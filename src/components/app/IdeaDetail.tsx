@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { Star, Trash2, ExternalLink, Save, X, Sparkles, ArrowLeft } from "lucide-react";
@@ -15,6 +15,8 @@ import {
 } from "@/components/ui/select";
 import { useIdea, useUpdateIdea, useDeleteIdea } from "@/hooks/useIdeas";
 import { useFolders } from "@/hooks/useFolders";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { useSwipeGesture } from "@/hooks/useSwipeGesture";
 import { toast } from "sonner";
 
 const NO_FOLDER = "__none__";
@@ -29,6 +31,8 @@ export const IdeaDetail = ({ ideaId, onClose }: Props) => {
   const { data: folders = [] } = useFolders();
   const updateIdea = useUpdateIdea();
   const deleteIdea = useDeleteIdea();
+  const isMobile = useIsMobile();
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const [editing, setEditing] = useState(false);
   const [title, setTitle] = useState("");
@@ -36,6 +40,14 @@ export const IdeaDetail = ({ ideaId, onClose }: Props) => {
   const [summary, setSummary] = useState("");
   const [tags, setTags] = useState("");
   const [folderId, setFolderId] = useState<string>(NO_FOLDER);
+
+  // Swipe-right from the left edge to go back (mobile only, not while editing)
+  useSwipeGesture(containerRef, {
+    onSwipe: onClose,
+    direction: "right",
+    edgeSize: 24,
+    enabled: isMobile && !editing && !!ideaId,
+  });
 
   useEffect(() => {
     if (idea) {
@@ -96,7 +108,7 @@ export const IdeaDetail = ({ ideaId, onClose }: Props) => {
   };
 
   return (
-    <div className="flex-1 flex flex-col h-full overflow-hidden bg-background md:animate-none anim-slide-in">
+    <div ref={containerRef} className="flex-1 flex flex-col h-full overflow-hidden bg-background md:animate-none anim-slide-in">
       <div className="safe-top sticky top-0 z-10 bg-background/85 backdrop-blur px-3 sm:px-6 py-2 sm:py-3 border-b border-border flex items-center gap-1 sm:gap-2">
         <Button
           variant="ghost"

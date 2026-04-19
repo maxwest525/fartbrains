@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Search, X, Menu } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,7 @@ import { NewIdeaDialog } from "@/components/app/NewIdeaDialog";
 import { MobileTabBar } from "@/components/app/MobileTabBar";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useSwipeGesture } from "@/hooks/useSwipeGesture";
 import type { IdeaFilter } from "@/hooks/useIdeas";
 
 const Shell = () => {
@@ -19,6 +20,15 @@ const Shell = () => {
   const [searchValue, setSearchValue] = useState("");
   const [drawerOpen, setDrawerOpen] = useState(false);
   const isMobile = useIsMobile();
+  const edgeSwipeRef = useRef<HTMLDivElement>(null);
+
+  // Swipe-from-left-edge → open the sidebar drawer (mobile only, list view only).
+  useSwipeGesture(edgeSwipeRef, {
+    onSwipe: () => setDrawerOpen(true),
+    direction: "right",
+    edgeSize: 0, // the zone itself is the edge — fire on any rightward swipe inside it
+    enabled: isMobile && !drawerOpen && selectedId === null && !newOpen,
+  });
 
   const onSearch = (v: string) => {
     setSearchValue(v);
@@ -45,7 +55,15 @@ const Shell = () => {
   const showDetailOnly = isMobile && selectedId !== null;
 
   return (
-    <div className="flex h-[100dvh] w-full bg-background overflow-hidden">
+    <div className="flex h-[100dvh] w-full bg-background overflow-hidden relative">
+      {/* Left-edge swipe zone — opens drawer on mobile when no detail/dialog is open */}
+      {isMobile && !drawerOpen && selectedId === null && !newOpen && (
+        <div
+          ref={edgeSwipeRef}
+          className="md:hidden fixed left-0 top-0 bottom-0 w-3 z-40"
+          aria-hidden="true"
+        />
+      )}
       {/* Sidebar — drawer on mobile, fixed on desktop */}
       {isMobile ? (
         <Sheet open={drawerOpen} onOpenChange={setDrawerOpen}>
