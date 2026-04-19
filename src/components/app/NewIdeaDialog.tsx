@@ -26,6 +26,28 @@ import { toast } from "sonner";
 
 const NO_FOLDER = "__none__";
 
+type Folder = { id: string; name: string };
+
+const FolderSelect = ({
+  value,
+  onChange,
+  folders,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  folders: Folder[];
+}) => (
+  <Select value={value} onValueChange={onChange}>
+    <SelectTrigger><SelectValue /></SelectTrigger>
+    <SelectContent>
+      <SelectItem value={NO_FOLDER}>No folder</SelectItem>
+      {folders.map((f) => (
+        <SelectItem key={f.id} value={f.id}>{f.name}</SelectItem>
+      ))}
+    </SelectContent>
+  </Select>
+);
+
 type Props = {
   open: boolean;
   onOpenChange: (v: boolean) => void;
