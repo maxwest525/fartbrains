@@ -48,7 +48,7 @@ export const IdeaDetail = ({ ideaId, onClose }: Props) => {
 
   if (!ideaId) {
     return (
-      <div className="flex-1 flex items-center justify-center bg-muted/20">
+      <div className="hidden md:flex flex-1 items-center justify-center bg-muted/20">
         <div className="text-center text-muted-foreground">
           <Sparkles className="h-10 w-10 mx-auto mb-3 opacity-30" />
           <p className="text-sm">Select an idea to view it</p>
@@ -59,7 +59,7 @@ export const IdeaDetail = ({ ideaId, onClose }: Props) => {
 
   if (isLoading || !idea) {
     return (
-      <div className="flex-1 flex items-center justify-center text-muted-foreground text-sm">
+      <div className="flex-1 flex items-center justify-center text-muted-foreground text-sm h-full">
         Loading…
       </div>
     );
