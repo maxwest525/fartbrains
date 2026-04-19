@@ -204,7 +204,7 @@ export const NewIdeaDialog = ({ open, onOpenChange, defaultFolderId, onCreated }
 
   return (
     <Dialog open={open} onOpenChange={(v) => (v ? onOpenChange(v) : close())}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl w-full sm:max-h-[90vh] max-h-[100dvh] h-[100dvh] sm:h-auto sm:rounded-lg rounded-none overflow-y-auto p-4 sm:p-6">
         <DialogHeader>
           <DialogTitle>New idea</DialogTitle>
           <DialogDescription>Capture an idea by typing it, pasting a URL, or pasting text.</DialogDescription>
