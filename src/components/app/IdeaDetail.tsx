@@ -158,7 +158,7 @@ export const IdeaDetail = ({ ideaId, onClose }: Props) => {
           <h1 className="text-2xl font-semibold tracking-tight">{idea.title}</h1>
         )}
 
-        <div className="grid grid-cols-2 gap-3 text-xs text-muted-foreground">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-muted-foreground">
           <div>
             <span className="font-medium text-foreground">Created:</span>{" "}
             {new Date(idea.created_at).toLocaleString()}
