@@ -227,7 +227,7 @@ export const NewIdeaDialog = ({ open, onOpenChange, defaultFolderId, onCreated }
               <Label>Note</Label>
               <Textarea value={mNote} onChange={(e) => setMNote(e.target.value)} rows={6} placeholder="Write your idea…" />
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div><Label>Folder</Label><FolderSelect value={mFolder} onChange={setMFolder} folders={folders} /></div>
               <div><Label>Tags</Label><Input value={mTags} onChange={(e) => setMTags(e.target.value)} placeholder="comma, separated" /></div>
             </div>
