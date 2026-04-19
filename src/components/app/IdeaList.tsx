@@ -78,7 +78,7 @@ export const IdeaList = ({ filter, selectedId, onSelect }: Props) => {
               key={idea.id}
               onClick={() => onSelect(idea.id)}
               className={cn(
-                "w-full text-left px-5 py-3 border-b border-border/60 hover:bg-muted/40 transition-colors",
+                "w-full text-left px-4 sm:px-5 py-3.5 border-b border-border/60 hover:bg-muted/40 active:bg-muted transition-colors min-h-[64px]",
                 active && "bg-muted"
               )}
             >
