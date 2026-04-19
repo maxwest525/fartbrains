@@ -72,7 +72,7 @@ export const AppSidebar = ({ filter, onFilterChange, onNewIdea }: Props) => {
   );
 
   return (
-    <aside className="w-64 shrink-0 border-r border-sidebar-border bg-sidebar h-screen flex flex-col">
+    <aside className="w-full md:w-64 shrink-0 border-r border-sidebar-border bg-sidebar h-full flex flex-col">
       <div className="p-4 border-b border-sidebar-border">
         <div className="flex items-center gap-2 mb-3">
           <div className="h-8 w-8 rounded-md bg-primary text-primary-foreground flex items-center justify-center text-sm font-bold">
@@ -80,7 +80,7 @@ export const AppSidebar = ({ filter, onFilterChange, onNewIdea }: Props) => {
           </div>
           <span className="font-semibold text-sidebar-foreground">Idea Vault</span>
         </div>
-        <Button onClick={onNewIdea} className="w-full" size="sm">
+        <Button onClick={onNewIdea} className="w-full h-11">
           <Plus className="h-4 w-4 mr-1" /> New idea
         </Button>
       </div>
@@ -95,10 +95,10 @@ export const AppSidebar = ({ filter, onFilterChange, onNewIdea }: Props) => {
         <span className="text-xs uppercase tracking-wider text-muted-foreground">Folders</span>
         <button
           onClick={() => setCreating(true)}
-          className="text-muted-foreground hover:text-foreground"
+          className="h-9 w-9 -mr-2 flex items-center justify-center text-muted-foreground hover:text-foreground"
           aria-label="New folder"
         >
-          <Plus className="h-3.5 w-3.5" />
+          <Plus className="h-4 w-4" />
         </button>
       </div>
 
@@ -123,7 +123,7 @@ export const AppSidebar = ({ filter, onFilterChange, onNewIdea }: Props) => {
             <div
               key={folder.id}
               className={cn(
-                "group flex items-center gap-1 px-2 py-1.5 rounded-md text-sm",
+                "group flex items-center gap-1 pl-2 pr-1 py-1 rounded-md text-sm",
                 active
                   ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
                   : "text-sidebar-foreground hover:bg-sidebar-accent/60"
@@ -136,21 +136,24 @@ export const AppSidebar = ({ filter, onFilterChange, onNewIdea }: Props) => {
                     value={renameValue}
                     onChange={(e) => setRenameValue(e.target.value)}
                     onBlur={() => setRenamingId(null)}
-                    className="h-7 text-sm"
+                    className="h-9 text-sm"
                   />
                 </form>
               ) : (
                 <>
                   <button
                     onClick={() => onFilterChange({ kind: "folder", folderId: folder.id })}
-                    className="flex items-center gap-2 flex-1 min-w-0"
+                    className="flex items-center gap-2 flex-1 min-w-0 min-h-[40px]"
                   >
                     <Folder className="h-4 w-4 shrink-0" />
                     <span className="truncate">{folder.name}</span>
                   </button>
                   <DropdownMenu>
-                    <DropdownMenuTrigger className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-foreground p-0.5">
-                      <MoreHorizontal className="h-3.5 w-3.5" />
+                    <DropdownMenuTrigger
+                      className="h-10 w-10 flex items-center justify-center text-muted-foreground hover:text-foreground md:opacity-0 md:group-hover:opacity-100 md:focus:opacity-100 md:data-[state=open]:opacity-100"
+                      aria-label="Folder actions"
+                    >
+                      <MoreHorizontal className="h-4 w-4" />
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                       <DropdownMenuItem

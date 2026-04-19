@@ -204,17 +204,17 @@ export const NewIdeaDialog = ({ open, onOpenChange, defaultFolderId, onCreated }
 
   return (
     <Dialog open={open} onOpenChange={(v) => (v ? onOpenChange(v) : close())}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl w-full sm:max-h-[90vh] max-h-[100dvh] h-[100dvh] sm:h-auto sm:rounded-lg rounded-none overflow-y-auto p-4 sm:p-6">
         <DialogHeader>
           <DialogTitle>New idea</DialogTitle>
           <DialogDescription>Capture an idea by typing it, pasting a URL, or pasting text.</DialogDescription>
         </DialogHeader>
 
         <Tabs defaultValue="manual">
-          <TabsList className="grid grid-cols-3 w-full">
-            <TabsTrigger value="manual">Manual note</TabsTrigger>
-            <TabsTrigger value="url">From URL</TabsTrigger>
-            <TabsTrigger value="transcript">Paste text</TabsTrigger>
+          <TabsList className="grid grid-cols-3 w-full h-auto">
+            <TabsTrigger value="manual" className="h-11 text-xs sm:text-sm">Manual</TabsTrigger>
+            <TabsTrigger value="url" className="h-11 text-xs sm:text-sm">From URL</TabsTrigger>
+            <TabsTrigger value="transcript" className="h-11 text-xs sm:text-sm">Paste text</TabsTrigger>
           </TabsList>
 
           {/* MANUAL */}
@@ -227,7 +227,7 @@ export const NewIdeaDialog = ({ open, onOpenChange, defaultFolderId, onCreated }
               <Label>Note</Label>
               <Textarea value={mNote} onChange={(e) => setMNote(e.target.value)} rows={6} placeholder="Write your idea…" />
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div><Label>Folder</Label><FolderSelect value={mFolder} onChange={setMFolder} folders={folders} /></div>
               <div><Label>Tags</Label><Input value={mTags} onChange={(e) => setMTags(e.target.value)} placeholder="comma, separated" /></div>
             </div>
@@ -270,7 +270,7 @@ export const NewIdeaDialog = ({ open, onOpenChange, defaultFolderId, onCreated }
                   <Label>Extracted text (preserved)</Label>
                   <Textarea value={uExtracted} onChange={(e) => setUExtracted(e.target.value)} rows={4} className="text-xs" />
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div><Label>Folder</Label><FolderSelect value={uFolder} onChange={setUFolder} folders={folders} /></div>
                   <div><Label>Tags</Label><Input value={uTags} onChange={(e) => setUTags(e.target.value)} placeholder="comma, separated" /></div>
                 </div>
@@ -305,7 +305,7 @@ export const NewIdeaDialog = ({ open, onOpenChange, defaultFolderId, onCreated }
                 </div>
               </>
             )}
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div><Label>Folder</Label><FolderSelect value={tFolder} onChange={setTFolder} folders={folders} /></div>
               <div><Label>Tags</Label><Input value={tTags} onChange={(e) => setTTags(e.target.value)} placeholder="comma, separated" /></div>
             </div>

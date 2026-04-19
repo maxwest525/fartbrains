@@ -42,8 +42,8 @@ export const IdeaList = ({ filter, selectedId, onSelect }: Props) => {
             : "Folder";
 
   return (
-    <div className="w-96 shrink-0 border-r border-border bg-background h-screen flex flex-col">
-      <div className="px-5 py-4 border-b border-border">
+    <div className="w-full md:w-96 md:shrink-0 md:border-r border-border bg-background h-full flex flex-col">
+      <div className="px-4 sm:px-5 py-3 sm:py-4 border-b border-border">
         <h2 className="text-lg font-semibold">{heading}</h2>
         <p className="text-xs text-muted-foreground mt-0.5">
           {isLoading ? "Loading…" : `${ideas.length} idea${ideas.length === 1 ? "" : "s"}`}
@@ -78,7 +78,7 @@ export const IdeaList = ({ filter, selectedId, onSelect }: Props) => {
               key={idea.id}
               onClick={() => onSelect(idea.id)}
               className={cn(
-                "w-full text-left px-5 py-3 border-b border-border/60 hover:bg-muted/40 transition-colors",
+                "w-full text-left px-4 sm:px-5 py-3.5 border-b border-border/60 hover:bg-muted/40 active:bg-muted transition-colors min-h-[64px]",
                 active && "bg-muted"
               )}
             >
