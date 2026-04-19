@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Search, X, Menu } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,7 @@ import { NewIdeaDialog } from "@/components/app/NewIdeaDialog";
 import { MobileTabBar } from "@/components/app/MobileTabBar";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useSwipeGesture } from "@/hooks/useSwipeGesture";
 import type { IdeaFilter } from "@/hooks/useIdeas";
 
 const Shell = () => {
