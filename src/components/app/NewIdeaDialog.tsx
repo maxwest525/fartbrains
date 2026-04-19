@@ -270,7 +270,7 @@ export const NewIdeaDialog = ({ open, onOpenChange, defaultFolderId, onCreated }
                   <Label>Extracted text (preserved)</Label>
                   <Textarea value={uExtracted} onChange={(e) => setUExtracted(e.target.value)} rows={4} className="text-xs" />
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div><Label>Folder</Label><FolderSelect value={uFolder} onChange={setUFolder} folders={folders} /></div>
                   <div><Label>Tags</Label><Input value={uTags} onChange={(e) => setUTags(e.target.value)} placeholder="comma, separated" /></div>
                 </div>
