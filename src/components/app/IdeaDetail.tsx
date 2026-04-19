@@ -108,7 +108,7 @@ export const IdeaDetail = ({ ideaId, onClose }: Props) => {
   };
 
   return (
-    <div className="flex-1 flex flex-col h-full overflow-hidden bg-background md:animate-none anim-slide-in">
+    <div ref={containerRef} className="flex-1 flex flex-col h-full overflow-hidden bg-background md:animate-none anim-slide-in">
       <div className="safe-top sticky top-0 z-10 bg-background/85 backdrop-blur px-3 sm:px-6 py-2 sm:py-3 border-b border-border flex items-center gap-1 sm:gap-2">
         <Button
           variant="ghost"
