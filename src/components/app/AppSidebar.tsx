@@ -73,14 +73,14 @@ export const AppSidebar = ({ filter, onFilterChange, onNewIdea }: Props) => {
 
   return (
     <aside className="w-full md:w-64 shrink-0 border-r border-sidebar-border bg-sidebar h-full flex flex-col">
-      <div className="p-4 border-b border-sidebar-border">
+      <div className="safe-top p-4 border-b border-sidebar-border">
         <div className="flex items-center gap-2 mb-3">
           <div className="h-8 w-8 rounded-md bg-primary text-primary-foreground flex items-center justify-center text-sm font-bold">
             IV
           </div>
           <span className="font-semibold text-sidebar-foreground">Idea Vault</span>
         </div>
-        <Button onClick={onNewIdea} className="w-full h-11">
+        <Button onClick={onNewIdea} className="w-full h-11 rounded-full">
           <Plus className="h-4 w-4 mr-1" /> New idea
         </Button>
       </div>

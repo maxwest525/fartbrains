@@ -7,6 +7,7 @@ import { AppSidebar } from "@/components/app/AppSidebar";
 import { IdeaList } from "@/components/app/IdeaList";
 import { IdeaDetail } from "@/components/app/IdeaDetail";
 import { NewIdeaDialog } from "@/components/app/NewIdeaDialog";
+import { MobileTabBar } from "@/components/app/MobileTabBar";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { useIsMobile } from "@/hooks/use-mobile";
 import type { IdeaFilter } from "@/hooks/useIdeas";
@@ -41,7 +42,6 @@ const Shell = () => {
     if (isMobile) setDrawerOpen(false);
   };
 
-  // Mobile: show detail as a full-screen overlay when an idea is selected.
   const showDetailOnly = isMobile && selectedId !== null;
 
   return (
@@ -49,7 +49,7 @@ const Shell = () => {
       {/* Sidebar — drawer on mobile, fixed on desktop */}
       {isMobile ? (
         <Sheet open={drawerOpen} onOpenChange={setDrawerOpen}>
-          <SheetContent side="left" className="p-0 w-72 max-w-[85vw]">
+          <SheetContent side="left" className="p-0 w-80 max-w-[85vw]">
             <AppSidebar
               filter={filter}
               onFilterChange={handleFilterChange}
@@ -68,37 +68,39 @@ const Shell = () => {
       <div className="flex-1 flex flex-col min-w-0">
         {/* Top bar — hidden on mobile when viewing a detail */}
         {!showDetailOnly && (
-          <div className="border-b border-border px-3 sm:px-5 py-2.5 bg-background flex items-center gap-2 sm:gap-3">
-            {isMobile && (
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-11 w-11 shrink-0"
-                onClick={() => setDrawerOpen(true)}
-                aria-label="Open menu"
-              >
-                <Menu className="h-5 w-5" />
-              </Button>
-            )}
-            <div className="relative flex-1 max-w-xl">
-              <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                value={searchValue}
-                onChange={(e) => onSearch(e.target.value)}
-                placeholder="Search ideas…"
-                className="pl-9 pr-9 h-11"
-              />
-              {searchValue && (
-                <button
-                  onClick={clearSearch}
-                  className="absolute right-1 top-1/2 -translate-y-1/2 h-9 w-9 flex items-center justify-center text-muted-foreground hover:text-foreground"
-                  aria-label="Clear search"
+          <header className="safe-top sticky top-0 z-20 bg-background/85 backdrop-blur border-b border-border">
+            <div className="px-3 sm:px-5 py-2.5 flex items-center gap-2 sm:gap-3">
+              {isMobile && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-11 w-11 shrink-0 md:hidden"
+                  onClick={() => setDrawerOpen(true)}
+                  aria-label="Open menu"
                 >
-                  <X className="h-4 w-4" />
-                </button>
+                  <Menu className="h-5 w-5" />
+                </Button>
               )}
+              <div className="relative flex-1 max-w-xl">
+                <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  value={searchValue}
+                  onChange={(e) => onSearch(e.target.value)}
+                  placeholder="Search ideas…"
+                  className="pl-9 pr-9 h-11 rounded-full bg-muted/60 border-transparent focus-visible:bg-background"
+                />
+                {searchValue && (
+                  <button
+                    onClick={clearSearch}
+                    className="absolute right-1 top-1/2 -translate-y-1/2 h-9 w-9 flex items-center justify-center text-muted-foreground hover:text-foreground"
+                    aria-label="Clear search"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                )}
+              </div>
             </div>
-          </div>
+          </header>
         )}
 
         <div className="flex-1 flex min-h-0">
@@ -112,6 +114,16 @@ const Shell = () => {
           )}
         </div>
       </div>
+
+      {/* Mobile bottom tab bar with center FAB */}
+      {isMobile && !showDetailOnly && (
+        <MobileTabBar
+          filter={filter}
+          onFilterChange={handleFilterChange}
+          onOpenMenu={() => setDrawerOpen(true)}
+          onNewIdea={handleNewIdea}
+        />
+      )}
 
       <NewIdeaDialog
         open={newOpen}
