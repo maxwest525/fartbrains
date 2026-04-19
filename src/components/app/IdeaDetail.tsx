@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { Star, Trash2, ExternalLink, Save, X, Sparkles, ArrowLeft } from "lucide-react";
@@ -15,6 +15,8 @@ import {
 } from "@/components/ui/select";
 import { useIdea, useUpdateIdea, useDeleteIdea } from "@/hooks/useIdeas";
 import { useFolders } from "@/hooks/useFolders";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { useSwipeGesture } from "@/hooks/useSwipeGesture";
 import { toast } from "sonner";
 
 const NO_FOLDER = "__none__";
