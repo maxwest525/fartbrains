@@ -26,6 +26,28 @@ import { toast } from "sonner";
 
 const NO_FOLDER = "__none__";
 
+type Folder = { id: string; name: string };
+
+const FolderSelect = ({
+  value,
+  onChange,
+  folders,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  folders: Folder[];
+}) => (
+  <Select value={value} onValueChange={onChange}>
+    <SelectTrigger><SelectValue /></SelectTrigger>
+    <SelectContent>
+      <SelectItem value={NO_FOLDER}>No folder</SelectItem>
+      {folders.map((f) => (
+        <SelectItem key={f.id} value={f.id}>{f.name}</SelectItem>
+      ))}
+    </SelectContent>
+  </Select>
+);
+
 type Props = {
   open: boolean;
   onOpenChange: (v: boolean) => void;
@@ -180,18 +202,6 @@ export const NewIdeaDialog = ({ open, onOpenChange, defaultFolderId, onCreated }
     close();
   };
 
-  const FolderSelect = ({ value, onChange }: { value: string; onChange: (v: string) => void }) => (
-    <Select value={value} onValueChange={onChange}>
-      <SelectTrigger><SelectValue /></SelectTrigger>
-      <SelectContent>
-        <SelectItem value={NO_FOLDER}>No folder</SelectItem>
-        {folders.map((f) => (
-          <SelectItem key={f.id} value={f.id}>{f.name}</SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
-  );
-
   return (
     <Dialog open={open} onOpenChange={(v) => (v ? onOpenChange(v) : close())}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
@@ -218,7 +228,7 @@ export const NewIdeaDialog = ({ open, onOpenChange, defaultFolderId, onCreated }
               <Textarea value={mNote} onChange={(e) => setMNote(e.target.value)} rows={6} placeholder="Write your idea…" />
             </div>
             <div className="grid grid-cols-2 gap-3">
-              <div><Label>Folder</Label><FolderSelect value={mFolder} onChange={setMFolder} /></div>
+              <div><Label>Folder</Label><FolderSelect value={mFolder} onChange={setMFolder} folders={folders} /></div>
               <div><Label>Tags</Label><Input value={mTags} onChange={(e) => setMTags(e.target.value)} placeholder="comma, separated" /></div>
             </div>
             <div className="flex justify-end pt-2">
@@ -261,7 +271,7 @@ export const NewIdeaDialog = ({ open, onOpenChange, defaultFolderId, onCreated }
                   <Textarea value={uExtracted} onChange={(e) => setUExtracted(e.target.value)} rows={4} className="text-xs" />
                 </div>
                 <div className="grid grid-cols-2 gap-3">
-                  <div><Label>Folder</Label><FolderSelect value={uFolder} onChange={setUFolder} /></div>
+                  <div><Label>Folder</Label><FolderSelect value={uFolder} onChange={setUFolder} folders={folders} /></div>
                   <div><Label>Tags</Label><Input value={uTags} onChange={(e) => setUTags(e.target.value)} placeholder="comma, separated" /></div>
                 </div>
                 <div className="flex justify-end pt-2">
@@ -296,7 +306,7 @@ export const NewIdeaDialog = ({ open, onOpenChange, defaultFolderId, onCreated }
               </>
             )}
             <div className="grid grid-cols-2 gap-3">
-              <div><Label>Folder</Label><FolderSelect value={tFolder} onChange={setTFolder} /></div>
+              <div><Label>Folder</Label><FolderSelect value={tFolder} onChange={setTFolder} folders={folders} /></div>
               <div><Label>Tags</Label><Input value={tTags} onChange={(e) => setTTags(e.target.value)} placeholder="comma, separated" /></div>
             </div>
             <div className="flex justify-end pt-2">
