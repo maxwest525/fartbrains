@@ -55,7 +55,15 @@ const Shell = () => {
   const showDetailOnly = isMobile && selectedId !== null;
 
   return (
-    <div className="flex h-[100dvh] w-full bg-background overflow-hidden">
+    <div className="flex h-[100dvh] w-full bg-background overflow-hidden relative">
+      {/* Left-edge swipe zone — opens drawer on mobile when no detail/dialog is open */}
+      {isMobile && !drawerOpen && selectedId === null && !newOpen && (
+        <div
+          ref={edgeSwipeRef}
+          className="md:hidden fixed left-0 top-0 bottom-0 w-3 z-40"
+          aria-hidden="true"
+        />
+      )}
       {/* Sidebar — drawer on mobile, fixed on desktop */}
       {isMobile ? (
         <Sheet open={drawerOpen} onOpenChange={setDrawerOpen}>
