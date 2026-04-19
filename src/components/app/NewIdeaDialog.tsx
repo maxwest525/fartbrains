@@ -305,7 +305,7 @@ export const NewIdeaDialog = ({ open, onOpenChange, defaultFolderId, onCreated }
                 </div>
               </>
             )}
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div><Label>Folder</Label><FolderSelect value={tFolder} onChange={setTFolder} folders={folders} /></div>
               <div><Label>Tags</Label><Input value={tTags} onChange={(e) => setTTags(e.target.value)} placeholder="comma, separated" /></div>
             </div>
