@@ -94,9 +94,18 @@ export const IdeaDetail = ({ ideaId, onClose }: Props) => {
   };
 
   return (
-    <div className="flex-1 flex flex-col h-screen overflow-hidden bg-background">
-      <div className="px-6 py-3 border-b border-border flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2 min-w-0">
+    <div className="flex-1 flex flex-col h-full overflow-hidden bg-background">
+      <div className="px-3 sm:px-6 py-2 sm:py-3 border-b border-border flex items-center gap-1 sm:gap-2">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-11 w-11 shrink-0 md:hidden"
+          onClick={onClose}
+          aria-label="Back"
+        >
+          <ArrowLeft className="h-5 w-5" />
+        </Button>
+        <div className="flex items-center gap-2 min-w-0 flex-1">
           <Badge variant="secondary" className="capitalize">
             {idea.source_type}
           </Badge>
@@ -105,40 +114,40 @@ export const IdeaDetail = ({ ideaId, onClose }: Props) => {
               href={idea.source_url}
               target="_blank"
               rel="noreferrer"
-              className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 truncate"
+              className="text-xs text-muted-foreground hover:text-foreground hidden sm:flex items-center gap-1 truncate"
             >
               <ExternalLink className="h-3 w-3 shrink-0" />
               <span className="truncate">{idea.source_url}</span>
             </a>
           )}
         </div>
-        <div className="flex items-center gap-1 shrink-0">
-          <Button variant="ghost" size="icon" onClick={onToggleFavorite}>
+        <div className="flex items-center gap-0.5 sm:gap-1 shrink-0">
+          <Button variant="ghost" size="icon" className="h-11 w-11" onClick={onToggleFavorite} aria-label="Toggle favorite">
             <Star
-              className={`h-4 w-4 ${idea.is_favorite ? "fill-accent text-accent" : ""}`}
+              className={`h-5 w-5 ${idea.is_favorite ? "fill-accent text-accent" : ""}`}
             />
           </Button>
           {editing ? (
             <>
-              <Button variant="ghost" size="sm" onClick={() => setEditing(false)}>
+              <Button variant="ghost" size="sm" className="h-11" onClick={() => setEditing(false)}>
                 <X className="h-4 w-4 mr-1" /> Cancel
               </Button>
-              <Button size="sm" onClick={onSave} disabled={updateIdea.isPending}>
+              <Button size="sm" className="h-11" onClick={onSave} disabled={updateIdea.isPending}>
                 <Save className="h-4 w-4 mr-1" /> Save
               </Button>
             </>
           ) : (
-            <Button variant="outline" size="sm" onClick={() => setEditing(true)}>
+            <Button variant="outline" size="sm" className="h-11" onClick={() => setEditing(true)}>
               Edit
             </Button>
           )}
-          <Button variant="ghost" size="icon" onClick={onDelete}>
-            <Trash2 className="h-4 w-4 text-destructive" />
+          <Button variant="ghost" size="icon" className="h-11 w-11" onClick={onDelete} aria-label="Delete">
+            <Trash2 className="h-5 w-5 text-destructive" />
           </Button>
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
+      <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-4 sm:py-5 space-y-5">
         {editing ? (
           <Input
             value={title}
