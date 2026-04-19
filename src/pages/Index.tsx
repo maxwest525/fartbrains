@@ -20,6 +20,15 @@ const Shell = () => {
   const [searchValue, setSearchValue] = useState("");
   const [drawerOpen, setDrawerOpen] = useState(false);
   const isMobile = useIsMobile();
+  const edgeSwipeRef = useRef<HTMLDivElement>(null);
+
+  // Swipe-from-left-edge → open the sidebar drawer (mobile only, list view only).
+  useSwipeGesture(edgeSwipeRef, {
+    onSwipe: () => setDrawerOpen(true),
+    direction: "right",
+    edgeSize: 0, // the zone itself is the edge — fire on any rightward swipe inside it
+    enabled: isMobile && !drawerOpen && selectedId === null && !newOpen,
+  });
 
   const onSearch = (v: string) => {
     setSearchValue(v);
