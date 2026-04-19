@@ -211,10 +211,10 @@ export const NewIdeaDialog = ({ open, onOpenChange, defaultFolderId, onCreated }
         </DialogHeader>
 
         <Tabs defaultValue="manual">
-          <TabsList className="grid grid-cols-3 w-full">
-            <TabsTrigger value="manual">Manual note</TabsTrigger>
-            <TabsTrigger value="url">From URL</TabsTrigger>
-            <TabsTrigger value="transcript">Paste text</TabsTrigger>
+          <TabsList className="grid grid-cols-3 w-full h-auto">
+            <TabsTrigger value="manual" className="h-11 text-xs sm:text-sm">Manual</TabsTrigger>
+            <TabsTrigger value="url" className="h-11 text-xs sm:text-sm">From URL</TabsTrigger>
+            <TabsTrigger value="transcript" className="h-11 text-xs sm:text-sm">Paste text</TabsTrigger>
           </TabsList>
 
           {/* MANUAL */}
