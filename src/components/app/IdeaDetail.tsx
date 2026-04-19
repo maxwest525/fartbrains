@@ -31,6 +31,8 @@ export const IdeaDetail = ({ ideaId, onClose }: Props) => {
   const { data: folders = [] } = useFolders();
   const updateIdea = useUpdateIdea();
   const deleteIdea = useDeleteIdea();
+  const isMobile = useIsMobile();
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const [editing, setEditing] = useState(false);
   const [title, setTitle] = useState("");
@@ -38,6 +40,14 @@ export const IdeaDetail = ({ ideaId, onClose }: Props) => {
   const [summary, setSummary] = useState("");
   const [tags, setTags] = useState("");
   const [folderId, setFolderId] = useState<string>(NO_FOLDER);
+
+  // Swipe-right from the left edge to go back (mobile only, not while editing)
+  useSwipeGesture(containerRef, {
+    onSwipe: onClose,
+    direction: "right",
+    edgeSize: 24,
+    enabled: isMobile && !editing && !!ideaId,
+  });
 
   useEffect(() => {
     if (idea) {
