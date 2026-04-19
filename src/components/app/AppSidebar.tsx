@@ -72,7 +72,7 @@ export const AppSidebar = ({ filter, onFilterChange, onNewIdea }: Props) => {
   );
 
   return (
-    <aside className="w-64 shrink-0 border-r border-sidebar-border bg-sidebar h-screen flex flex-col">
+    <aside className="w-full md:w-64 shrink-0 border-r border-sidebar-border bg-sidebar h-full flex flex-col">
       <div className="p-4 border-b border-sidebar-border">
         <div className="flex items-center gap-2 mb-3">
           <div className="h-8 w-8 rounded-md bg-primary text-primary-foreground flex items-center justify-center text-sm font-bold">
@@ -80,7 +80,7 @@ export const AppSidebar = ({ filter, onFilterChange, onNewIdea }: Props) => {
           </div>
           <span className="font-semibold text-sidebar-foreground">Idea Vault</span>
         </div>
-        <Button onClick={onNewIdea} className="w-full" size="sm">
+        <Button onClick={onNewIdea} className="w-full h-11">
           <Plus className="h-4 w-4 mr-1" /> New idea
         </Button>
       </div>
@@ -95,10 +95,10 @@ export const AppSidebar = ({ filter, onFilterChange, onNewIdea }: Props) => {
         <span className="text-xs uppercase tracking-wider text-muted-foreground">Folders</span>
         <button
           onClick={() => setCreating(true)}
-          className="text-muted-foreground hover:text-foreground"
+          className="h-9 w-9 -mr-2 flex items-center justify-center text-muted-foreground hover:text-foreground"
           aria-label="New folder"
         >
-          <Plus className="h-3.5 w-3.5" />
+          <Plus className="h-4 w-4" />
         </button>
       </div>
 
