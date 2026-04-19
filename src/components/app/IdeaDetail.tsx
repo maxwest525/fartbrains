@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Star, Trash2, ExternalLink, Save, X, Sparkles } from "lucide-react";
+import { Star, Trash2, ExternalLink, Save, X, Sparkles, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
