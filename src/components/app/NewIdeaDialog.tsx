@@ -180,18 +180,6 @@ export const NewIdeaDialog = ({ open, onOpenChange, defaultFolderId, onCreated }
     close();
   };
 
-  const FolderSelect = ({ value, onChange }: { value: string; onChange: (v: string) => void }) => (
-    <Select value={value} onValueChange={onChange}>
-      <SelectTrigger><SelectValue /></SelectTrigger>
-      <SelectContent>
-        <SelectItem value={NO_FOLDER}>No folder</SelectItem>
-        {folders.map((f) => (
-          <SelectItem key={f.id} value={f.id}>{f.name}</SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
-  );
-
   return (
     <Dialog open={open} onOpenChange={(v) => (v ? onOpenChange(v) : close())}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
