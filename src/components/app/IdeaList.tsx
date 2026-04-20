@@ -58,7 +58,7 @@ export const IdeaList = ({ filter, selectedId, onSelect }: Props) => {
             : "Folder";
 
   return (
-    <div className="w-full md:w-96 md:shrink-0 md:border-r border-border bg-background h-full flex flex-col">
+    <div className="w-full h-full flex flex-col bg-background">
       {/* iOS large title (mobile only). Desktop keeps the compact label. */}
       <div className="px-4 sm:px-5 pt-2 pb-2 md:py-4 md:border-b border-border">
         <h2 className="text-[34px] leading-tight md:text-lg font-bold md:font-semibold tracking-tight">
