@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { Star, Trash2, ExternalLink, Sparkles, ChevronLeft } from "lucide-react";
+import { Star, Trash2, ExternalLink, Sparkles, ChevronLeft, Wand2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
@@ -232,9 +233,27 @@ export const IdeaDetail = ({ ideaId, onClose }: Props) => {
 
         {(editing || idea.ai_summary) && (
           <section>
-            <h3 className="text-sm font-semibold mb-2 flex items-center gap-1.5">
-              <Sparkles className="h-3.5 w-3.5 text-accent" /> Summary
-            </h3>
+            <div className="flex items-center justify-between mb-2 gap-2">
+              <h3 className="text-sm font-semibold flex items-center gap-1.5">
+                <Sparkles className="h-3.5 w-3.5 text-accent" /> Summary
+              </h3>
+              {!editing && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="h-8 rounded-full text-xs"
+                  onClick={() =>
+                    toast("Generate prompt — coming soon", {
+                      description: "We'll combine your note with the AI summary into a ready-to-paste prompt.",
+                    })
+                  }
+                >
+                  <Wand2 className="h-3.5 w-3.5 mr-1" />
+                  Generate prompt
+                </Button>
+              )}
+            </div>
             {editing ? (
               <Textarea
                 value={summary}
