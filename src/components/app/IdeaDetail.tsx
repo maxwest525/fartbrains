@@ -357,20 +357,67 @@ export const IdeaDetail = ({ ideaId, onClose }: Props) => {
           </section>
         )}
 
-        {(editing || idea.raw_note) && (
-          <section>
-            <h3 className="text-sm font-semibold mb-2">Note</h3>
-            {editing ? (
-              <Textarea
-                value={rawNote}
-                onChange={(e) => setRawNote(e.target.value)}
-                rows={6}
-              />
-            ) : (
-              <p className="whitespace-pre-wrap text-sm">{idea.raw_note}</p>
-            )}
-          </section>
-        )}
+        {(editing || idea.raw_note) && (() => {
+          const isChecklist = !!idea.raw_note && /^\s*- \[[ xX]\] /m.test(idea.raw_note);
+          const toggleItem = (index: number) => {
+            if (!idea.raw_note) return;
+            let n = -1;
+            const next = idea.raw_note
+              .split("\n")
+              .map((line) => {
+                const m = line.match(/^(\s*- \[)([ xX])(\] )(.*)$/);
+                if (!m) return line;
+                n += 1;
+                if (n !== index) return line;
+                const toggled = m[2] === " " ? "x" : " ";
+                return `${m[1]}${toggled}${m[3]}${m[4]}`;
+              })
+              .join("\n");
+            updateIdea.mutate({ id: idea.id, patch: { raw_note: next } });
+          };
+          let checkboxIndex = -1;
+          return (
+            <section>
+              <h3 className="text-sm font-semibold mb-2">{isChecklist ? "Checklist" : "Note"}</h3>
+              {editing ? (
+                <Textarea
+                  value={rawNote}
+                  onChange={(e) => setRawNote(e.target.value)}
+                  rows={6}
+                />
+              ) : isChecklist ? (
+                <div className="rounded-md bg-muted/40 p-4 text-sm prose prose-sm dark:prose-invert max-w-none prose-ul:my-0 prose-li:my-0.5">
+                  <ReactMarkdown
+                    remarkPlugins={[remarkGfm]}
+                    components={{
+                      input: ({ checked, disabled, ...rest }) => {
+                        if (rest.type !== "checkbox") return <input {...rest} />;
+                        checkboxIndex += 1;
+                        const idx = checkboxIndex;
+                        return (
+                          <input
+                            type="checkbox"
+                            checked={!!checked}
+                            disabled={false}
+                            onChange={() => toggleItem(idx)}
+                            className="mr-2 h-4 w-4 cursor-pointer accent-primary align-middle"
+                          />
+                        );
+                      },
+                      li: ({ children, ...props }) => (
+                        <li {...props} className="list-none -ml-6">{children}</li>
+                      ),
+                    }}
+                  >
+                    {idea.raw_note ?? ""}
+                  </ReactMarkdown>
+                </div>
+              ) : (
+                <p className="whitespace-pre-wrap text-sm">{idea.raw_note}</p>
+              )}
+            </section>
+          );
+        })()}
 
         {idea.extracted_text && (
           <section>

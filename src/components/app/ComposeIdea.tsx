@@ -31,10 +31,20 @@ const PLACEHOLDERS: Record<SourceKey, { url?: string; note: string }> = {
   instagram: { url: "Instagram Reel URL", note: "Quick note (optional)" },
   link:      { url: "Paste a URL",        note: "Quick note (optional)" },
   note:      {                            note: "Write your idea…" },
+  list:      {                            note: "One item per line…\nBuy milk\nCall dentist\nShip v2" },
   voice:     { note: "" },
   image:     { note: "" },
   prompt:    { note: "" },
 };
+
+/** Convert raw textarea lines into a markdown checklist. Blank lines are skipped. */
+const linesToChecklist = (raw: string): string =>
+  raw
+    .split("\n")
+    .map((l) => l.trim())
+    .filter(Boolean)
+    .map((l) => (/^- \[[ xX]\] /.test(l) ? l : `- [ ] ${l}`))
+    .join("\n");
 
 /**
  * Always-visible compose card. Lives on the main page above the idea list
@@ -125,22 +135,31 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
     if (needsUrl && !url.trim()) return toast.error("URL required");
     if (source === "note" && !note.trim() && !title.trim())
       return toast.error("Add a title or a note");
+    if (source === "list" && !note.trim() && !title.trim())
+      return toast.error("Add at least one list item or a title");
 
     setSaving(true);
     try {
       const userTitle = title.trim();
+      const isList = source === "list";
+      const listBody = isList ? linesToChecklist(note) : null;
+
       const fallbackTitle =
         userTitle ||
-        (needsUrl ? url.trim() : note.trim().split("\n")[0].slice(0, 80)) ||
+        (needsUrl
+          ? url.trim()
+          : isList
+            ? (note.trim().split("\n").find((l) => l.trim()) ?? "").slice(0, 80) || "Checklist"
+            : note.trim().split("\n")[0].slice(0, 80)) ||
         "Untitled idea";
 
       const idea = await createIdea.mutateAsync({
         title: fallbackTitle,
-        raw_note: note.trim() || null,
+        raw_note: isList ? listBody : (note.trim() || null),
         source_url: needsUrl ? url.trim() : null,
         source_type: needsUrl ? "webpage" : "manual",
         folder_id: folderOrNull(folder),
-        tags: [],
+        tags: isList ? ["list"] : [],
       });
 
       onCreated?.(idea.id);
@@ -228,12 +247,12 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
         </div>
       )}
 
-      {source === "note" ? (
+      {source === "note" || source === "list" ? (
         <Textarea
           value={note}
           onChange={(e) => setNote(e.target.value)}
           placeholder={ph.note}
-          rows={4}
+          rows={source === "list" ? 5 : 4}
           className="rounded-xl bg-secondary/60 border-transparent text-[15px] resize-none"
         />
       ) : (
@@ -316,7 +335,7 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
         ) : (
           <>
             <Sparkles className="h-4 w-4 mr-1.5" />
-            {needsUrl ? "Extract & save" : "Save idea"}
+            {needsUrl ? "Extract & save" : source === "list" ? "Save list" : "Save idea"}
           </>
         )}
       </Button>
