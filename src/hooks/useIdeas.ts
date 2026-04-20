@@ -101,6 +101,7 @@ export function useCreateIdea() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["ideas"] });
       qc.invalidateQueries({ queryKey: ["folder-counts"] });
+      qc.invalidateQueries({ queryKey: ["folder-previews"] });
       toast.success("Idea saved");
     },
     onError: (e: Error) => toast.error(e.message),
@@ -118,6 +119,7 @@ export function useUpdateIdea() {
       qc.invalidateQueries({ queryKey: ["ideas"] });
       qc.invalidateQueries({ queryKey: ["idea", vars.id] });
       qc.invalidateQueries({ queryKey: ["folder-counts"] });
+      qc.invalidateQueries({ queryKey: ["folder-previews"] });
     },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -133,6 +135,7 @@ export function useDeleteIdea() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["ideas"] });
       qc.invalidateQueries({ queryKey: ["folder-counts"] });
+      qc.invalidateQueries({ queryKey: ["folder-previews"] });
       toast.success("Idea deleted");
     },
     onError: (e: Error) => toast.error(e.message),

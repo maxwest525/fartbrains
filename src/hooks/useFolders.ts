@@ -41,6 +41,43 @@ export function useFolderCounts() {
   });
 }
 
+export type FolderPreviewItem = {
+  id: string;
+  title: string;
+  source_type: "manual" | "webpage" | "transcript" | "audio";
+};
+
+/**
+ * Latest 3 ideas per folder for at-a-glance previews on the Folders grid.
+ * Returns a map of folder_id → ordered list (newest first).
+ */
+export function useFolderPreviews() {
+  return useQuery({
+    queryKey: ["folder-previews"],
+    queryFn: async (): Promise<Record<string, FolderPreviewItem[]>> => {
+      const { data, error } = await supabase
+        .from("ideas")
+        .select("id,title,source_type,folder_id,created_at")
+        .not("folder_id", "is", null)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      const map: Record<string, FolderPreviewItem[]> = {};
+      (data ?? []).forEach((row) => {
+        if (!row.folder_id) return;
+        const list = (map[row.folder_id] ??= []);
+        if (list.length < 3) {
+          list.push({
+            id: row.id,
+            title: row.title,
+            source_type: row.source_type as FolderPreviewItem["source_type"],
+          });
+        }
+      });
+      return map;
+    },
+  });
+}
+
 export function useCreateFolder() {
   const qc = useQueryClient();
   return useMutation({
