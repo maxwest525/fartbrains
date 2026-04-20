@@ -41,6 +41,8 @@ export const IdeaDetail = ({ ideaId, onClose }: Props) => {
   const [summary, setSummary] = useState("");
   const [tags, setTags] = useState("");
   const [folderId, setFolderId] = useState<string>(NO_FOLDER);
+  const [generating, setGenerating] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   // Swipe-right from the left edge to go back (mobile only, not while editing)
   useSwipeGesture(containerRef, {
