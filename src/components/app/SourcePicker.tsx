@@ -1,0 +1,74 @@
+import { Instagram, FileText, Link2, Mic, Image as ImageIcon, Wand2, type LucideIcon } from "lucide-react";
+import { cn } from "@/lib/utils";
+
+export type SourceKey = "instagram" | "note" | "link" | "voice" | "image" | "prompt";
+
+type Tile = {
+  key: SourceKey;
+  label: string;
+  icon: LucideIcon;
+  /** Tailwind classes for the icon color, used when active. */
+  tone: string;
+  enabled: boolean;
+};
+
+const TILES: Tile[] = [
+  { key: "instagram", label: "Instagram", icon: Instagram, tone: "text-primary",     enabled: true  },
+  { key: "note",      label: "Note",      icon: FileText,  tone: "text-foreground",  enabled: true  },
+  { key: "link",      label: "Link",      icon: Link2,     tone: "text-primary",     enabled: true  },
+  { key: "voice",     label: "Voice",     icon: Mic,       tone: "text-foreground",  enabled: false },
+  { key: "image",     label: "Image",     icon: ImageIcon, tone: "text-foreground",  enabled: false },
+  { key: "prompt",    label: "Prompt",    icon: Wand2,     tone: "text-foreground",  enabled: false },
+];
+
+type Props = {
+  value: SourceKey;
+  onChange: (key: SourceKey) => void;
+};
+
+/**
+ * Six-tile source picker for the New Idea dialog.
+ * Mirrors the iOS reference design: a single rounded grid of 3×2 tiles where
+ * the selected tile is filled with the primary color. Disabled tiles announce
+ * themselves as "Coming soon" via a small label and a click handler upstream.
+ */
+export const SourcePicker = ({ value, onChange }: Props) => {
+  return (
+    <div className="rounded-2xl bg-secondary/60 p-2 grid grid-cols-3 gap-2">
+      {TILES.map((tile) => {
+        const Icon = tile.icon;
+        const active = value === tile.key && tile.enabled;
+        return (
+          <button
+            key={tile.key}
+            type="button"
+            onClick={() => onChange(tile.key)}
+            aria-pressed={active}
+            aria-disabled={!tile.enabled}
+            className={cn(
+              "press relative flex flex-col items-center justify-center gap-1.5 rounded-xl py-3.5 px-2 text-[13px] font-medium transition-colors",
+              active
+                ? "bg-primary text-primary-foreground shadow-[0_4px_14px_-4px_hsl(var(--primary)/0.55)]"
+                : "bg-card text-foreground hover:bg-card/80",
+              !tile.enabled && "opacity-55"
+            )}
+          >
+            <Icon
+              className={cn("h-[22px] w-[22px]", active ? "text-primary-foreground" : tile.tone)}
+              strokeWidth={1.8}
+            />
+            <span className="leading-none">{tile.label}</span>
+            {!tile.enabled && (
+              <span className="absolute -top-1 right-1 text-[9px] uppercase tracking-wide font-semibold text-muted-foreground bg-background/80 px-1 rounded">
+                Soon
+              </span>
+            )}
+          </button>
+        );
+      })}
+    </div>
+  );
+};
+
+export const isSourceEnabled = (key: SourceKey) =>
+  TILES.find((t) => t.key === key)?.enabled ?? false;
