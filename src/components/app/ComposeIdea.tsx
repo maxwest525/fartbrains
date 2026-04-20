@@ -247,12 +247,12 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
         </div>
       )}
 
-      {source === "note" ? (
+      {source === "note" || source === "list" ? (
         <Textarea
           value={note}
           onChange={(e) => setNote(e.target.value)}
           placeholder={ph.note}
-          rows={4}
+          rows={source === "list" ? 5 : 4}
           className="rounded-xl bg-secondary/60 border-transparent text-[15px] resize-none"
         />
       ) : (
