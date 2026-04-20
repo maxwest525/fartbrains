@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { Search, X, Menu } from "lucide-react";
+import { Search, X, Menu, Plus } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
@@ -133,13 +133,24 @@ const Shell = () => {
         </div>
       </div>
 
-      {/* Mobile bottom tab bar with center FAB */}
+      {/* Mobile floating "compose" FAB — sits above the tab bar like iOS Mail. */}
+      {isMobile && !showDetailOnly && (
+        <button
+          onClick={handleNewIdea}
+          aria-label="New idea"
+          className="press md:hidden fixed right-4 z-40 h-14 w-14 rounded-full bg-primary text-primary-foreground shadow-[0_8px_24px_-6px_hsl(var(--primary)/0.5)] flex items-center justify-center"
+          style={{ bottom: "calc(env(safe-area-inset-bottom) + 64px)" }}
+        >
+          <Plus className="h-7 w-7" strokeWidth={2.4} />
+        </button>
+      )}
+
+      {/* Mobile bottom tab bar (iOS-style) */}
       {isMobile && !showDetailOnly && (
         <MobileTabBar
           filter={filter}
           onFilterChange={handleFilterChange}
           onOpenMenu={() => setDrawerOpen(true)}
-          onNewIdea={handleNewIdea}
         />
       )}
 
