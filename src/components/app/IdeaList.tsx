@@ -33,9 +33,11 @@ type Props = {
   onSelect: (id: string) => void;
   /** Optional — shown only when viewing a folder, lets the user jump back to the Folders page. */
   onBackToFolders?: () => void;
+  /** Change the active filter from the inline folder strip. */
+  onFilterChange?: (filter: IdeaFilter) => void;
 };
 
-export const IdeaList = ({ filter, selectedId, onSelect, onBackToFolders }: Props) => {
+export const IdeaList = ({ filter, selectedId, onSelect, onBackToFolders, onFilterChange }: Props) => {
   const { data: ideas = [], isLoading } = useIdeas(filter);
   const { data: folders = [] } = useFolders();
   const qc = useQueryClient();
