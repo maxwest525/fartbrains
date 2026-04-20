@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Sparkles, Loader2 } from "lucide-react";
+import { Sparkles, Loader2, AlertTriangle } from "lucide-react";
+import { useDuplicateUrl } from "@/hooks/useDuplicateUrl";
 import {
   Dialog,
   DialogContent,
@@ -53,9 +54,11 @@ type Props = {
   onOpenChange: (v: boolean) => void;
   defaultFolderId?: string | null;
   onCreated?: (id: string) => void;
+  /** Opens an already-existing idea (used when a duplicate URL is detected). */
+  onOpenExisting?: (id: string) => void;
 };
 
-export const NewIdeaDialog = ({ open, onOpenChange, defaultFolderId, onCreated }: Props) => {
+export const NewIdeaDialog = ({ open, onOpenChange, defaultFolderId, onCreated, onOpenExisting }: Props) => {
   const { data: folders = [] } = useFolders();
   const createIdea = useCreateIdea();
 
@@ -74,6 +77,7 @@ export const NewIdeaDialog = ({ open, onOpenChange, defaultFolderId, onCreated }
   const [uTags, setUTags] = useState("");
   const [uExtracting, setUExtracting] = useState(false);
   const [uSummarizing, setUSummarizing] = useState(false);
+  const { data: urlDuplicate } = useDuplicateUrl(uUrl);
 
   // Transcript
   const [tTitle, setTTitle] = useState("");
@@ -250,6 +254,28 @@ export const NewIdeaDialog = ({ open, onOpenChange, defaultFolderId, onCreated }
                 Works for most articles/blogs. JS-heavy sites (TikTok, Instagram) won't extract — use Paste text instead.
               </p>
             </div>
+            {urlDuplicate && (
+              <div className="flex items-start gap-2 rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm">
+                <AlertTriangle className="h-4 w-4 text-destructive mt-0.5 shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <div className="font-medium text-foreground">You already saved this link</div>
+                  <div className="text-muted-foreground truncate">"{urlDuplicate.title}"</div>
+                </div>
+                {onOpenExisting && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      onOpenExisting(urlDuplicate.id);
+                      close();
+                    }}
+                  >
+                    Open
+                  </Button>
+                )}
+              </div>
+            )}
             {uExtracted && (
               <>
                 <div>

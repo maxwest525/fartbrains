@@ -148,6 +148,7 @@ const Shell = () => {
         onOpenChange={setNewOpen}
         defaultFolderId={filter.kind === "folder" ? filter.folderId : null}
         onCreated={(id) => setSelectedId(id)}
+        onOpenExisting={(id) => setSelectedId(id)}
       />
     </div>
   );
