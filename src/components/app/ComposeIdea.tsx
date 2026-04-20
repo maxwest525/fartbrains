@@ -172,7 +172,39 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
         />
       )}
 
-      {urlDuplicate && needsUrl && (
+      {/* Live URL reachability — only shown when the user has typed something */}
+      {needsUrl && url.trim() && urlCheck.status !== "idle" && (
+        <div
+          className={cn(
+            "flex items-start gap-2 rounded-lg px-3 py-2 text-[13px] transition-colors",
+            urlCheck.status === "checking" && "bg-secondary/60 text-muted-foreground",
+            urlCheck.status === "ok" && "bg-[hsl(140_70%_45%/0.1)] text-[hsl(140_70%_30%)] dark:text-[hsl(140_60%_60%)]",
+            urlCheck.status === "error" && "bg-destructive/10 text-destructive"
+          )}
+          role="status"
+          aria-live="polite"
+        >
+          {urlCheck.status === "checking" && (
+            <Loader2 className="h-3.5 w-3.5 mt-0.5 shrink-0 animate-spin" />
+          )}
+          {urlCheck.status === "ok" && (
+            <CheckCircle2 className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+          )}
+          {urlCheck.status === "error" && (
+            <XCircle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+          )}
+          <div className="flex-1 min-w-0">
+            <div className="font-medium leading-tight">{urlCheck.message}</div>
+            {urlCheck.status === "ok" && urlCheck.redirected && urlCheck.finalUrl && (
+              <div className="mt-0.5 flex items-center gap-1 text-[11.5px] opacity-80 truncate">
+                <ArrowRight className="h-3 w-3 shrink-0" />
+                <span className="truncate">{urlCheck.finalUrl}</span>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
         <div className="flex items-start gap-2 rounded-xl border border-destructive/40 bg-destructive/10 p-3 text-sm">
           <AlertTriangle className="h-4 w-4 text-destructive mt-0.5 shrink-0" />
           <div className="flex-1 min-w-0">
