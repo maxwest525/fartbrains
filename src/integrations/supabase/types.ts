@@ -44,6 +44,7 @@ export type Database = {
           generated_prompt: string | null
           id: string
           is_favorite: boolean
+          priority: Database["public"]["Enums"]["idea_priority"]
           raw_note: string | null
           source_type: Database["public"]["Enums"]["idea_source_type"]
           source_url: string | null
@@ -60,6 +61,7 @@ export type Database = {
           generated_prompt?: string | null
           id?: string
           is_favorite?: boolean
+          priority?: Database["public"]["Enums"]["idea_priority"]
           raw_note?: string | null
           source_type?: Database["public"]["Enums"]["idea_source_type"]
           source_url?: string | null
@@ -76,6 +78,7 @@ export type Database = {
           generated_prompt?: string | null
           id?: string
           is_favorite?: boolean
+          priority?: Database["public"]["Enums"]["idea_priority"]
           raw_note?: string | null
           source_type?: Database["public"]["Enums"]["idea_source_type"]
           source_url?: string | null
@@ -102,6 +105,7 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
+      idea_priority: "none" | "low" | "medium" | "high"
       idea_source_type: "manual" | "webpage" | "transcript" | "audio"
     }
     CompositeTypes: {
@@ -230,6 +234,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      idea_priority: ["none", "low", "medium", "high"],
       idea_source_type: ["manual", "webpage", "transcript", "audio"],
     },
   },
