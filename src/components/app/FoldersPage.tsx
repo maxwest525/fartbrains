@@ -35,6 +35,17 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useIsMobile } from "@/hooks/use-mobile";
 
+/**
+ * Map a folder id to a stable hue (0-360) so each tile gets its own color
+ * accent without storing one in the DB. djb2-ish hash → curated palette.
+ */
+const hashHue = (id: string): number => {
+  let h = 5381;
+  for (let i = 0; i < id.length; i++) h = ((h << 5) + h + id.charCodeAt(i)) | 0;
+  const palette = [210, 250, 280, 320, 0, 18, 36, 158, 188];
+  return palette[Math.abs(h) % palette.length];
+};
+
 type Props = {
   /** Open a folder by id (parent navigates to the folder filter view). */
   onOpenFolder: (folderId: string) => void;
