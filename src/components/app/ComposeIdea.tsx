@@ -61,6 +61,9 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
     source === "instagram" || source === "link" ? url : ""
   );
 
+  // Live reachability check on the URL field — debounced server call.
+  const urlCheck = useUrlCheck(url, source === "instagram" || source === "link");
+
   const reset = () => {
     setUrl("");
     setNote("");
