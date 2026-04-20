@@ -30,10 +30,13 @@ type Props = {
   filter: IdeaFilter;
   selectedId: string | null;
   onSelect: (id: string) => void;
+  /** Optional — shown only when viewing a folder, lets the user jump back to the Folders page. */
+  onBackToFolders?: () => void;
 };
 
-export const IdeaList = ({ filter, selectedId, onSelect }: Props) => {
+export const IdeaList = ({ filter, selectedId, onSelect, onBackToFolders }: Props) => {
   const { data: ideas = [], isLoading } = useIdeas(filter);
+  const { data: folders = [] } = useFolders();
   const qc = useQueryClient();
   const isMobile = useIsMobile();
 
@@ -47,6 +50,11 @@ export const IdeaList = ({ filter, selectedId, onSelect }: Props) => {
 
   const ready = pull >= threshold || refreshing;
 
+  const folderName =
+    filter.kind === "folder"
+      ? (folders.find((f) => f.id === filter.folderId)?.name ?? "Folder")
+      : null;
+
   const heading =
     filter.kind === "all"
       ? "Ideas"
@@ -56,12 +64,22 @@ export const IdeaList = ({ filter, selectedId, onSelect }: Props) => {
           ? "Recent"
           : filter.kind === "search"
             ? `"${filter.query}"`
-            : "Folder";
+            : (folderName ?? "Folder");
 
   return (
     <div className="w-full h-full flex flex-col bg-background">
       {/* iOS large title (mobile only). Desktop keeps the compact label. */}
       <div className="px-4 sm:px-5 pt-2 pb-2 md:py-4 md:border-b border-border">
+        {filter.kind === "folder" && onBackToFolders && (
+          <button
+            onClick={onBackToFolders}
+            className="press -ml-2 mb-1 inline-flex items-center text-primary text-[15px] md:text-sm h-8 pl-1 pr-2"
+            aria-label="Back to Folders"
+          >
+            <ChevronLeft className="h-5 w-5 -mr-0.5" strokeWidth={2.4} />
+            <span>Folders</span>
+          </button>
+        )}
         <h2 className="text-[34px] leading-tight md:text-lg font-bold md:font-semibold tracking-tight">
           {heading}
         </h2>
