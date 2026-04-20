@@ -19,6 +19,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { useSwipeGesture } from "@/hooks/useSwipeGesture";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { PrioritySelector } from "./PrioritySelector";
 
 const NO_FOLDER = "__none__";
 
@@ -225,6 +226,15 @@ export const IdeaDetail = ({ ideaId, onClose }: Props) => {
             {idea.title}
           </h1>
         )}
+
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-xs font-medium text-muted-foreground mr-1">Priority</span>
+          <PrioritySelector
+            value={idea.priority}
+            onChange={(p) => updateIdea.mutate({ id: idea.id, patch: { priority: p } })}
+            disabled={updateIdea.isPending}
+          />
+        </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-muted-foreground">
           <div>
