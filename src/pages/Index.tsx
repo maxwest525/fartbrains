@@ -1,12 +1,12 @@
 import { useRef, useState } from "react";
-import { Search, X, Menu, Plus } from "lucide-react";
+import { Search, X, Menu } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { AppSidebar } from "@/components/app/AppSidebar";
 import { IdeaList } from "@/components/app/IdeaList";
 import { IdeaDetail } from "@/components/app/IdeaDetail";
-import { NewIdeaDialog } from "@/components/app/NewIdeaDialog";
+import { ComposeIdea } from "@/components/app/ComposeIdea";
 import { MobileTabBar } from "@/components/app/MobileTabBar";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -16,18 +16,18 @@ import type { IdeaFilter } from "@/hooks/useIdeas";
 const Shell = () => {
   const [filter, setFilter] = useState<IdeaFilter>({ kind: "all" });
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [newOpen, setNewOpen] = useState(false);
   const [searchValue, setSearchValue] = useState("");
   const [drawerOpen, setDrawerOpen] = useState(false);
   const isMobile = useIsMobile();
   const edgeSwipeRef = useRef<HTMLDivElement>(null);
+  const composeRef = useRef<HTMLDivElement>(null);
 
   // Swipe-from-left-edge → open the sidebar drawer (mobile only, list view only).
   useSwipeGesture(edgeSwipeRef, {
     onSwipe: () => setDrawerOpen(true),
     direction: "right",
-    edgeSize: 0, // the zone itself is the edge — fire on any rightward swipe inside it
-    enabled: isMobile && !drawerOpen && selectedId === null && !newOpen,
+    edgeSize: 0,
+    enabled: isMobile && !drawerOpen && selectedId === null,
   });
 
   const onSearch = (v: string) => {
@@ -47,23 +47,29 @@ const Shell = () => {
     if (isMobile) setDrawerOpen(false);
   };
 
-  const handleNewIdea = () => {
-    setNewOpen(true);
+  // Sidebar's "New idea" just scrolls the compose card into view.
+  const focusCompose = () => {
     if (isMobile) setDrawerOpen(false);
+    requestAnimationFrame(() => {
+      composeRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      composeRef.current?.querySelector<HTMLElement>("input,textarea")?.focus();
+    });
   };
 
   const showDetailOnly = isMobile && selectedId !== null;
+  const defaultFolderId = filter.kind === "folder" ? filter.folderId : null;
 
   return (
     <div className="flex h-[100dvh] w-full bg-background overflow-hidden relative">
-      {/* Left-edge swipe zone — opens drawer on mobile when no detail/dialog is open */}
-      {isMobile && !drawerOpen && selectedId === null && !newOpen && (
+      {/* Left-edge swipe zone — opens drawer on mobile when no detail is open */}
+      {isMobile && !drawerOpen && selectedId === null && (
         <div
           ref={edgeSwipeRef}
           className="md:hidden fixed left-0 top-0 bottom-0 w-3 z-40"
           aria-hidden="true"
         />
       )}
+
       {/* Sidebar — drawer on mobile, fixed on desktop */}
       {isMobile ? (
         <Sheet open={drawerOpen} onOpenChange={setDrawerOpen}>
@@ -71,7 +77,7 @@ const Shell = () => {
             <AppSidebar
               filter={filter}
               onFilterChange={handleFilterChange}
-              onNewIdea={handleNewIdea}
+              onNewIdea={focusCompose}
             />
           </SheetContent>
         </Sheet>
@@ -79,7 +85,7 @@ const Shell = () => {
         <AppSidebar
           filter={filter}
           onFilterChange={handleFilterChange}
-          onNewIdea={() => setNewOpen(true)}
+          onNewIdea={focusCompose}
         />
       )}
 
@@ -122,28 +128,31 @@ const Shell = () => {
         )}
 
         <div className="flex-1 flex min-h-0">
-          {/* List: hidden on mobile when a detail is open */}
+          {/* Main column: compose card on top, then list. Hidden on mobile when detail is open. */}
           {!showDetailOnly && (
-            <IdeaList filter={filter} selectedId={selectedId} onSelect={setSelectedId} />
+            <div className="w-full md:w-[28rem] md:shrink-0 md:border-r border-border flex flex-col min-h-0 bg-background">
+              <div ref={composeRef} className="px-3 sm:px-5 pt-3 pb-2 shrink-0">
+                <ComposeIdea
+                  defaultFolderId={defaultFolderId}
+                  onCreated={(id) => setSelectedId(id)}
+                  onOpenExisting={(id) => setSelectedId(id)}
+                />
+              </div>
+              <div className="flex-1 min-h-0 overflow-hidden">
+                <IdeaList
+                  filter={filter}
+                  selectedId={selectedId}
+                  onSelect={setSelectedId}
+                />
+              </div>
+            </div>
           )}
-          {/* Detail: hidden on mobile when nothing is selected */}
+          {/* Detail */}
           {(!isMobile || showDetailOnly) && (
             <IdeaDetail ideaId={selectedId} onClose={() => setSelectedId(null)} />
           )}
         </div>
       </div>
-
-      {/* Mobile floating "compose" FAB — sits above the tab bar like iOS Mail. */}
-      {isMobile && !showDetailOnly && (
-        <button
-          onClick={handleNewIdea}
-          aria-label="New idea"
-          className="press md:hidden fixed right-4 z-40 h-14 w-14 rounded-full bg-primary text-primary-foreground shadow-[0_8px_24px_-6px_hsl(var(--primary)/0.5)] flex items-center justify-center"
-          style={{ bottom: "calc(env(safe-area-inset-bottom) + 64px)" }}
-        >
-          <Plus className="h-7 w-7" strokeWidth={2.4} />
-        </button>
-      )}
 
       {/* Mobile bottom tab bar (iOS-style) */}
       {isMobile && !showDetailOnly && (
@@ -153,14 +162,6 @@ const Shell = () => {
           onOpenMenu={() => setDrawerOpen(true)}
         />
       )}
-
-      <NewIdeaDialog
-        open={newOpen}
-        onOpenChange={setNewOpen}
-        defaultFolderId={filter.kind === "folder" ? filter.folderId : null}
-        onCreated={(id) => setSelectedId(id)}
-        onOpenExisting={(id) => setSelectedId(id)}
-      />
     </div>
   );
 };
