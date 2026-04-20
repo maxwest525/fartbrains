@@ -128,6 +128,15 @@ export const IdeaList = ({ filter, selectedId, onSelect, onBackToFolders, onFilt
             transition: refreshing ? "transform 180ms ease" : undefined,
           }}
         >
+        {/* Inline folder strip — folders live where ideas are, no separate page needed.
+            Hidden during search to keep results focused. */}
+        {filter.kind !== "search" && onFilterChange && (
+          <FolderStrip
+            activeFolderId={filter.kind === "folder" ? filter.folderId : null}
+            onSelectFolder={(folderId) => onFilterChange({ kind: "folder", folderId })}
+            onSelectAll={() => onFilterChange({ kind: "all" })}
+          />
+        )}
         {isLoading && (
           <div className="px-4 md:px-4 pt-3 space-y-3 md:space-y-2">
             {[...Array(4)].map((_, i) => (
