@@ -47,6 +47,19 @@ const hashHue = (id: string): number => {
   return palette[Math.abs(h) % palette.length];
 };
 
+/** Tiny icon for the source type, used inside folder preview rows. */
+const SourceIcon = ({
+  type,
+  className,
+}: {
+  type: "manual" | "webpage" | "transcript" | "audio";
+  className?: string;
+}) => {
+  const Icon =
+    type === "webpage" ? Globe : type === "transcript" ? Mic : type === "audio" ? AudioLines : FileText;
+  return <Icon className={className} strokeWidth={2.2} />;
+};
+
 type Props = {
   /** Open a folder by id (parent navigates to the folder filter view). */
   onOpenFolder: (folderId: string) => void;
