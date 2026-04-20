@@ -54,9 +54,11 @@ type Props = {
   onOpenChange: (v: boolean) => void;
   defaultFolderId?: string | null;
   onCreated?: (id: string) => void;
+  /** Opens an already-existing idea (used when a duplicate URL is detected). */
+  onOpenExisting?: (id: string) => void;
 };
 
-export const NewIdeaDialog = ({ open, onOpenChange, defaultFolderId, onCreated }: Props) => {
+export const NewIdeaDialog = ({ open, onOpenChange, defaultFolderId, onCreated, onOpenExisting }: Props) => {
   const { data: folders = [] } = useFolders();
   const createIdea = useCreateIdea();
 
