@@ -253,10 +253,10 @@ export const IdeaDetail = ({ ideaId, onClose }: Props) => {
               <label className="text-xs font-medium text-muted-foreground">Folder</label>
               <Select value={folderId} onValueChange={setFolderId}>
                 <SelectTrigger className="mt-1">
-                  <SelectValue placeholder="No folder" />
+                  <SelectValue placeholder="All ideas" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value={NO_FOLDER}>No folder</SelectItem>
+                  <SelectItem value={NO_FOLDER}>All ideas</SelectItem>
                   {folders.map((f) => (
                     <SelectItem key={f.id} value={f.id}>
                       {f.name}
