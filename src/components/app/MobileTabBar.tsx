@@ -4,6 +4,8 @@ import type { IdeaFilter } from "@/hooks/useIdeas";
 
 type Props = {
   filter: IdeaFilter;
+  /** Which top-level view is active. Used so the Folders tab highlights when on the Folders page. */
+  view: "ideas" | "folders";
   onFilterChange: (f: IdeaFilter) => void;
   onOpenFolders: () => void;
   onOpenSettings: () => void;
@@ -38,10 +40,10 @@ const Tab = ({
  * Folders opens the sidebar drawer (where folder list lives); Settings opens
  * a dedicated sheet handled by the parent.
  */
-export const MobileTabBar = ({ filter, onFilterChange, onOpenFolders, onOpenSettings }: Props) => {
-  const isAll = filter.kind === "all";
-  const isFolders = filter.kind === "folder";
-  const isHistory = filter.kind === "recent";
+export const MobileTabBar = ({ filter, view, onFilterChange, onOpenFolders, onOpenSettings }: Props) => {
+  const isAll = view === "ideas" && filter.kind === "all";
+  const isFolders = view === "folders";
+  const isHistory = view === "ideas" && filter.kind === "recent";
 
   return (
     <nav
