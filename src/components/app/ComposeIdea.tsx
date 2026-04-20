@@ -51,6 +51,11 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
   const [folder, setFolder] = useState<string>(defaultFolderId ?? NO_FOLDER);
   const [saving, setSaving] = useState(false);
 
+  // Keep folder selection in sync when the parent switches active folder filter.
+  useEffect(() => {
+    setFolder(defaultFolderId ?? NO_FOLDER);
+  }, [defaultFolderId]);
+
   const { data: urlDuplicate } = useDuplicateUrl(
     source === "instagram" || source === "link" ? url : ""
   );
