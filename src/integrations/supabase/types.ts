@@ -41,6 +41,7 @@ export type Database = {
           created_at: string
           extracted_text: string | null
           folder_id: string | null
+          generated_prompt: string | null
           id: string
           is_favorite: boolean
           raw_note: string | null
@@ -56,6 +57,7 @@ export type Database = {
           created_at?: string
           extracted_text?: string | null
           folder_id?: string | null
+          generated_prompt?: string | null
           id?: string
           is_favorite?: boolean
           raw_note?: string | null
@@ -71,6 +73,7 @@ export type Database = {
           created_at?: string
           extracted_text?: string | null
           folder_id?: string | null
+          generated_prompt?: string | null
           id?: string
           is_favorite?: boolean
           raw_note?: string | null

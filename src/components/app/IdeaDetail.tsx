@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { Star, Trash2, ExternalLink, Sparkles, ChevronLeft, Wand2 } from "lucide-react";
+import { Star, Trash2, ExternalLink, Sparkles, ChevronLeft, Wand2, Copy, Check, Loader2, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -17,6 +17,7 @@ import { useIdea, useUpdateIdea, useDeleteIdea } from "@/hooks/useIdeas";
 import { useFolders } from "@/hooks/useFolders";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useSwipeGesture } from "@/hooks/useSwipeGesture";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 const NO_FOLDER = "__none__";
@@ -40,6 +41,8 @@ export const IdeaDetail = ({ ideaId, onClose }: Props) => {
   const [summary, setSummary] = useState("");
   const [tags, setTags] = useState("");
   const [folderId, setFolderId] = useState<string>(NO_FOLDER);
+  const [generating, setGenerating] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   // Swipe-right from the left edge to go back (mobile only, not while editing)
   useSwipeGesture(containerRef, {
@@ -104,6 +107,46 @@ export const IdeaDetail = ({ ideaId, onClose }: Props) => {
   const onDelete = () => {
     if (confirm("Delete this idea? This cannot be undone.")) {
       deleteIdea.mutate(idea.id, { onSuccess: onClose });
+    }
+  };
+
+  const onGeneratePrompt = async () => {
+    if (generating) return;
+    if (!idea.raw_note?.trim() && !idea.ai_summary?.trim()) {
+      toast.error("Add a note or summary first so the AI has something to work with.");
+      return;
+    }
+    setGenerating(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-prompt", {
+        body: {
+          title: idea.title,
+          note: idea.raw_note,
+          summary: idea.ai_summary,
+          sourceUrl: idea.source_url,
+        },
+      });
+      if (error) throw new Error(error.message);
+      if (data?.error) throw new Error(data.error);
+      const prompt: string = data?.prompt ?? "";
+      if (!prompt.trim()) throw new Error("Empty prompt returned");
+      await updateIdea.mutateAsync({ id: idea.id, patch: { generated_prompt: prompt } });
+      toast.success("Prompt ready");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed to generate prompt");
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  const onCopyPrompt = async () => {
+    if (!idea.generated_prompt) return;
+    try {
+      await navigator.clipboard.writeText(idea.generated_prompt);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      toast.error("Couldn't copy — try selecting the text manually.");
     }
   };
 
@@ -231,29 +274,64 @@ export const IdeaDetail = ({ ideaId, onClose }: Props) => {
           </div>
         )}
 
-        {(editing || idea.ai_summary) && (
+        {!editing && (idea.generated_prompt || idea.raw_note || idea.ai_summary) && (
           <section>
             <div className="flex items-center justify-between mb-2 gap-2">
               <h3 className="text-sm font-semibold flex items-center gap-1.5">
-                <Sparkles className="h-3.5 w-3.5 text-accent" /> Summary
+                <Wand2 className="h-3.5 w-3.5 text-primary" /> Ready-to-paste prompt
               </h3>
-              {!editing && (
+              <div className="flex items-center gap-1.5">
+                {idea.generated_prompt && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 rounded-full text-xs"
+                    onClick={onCopyPrompt}
+                  >
+                    {copied ? (
+                      <><Check className="h-3.5 w-3.5 mr-1" /> Copied</>
+                    ) : (
+                      <><Copy className="h-3.5 w-3.5 mr-1" /> Copy</>
+                    )}
+                  </Button>
+                )}
                 <Button
                   type="button"
                   variant="outline"
                   size="sm"
                   className="h-8 rounded-full text-xs"
-                  onClick={() =>
-                    toast("Generate prompt — coming soon", {
-                      description: "We'll combine your note with the AI summary into a ready-to-paste prompt.",
-                    })
-                  }
+                  onClick={onGeneratePrompt}
+                  disabled={generating}
                 >
-                  <Wand2 className="h-3.5 w-3.5 mr-1" />
-                  Generate prompt
+                  {generating ? (
+                    <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" />
+                  ) : idea.generated_prompt ? (
+                    <RefreshCw className="h-3.5 w-3.5 mr-1" />
+                  ) : (
+                    <Wand2 className="h-3.5 w-3.5 mr-1" />
+                  )}
+                  {idea.generated_prompt ? "Regenerate" : "Generate prompt"}
                 </Button>
-              )}
+              </div>
             </div>
+            {idea.generated_prompt ? (
+              <div className="rounded-xl bg-card border border-border p-4 text-sm whitespace-pre-wrap font-mono leading-relaxed select-text">
+                {idea.generated_prompt}
+              </div>
+            ) : (
+              <div className="rounded-xl bg-muted/40 border border-dashed border-border p-4 text-xs text-muted-foreground">
+                Combine your note with the AI summary into a single prompt you can paste into ChatGPT, Claude, or Gemini.
+              </div>
+            )}
+          </section>
+        )}
+
+        {(editing || idea.ai_summary) && (
+          <section>
+            <h3 className="text-sm font-semibold mb-2 flex items-center gap-1.5">
+              <Sparkles className="h-3.5 w-3.5 text-accent" /> Summary
+            </h3>
             {editing ? (
               <Textarea
                 value={summary}
