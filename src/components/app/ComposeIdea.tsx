@@ -205,6 +205,7 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
         </div>
       )}
 
+      {urlDuplicate && needsUrl && (
         <div className="flex items-start gap-2 rounded-xl border border-destructive/40 bg-destructive/10 p-3 text-sm">
           <AlertTriangle className="h-4 w-4 text-destructive mt-0.5 shrink-0" />
           <div className="flex-1 min-w-0">
