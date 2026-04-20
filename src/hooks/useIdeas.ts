@@ -13,6 +13,7 @@ export type Idea = {
   source_type: SourceType;
   extracted_text: string | null;
   ai_summary: string | null;
+  generated_prompt: string | null;
   tags: string[];
   is_favorite: boolean;
   created_at: string;
