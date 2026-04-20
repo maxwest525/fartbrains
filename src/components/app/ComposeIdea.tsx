@@ -335,7 +335,7 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
         ) : (
           <>
             <Sparkles className="h-4 w-4 mr-1.5" />
-            {needsUrl ? "Extract & save" : "Save idea"}
+            {needsUrl ? "Extract & save" : source === "list" ? "Save list" : "Save idea"}
           </>
         )}
       </Button>
