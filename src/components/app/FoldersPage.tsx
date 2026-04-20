@@ -193,6 +193,7 @@ export const FoldersPage = ({ onOpenFolder, onBack }: Props) => {
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4">
             {filtered.map((folder) => {
               const count = counts[folder.id] ?? 0;
+              const folderPreviews = previews[folder.id] ?? [];
               // Deterministic hue per folder so tiles read as distinct.
               const hue = hashHue(folder.id);
               return (
@@ -210,38 +211,70 @@ export const FoldersPage = ({ onOpenFolder, onBack }: Props) => {
 
                   <button
                     onClick={() => onOpenFolder(folder.id)}
-                    className="press relative w-full text-left p-4 flex flex-col items-start gap-3 min-h-[140px]"
+                    className="press relative w-full text-left p-4 flex flex-col items-start gap-3 min-h-[180px]"
                   >
-                    {/* Folder glyph with tinted gradient + soft inner highlight */}
-                    <div
-                      className="relative h-12 w-12 rounded-[14px] flex items-center justify-center shrink-0"
-                      style={{
-                        background: `linear-gradient(140deg, hsl(${hue} 85% 62%) 0%, hsl(${hue} 75% 48%) 100%)`,
-                        boxShadow:
-                          `0 6px 14px -4px hsl(${hue} 70% 45% / 0.45), 0 1px 0 hsl(0 0% 100% / 0.35) inset`,
-                      }}
-                    >
-                      <Folder
-                        className="h-[22px] w-[22px] text-white drop-shadow-[0_1px_1px_rgba(0,0,0,0.18)]"
-                        strokeWidth={2}
-                        fill="currentColor"
-                        fillOpacity={0.18}
-                      />
+                    {/* Header row: glyph + name/count */}
+                    <div className="flex items-center gap-3 w-full min-w-0">
+                      <div
+                        className="relative h-11 w-11 rounded-[12px] flex items-center justify-center shrink-0"
+                        style={{
+                          background: `linear-gradient(140deg, hsl(${hue} 85% 62%) 0%, hsl(${hue} 75% 48%) 100%)`,
+                          boxShadow:
+                            `0 6px 14px -4px hsl(${hue} 70% 45% / 0.45), 0 1px 0 hsl(0 0% 100% / 0.35) inset`,
+                        }}
+                      >
+                        <Folder
+                          className="h-5 w-5 text-white drop-shadow-[0_1px_1px_rgba(0,0,0,0.18)]"
+                          strokeWidth={2}
+                          fill="currentColor"
+                          fillOpacity={0.18}
+                        />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="font-semibold text-[15px] truncate leading-tight tracking-tight">
+                          {folder.name}
+                        </p>
+                        <div className="mt-1 flex items-center gap-1.5">
+                          <span
+                            className="h-1.5 w-1.5 rounded-full"
+                            style={{ background: `hsl(${hue} 75% 55%)` }}
+                          />
+                          <p className="text-[12px] text-muted-foreground tabular-nums">
+                            {count} {count === 1 ? "idea" : "ideas"}
+                          </p>
+                        </div>
+                      </div>
                     </div>
 
-                    <div className="w-full min-w-0">
-                      <p className="font-semibold text-[15px] truncate leading-tight tracking-tight">
-                        {folder.name}
-                      </p>
-                      <div className="mt-1.5 flex items-center gap-1.5">
-                        <span
-                          className="h-1.5 w-1.5 rounded-full"
-                          style={{ background: `hsl(${hue} 75% 55%)` }}
-                        />
-                        <p className="text-[12px] text-muted-foreground tabular-nums">
-                          {count} {count === 1 ? "idea" : "ideas"}
+                    {/* Preview list — up to 3 most recent ideas */}
+                    <div className="w-full mt-1 flex-1 flex flex-col gap-1">
+                      {folderPreviews.length === 0 ? (
+                        <div className="flex-1 flex items-center">
+                          <p className="text-[12px] text-muted-foreground/70 italic">
+                            Empty folder
+                          </p>
+                        </div>
+                      ) : (
+                        folderPreviews.map((item) => (
+                          <div
+                            key={item.id}
+                            className="flex items-center gap-1.5 rounded-md px-1.5 py-1 bg-background/40 backdrop-blur-sm border border-border/40"
+                          >
+                            <SourceIcon
+                              type={item.source_type}
+                              className="h-3 w-3 shrink-0 text-muted-foreground"
+                            />
+                            <span className="text-[11.5px] truncate leading-tight text-foreground/80">
+                              {item.title}
+                            </span>
+                          </div>
+                        ))
+                      )}
+                      {count > folderPreviews.length && folderPreviews.length > 0 && (
+                        <p className="text-[10.5px] text-muted-foreground/70 pl-1.5 pt-0.5">
+                          +{count - folderPreviews.length} more
                         </p>
-                      </div>
+                      )}
                     </div>
                   </button>
 
