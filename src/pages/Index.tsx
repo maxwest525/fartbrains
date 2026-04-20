@@ -9,12 +9,16 @@ import { IdeaDetail } from "@/components/app/IdeaDetail";
 import { ComposeIdea } from "@/components/app/ComposeIdea";
 import { MobileTabBar } from "@/components/app/MobileTabBar";
 import { SettingsSheet } from "@/components/app/SettingsSheet";
+import { FoldersPage } from "@/components/app/FoldersPage";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useSwipeGesture } from "@/hooks/useSwipeGesture";
 import type { IdeaFilter } from "@/hooks/useIdeas";
 
+type View = "ideas" | "folders";
+
 const Shell = () => {
+  const [view, setView] = useState<View>("ideas");
   const [filter, setFilter] = useState<IdeaFilter>({ kind: "all" });
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [searchValue, setSearchValue] = useState("");
@@ -29,13 +33,17 @@ const Shell = () => {
     onSwipe: () => setDrawerOpen(true),
     direction: "right",
     edgeSize: 0,
-    enabled: isMobile && !drawerOpen && selectedId === null,
+    enabled: isMobile && !drawerOpen && selectedId === null && view === "ideas",
   });
 
   const onSearch = (v: string) => {
     setSearchValue(v);
-    if (v.trim()) setFilter({ kind: "search", query: v });
-    else setFilter({ kind: "all" });
+    if (v.trim()) {
+      setView("ideas");
+      setFilter({ kind: "search", query: v });
+    } else {
+      setFilter({ kind: "all" });
+    }
   };
 
   const clearSearch = () => {
@@ -44,6 +52,7 @@ const Shell = () => {
   };
 
   const handleFilterChange = (f: IdeaFilter) => {
+    setView("ideas");
     setFilter(f);
     if (f.kind !== "search") setSearchValue("");
     if (isMobile) setDrawerOpen(false);
@@ -51,6 +60,7 @@ const Shell = () => {
 
   // Sidebar's "New idea" just scrolls the compose card into view.
   const focusCompose = () => {
+    setView("ideas");
     if (isMobile) setDrawerOpen(false);
     requestAnimationFrame(() => {
       composeRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -58,13 +68,20 @@ const Shell = () => {
     });
   };
 
+  const openFoldersPage = () => {
+    setView("folders");
+    setSelectedId(null);
+    if (isMobile) setDrawerOpen(false);
+  };
+
   const showDetailOnly = isMobile && selectedId !== null;
+  const showFolders = view === "folders" && !showDetailOnly;
   const defaultFolderId = filter.kind === "folder" ? filter.folderId : null;
 
   return (
     <div className="flex h-[100dvh] w-full bg-background overflow-hidden relative">
       {/* Left-edge swipe zone — opens drawer on mobile when no detail is open */}
-      {isMobile && !drawerOpen && selectedId === null && (
+      {isMobile && !drawerOpen && selectedId === null && view === "ideas" && (
         <div
           ref={edgeSwipeRef}
           className="md:hidden fixed left-0 top-0 bottom-0 w-3 z-40"
@@ -80,6 +97,8 @@ const Shell = () => {
               filter={filter}
               onFilterChange={handleFilterChange}
               onNewIdea={focusCompose}
+              onOpenFolders={openFoldersPage}
+              foldersActive={view === "folders"}
             />
           </SheetContent>
         </Sheet>
@@ -88,12 +107,14 @@ const Shell = () => {
           filter={filter}
           onFilterChange={handleFilterChange}
           onNewIdea={focusCompose}
+          onOpenFolders={openFoldersPage}
+          foldersActive={view === "folders"}
         />
       )}
 
       <div className="flex-1 flex flex-col min-w-0">
-        {/* Top bar — hidden on mobile when viewing a detail */}
-        {!showDetailOnly && (
+        {/* Top bar — hidden on mobile when viewing a detail or the folders page (folders has its own header) */}
+        {!showDetailOnly && !(isMobile && showFolders) && (
           <header className="safe-top sticky top-0 z-20 bg-background/80 backdrop-blur-xl md:border-b border-border">
             <div className="px-3 sm:px-5 py-2 flex items-center gap-2 sm:gap-3">
               {isMobile && (
@@ -130,8 +151,19 @@ const Shell = () => {
         )}
 
         <div className="flex-1 flex min-h-0">
-          {/* Main column: compose card on top, then list. Hidden on mobile when detail is open. */}
-          {!showDetailOnly && (
+          {/* Folders page — full-width when active */}
+          {showFolders && (
+            <FoldersPage
+              onOpenFolder={(folderId) => {
+                setView("ideas");
+                setFilter({ kind: "folder", folderId });
+              }}
+              onBack={isMobile ? () => setView("ideas") : undefined}
+            />
+          )}
+
+          {/* Ideas view — compose + list. Hidden on mobile when detail is open or folders page is showing. */}
+          {!showFolders && !showDetailOnly && (
             <div className="w-full md:w-[28rem] md:shrink-0 md:border-r border-border flex flex-col min-h-0 bg-background">
               <div ref={composeRef} className="px-3 sm:px-5 pt-3 pb-2 shrink-0">
                 <ComposeIdea
@@ -149,8 +181,9 @@ const Shell = () => {
               </div>
             </div>
           )}
-          {/* Detail */}
-          {(!isMobile || showDetailOnly) && (
+
+          {/* Detail — desktop always shows, mobile only when an idea is selected */}
+          {!showFolders && (!isMobile || showDetailOnly) && (
             <IdeaDetail ideaId={selectedId} onClose={() => setSelectedId(null)} />
           )}
         </div>
@@ -160,8 +193,9 @@ const Shell = () => {
       {isMobile && !showDetailOnly && (
         <MobileTabBar
           filter={filter}
+          view={view}
           onFilterChange={handleFilterChange}
-          onOpenFolders={() => setDrawerOpen(true)}
+          onOpenFolders={openFoldersPage}
           onOpenSettings={() => setSettingsOpen(true)}
         />
       )}
