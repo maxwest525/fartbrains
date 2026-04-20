@@ -178,7 +178,9 @@ export const IdeaDetail = ({ ideaId, onClose }: Props) => {
             className="text-xl font-semibold h-auto py-2"
           />
         ) : (
-          <h1 className="text-2xl font-semibold tracking-tight">{idea.title}</h1>
+          <h1 className="text-[28px] md:text-2xl font-bold md:font-semibold tracking-tight leading-tight">
+            {idea.title}
+          </h1>
         )}
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-muted-foreground">
