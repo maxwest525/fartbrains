@@ -1,11 +1,12 @@
-import { Inbox, Star, Clock, Menu } from "lucide-react";
+import { Inbox, Folder, Clock, Settings as SettingsIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { IdeaFilter } from "@/hooks/useIdeas";
 
 type Props = {
   filter: IdeaFilter;
   onFilterChange: (f: IdeaFilter) => void;
-  onOpenMenu: () => void;
+  onOpenFolders: () => void;
+  onOpenSettings: () => void;
 };
 
 const Tab = ({
@@ -33,14 +34,14 @@ const Tab = ({
 );
 
 /**
- * iOS-style bottom tab bar. Frosted blur, hairline top border, four equal tabs.
- * The "+" capture action lives as a separate floating action button so the bar
- * itself stays clean and recognizably iOS.
+ * iOS-style bottom tab bar. Four equal tabs: Ideas, Folders, History, Settings.
+ * Folders opens the sidebar drawer (where folder list lives); Settings opens
+ * a dedicated sheet handled by the parent.
  */
-export const MobileTabBar = ({ filter, onFilterChange, onOpenMenu }: Props) => {
+export const MobileTabBar = ({ filter, onFilterChange, onOpenFolders, onOpenSettings }: Props) => {
   const isAll = filter.kind === "all";
-  const isFav = filter.kind === "favorites";
-  const isRecent = filter.kind === "recent";
+  const isFolders = filter.kind === "folder";
+  const isHistory = filter.kind === "recent";
 
   return (
     <nav
@@ -49,9 +50,9 @@ export const MobileTabBar = ({ filter, onFilterChange, onOpenMenu }: Props) => {
     >
       <div className="flex items-stretch h-[50px]">
         <Tab active={isAll} icon={Inbox} label="Ideas" onClick={() => onFilterChange({ kind: "all" })} />
-        <Tab active={isRecent} icon={Clock} label="Recent" onClick={() => onFilterChange({ kind: "recent" })} />
-        <Tab active={isFav} icon={Star} label="Favorites" onClick={() => onFilterChange({ kind: "favorites" })} />
-        <Tab active={false} icon={Menu} label="More" onClick={onOpenMenu} />
+        <Tab active={isFolders} icon={Folder} label="Folders" onClick={onOpenFolders} />
+        <Tab active={isHistory} icon={Clock} label="History" onClick={() => onFilterChange({ kind: "recent" })} />
+        <Tab active={false} icon={SettingsIcon} label="Settings" onClick={onOpenSettings} />
       </div>
     </nav>
   );
