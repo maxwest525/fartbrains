@@ -1,7 +1,10 @@
-import { Star, FileText, Link2, Mic, MessageSquare, ChevronRight } from "lucide-react";
+import { Star, FileText, Link2, Mic, MessageSquare, ChevronRight, Loader2 } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 import { useIdeas, type Idea, type IdeaFilter } from "@/hooks/useIdeas";
 import { Skeleton } from "@/components/ui/skeleton";
+import { usePullToRefresh } from "@/hooks/usePullToRefresh";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const sourceMeta = (s: Idea["source_type"]) => {
   // iOS-style colored squircles per source type
