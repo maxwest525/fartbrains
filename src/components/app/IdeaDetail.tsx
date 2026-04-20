@@ -274,29 +274,64 @@ export const IdeaDetail = ({ ideaId, onClose }: Props) => {
           </div>
         )}
 
-        {(editing || idea.ai_summary) && (
+        {!editing && (idea.generated_prompt || idea.raw_note || idea.ai_summary) && (
           <section>
             <div className="flex items-center justify-between mb-2 gap-2">
               <h3 className="text-sm font-semibold flex items-center gap-1.5">
-                <Sparkles className="h-3.5 w-3.5 text-accent" /> Summary
+                <Wand2 className="h-3.5 w-3.5 text-primary" /> Ready-to-paste prompt
               </h3>
-              {!editing && (
+              <div className="flex items-center gap-1.5">
+                {idea.generated_prompt && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 rounded-full text-xs"
+                    onClick={onCopyPrompt}
+                  >
+                    {copied ? (
+                      <><Check className="h-3.5 w-3.5 mr-1" /> Copied</>
+                    ) : (
+                      <><Copy className="h-3.5 w-3.5 mr-1" /> Copy</>
+                    )}
+                  </Button>
+                )}
                 <Button
                   type="button"
                   variant="outline"
                   size="sm"
                   className="h-8 rounded-full text-xs"
-                  onClick={() =>
-                    toast("Generate prompt — coming soon", {
-                      description: "We'll combine your note with the AI summary into a ready-to-paste prompt.",
-                    })
-                  }
+                  onClick={onGeneratePrompt}
+                  disabled={generating}
                 >
-                  <Wand2 className="h-3.5 w-3.5 mr-1" />
-                  Generate prompt
+                  {generating ? (
+                    <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" />
+                  ) : idea.generated_prompt ? (
+                    <RefreshCw className="h-3.5 w-3.5 mr-1" />
+                  ) : (
+                    <Wand2 className="h-3.5 w-3.5 mr-1" />
+                  )}
+                  {idea.generated_prompt ? "Regenerate" : "Generate prompt"}
                 </Button>
-              )}
+              </div>
             </div>
+            {idea.generated_prompt ? (
+              <div className="rounded-xl bg-card border border-border p-4 text-sm whitespace-pre-wrap font-mono leading-relaxed select-text">
+                {idea.generated_prompt}
+              </div>
+            ) : (
+              <div className="rounded-xl bg-muted/40 border border-dashed border-border p-4 text-xs text-muted-foreground">
+                Combine your note with the AI summary into a single prompt you can paste into ChatGPT, Claude, or Gemini.
+              </div>
+            )}
+          </section>
+        )}
+
+        {(editing || idea.ai_summary) && (
+          <section>
+            <h3 className="text-sm font-semibold mb-2 flex items-center gap-1.5">
+              <Sparkles className="h-3.5 w-3.5 text-accent" /> Summary
+            </h3>
             {editing ? (
               <Textarea
                 value={summary}
