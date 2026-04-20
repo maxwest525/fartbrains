@@ -1,8 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { Star, Trash2, ExternalLink, Save, X, Sparkles, ChevronLeft } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Star, Trash2, ExternalLink, Sparkles, ChevronLeft } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
