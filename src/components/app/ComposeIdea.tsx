@@ -31,10 +31,20 @@ const PLACEHOLDERS: Record<SourceKey, { url?: string; note: string }> = {
   instagram: { url: "Instagram Reel URL", note: "Quick note (optional)" },
   link:      { url: "Paste a URL",        note: "Quick note (optional)" },
   note:      {                            note: "Write your idea…" },
+  list:      {                            note: "One item per line…\nBuy milk\nCall dentist\nShip v2" },
   voice:     { note: "" },
   image:     { note: "" },
   prompt:    { note: "" },
 };
+
+/** Convert raw textarea lines into a markdown checklist. Blank lines are skipped. */
+const linesToChecklist = (raw: string): string =>
+  raw
+    .split("\n")
+    .map((l) => l.trim())
+    .filter(Boolean)
+    .map((l) => (/^- \[[ xX]\] /.test(l) ? l : `- [ ] ${l}`))
+    .join("\n");
 
 /**
  * Always-visible compose card. Lives on the main page above the idea list
