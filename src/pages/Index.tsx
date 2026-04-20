@@ -26,6 +26,8 @@ const Shell = () => {
   const isMobile = useIsMobile();
   const composeRef = useRef<HTMLDivElement>(null);
   const { user, signOut } = useAuth();
+  // Polls folders client-side; fires browser + toast notifications when due.
+  useReminderNotifier();
 
   const onSearch = (v: string) => {
     setSearchValue(v);
