@@ -255,8 +255,8 @@ export const NewIdeaDialog = ({ open, onOpenChange, defaultFolderId, onCreated, 
               </p>
             </div>
             {urlDuplicate && (
-              <div className="flex items-start gap-2 rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-sm">
-                <AlertTriangle className="h-4 w-4 text-amber-600 mt-0.5 shrink-0" />
+              <div className="flex items-start gap-2 rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm">
+                <AlertTriangle className="h-4 w-4 text-destructive mt-0.5 shrink-0" />
                 <div className="flex-1 min-w-0">
                   <div className="font-medium text-foreground">You already saved this link</div>
                   <div className="text-muted-foreground truncate">"{urlDuplicate.title}"</div>
