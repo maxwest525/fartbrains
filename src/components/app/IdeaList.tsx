@@ -33,6 +33,18 @@ type Props = {
 
 export const IdeaList = ({ filter, selectedId, onSelect }: Props) => {
   const { data: ideas = [], isLoading } = useIdeas(filter);
+  const qc = useQueryClient();
+  const isMobile = useIsMobile();
+
+  // Pull-to-refresh — only on mobile, refetches the active ideas query.
+  const { bind, pull, refreshing, threshold } = usePullToRefresh<HTMLDivElement>({
+    enabled: isMobile,
+    onRefresh: async () => {
+      await qc.invalidateQueries({ queryKey: ["ideas"] });
+    },
+  });
+
+  const ready = pull >= threshold || refreshing;
 
   const heading =
     filter.kind === "all"
@@ -57,7 +69,43 @@ export const IdeaList = ({ filter, selectedId, onSelect }: Props) => {
         </p>
       </div>
 
-      <div className="flex-1 overflow-y-auto scroll-momentum px-0 pb-28 md:pb-0">
+      <div
+        {...bind}
+        className="flex-1 overflow-y-auto scroll-momentum px-0 pb-28 md:pb-0 relative"
+      >
+        {/* Pull-to-refresh indicator (mobile only). Sits above the content and
+            follows the finger; locks at threshold while refreshing. */}
+        {isMobile && (pull > 0 || refreshing) && (
+          <div
+            className="absolute left-0 right-0 top-0 flex items-start justify-center pointer-events-none z-10"
+            style={{ height: pull, transition: refreshing ? "height 180ms ease" : undefined }}
+          >
+            <div
+              className="mt-2 h-8 w-8 rounded-full bg-card shadow-md flex items-center justify-center"
+              style={{
+                opacity: Math.min(1, pull / threshold),
+                transform: refreshing ? "none" : `rotate(${Math.min(360, (pull / threshold) * 360)}deg)`,
+                transition: refreshing ? "transform 180ms ease" : undefined,
+              }}
+            >
+              <Loader2
+                className={cn(
+                  "h-4 w-4 text-primary",
+                  refreshing && "animate-spin",
+                  ready && !refreshing && "text-primary"
+                )}
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Content shifts down with the pull so the spinner has room. */}
+        <div
+          style={{
+            transform: isMobile && pull > 0 ? `translateY(${pull}px)` : undefined,
+            transition: refreshing ? "transform 180ms ease" : undefined,
+          }}
+        >
         {isLoading && (
           <div className="px-4 md:px-4 pt-3 space-y-3 md:space-y-2">
             {[...Array(4)].map((_, i) => (
