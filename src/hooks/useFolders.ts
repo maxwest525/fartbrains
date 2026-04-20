@@ -129,3 +129,22 @@ export function useDeleteFolder() {
     onError: (e: Error) => toast.error(e.message),
   });
 }
+
+/** Set or clear a folder's reminder time. Pass null to clear. */
+export function useSetFolderReminder() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, remindAt }: { id: string; remindAt: string | null }) => {
+      const { error } = await supabase
+        .from("folders")
+        .update({ remind_at: remindAt })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: (_, vars) => {
+      qc.invalidateQueries({ queryKey: ["folders"] });
+      toast.success(vars.remindAt ? "Reminder set" : "Reminder cleared");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+}
