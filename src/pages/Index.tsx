@@ -8,6 +8,7 @@ import { IdeaList } from "@/components/app/IdeaList";
 import { IdeaDetail } from "@/components/app/IdeaDetail";
 import { ComposeIdea } from "@/components/app/ComposeIdea";
 import { MobileTabBar } from "@/components/app/MobileTabBar";
+import { SettingsSheet } from "@/components/app/SettingsSheet";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useSwipeGesture } from "@/hooks/useSwipeGesture";
@@ -18,6 +19,7 @@ const Shell = () => {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [searchValue, setSearchValue] = useState("");
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const isMobile = useIsMobile();
   const edgeSwipeRef = useRef<HTMLDivElement>(null);
   const composeRef = useRef<HTMLDivElement>(null);
@@ -159,9 +161,12 @@ const Shell = () => {
         <MobileTabBar
           filter={filter}
           onFilterChange={handleFilterChange}
-          onOpenMenu={() => setDrawerOpen(true)}
+          onOpenFolders={() => setDrawerOpen(true)}
+          onOpenSettings={() => setSettingsOpen(true)}
         />
       )}
+
+      <SettingsSheet open={settingsOpen} onOpenChange={setSettingsOpen} />
     </div>
   );
 };
