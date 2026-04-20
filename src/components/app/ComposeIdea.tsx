@@ -1,0 +1,249 @@
+import { useState } from "react";
+import { Sparkles, Loader2, AlertTriangle, Inbox } from "lucide-react";
+import { useDuplicateUrl } from "@/hooks/useDuplicateUrl";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useFolders } from "@/hooks/useFolders";
+import { useCreateIdea, useUpdateIdea } from "@/hooks/useIdeas";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import { SourcePicker, isSourceEnabled, type SourceKey } from "./SourcePicker";
+
+const NO_FOLDER = "__none__";
+
+type Props = {
+  defaultFolderId?: string | null;
+  onCreated?: (id: string) => void;
+  onOpenExisting?: (id: string) => void;
+};
+
+const PLACEHOLDERS: Record<SourceKey, { url?: string; note: string }> = {
+  instagram: { url: "Instagram Reel URL", note: "Quick note (optional)" },
+  link:      { url: "Paste a URL",        note: "Quick note (optional)" },
+  note:      {                            note: "Write your idea…" },
+  voice:     { note: "" },
+  image:     { note: "" },
+  prompt:    { note: "" },
+};
+
+/**
+ * Always-visible compose card. Lives on the main page above the idea list
+ * so capture is one tap away — no modal required.
+ */
+export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Props) => {
+  const { data: folders = [] } = useFolders();
+  const createIdea = useCreateIdea();
+  const updateIdea = useUpdateIdea();
+
+  const [source, setSource] = useState<SourceKey>("instagram");
+  const [url, setUrl] = useState("");
+  const [note, setNote] = useState("");
+  const [title, setTitle] = useState("");
+  const [folder, setFolder] = useState<string>(defaultFolderId ?? NO_FOLDER);
+  const [saving, setSaving] = useState(false);
+
+  const { data: urlDuplicate } = useDuplicateUrl(
+    source === "instagram" || source === "link" ? url : ""
+  );
+
+  const reset = () => {
+    setUrl("");
+    setNote("");
+    setTitle("");
+  };
+
+  const folderOrNull = (v: string) => (v === NO_FOLDER ? null : v);
+  const needsUrl = source === "instagram" || source === "link";
+
+  const handleSourceChange = (key: SourceKey) => {
+    if (!isSourceEnabled(key)) {
+      toast("Coming soon", {
+        description: `${key.charAt(0).toUpperCase() + key.slice(1)} captures are on the roadmap.`,
+      });
+      return;
+    }
+    setSource(key);
+  };
+
+  /** Background enrichment for URL ideas — extract + summarize, then patch row. */
+  const enrichInBackground = async (ideaId: string, srcUrl: string, hadUserTitle: boolean) => {
+    try {
+      const { data: ext, error: extErr } = await supabase.functions.invoke("extract-url", {
+        body: { url: srcUrl },
+      });
+      if (extErr) throw new Error(extErr.message);
+      if (ext?.error) throw new Error(ext.error);
+
+      const extractedText: string = ext.text ?? "";
+      const suggestedTitle: string | undefined = ext.title;
+
+      let summary: string | null = null;
+      let aiTitle: string | undefined;
+      try {
+        const { data: sum, error: sumErr } = await supabase.functions.invoke("summarize", {
+          body: { text: extractedText, kind: "webpage" },
+        });
+        if (!sumErr && !sum?.error) {
+          summary = sum.summary ?? null;
+          aiTitle = sum.suggestedTitle;
+        }
+      } catch {/* non-fatal */}
+
+      await updateIdea.mutateAsync({
+        id: ideaId,
+        patch: {
+          extracted_text: extractedText || null,
+          ai_summary: summary,
+          ...(hadUserTitle ? {} : { title: (aiTitle || suggestedTitle || srcUrl).slice(0, 200) }),
+        },
+      });
+    } catch (e) {
+      toast.error(e instanceof Error ? `Auto-extract failed: ${e.message}` : "Auto-extract failed");
+    }
+  };
+
+  const handleSave = async () => {
+    if (saving) return;
+    if (needsUrl && !url.trim()) return toast.error("URL required");
+    if (source === "note" && !note.trim() && !title.trim())
+      return toast.error("Add a title or a note");
+
+    setSaving(true);
+    try {
+      const userTitle = title.trim();
+      const fallbackTitle =
+        userTitle ||
+        (needsUrl ? url.trim() : note.trim().split("\n")[0].slice(0, 80)) ||
+        "Untitled idea";
+
+      const idea = await createIdea.mutateAsync({
+        title: fallbackTitle,
+        raw_note: note.trim() || null,
+        source_url: needsUrl ? url.trim() : null,
+        source_type: needsUrl ? "webpage" : "manual",
+        folder_id: folderOrNull(folder),
+        tags: [],
+      });
+
+      onCreated?.(idea.id);
+      reset();
+
+      if (needsUrl) {
+        void enrichInBackground(idea.id, url.trim(), !!userTitle);
+      }
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const ph = PLACEHOLDERS[source];
+
+  return (
+    <div className="rounded-2xl bg-card border border-border/60 p-3 sm:p-4 space-y-3 shadow-sm">
+      <SourcePicker value={source} onChange={handleSourceChange} />
+
+      {needsUrl && (
+        <Input
+          value={url}
+          onChange={(e) => setUrl(e.target.value)}
+          placeholder={ph.url}
+          inputMode="url"
+          autoCapitalize="none"
+          autoCorrect="off"
+          className="h-12 rounded-xl bg-secondary/60 border-transparent text-[15px]"
+        />
+      )}
+
+      {urlDuplicate && needsUrl && (
+        <div className="flex items-start gap-2 rounded-xl border border-destructive/40 bg-destructive/10 p-3 text-sm">
+          <AlertTriangle className="h-4 w-4 text-destructive mt-0.5 shrink-0" />
+          <div className="flex-1 min-w-0">
+            <div className="font-medium text-foreground">You already saved this link</div>
+            <div className="text-muted-foreground truncate">"{urlDuplicate.title}"</div>
+          </div>
+          {onOpenExisting && (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                onOpenExisting(urlDuplicate.id);
+                reset();
+              }}
+            >
+              Open
+            </Button>
+          )}
+        </div>
+      )}
+
+      {source === "note" ? (
+        <Textarea
+          value={note}
+          onChange={(e) => setNote(e.target.value)}
+          placeholder={ph.note}
+          rows={4}
+          className="rounded-xl bg-secondary/60 border-transparent text-[15px] resize-none"
+        />
+      ) : (
+        <Input
+          value={note}
+          onChange={(e) => setNote(e.target.value)}
+          placeholder={ph.note}
+          className="h-12 rounded-xl bg-secondary/60 border-transparent text-[15px]"
+        />
+      )}
+
+      <Input
+        value={title}
+        onChange={(e) => setTitle(e.target.value)}
+        placeholder="Title (optional — AI will fill in)"
+        className="h-12 rounded-xl bg-secondary/60 border-transparent text-[15px]"
+      />
+
+      <Select value={folder} onValueChange={setFolder}>
+        <SelectTrigger className="h-12 rounded-xl bg-secondary/60 border-transparent text-[15px]">
+          <div className="flex items-center gap-2">
+            <Inbox className="h-4 w-4 text-muted-foreground" />
+            <SelectValue />
+          </div>
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value={NO_FOLDER}>No folder</SelectItem>
+          {folders.map((f) => (
+            <SelectItem key={f.id} value={f.id}>{f.name}</SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+
+      <Button
+        onClick={handleSave}
+        disabled={saving || createIdea.isPending}
+        className="w-full h-12 rounded-xl text-[16px] font-semibold"
+      >
+        {saving ? (
+          <Loader2 className="h-5 w-5 animate-spin" />
+        ) : (
+          <>
+            <Sparkles className="h-4 w-4 mr-1.5" />
+            {needsUrl ? "Extract & save" : "Save idea"}
+          </>
+        )}
+      </Button>
+
+      {needsUrl && (
+        <p className="text-xs text-muted-foreground text-center">
+          We'll grab the page text and write a summary in the background.
+        </p>
+      )}
+    </div>
+  );
+};
