@@ -17,9 +17,13 @@ type Props = {
   filter: IdeaFilter;
   onFilterChange: (f: IdeaFilter) => void;
   onNewIdea: () => void;
+  /** Open the dedicated Folders page (Files-style grid). */
+  onOpenFolders?: () => void;
+  /** Highlights the Folders nav item when the parent is on the folders page. */
+  foldersActive?: boolean;
 };
 
-export const AppSidebar = ({ filter, onFilterChange, onNewIdea }: Props) => {
+export const AppSidebar = ({ filter, onFilterChange, onNewIdea, onOpenFolders, foldersActive }: Props) => {
   const { data: folders = [] } = useFolders();
   const createFolder = useCreateFolder();
   const deleteFolder = useDeleteFolder();
@@ -89,6 +93,20 @@ export const AppSidebar = ({ filter, onFilterChange, onNewIdea }: Props) => {
         <NavBtn f={{ kind: "all" }} icon={Inbox} label="All ideas" />
         <NavBtn f={{ kind: "favorites" }} icon={Star} label="Favorites" />
         <NavBtn f={{ kind: "recent" }} icon={Clock} label="Recent" />
+        {onOpenFolders && (
+          <button
+            onClick={onOpenFolders}
+            className={cn(
+              "w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm transition-colors",
+              foldersActive
+                ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+                : "text-sidebar-foreground hover:bg-sidebar-accent/60"
+            )}
+          >
+            <Folder className="h-4 w-4 shrink-0" />
+            <span className="truncate">Folders</span>
+          </button>
+        )}
       </nav>
 
       <div className="px-4 pt-4 pb-1 flex items-center justify-between">

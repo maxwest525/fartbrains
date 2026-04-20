@@ -22,6 +22,25 @@ export function useFolders() {
   });
 }
 
+/**
+ * Per-folder idea counts. Returns a map of folder_id → count.
+ * Pulls all ideas (RLS scopes to the current user) and aggregates client-side.
+ */
+export function useFolderCounts() {
+  return useQuery({
+    queryKey: ["folder-counts"],
+    queryFn: async (): Promise<Record<string, number>> => {
+      const { data, error } = await supabase.from("ideas").select("folder_id");
+      if (error) throw error;
+      const counts: Record<string, number> = {};
+      (data ?? []).forEach((row) => {
+        if (row.folder_id) counts[row.folder_id] = (counts[row.folder_id] ?? 0) + 1;
+      });
+      return counts;
+    },
+  });
+}
+
 export function useCreateFolder() {
   const qc = useQueryClient();
   return useMutation({
