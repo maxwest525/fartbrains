@@ -110,6 +110,46 @@ export const IdeaDetail = ({ ideaId, onClose }: Props) => {
     }
   };
 
+  const onGeneratePrompt = async () => {
+    if (generating) return;
+    if (!idea.raw_note?.trim() && !idea.ai_summary?.trim()) {
+      toast.error("Add a note or summary first so the AI has something to work with.");
+      return;
+    }
+    setGenerating(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-prompt", {
+        body: {
+          title: idea.title,
+          note: idea.raw_note,
+          summary: idea.ai_summary,
+          sourceUrl: idea.source_url,
+        },
+      });
+      if (error) throw new Error(error.message);
+      if (data?.error) throw new Error(data.error);
+      const prompt: string = data?.prompt ?? "";
+      if (!prompt.trim()) throw new Error("Empty prompt returned");
+      await updateIdea.mutateAsync({ id: idea.id, patch: { generated_prompt: prompt } });
+      toast.success("Prompt ready");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed to generate prompt");
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  const onCopyPrompt = async () => {
+    if (!idea.generated_prompt) return;
+    try {
+      await navigator.clipboard.writeText(idea.generated_prompt);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      toast.error("Couldn't copy — try selecting the text manually.");
+    }
+  };
+
   return (
     <div ref={containerRef} className="flex-1 flex flex-col h-full overflow-hidden bg-background md:animate-none anim-slide-in">
       {/* iOS-style nav bar: text "Back" on left, action cluster on right */}
