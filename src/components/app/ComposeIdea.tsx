@@ -1,5 +1,6 @@
-import { useState } from "react";
-import { Sparkles, Loader2, AlertTriangle, Inbox } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Sparkles, Loader2, AlertTriangle, Inbox, Folder as FolderIcon } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { useDuplicateUrl } from "@/hooks/useDuplicateUrl";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -49,6 +50,11 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
   const [title, setTitle] = useState("");
   const [folder, setFolder] = useState<string>(defaultFolderId ?? NO_FOLDER);
   const [saving, setSaving] = useState(false);
+
+  // Keep folder selection in sync when the parent switches active folder filter.
+  useEffect(() => {
+    setFolder(defaultFolderId ?? NO_FOLDER);
+  }, [defaultFolderId]);
 
   const { data: urlDuplicate } = useDuplicateUrl(
     source === "instagram" || source === "link" ? url : ""
@@ -223,6 +229,45 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
           ))}
         </SelectContent>
       </Select>
+
+      {/* Quick folder chips — tap to set folder above without opening the dropdown. */}
+      {folders.length > 0 && (
+        <div className="flex items-center gap-1.5 overflow-x-auto -mx-1 px-1 pb-0.5 scrollbar-none">
+          <button
+            type="button"
+            onClick={() => setFolder(NO_FOLDER)}
+            className={cn(
+              "shrink-0 inline-flex items-center gap-1 h-8 px-3 rounded-full text-[13px] font-medium border transition-colors press",
+              folder === NO_FOLDER
+                ? "bg-primary text-primary-foreground border-primary"
+                : "bg-secondary/60 text-muted-foreground border-transparent hover:text-foreground"
+            )}
+          >
+            <Inbox className="h-3.5 w-3.5" />
+            All
+          </button>
+          {folders.map((f) => {
+            const active = folder === f.id;
+            return (
+              <button
+                key={f.id}
+                type="button"
+                onClick={() => setFolder(f.id)}
+                className={cn(
+                  "shrink-0 inline-flex items-center gap-1 h-8 px-3 rounded-full text-[13px] font-medium border transition-colors press max-w-[160px]",
+                  active
+                    ? "bg-primary text-primary-foreground border-primary"
+                    : "bg-secondary/60 text-muted-foreground border-transparent hover:text-foreground"
+                )}
+                title={f.name}
+              >
+                <FolderIcon className="h-3.5 w-3.5 shrink-0" />
+                <span className="truncate">{f.name}</span>
+              </button>
+            );
+          })}
+        </div>
+      )}
 
       <Button
         onClick={handleSave}
