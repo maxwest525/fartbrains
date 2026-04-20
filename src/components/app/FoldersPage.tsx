@@ -1,8 +1,9 @@
 import { useState } from "react";
-import { Folder, Plus, MoreHorizontal, Pencil, Trash2, ChevronLeft, Search, X } from "lucide-react";
+import { Folder, Plus, MoreHorizontal, Pencil, Trash2, ChevronLeft, Search, X, FileText, Globe, Mic, AudioLines } from "lucide-react";
 import {
   useFolders,
   useFolderCounts,
+  useFolderPreviews,
   useCreateFolder,
   useRenameFolder,
   useDeleteFolder,
