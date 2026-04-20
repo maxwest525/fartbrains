@@ -177,6 +177,7 @@ const Shell = () => {
                   filter={filter}
                   selectedId={selectedId}
                   onSelect={setSelectedId}
+                  onBackToFolders={openFoldersPage}
                 />
               </div>
             </div>
