@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 export type SourceType = "manual" | "webpage" | "transcript" | "audio";
+export type Priority = "none" | "low" | "medium" | "high";
 
 export type Idea = {
   id: string;
@@ -14,6 +15,7 @@ export type Idea = {
   extracted_text: string | null;
   ai_summary: string | null;
   generated_prompt: string | null;
+  priority: Priority;
   tags: string[];
   is_favorite: boolean;
   created_at: string;
