@@ -159,4 +159,8 @@
     right: 0;
     border-top: 0.5px solid hsl(var(--border));
   }
+
+  /* Hide horizontal scrollbar (used by inline folder strip) but keep scrolling */
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+  .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 }
