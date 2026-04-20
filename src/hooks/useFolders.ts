@@ -6,6 +6,8 @@ export type Folder = {
   id: string;
   name: string;
   created_at: string;
+  updated_at: string;
+  remind_at: string | null;
 };
 
 export function useFolders() {
@@ -14,10 +16,10 @@ export function useFolders() {
     queryFn: async (): Promise<Folder[]> => {
       const { data, error } = await supabase
         .from("folders")
-        .select("id,name,created_at")
-        .order("name", { ascending: true });
+        .select("id,name,created_at,updated_at,remind_at")
+        .order("updated_at", { ascending: false });
       if (error) throw error;
-      return data ?? [];
+      return (data ?? []) as Folder[];
     },
   });
 }
