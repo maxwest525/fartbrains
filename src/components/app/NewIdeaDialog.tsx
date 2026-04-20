@@ -77,6 +77,7 @@ export const NewIdeaDialog = ({ open, onOpenChange, defaultFolderId, onCreated, 
   const [uTags, setUTags] = useState("");
   const [uExtracting, setUExtracting] = useState(false);
   const [uSummarizing, setUSummarizing] = useState(false);
+  const { data: urlDuplicate } = useDuplicateUrl(uUrl);
 
   // Transcript
   const [tTitle, setTTitle] = useState("");
