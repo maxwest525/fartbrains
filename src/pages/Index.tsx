@@ -11,6 +11,7 @@ import { FoldersPage } from "@/components/app/FoldersPage";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useAuth } from "@/hooks/useAuth";
+import { useReminderNotifier } from "@/hooks/useReminderNotifier";
 import { cn } from "@/lib/utils";
 import type { IdeaFilter } from "@/hooks/useIdeas";
 
@@ -25,6 +26,8 @@ const Shell = () => {
   const isMobile = useIsMobile();
   const composeRef = useRef<HTMLDivElement>(null);
   const { user, signOut } = useAuth();
+  // Polls folders client-side; fires browser + toast notifications when due.
+  useReminderNotifier();
 
   const onSearch = (v: string) => {
     setSearchValue(v);
@@ -188,6 +191,7 @@ const Shell = () => {
                 selectedId={selectedId}
                 onSelect={setSelectedId}
                 onBackToFolders={openFoldersPage}
+                onFilterChange={handleFilterChange}
               />
             </div>
           </div>

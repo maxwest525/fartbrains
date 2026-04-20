@@ -6,6 +6,7 @@ import { useFolders } from "@/hooks/useFolders";
 import { Skeleton } from "@/components/ui/skeleton";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { FolderStrip } from "./FolderStrip";
 
 const sourceMeta = (s: Idea["source_type"]) => {
   // iOS-style colored squircles per source type
@@ -32,9 +33,11 @@ type Props = {
   onSelect: (id: string) => void;
   /** Optional — shown only when viewing a folder, lets the user jump back to the Folders page. */
   onBackToFolders?: () => void;
+  /** Change the active filter from the inline folder strip. */
+  onFilterChange?: (filter: IdeaFilter) => void;
 };
 
-export const IdeaList = ({ filter, selectedId, onSelect, onBackToFolders }: Props) => {
+export const IdeaList = ({ filter, selectedId, onSelect, onBackToFolders, onFilterChange }: Props) => {
   const { data: ideas = [], isLoading } = useIdeas(filter);
   const { data: folders = [] } = useFolders();
   const qc = useQueryClient();
@@ -125,6 +128,15 @@ export const IdeaList = ({ filter, selectedId, onSelect, onBackToFolders }: Prop
             transition: refreshing ? "transform 180ms ease" : undefined,
           }}
         >
+        {/* Inline folder strip — folders live where ideas are, no separate page needed.
+            Hidden during search to keep results focused. */}
+        {filter.kind !== "search" && onFilterChange && (
+          <FolderStrip
+            activeFolderId={filter.kind === "folder" ? filter.folderId : null}
+            onSelectFolder={(folderId) => onFilterChange({ kind: "folder", folderId })}
+            onSelectAll={() => onFilterChange({ kind: "all" })}
+          />
+        )}
         {isLoading && (
           <div className="px-4 md:px-4 pt-3 space-y-3 md:space-y-2">
             {[...Array(4)].map((_, i) => (

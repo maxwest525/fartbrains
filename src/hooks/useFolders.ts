@@ -6,6 +6,8 @@ export type Folder = {
   id: string;
   name: string;
   created_at: string;
+  updated_at: string;
+  remind_at: string | null;
 };
 
 export function useFolders() {
@@ -14,10 +16,10 @@ export function useFolders() {
     queryFn: async (): Promise<Folder[]> => {
       const { data, error } = await supabase
         .from("folders")
-        .select("id,name,created_at")
-        .order("name", { ascending: true });
+        .select("id,name,created_at,updated_at,remind_at")
+        .order("updated_at", { ascending: false });
       if (error) throw error;
-      return data ?? [];
+      return (data ?? []) as Folder[];
     },
   });
 }
@@ -123,6 +125,25 @@ export function useDeleteFolder() {
       qc.invalidateQueries({ queryKey: ["folders"] });
       qc.invalidateQueries({ queryKey: ["ideas"] });
       toast.success("Folder deleted");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+}
+
+/** Set or clear a folder's reminder time. Pass null to clear. */
+export function useSetFolderReminder() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, remindAt }: { id: string; remindAt: string | null }) => {
+      const { error } = await supabase
+        .from("folders")
+        .update({ remind_at: remindAt })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: (_, vars) => {
+      qc.invalidateQueries({ queryKey: ["folders"] });
+      toast.success(vars.remindAt ? "Reminder set" : "Reminder cleared");
     },
     onError: (e: Error) => toast.error(e.message),
   });
