@@ -35,6 +35,17 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useIsMobile } from "@/hooks/use-mobile";
 
+/**
+ * Map a folder id to a stable hue (0-360) so each tile gets its own color
+ * accent without storing one in the DB. djb2-ish hash → curated palette.
+ */
+const hashHue = (id: string): number => {
+  let h = 5381;
+  for (let i = 0; i < id.length; i++) h = ((h << 5) + h + id.charCodeAt(i)) | 0;
+  const palette = [210, 250, 280, 320, 0, 18, 36, 158, 188];
+  return palette[Math.abs(h) % palette.length];
+};
+
 type Props = {
   /** Open a folder by id (parent navigates to the folder filter view). */
   onOpenFolder: (folderId: string) => void;
@@ -164,33 +175,64 @@ export const FoldersPage = ({ onOpenFolder, onBack }: Props) => {
             )}
           </div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4">
             {filtered.map((folder) => {
               const count = counts[folder.id] ?? 0;
+              // Deterministic hue per folder so tiles read as distinct.
+              const hue = hashHue(folder.id);
               return (
                 <div
                   key={folder.id}
-                  className="group relative rounded-2xl bg-card border border-border/60 hover:border-border transition-colors overflow-hidden"
+                  className="group relative rounded-2xl overflow-hidden transition-all duration-200 hover:-translate-y-0.5"
+                  style={{
+                    background: `linear-gradient(155deg, hsl(${hue} 70% 96% / 0.9) 0%, hsl(var(--card)) 55%)`,
+                    boxShadow:
+                      "0 1px 0 hsl(0 0% 100% / 0.06) inset, 0 8px 24px -14px hsl(0 0% 0% / 0.25), 0 1px 2px hsl(0 0% 0% / 0.04)",
+                  }}
                 >
+                  {/* Hairline border that adapts to light/dark via border-token */}
+                  <div className="absolute inset-0 rounded-2xl border border-border/50 pointer-events-none" />
+
                   <button
                     onClick={() => onOpenFolder(folder.id)}
-                    className="press w-full text-left p-4 flex flex-col items-start gap-3 min-h-[128px]"
+                    className="press relative w-full text-left p-4 flex flex-col items-start gap-3 min-h-[140px]"
                   >
-                    <div className="h-12 w-12 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
-                      <Folder className="h-6 w-6" strokeWidth={1.8} />
+                    {/* Folder glyph with tinted gradient + soft inner highlight */}
+                    <div
+                      className="relative h-12 w-12 rounded-[14px] flex items-center justify-center shrink-0"
+                      style={{
+                        background: `linear-gradient(140deg, hsl(${hue} 85% 62%) 0%, hsl(${hue} 75% 48%) 100%)`,
+                        boxShadow:
+                          `0 6px 14px -4px hsl(${hue} 70% 45% / 0.45), 0 1px 0 hsl(0 0% 100% / 0.35) inset`,
+                      }}
+                    >
+                      <Folder
+                        className="h-[22px] w-[22px] text-white drop-shadow-[0_1px_1px_rgba(0,0,0,0.18)]"
+                        strokeWidth={2}
+                        fill="currentColor"
+                        fillOpacity={0.18}
+                      />
                     </div>
+
                     <div className="w-full min-w-0">
-                      <p className="font-semibold text-[15px] truncate leading-tight">
+                      <p className="font-semibold text-[15px] truncate leading-tight tracking-tight">
                         {folder.name}
                       </p>
-                      <p className="text-[13px] text-muted-foreground mt-0.5">
-                        {count} idea{count === 1 ? "" : "s"}
-                      </p>
+                      <div className="mt-1.5 flex items-center gap-1.5">
+                        <span
+                          className="h-1.5 w-1.5 rounded-full"
+                          style={{ background: `hsl(${hue} 75% 55%)` }}
+                        />
+                        <p className="text-[12px] text-muted-foreground tabular-nums">
+                          {count} {count === 1 ? "idea" : "ideas"}
+                        </p>
+                      </div>
                     </div>
                   </button>
+
                   <DropdownMenu>
                     <DropdownMenuTrigger
-                      className="absolute top-2 right-2 h-8 w-8 rounded-full bg-background/70 backdrop-blur flex items-center justify-center text-muted-foreground hover:text-foreground md:opacity-0 md:group-hover:opacity-100 md:focus:opacity-100 md:data-[state=open]:opacity-100"
+                      className="absolute top-2 right-2 h-8 w-8 rounded-full bg-background/70 backdrop-blur flex items-center justify-center text-muted-foreground hover:text-foreground md:opacity-0 md:group-hover:opacity-100 md:focus:opacity-100 md:data-[state=open]:opacity-100 transition-opacity"
                       aria-label="Folder actions"
                       onClick={(e) => e.stopPropagation()}
                     >
