@@ -1,4 +1,4 @@
-import { Inbox, Star, Clock, Menu, Plus } from "lucide-react";
+import { Inbox, Star, Clock, Menu } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { IdeaFilter } from "@/hooks/useIdeas";
 
@@ -6,7 +6,6 @@ type Props = {
   filter: IdeaFilter;
   onFilterChange: (f: IdeaFilter) => void;
   onOpenMenu: () => void;
-  onNewIdea: () => void;
 };
 
 const Tab = ({
@@ -28,38 +27,31 @@ const Tab = ({
     )}
     aria-label={label}
   >
-    <Icon className={cn("h-5 w-5", active && "fill-primary/10")} />
+    <Icon className={cn("h-[22px] w-[22px]", active && "fill-primary/15")} strokeWidth={active ? 2.4 : 2} />
     <span className="text-[10px] font-medium tracking-tight">{label}</span>
   </button>
 );
 
-export const MobileTabBar = ({ filter, onFilterChange, onOpenMenu, onNewIdea }: Props) => {
+/**
+ * iOS-style bottom tab bar. Frosted blur, hairline top border, four equal tabs.
+ * The "+" capture action lives as a separate floating action button so the bar
+ * itself stays clean and recognizably iOS.
+ */
+export const MobileTabBar = ({ filter, onFilterChange, onOpenMenu }: Props) => {
   const isAll = filter.kind === "all";
   const isFav = filter.kind === "favorites";
   const isRecent = filter.kind === "recent";
 
   return (
     <nav
-      className="md:hidden fixed bottom-0 inset-x-0 z-30 bg-background/95 backdrop-blur border-t border-border safe-bottom"
+      className="md:hidden fixed bottom-0 inset-x-0 z-30 bg-background/80 backdrop-blur-xl border-t border-border safe-bottom"
       aria-label="Primary"
     >
-      <div className="relative flex items-stretch h-14">
+      <div className="flex items-stretch h-[50px]">
         <Tab active={isAll} icon={Inbox} label="Ideas" onClick={() => onFilterChange({ kind: "all" })} />
         <Tab active={isRecent} icon={Clock} label="Recent" onClick={() => onFilterChange({ kind: "recent" })} />
-
-        {/* Center FAB */}
-        <div className="w-16 flex items-start justify-center">
-          <button
-            onClick={onNewIdea}
-            aria-label="New idea"
-            className="press -mt-5 h-14 w-14 rounded-full bg-primary text-primary-foreground shadow-lg shadow-primary/30 flex items-center justify-center ring-4 ring-background"
-          >
-            <Plus className="h-6 w-6" />
-          </button>
-        </div>
-
         <Tab active={isFav} icon={Star} label="Favorites" onClick={() => onFilterChange({ kind: "favorites" })} />
-        <Tab active={false} icon={Menu} label="Menu" onClick={onOpenMenu} />
+        <Tab active={false} icon={Menu} label="More" onClick={onOpenMenu} />
       </div>
     </nav>
   );

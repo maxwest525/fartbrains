@@ -1,8 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { Star, Trash2, ExternalLink, Save, X, Sparkles, ArrowLeft } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Star, Trash2, ExternalLink, Sparkles, ChevronLeft } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
@@ -109,17 +108,17 @@ export const IdeaDetail = ({ ideaId, onClose }: Props) => {
 
   return (
     <div ref={containerRef} className="flex-1 flex flex-col h-full overflow-hidden bg-background md:animate-none anim-slide-in">
-      <div className="safe-top sticky top-0 z-10 bg-background/85 backdrop-blur px-3 sm:px-6 py-2 sm:py-3 border-b border-border flex items-center gap-1 sm:gap-2">
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-11 w-11 shrink-0 md:hidden"
+      {/* iOS-style nav bar: text "Back" on left, action cluster on right */}
+      <div className="safe-top sticky top-0 z-10 bg-background/80 backdrop-blur-xl px-1 sm:px-4 py-1 sm:py-2 md:border-b border-border flex items-center gap-1 min-h-[44px]">
+        <button
           onClick={onClose}
+          className="press md:hidden flex items-center text-primary -ml-1 pl-1 pr-2 h-10 text-[17px]"
           aria-label="Back"
         >
-          <ArrowLeft className="h-5 w-5" />
-        </Button>
-        <div className="flex items-center gap-2 min-w-0 flex-1">
+          <ChevronLeft className="h-6 w-6 -mr-0.5" strokeWidth={2.4} />
+          <span className="font-normal">Back</span>
+        </button>
+        <div className="hidden md:flex items-center gap-2 min-w-0 flex-1 px-2">
           <Badge variant="secondary" className="capitalize">
             {idea.source_type}
           </Badge>
@@ -135,29 +134,38 @@ export const IdeaDetail = ({ ideaId, onClose }: Props) => {
             </a>
           )}
         </div>
-        <div className="flex items-center gap-0.5 sm:gap-1 shrink-0">
-          <Button variant="ghost" size="icon" className="h-11 w-11" onClick={onToggleFavorite} aria-label="Toggle favorite">
+        <div className="flex-1 md:hidden" />
+        <div className="flex items-center gap-0 sm:gap-1 shrink-0 pr-1">
+          <button
+            onClick={onToggleFavorite}
+            className="press h-10 w-10 flex items-center justify-center text-primary"
+            aria-label="Toggle favorite"
+          >
             <Star
-              className={`h-5 w-5 ${idea.is_favorite ? "fill-accent text-accent" : ""}`}
+              className={`h-[22px] w-[22px] ${idea.is_favorite ? "fill-accent text-accent" : ""}`}
             />
-          </Button>
+          </button>
           {editing ? (
             <>
-              <Button variant="ghost" size="sm" className="h-11" onClick={() => setEditing(false)}>
-                <X className="h-4 w-4 mr-1" /> Cancel
-              </Button>
-              <Button size="sm" className="h-11" onClick={onSave} disabled={updateIdea.isPending}>
-                <Save className="h-4 w-4 mr-1" /> Save
-              </Button>
+              <button onClick={() => setEditing(false)} className="press h-10 px-2 text-[17px] text-primary">
+                Cancel
+              </button>
+              <button onClick={onSave} disabled={updateIdea.isPending} className="press h-10 px-2 text-[17px] text-primary font-semibold disabled:opacity-50">
+                Save
+              </button>
             </>
           ) : (
-            <Button variant="outline" size="sm" className="h-11" onClick={() => setEditing(true)}>
+            <button onClick={() => setEditing(true)} className="press h-10 px-2 text-[17px] text-primary">
               Edit
-            </Button>
+            </button>
           )}
-          <Button variant="ghost" size="icon" className="h-11 w-11" onClick={onDelete} aria-label="Delete">
-            <Trash2 className="h-5 w-5 text-destructive" />
-          </Button>
+          <button
+            onClick={onDelete}
+            className="press h-10 w-10 flex items-center justify-center text-destructive"
+            aria-label="Delete"
+          >
+            <Trash2 className="h-[20px] w-[20px]" />
+          </button>
         </div>
       </div>
 
@@ -169,7 +177,9 @@ export const IdeaDetail = ({ ideaId, onClose }: Props) => {
             className="text-xl font-semibold h-auto py-2"
           />
         ) : (
-          <h1 className="text-2xl font-semibold tracking-tight">{idea.title}</h1>
+          <h1 className="text-[28px] md:text-2xl font-bold md:font-semibold tracking-tight leading-tight">
+            {idea.title}
+          </h1>
         )}
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-muted-foreground">

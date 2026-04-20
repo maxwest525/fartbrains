@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { Search, X, Menu } from "lucide-react";
+import { Search, X, Menu, Plus } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
@@ -86,17 +86,17 @@ const Shell = () => {
       <div className="flex-1 flex flex-col min-w-0">
         {/* Top bar — hidden on mobile when viewing a detail */}
         {!showDetailOnly && (
-          <header className="safe-top sticky top-0 z-20 bg-background/85 backdrop-blur border-b border-border">
-            <div className="px-3 sm:px-5 py-2.5 flex items-center gap-2 sm:gap-3">
+          <header className="safe-top sticky top-0 z-20 bg-background/80 backdrop-blur-xl md:border-b border-border">
+            <div className="px-3 sm:px-5 py-2 flex items-center gap-2 sm:gap-3">
               {isMobile && (
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-11 w-11 shrink-0 md:hidden"
+                  className="h-10 w-10 shrink-0 md:hidden text-primary"
                   onClick={() => setDrawerOpen(true)}
                   aria-label="Open menu"
                 >
-                  <Menu className="h-5 w-5" />
+                  <Menu className="h-[22px] w-[22px]" />
                 </Button>
               )}
               <div className="relative flex-1 max-w-xl">
@@ -104,13 +104,13 @@ const Shell = () => {
                 <Input
                   value={searchValue}
                   onChange={(e) => onSearch(e.target.value)}
-                  placeholder="Search ideas…"
-                  className="pl-9 pr-9 h-11 rounded-full bg-muted/60 border-transparent focus-visible:bg-background"
+                  placeholder="Search"
+                  className="pl-9 pr-9 h-9 rounded-[10px] bg-secondary border-transparent focus-visible:bg-card text-[15px]"
                 />
                 {searchValue && (
                   <button
                     onClick={clearSearch}
-                    className="absolute right-1 top-1/2 -translate-y-1/2 h-9 w-9 flex items-center justify-center text-muted-foreground hover:text-foreground"
+                    className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 flex items-center justify-center text-muted-foreground hover:text-foreground"
                     aria-label="Clear search"
                   >
                     <X className="h-4 w-4" />
@@ -133,13 +133,24 @@ const Shell = () => {
         </div>
       </div>
 
-      {/* Mobile bottom tab bar with center FAB */}
+      {/* Mobile floating "compose" FAB — sits above the tab bar like iOS Mail. */}
+      {isMobile && !showDetailOnly && (
+        <button
+          onClick={handleNewIdea}
+          aria-label="New idea"
+          className="press md:hidden fixed right-4 z-40 h-14 w-14 rounded-full bg-primary text-primary-foreground shadow-[0_8px_24px_-6px_hsl(var(--primary)/0.5)] flex items-center justify-center"
+          style={{ bottom: "calc(env(safe-area-inset-bottom) + 64px)" }}
+        >
+          <Plus className="h-7 w-7" strokeWidth={2.4} />
+        </button>
+      )}
+
+      {/* Mobile bottom tab bar (iOS-style) */}
       {isMobile && !showDetailOnly && (
         <MobileTabBar
           filter={filter}
           onFilterChange={handleFilterChange}
           onOpenMenu={() => setDrawerOpen(true)}
-          onNewIdea={handleNewIdea}
         />
       )}
 

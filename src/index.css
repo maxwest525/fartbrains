@@ -2,87 +2,99 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Idea Vault — desktop-style notes design system. All HSL. */
+/* Idea Vault — iOS-style design system. All HSL.
+   Mobile feels like a native iPhone app (iOS 17 grouped lists, large titles,
+   blue accent, system gray backgrounds). Desktop reuses the same tokens but
+   renders a more conventional two-pane workspace. */
 
 @layer base {
   :root {
-    --background: 30 20% 98%;
-    --foreground: 220 18% 14%;
+    /* iOS systemGroupedBackground */
+    --background: 240 11% 96%;
+    --foreground: 0 0% 0%;
 
+    /* iOS secondarySystemGroupedBackground (used for list cells / cards) */
     --card: 0 0% 100%;
-    --card-foreground: 220 18% 14%;
+    --card-foreground: 0 0% 0%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 220 18% 14%;
+    --popover-foreground: 0 0% 0%;
 
-    --primary: 220 80% 50%;
+    /* iOS systemBlue */
+    --primary: 211 100% 50%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 220 14% 95%;
-    --secondary-foreground: 220 18% 20%;
+    --secondary: 240 6% 92%;
+    --secondary-foreground: 0 0% 0%;
 
-    --muted: 220 14% 96%;
-    --muted-foreground: 220 10% 45%;
+    --muted: 240 11% 96%;
+    --muted-foreground: 240 6% 50%;
 
-    --accent: 38 95% 55%;
-    --accent-foreground: 220 18% 14%;
+    /* iOS systemYellow */
+    --accent: 47 100% 50%;
+    --accent-foreground: 0 0% 0%;
 
-    --destructive: 0 75% 55%;
+    /* iOS systemRed */
+    --destructive: 4 90% 58%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 220 14% 90%;
-    --input: 220 14% 90%;
-    --ring: 220 80% 50%;
+    /* Hairline separator (iOS opaqueSeparator ~ rgba(60,60,67,0.29)) */
+    --border: 240 6% 88%;
+    --input: 240 6% 88%;
+    --ring: 211 100% 50%;
 
-    --radius: 0.625rem;
+    --radius: 0.875rem; /* iOS rows like 13–14px */
 
-    --sidebar-background: 220 16% 97%;
-    --sidebar-foreground: 220 12% 30%;
-    --sidebar-primary: 220 80% 50%;
+    --sidebar-background: 240 11% 96%;
+    --sidebar-foreground: 0 0% 0%;
+    --sidebar-primary: 211 100% 50%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 220 14% 92%;
-    --sidebar-accent-foreground: 220 18% 14%;
-    --sidebar-border: 220 14% 88%;
-    --sidebar-ring: 220 80% 50%;
+    --sidebar-accent: 240 6% 92%;
+    --sidebar-accent-foreground: 0 0% 0%;
+    --sidebar-border: 240 6% 88%;
+    --sidebar-ring: 211 100% 50%;
   }
 
   .dark {
-    --background: 220 18% 9%;
-    --foreground: 220 14% 92%;
+    /* iOS systemGroupedBackground (dark) */
+    --background: 0 0% 0%;
+    --foreground: 0 0% 100%;
 
-    --card: 220 18% 12%;
-    --card-foreground: 220 14% 92%;
+    /* iOS secondarySystemGroupedBackground (dark) */
+    --card: 240 4% 11%;
+    --card-foreground: 0 0% 100%;
 
-    --popover: 220 18% 12%;
-    --popover-foreground: 220 14% 92%;
+    --popover: 240 4% 11%;
+    --popover-foreground: 0 0% 100%;
 
-    --primary: 220 80% 60%;
+    /* iOS systemBlue (dark) */
+    --primary: 211 100% 60%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 220 14% 18%;
-    --secondary-foreground: 220 14% 92%;
+    --secondary: 240 4% 18%;
+    --secondary-foreground: 0 0% 100%;
 
-    --muted: 220 14% 16%;
-    --muted-foreground: 220 10% 60%;
+    --muted: 240 4% 11%;
+    --muted-foreground: 240 5% 65%;
 
-    --accent: 38 95% 60%;
-    --accent-foreground: 220 18% 9%;
+    --accent: 47 100% 55%;
+    --accent-foreground: 0 0% 0%;
 
-    --destructive: 0 65% 50%;
+    --destructive: 4 90% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 220 14% 20%;
-    --input: 220 14% 20%;
-    --ring: 220 80% 60%;
+    --border: 240 5% 22%;
+    --input: 240 5% 22%;
+    --ring: 211 100% 60%;
 
-    --sidebar-background: 220 18% 11%;
-    --sidebar-foreground: 220 14% 80%;
-    --sidebar-primary: 220 80% 60%;
+    --sidebar-background: 240 4% 8%;
+    --sidebar-foreground: 0 0% 100%;
+    --sidebar-primary: 211 100% 60%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 220 14% 18%;
-    --sidebar-accent-foreground: 220 14% 92%;
-    --sidebar-border: 220 14% 18%;
-    --sidebar-ring: 220 80% 60%;
+    --sidebar-accent: 240 4% 18%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 240 5% 22%;
+    --sidebar-ring: 211 100% 60%;
   }
 }
 
@@ -93,11 +105,17 @@
 
   html, body {
     @apply bg-background text-foreground;
-    font-feature-settings: "ss01", "cv11";
+    /* iOS-feeling system stack — picks up SF Pro on Apple devices */
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display",
+                 "Helvetica Neue", system-ui, "Segoe UI", Roboto, sans-serif;
     -webkit-tap-highlight-color: transparent;
     -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
     overscroll-behavior-y: none;
   }
+
+  /* Prevent iOS text-size auto-bumping on landscape */
+  html { -webkit-text-size-adjust: 100%; }
 }
 
 @layer utilities {
@@ -111,12 +129,34 @@
   .press { transition: transform 120ms ease, background-color 120ms ease, opacity 120ms ease; }
   .press:active { transform: scale(0.97); }
 
-  /* Slide-in animation for detail view on mobile */
+  /* iOS-style tap highlight on list rows */
+  .row-press:active { background-color: hsl(var(--secondary)); }
+
+  /* Slide-in animation for detail view on mobile (iOS push) */
   .anim-slide-in {
-    animation: slide-in-right 220ms cubic-bezier(0.32, 0.72, 0, 1);
+    animation: ios-push 280ms cubic-bezier(0.32, 0.72, 0, 1);
   }
-  @keyframes slide-in-right {
-    from { transform: translateX(8%); opacity: 0; }
+  @keyframes ios-push {
+    from { transform: translateX(18%); opacity: 0.6; }
     to   { transform: translateX(0);   opacity: 1; }
+  }
+
+  /* iOS hairline separator inside grouped lists.
+     Indents from the left like UITableView default cell separator. */
+  .ios-separator > * + * {
+    border-top: 0.5px solid hsl(var(--border));
+  }
+
+  /* Larger left inset to mimic UITableView grouped style separator */
+  .ios-separator-inset > * + * {
+    position: relative;
+  }
+  .ios-separator-inset > * + *::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 3.5rem;
+    right: 0;
+    border-top: 0.5px solid hsl(var(--border));
   }
 }
