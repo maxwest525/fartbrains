@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
-import { Sparkles, Loader2, AlertTriangle, Inbox, Folder as FolderIcon } from "lucide-react";
+import { Sparkles, Loader2, AlertTriangle, Inbox, Folder as FolderIcon, CheckCircle2, XCircle, ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useDuplicateUrl } from "@/hooks/useDuplicateUrl";
+import { useUrlCheck } from "@/hooks/useUrlCheck";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
