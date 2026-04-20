@@ -61,6 +61,7 @@ type Props = {
 export const FoldersPage = ({ onOpenFolder, onBack }: Props) => {
   const { data: folders = [], isLoading } = useFolders();
   const { data: counts = {} } = useFolderCounts();
+  const { data: previews = {} } = useFolderPreviews();
   const createFolder = useCreateFolder();
   const renameFolder = useRenameFolder();
   const deleteFolder = useDeleteFolder();
