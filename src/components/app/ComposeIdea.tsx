@@ -217,7 +217,7 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
           </div>
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value={NO_FOLDER}>No folder</SelectItem>
+          <SelectItem value={NO_FOLDER}>All ideas</SelectItem>
           {folders.map((f) => (
             <SelectItem key={f.id} value={f.id}>{f.name}</SelectItem>
           ))}
