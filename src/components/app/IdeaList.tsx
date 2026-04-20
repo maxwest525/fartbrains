@@ -211,6 +211,7 @@ export const IdeaList = ({ filter, selectedId, onSelect }: Props) => {
             </div>
           </>
         )}
+        </div>
       </div>
     </div>
   );
