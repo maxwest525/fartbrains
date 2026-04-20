@@ -17,9 +17,13 @@ type Props = {
   filter: IdeaFilter;
   onFilterChange: (f: IdeaFilter) => void;
   onNewIdea: () => void;
+  /** Open the dedicated Folders page (Files-style grid). */
+  onOpenFolders?: () => void;
+  /** Highlights the Folders nav item when the parent is on the folders page. */
+  foldersActive?: boolean;
 };
 
-export const AppSidebar = ({ filter, onFilterChange, onNewIdea }: Props) => {
+export const AppSidebar = ({ filter, onFilterChange, onNewIdea, onOpenFolders, foldersActive }: Props) => {
   const { data: folders = [] } = useFolders();
   const createFolder = useCreateFolder();
   const deleteFolder = useDeleteFolder();
