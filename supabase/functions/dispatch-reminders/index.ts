@@ -75,6 +75,7 @@ const sendPushToUser = async (
   userId: string,
   payload: { title: string; body: string; tag: string; url?: string },
 ) => {
+  if (!initPush()) return { sent: 0, removed: 0 };
   const { data: subs, error } = await admin
     .from("push_subscriptions")
     .select("id,endpoint,p256dh,auth")
