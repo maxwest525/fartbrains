@@ -73,7 +73,6 @@ export const IdeaReminderDialog = ({ open, onOpenChange, idea }: Props) => {
         remind_at: iso,
         notify_push: push,
         notify_email: email,
-        // @ts-expect-error - field exists in DB; types may not be regenerated yet
         reminder_fired_at: null,
       },
     });
@@ -83,11 +82,7 @@ export const IdeaReminderDialog = ({ open, onOpenChange, idea }: Props) => {
   const clear = async () => {
     await update.mutateAsync({
       id: idea.id,
-      patch: {
-        remind_at: null,
-        // @ts-expect-error - field exists in DB
-        reminder_fired_at: null,
-      },
+      patch: { remind_at: null, reminder_fired_at: null },
     });
     onOpenChange(false);
   };

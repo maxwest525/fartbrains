@@ -18,6 +18,10 @@ export type Idea = {
   priority: Priority;
   tags: string[];
   is_favorite: boolean;
+  remind_at: string | null;
+  notify_push: boolean;
+  notify_email: boolean;
+  reminder_fired_at: string | null;
   created_at: string;
   updated_at: string;
 };
