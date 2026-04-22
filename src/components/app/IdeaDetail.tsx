@@ -245,6 +245,22 @@ export const IdeaDetail = ({ ideaId, onClose }: Props) => {
             onChange={(p) => updateIdea.mutate({ id: idea.id, patch: { priority: p } })}
             disabled={updateIdea.isPending}
           />
+          {idea.remind_at && (
+            <button
+              onClick={() => setReminderOpen(true)}
+              className="ml-auto inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full bg-accent/10 text-accent hover:bg-accent/15 press"
+              title="Edit reminder"
+            >
+              <Bell className="h-3 w-3" />
+              <span>{formatReminder(idea.remind_at)}</span>
+              <span className="text-accent/70">·</span>
+              <span className="text-accent/80">
+                {[idea.notify_push && "push", idea.notify_email && "email"]
+                  .filter(Boolean)
+                  .join(" + ") || "muted"}
+              </span>
+            </button>
+          )}
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-muted-foreground">
@@ -439,6 +455,22 @@ export const IdeaDetail = ({ ideaId, onClose }: Props) => {
           </section>
         )}
       </div>
+
+      <IdeaReminderDialog
+        open={reminderOpen}
+        onOpenChange={setReminderOpen}
+        idea={
+          idea
+            ? {
+                id: idea.id,
+                title: idea.title,
+                remind_at: idea.remind_at,
+                notify_push: idea.notify_push,
+                notify_email: idea.notify_email,
+              }
+            : null
+        }
+      />
     </div>
   );
 };
