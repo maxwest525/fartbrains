@@ -185,6 +185,14 @@ export const IdeaDetail = ({ ideaId, onClose }: Props) => {
         <div className="flex-1 md:hidden" />
         <div className="flex items-center gap-0 sm:gap-1 shrink-0 pr-1">
           <button
+            onClick={() => setReminderOpen(true)}
+            className={`press h-10 w-10 flex items-center justify-center ${idea.remind_at ? "text-accent" : "text-primary"}`}
+            aria-label="Reminder"
+            title={idea.remind_at ? `Reminder ${formatReminder(idea.remind_at)}` : "Set reminder"}
+          >
+            <Bell className={`h-[20px] w-[20px] ${idea.remind_at ? "fill-accent/30" : ""}`} />
+          </button>
+          <button
             onClick={onToggleFavorite}
             className="press h-10 w-10 flex items-center justify-center text-primary"
             aria-label="Toggle favorite"
