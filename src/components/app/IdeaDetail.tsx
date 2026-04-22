@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { Star, Trash2, ExternalLink, Sparkles, ChevronLeft, Wand2, Copy, Check, Loader2, RefreshCw } from "lucide-react";
+import { Star, Trash2, ExternalLink, Sparkles, ChevronLeft, Wand2, Copy, Check, Loader2, RefreshCw, Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -20,6 +20,8 @@ import { useSwipeGesture } from "@/hooks/useSwipeGesture";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { PrioritySelector } from "./PrioritySelector";
+import { IdeaReminderDialog } from "./IdeaReminderDialog";
+import { formatReminder } from "@/lib/formatTime";
 
 const NO_FOLDER = "__none__";
 
@@ -44,6 +46,7 @@ export const IdeaDetail = ({ ideaId, onClose }: Props) => {
   const [folderId, setFolderId] = useState<string>(NO_FOLDER);
   const [generating, setGenerating] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [reminderOpen, setReminderOpen] = useState(false);
 
   // Swipe-right from the left edge to go back (mobile only, not while editing)
   useSwipeGesture(containerRef, {
@@ -182,6 +185,14 @@ export const IdeaDetail = ({ ideaId, onClose }: Props) => {
         <div className="flex-1 md:hidden" />
         <div className="flex items-center gap-0 sm:gap-1 shrink-0 pr-1">
           <button
+            onClick={() => setReminderOpen(true)}
+            className={`press h-10 w-10 flex items-center justify-center ${idea.remind_at ? "text-accent" : "text-primary"}`}
+            aria-label="Reminder"
+            title={idea.remind_at ? `Reminder ${formatReminder(idea.remind_at)}` : "Set reminder"}
+          >
+            <Bell className={`h-[20px] w-[20px] ${idea.remind_at ? "fill-accent/30" : ""}`} />
+          </button>
+          <button
             onClick={onToggleFavorite}
             className="press h-10 w-10 flex items-center justify-center text-primary"
             aria-label="Toggle favorite"
@@ -234,6 +245,22 @@ export const IdeaDetail = ({ ideaId, onClose }: Props) => {
             onChange={(p) => updateIdea.mutate({ id: idea.id, patch: { priority: p } })}
             disabled={updateIdea.isPending}
           />
+          {idea.remind_at && (
+            <button
+              onClick={() => setReminderOpen(true)}
+              className="ml-auto inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full bg-accent/10 text-accent hover:bg-accent/15 press"
+              title="Edit reminder"
+            >
+              <Bell className="h-3 w-3" />
+              <span>{formatReminder(idea.remind_at)}</span>
+              <span className="text-accent/70">·</span>
+              <span className="text-accent/80">
+                {[idea.notify_push && "push", idea.notify_email && "email"]
+                  .filter(Boolean)
+                  .join(" + ") || "muted"}
+              </span>
+            </button>
+          )}
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-muted-foreground">
@@ -428,6 +455,22 @@ export const IdeaDetail = ({ ideaId, onClose }: Props) => {
           </section>
         )}
       </div>
+
+      <IdeaReminderDialog
+        open={reminderOpen}
+        onOpenChange={setReminderOpen}
+        idea={
+          idea
+            ? {
+                id: idea.id,
+                title: idea.title,
+                remind_at: idea.remind_at,
+                notify_push: idea.notify_push,
+                notify_email: idea.notify_email,
+              }
+            : null
+        }
+      />
     </div>
   );
 };
