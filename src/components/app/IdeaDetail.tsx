@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { Star, Trash2, ExternalLink, Sparkles, ChevronLeft, Wand2, Copy, Check, Loader2, RefreshCw } from "lucide-react";
+import { Star, Trash2, ExternalLink, Sparkles, ChevronLeft, Wand2, Copy, Check, Loader2, RefreshCw, Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -20,6 +20,8 @@ import { useSwipeGesture } from "@/hooks/useSwipeGesture";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { PrioritySelector } from "./PrioritySelector";
+import { IdeaReminderDialog } from "./IdeaReminderDialog";
+import { formatReminder } from "@/lib/formatTime";
 
 const NO_FOLDER = "__none__";
 
@@ -44,6 +46,7 @@ export const IdeaDetail = ({ ideaId, onClose }: Props) => {
   const [folderId, setFolderId] = useState<string>(NO_FOLDER);
   const [generating, setGenerating] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [reminderOpen, setReminderOpen] = useState(false);
 
   // Swipe-right from the left edge to go back (mobile only, not while editing)
   useSwipeGesture(containerRef, {
