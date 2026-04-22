@@ -22,17 +22,27 @@ const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const VAPID_PUBLIC = Deno.env.get("VAPID_PUBLIC_KEY")!;
 const VAPID_PRIVATE = Deno.env.get("VAPID_PRIVATE_KEY")!;
 const VAPID_SUBJECT_RAW = Deno.env.get("VAPID_SUBJECT") ?? "";
-// web-push requires a `mailto:` or `https://` URL. Coerce common mistakes
-// (bare email, missing scheme) into a valid value so cron doesn't crash.
-const VAPID_SUBJECT = (() => {
-  const v = VAPID_SUBJECT_RAW.trim();
+
+const normalizeSubject = (raw: string) => {
+  const v = raw.trim();
   if (!v) return "mailto:noreply@idea-vault.app";
   if (v.startsWith("mailto:") || v.startsWith("https://")) return v;
   if (v.includes("@")) return `mailto:${v}`;
   return "mailto:noreply@idea-vault.app";
-})();
+};
 
-webpush.setVapidDetails(VAPID_SUBJECT, VAPID_PUBLIC, VAPID_PRIVATE);
+let pushReady = false;
+const initPush = () => {
+  if (pushReady) return true;
+  try {
+    webpush.setVapidDetails(normalizeSubject(VAPID_SUBJECT_RAW), VAPID_PUBLIC, VAPID_PRIVATE);
+    pushReady = true;
+    return true;
+  } catch (e) {
+    console.error("web-push init failed", e);
+    return false;
+  }
+};
 
 const admin = createClient(SUPABASE_URL, SERVICE_KEY, {
   auth: { persistSession: false, autoRefreshToken: false },
