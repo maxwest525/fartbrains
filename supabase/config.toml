@@ -1,1 +1,7 @@
 project_id = "uwuhfvhqnpozhndrabwl"
+
+[functions.push-public-key]
+verify_jwt = false
+
+[functions.dispatch-reminders]
+verify_jwt = false
