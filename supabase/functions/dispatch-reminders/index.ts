@@ -21,7 +21,16 @@ const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const VAPID_PUBLIC = Deno.env.get("VAPID_PUBLIC_KEY")!;
 const VAPID_PRIVATE = Deno.env.get("VAPID_PRIVATE_KEY")!;
-const VAPID_SUBJECT = Deno.env.get("VAPID_SUBJECT") ?? "mailto:noreply@example.com";
+const VAPID_SUBJECT_RAW = Deno.env.get("VAPID_SUBJECT") ?? "";
+// web-push requires a `mailto:` or `https://` URL. Coerce common mistakes
+// (bare email, missing scheme) into a valid value so cron doesn't crash.
+const VAPID_SUBJECT = (() => {
+  const v = VAPID_SUBJECT_RAW.trim();
+  if (!v) return "mailto:noreply@idea-vault.app";
+  if (v.startsWith("mailto:") || v.startsWith("https://")) return v;
+  if (v.includes("@")) return `mailto:${v}`;
+  return "mailto:noreply@idea-vault.app";
+})();
 
 webpush.setVapidDetails(VAPID_SUBJECT, VAPID_PUBLIC, VAPID_PRIVATE);
 
