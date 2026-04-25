@@ -1,5 +1,5 @@
 import { Folder as FolderIcon, Plus, Star, FileText, Link2, Mic, MessageSquare, ChevronRight } from "lucide-react";
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { useFolders, useFolderCounts, useCreateFolder } from "@/hooks/useFolders";
 import { useIdeas, type Idea, type IdeaFilter } from "@/hooks/useIdeas";
 import { Skeleton } from "@/components/ui/skeleton";

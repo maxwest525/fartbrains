@@ -166,7 +166,7 @@ export const FoldersPage = ({ onOpenFolder, onBack }: Props) => {
       </div>
 
       {/* Grid */}
-      <div className="flex-1 overflow-y-auto scroll-momentum px-4 sm:px-6 py-4 pb-28 md:pb-8">
+      <div className="flex-1 min-h-0 overflow-y-auto scroll-momentum touch-pan-y px-4 sm:px-6 py-4 pb-[calc(7rem+env(safe-area-inset-bottom))] md:pb-8">
         {isLoading ? (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
             {[...Array(6)].map((_, i) => (
