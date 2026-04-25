@@ -1,4 +1,4 @@
-import { Folder as FolderIcon, Plus, Star, FileText, Link2, Mic, MessageSquare, ChevronRight } from "lucide-react";
+import { Folder as FolderIcon, Plus, Star, FileText, Link2, Mic, MessageSquare, ChevronRight, Inbox } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { useFolders, useFolderCounts, useCreateFolder } from "@/hooks/useFolders";
 import { useIdeas, type Idea, type IdeaFilter } from "@/hooks/useIdeas";
@@ -47,6 +47,8 @@ type Props = {
   captureSlot?: ReactNode;
   /** Switch the parent filter to "recent" when "See all" is tapped. */
   onSeeAllRecent: () => void;
+  /** Open the full "All ideas" list (used by the All tile and section link). */
+  onSeeAllIdeas: () => void;
 };
 
 /**
@@ -55,7 +57,7 @@ type Props = {
  * of the 3 most recently updated ideas. The full ideas list lives behind
  * the "All ideas" link / Ideas tab.
  */
-export const MobileHome = ({ captureSlot, onOpenFolder, onSelectIdea, onSeeAllRecent }: Props) => {
+export const MobileHome = ({ captureSlot, onOpenFolder, onSelectIdea, onSeeAllRecent, onSeeAllIdeas }: Props) => {
   const { data: folders = [], isLoading: foldersLoading } = useFolders();
   const { data: counts = {} } = useFolderCounts();
   const recentFilter: IdeaFilter = { kind: "recent" };
@@ -86,6 +88,12 @@ export const MobileHome = ({ captureSlot, onOpenFolder, onSelectIdea, onSeeAllRe
               {folders.length} folder{folders.length === 1 ? "" : "s"} · {totalIdeas} idea{totalIdeas === 1 ? "" : "s"}
             </p>
           </div>
+          <button
+            onClick={onSeeAllIdeas}
+            className="press text-[15px] font-medium text-primary px-1 h-9"
+          >
+            All ideas
+          </button>
         </div>
 
         {foldersLoading ? (
@@ -96,6 +104,28 @@ export const MobileHome = ({ captureSlot, onOpenFolder, onSelectIdea, onSeeAllRe
           </div>
         ) : (
           <div className="grid grid-cols-2 gap-3">
+            {/* All ideas tile — first so the unfiled inbox is always one tap away. */}
+            <button
+              onClick={onSeeAllIdeas}
+              className="press relative rounded-2xl overflow-hidden p-3 text-left min-h-[96px] flex flex-col justify-between bg-primary text-primary-foreground"
+              style={{
+                boxShadow:
+                  "0 1px 0 hsl(0 0% 100% / 0.12) inset, 0 8px 20px -12px hsl(var(--primary) / 0.55), 0 1px 2px hsl(0 0% 0% / 0.06)",
+              }}
+            >
+              <div className="relative h-9 w-9 rounded-[10px] flex items-center justify-center bg-white/15">
+                <Inbox className="h-[18px] w-[18px]" strokeWidth={2.2} />
+              </div>
+              <div className="relative">
+                <p className="font-semibold text-[15px] truncate leading-tight tracking-tight">
+                  All ideas
+                </p>
+                <p className="text-[12px] text-primary-foreground/80 tabular-nums mt-0.5">
+                  {totalIdeas} {totalIdeas === 1 ? "idea" : "ideas"}
+                </p>
+              </div>
+            </button>
+
             {folders.map((folder) => {
               const count = counts[folder.id] ?? 0;
               const hue = hashHue(folder.id);

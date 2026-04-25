@@ -202,7 +202,7 @@ const Shell = () => {
                   }}
                   onSelectIdea={(id) => setSelectedId(id)}
                   onSeeAllRecent={() => handleFilterChange({ kind: "recent" })}
-                  
+                  onSeeAllIdeas={() => handleFilterChange({ kind: "all" })}
                 />
               </div>
             ) : (
