@@ -43,6 +43,8 @@ const formatDate = (iso: string) => {
 type Props = {
   onOpenFolder: (folderId: string) => void;
   onSelectIdea: (id: string) => void;
+  /** Inline capture UI rendered below folders on mobile home. */
+  captureSlot?: ReactNode;
   /** Switch the parent filter to "recent" when "See all" is tapped. */
   onSeeAllRecent: () => void;
   /** Switch parent to "all ideas" view. */
@@ -55,7 +57,7 @@ type Props = {
  * of the 3 most recently updated ideas. The full ideas list lives behind
  * the "All ideas" link / Ideas tab.
  */
-export const MobileHome = ({ onOpenFolder, onSelectIdea, onSeeAllRecent, onSeeAllIdeas }: Props) => {
+export const MobileHome = ({ captureSlot, onOpenFolder, onSelectIdea, onSeeAllRecent, onSeeAllIdeas }: Props) => {
   const { data: folders = [], isLoading: foldersLoading } = useFolders();
   const { data: counts = {} } = useFolderCounts();
   const recentFilter: IdeaFilter = { kind: "recent" };
