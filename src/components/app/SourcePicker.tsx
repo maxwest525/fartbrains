@@ -36,38 +36,40 @@ type Props = {
  */
 export const SourcePicker = ({ value, onChange }: Props) => {
   return (
-    <div className="rounded-2xl bg-secondary/60 p-2 grid grid-cols-3 gap-2">
-      {TILES.map((tile) => {
-        const Icon = tile.icon;
-        const active = value === tile.key && tile.enabled;
-        return (
-          <button
-            key={tile.key}
-            type="button"
-            onClick={() => onChange(tile.key)}
-            aria-pressed={active}
-            aria-disabled={!tile.enabled}
-            className={cn(
-              "press relative flex flex-col items-center justify-center gap-1.5 rounded-xl py-3.5 px-2 text-[13px] font-medium transition-colors",
-              active
-                ? "bg-primary text-primary-foreground shadow-[0_4px_14px_-4px_hsl(var(--primary)/0.55)]"
-                : "bg-card text-foreground hover:bg-card/80",
-              !tile.enabled && "opacity-55"
-            )}
-          >
-            <Icon
-              className={cn("h-[22px] w-[22px]", active ? "text-primary-foreground" : tile.tone)}
-              strokeWidth={1.8}
-            />
-            <span className="leading-none">{tile.label}</span>
-            {!tile.enabled && (
-              <span className="absolute -top-1 right-1 text-[9px] uppercase tracking-wide font-semibold text-muted-foreground bg-background/80 px-1 rounded">
-                Soon
-              </span>
-            )}
-          </button>
-        );
-      })}
+    <div className="-mx-1 overflow-x-auto no-scrollbar scroll-momentum md:mx-0 md:overflow-visible md:rounded-2xl md:bg-secondary/60 md:p-2">
+      <div className="flex gap-2 px-1 md:grid md:grid-cols-3 md:px-0">
+        {TILES.map((tile) => {
+          const Icon = tile.icon;
+          const active = value === tile.key && tile.enabled;
+          return (
+            <button
+              key={tile.key}
+              type="button"
+              onClick={() => onChange(tile.key)}
+              aria-pressed={active}
+              aria-disabled={!tile.enabled}
+              className={cn(
+                "press relative shrink-0 min-w-[86px] h-16 md:h-auto md:min-w-0 flex flex-col items-center justify-center gap-1.5 rounded-xl px-2 text-[13px] font-medium transition-colors",
+                active
+                  ? "bg-primary text-primary-foreground shadow-[0_4px_14px_-4px_hsl(var(--primary)/0.55)]"
+                  : "bg-card text-foreground hover:bg-card/80",
+                !tile.enabled && "opacity-55"
+              )}
+            >
+              <Icon
+                className={cn("h-[21px] w-[21px] md:h-[22px] md:w-[22px]", active ? "text-primary-foreground" : tile.tone)}
+                strokeWidth={1.8}
+              />
+              <span className="leading-none whitespace-nowrap">{tile.label}</span>
+              {!tile.enabled && (
+                <span className="absolute -top-1 right-1 text-[9px] uppercase tracking-wide font-semibold text-muted-foreground bg-background/80 px-1 rounded">
+                  Soon
+                </span>
+              )}
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 };

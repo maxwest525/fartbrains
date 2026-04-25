@@ -449,7 +449,7 @@ export const IdeaDetail = ({ ideaId, onClose }: Props) => {
         {idea.extracted_text && (
           <section>
             <h3 className="text-sm font-semibold mb-2">Original extracted text</h3>
-            <div className="rounded-md border border-border bg-muted/20 p-4 text-xs whitespace-pre-wrap max-h-96 overflow-y-auto">
+            <div className="rounded-md border border-border bg-muted/20 p-4 text-xs whitespace-pre-wrap">
               {idea.extracted_text}
             </div>
           </section>

@@ -78,22 +78,16 @@ export const MobileHome = ({ captureSlot, onOpenFolder, onSelectIdea, onSeeAllRe
   };
 
   return (
-    <div className="px-4 pt-2 pb-2 space-y-5">
+    <div className="px-4 pt-4 pb-2 space-y-5">
       {/* Folders section */}
       <section>
-        <div className="flex items-end justify-between mb-2 px-0.5">
+        <div className="flex items-end justify-between mb-3 px-0.5">
           <div>
-            <h2 className="text-[22px] font-bold tracking-tight leading-tight">Folders</h2>
-            <p className="text-[13px] text-muted-foreground">
+            <h2 className="text-[30px] font-bold tracking-tight leading-none">Folders</h2>
+            <p className="text-[13px] text-muted-foreground mt-1">
               {folders.length} folder{folders.length === 1 ? "" : "s"} · {totalIdeas} idea{totalIdeas === 1 ? "" : "s"}
             </p>
           </div>
-          <button
-            onClick={onSeeAllIdeas}
-            className="press text-[13px] font-medium text-primary px-1 h-8"
-          >
-            All ideas
-          </button>
         </div>
 
         {foldersLoading ? (
