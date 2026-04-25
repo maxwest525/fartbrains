@@ -47,8 +47,6 @@ type Props = {
   captureSlot?: ReactNode;
   /** Switch the parent filter to "recent" when "See all" is tapped. */
   onSeeAllRecent: () => void;
-  /** Switch parent to "all ideas" view. */
-  onSeeAllIdeas: () => void;
 };
 
 /**
@@ -57,7 +55,7 @@ type Props = {
  * of the 3 most recently updated ideas. The full ideas list lives behind
  * the "All ideas" link / Ideas tab.
  */
-export const MobileHome = ({ captureSlot, onOpenFolder, onSelectIdea, onSeeAllRecent, onSeeAllIdeas }: Props) => {
+export const MobileHome = ({ captureSlot, onOpenFolder, onSelectIdea, onSeeAllRecent }: Props) => {
   const { data: folders = [], isLoading: foldersLoading } = useFolders();
   const { data: counts = {} } = useFolderCounts();
   const recentFilter: IdeaFilter = { kind: "recent" };

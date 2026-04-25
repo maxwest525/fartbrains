@@ -188,7 +188,7 @@ const Shell = () => {
               <div className="flex-1 min-h-0 overflow-y-auto scroll-momentum touch-pan-y pb-[calc(7rem+env(safe-area-inset-bottom))]">
                 <MobileHome
                   captureSlot={
-                    <div ref={composeRef} className="px-4 pt-1 pb-1">
+                    <div ref={composeRef} className="pt-1 pb-1">
                       <ComposeIdea
                         defaultFolderId={defaultFolderId}
                         onCreated={(id) => setSelectedId(id)}
@@ -202,7 +202,7 @@ const Shell = () => {
                   }}
                   onSelectIdea={(id) => setSelectedId(id)}
                   onSeeAllRecent={() => handleFilterChange({ kind: "recent" })}
-                  onSeeAllIdeas={() => handleFilterChange({ kind: "all" })}
+                  
                 />
               </div>
             ) : (
