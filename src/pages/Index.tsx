@@ -60,6 +60,10 @@ const Shell = () => {
   const showFolders = view === "folders" && !showDetailOnly;
   const defaultFolderId = filter.kind === "folder" ? filter.folderId : null;
 
+  // Mobile "home" view: folders-first grid + recent ideas, instead of the full list.
+  // Triggered when the user is on the default Ideas tab with no filter applied.
+  const showMobileHome = isMobile && view === "ideas" && filter.kind === "all" && !showDetailOnly;
+
   // Desktop top-bar nav items.
   const navItems: Array<{
     label: string;
