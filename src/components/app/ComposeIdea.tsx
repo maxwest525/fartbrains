@@ -71,6 +71,7 @@ type PreviewState = {
 export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Props) => {
   const { data: folders = [] } = useFolders();
   const createIdea = useCreateIdea();
+  const createFolder = useCreateFolder();
 
   const [source, setSource] = useState<SourceKey>("instagram");
   const [url, setUrl] = useState("");
@@ -82,6 +83,10 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
   // AI preview workflow state.
   const [generating, setGenerating] = useState(false);
   const [preview, setPreview] = useState<PreviewState | null>(null);
+
+  // Inline new-folder UI (triggered from dropdown item or chip).
+  const [newFolderOpen, setNewFolderOpen] = useState(false);
+  const [newFolderName, setNewFolderName] = useState("");
 
   // Keep folder selection in sync when the parent switches active folder filter.
   useEffect(() => {
