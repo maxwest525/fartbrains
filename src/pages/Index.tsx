@@ -184,18 +184,19 @@ const Shell = () => {
         {!showFolders && !showDetailOnly && (
           <div className="w-full md:w-[28rem] md:shrink-0 md:border-r border-border flex flex-col min-h-0 bg-background">
             {showMobileHome ? (
-              // MOBILE HOME — single scroll container so the whole page scrolls
-              // naturally (compose card + folders grid + recent). The bottom tab
-              // bar is fixed, so we pad the bottom to clear it.
-              <div className="flex-1 min-h-0 overflow-y-auto scroll-momentum pb-28">
-                <div ref={composeRef} className="px-3 pt-3 pb-1">
-                  <ComposeIdea
-                    defaultFolderId={defaultFolderId}
-                    onCreated={(id) => setSelectedId(id)}
-                    onOpenExisting={(id) => setSelectedId(id)}
-                  />
-                </div>
+              // MOBILE HOME — one touch-friendly scroll surface. Folders stay first,
+              // capture sits inline below them, and the fixed tab bar has safe clearance.
+              <div className="flex-1 min-h-0 overflow-y-auto scroll-momentum touch-pan-y pb-[calc(7rem+env(safe-area-inset-bottom))]">
                 <MobileHome
+                  captureSlot={
+                    <div ref={composeRef} className="px-4 pt-1 pb-1">
+                      <ComposeIdea
+                        defaultFolderId={defaultFolderId}
+                        onCreated={(id) => setSelectedId(id)}
+                        onOpenExisting={(id) => setSelectedId(id)}
+                      />
+                    </div>
+                  }
                   onOpenFolder={(folderId) => {
                     setView("ideas");
                     setFilter({ kind: "folder", folderId });
