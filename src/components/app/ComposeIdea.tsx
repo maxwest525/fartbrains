@@ -140,7 +140,9 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
       const sourceUrl = needsUrl ? url.trim() : null;
 
       if (needsUrl) {
-        const { data: ext, error: extErr } = await supabase.functions.invoke("extract-url", {
+        // Instagram has its own extractor — Readability can't parse the React-rendered page.
+        const fnName = source === "instagram" ? "extract-instagram" : "extract-url";
+        const { data: ext, error: extErr } = await supabase.functions.invoke(fnName, {
           body: { url: sourceUrl },
         });
         if (extErr) throw new Error(extErr.message);
@@ -187,6 +189,20 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
       toast.error(e instanceof Error ? e.message : "Couldn't generate summary");
     } finally {
       setGenerating(false);
+    }
+  };
+
+  /** Create a folder inline and immediately select it. */
+  const handleCreateFolder = async () => {
+    const name = newFolderName.trim();
+    if (!name) return;
+    try {
+      const created = await createFolder.mutateAsync(name);
+      setFolder(created.id);
+      setNewFolderName("");
+      setNewFolderOpen(false);
+    } catch {
+      // toast handled in the hook
     }
   };
 
