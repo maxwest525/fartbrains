@@ -1,5 +1,5 @@
 import { Folder as FolderIcon, Plus, Star, FileText, Link2, Mic, MessageSquare, ChevronRight } from "lucide-react";
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { useFolders, useFolderCounts, useCreateFolder } from "@/hooks/useFolders";
 import { useIdeas, type Idea, type IdeaFilter } from "@/hooks/useIdeas";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -43,10 +43,10 @@ const formatDate = (iso: string) => {
 type Props = {
   onOpenFolder: (folderId: string) => void;
   onSelectIdea: (id: string) => void;
+  /** Inline capture UI rendered below folders on mobile home. */
+  captureSlot?: ReactNode;
   /** Switch the parent filter to "recent" when "See all" is tapped. */
   onSeeAllRecent: () => void;
-  /** Switch parent to "all ideas" view. */
-  onSeeAllIdeas: () => void;
 };
 
 /**
@@ -55,7 +55,7 @@ type Props = {
  * of the 3 most recently updated ideas. The full ideas list lives behind
  * the "All ideas" link / Ideas tab.
  */
-export const MobileHome = ({ onOpenFolder, onSelectIdea, onSeeAllRecent, onSeeAllIdeas }: Props) => {
+export const MobileHome = ({ captureSlot, onOpenFolder, onSelectIdea, onSeeAllRecent }: Props) => {
   const { data: folders = [], isLoading: foldersLoading } = useFolders();
   const { data: counts = {} } = useFolderCounts();
   const recentFilter: IdeaFilter = { kind: "recent" };
@@ -76,22 +76,16 @@ export const MobileHome = ({ onOpenFolder, onSelectIdea, onSeeAllRecent, onSeeAl
   };
 
   return (
-    <div className="px-4 pt-2 pb-2 space-y-5">
+    <div className="px-4 pt-4 pb-2 space-y-5">
       {/* Folders section */}
       <section>
-        <div className="flex items-end justify-between mb-2 px-0.5">
+        <div className="flex items-end justify-between mb-3 px-0.5">
           <div>
-            <h2 className="text-[22px] font-bold tracking-tight leading-tight">Folders</h2>
-            <p className="text-[13px] text-muted-foreground">
+            <h2 className="text-[30px] font-bold tracking-tight leading-none">Folders</h2>
+            <p className="text-[13px] text-muted-foreground mt-1">
               {folders.length} folder{folders.length === 1 ? "" : "s"} · {totalIdeas} idea{totalIdeas === 1 ? "" : "s"}
             </p>
           </div>
-          <button
-            onClick={onSeeAllIdeas}
-            className="press text-[13px] font-medium text-primary px-1 h-8"
-          >
-            All ideas
-          </button>
         </div>
 
         {foldersLoading ? (
@@ -154,6 +148,8 @@ export const MobileHome = ({ onOpenFolder, onSelectIdea, onSeeAllRecent, onSeeAl
           </div>
         )}
       </section>
+
+      {captureSlot && <section>{captureSlot}</section>}
 
       {/* Recent section */}
       <section>

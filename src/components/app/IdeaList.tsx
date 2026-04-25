@@ -93,7 +93,7 @@ export const IdeaList = ({ filter, selectedId, onSelect, onBackToFolders, onFilt
 
       <div
         {...bind}
-        className="flex-1 overflow-y-auto scroll-momentum px-0 pb-28 md:pb-0 relative"
+        className="flex-1 min-h-0 overflow-y-auto scroll-momentum touch-pan-y px-0 pb-[calc(7rem+env(safe-area-inset-bottom))] md:pb-0 relative"
       >
         {/* Pull-to-refresh indicator (mobile only). Sits above the content and
             follows the finger; locks at threshold while refreshing. */}

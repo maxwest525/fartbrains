@@ -523,7 +523,7 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
       )}
 
       {/* Quick folder chips — tap to set folder above without opening the dropdown. */}
-      <div className="flex items-center gap-1.5 overflow-x-auto -mx-1 px-1 pb-0.5 scrollbar-none">
+      <div className="flex items-center gap-1.5 overflow-x-auto -mx-1 px-1 pb-0.5 no-scrollbar scroll-momentum">
         <button
           type="button"
           onClick={() => setFolder(NO_FOLDER)}
