@@ -449,7 +449,16 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
         className="h-12 rounded-xl bg-secondary/60 border-transparent text-[15px]"
       />
 
-      <Select value={folder} onValueChange={setFolder}>
+      <Select
+        value={folder}
+        onValueChange={(v) => {
+          if (v === NEW_FOLDER) {
+            setNewFolderOpen(true);
+            return;
+          }
+          setFolder(v);
+        }}
+      >
         <SelectTrigger className="h-12 rounded-xl bg-secondary/60 border-transparent text-[15px]">
           <div className="flex items-center gap-2">
             <Inbox className="h-4 w-4 text-muted-foreground" />
@@ -457,6 +466,13 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
           </div>
         </SelectTrigger>
         <SelectContent>
+          <SelectItem value={NEW_FOLDER}>
+            <span className="flex items-center gap-2 text-primary font-medium">
+              <Plus className="h-4 w-4" />
+              New folder…
+            </span>
+          </SelectItem>
+          <SelectSeparator />
           <SelectItem value={NO_FOLDER}>All ideas</SelectItem>
           {folders.map((f) => (
             <SelectItem key={f.id} value={f.id}>{f.name}</SelectItem>
@@ -464,44 +480,93 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
         </SelectContent>
       </Select>
 
-      {/* Quick folder chips — tap to set folder above without opening the dropdown. */}
-      {folders.length > 0 && (
-        <div className="flex items-center gap-1.5 overflow-x-auto -mx-1 px-1 pb-0.5 scrollbar-none">
-          <button
+      {/* Inline new-folder name field — opens from dropdown item or chip. */}
+      {newFolderOpen && (
+        <div className="flex items-center gap-2">
+          <Input
+            autoFocus
+            value={newFolderName}
+            onChange={(e) => setNewFolderName(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                handleCreateFolder();
+              } else if (e.key === "Escape") {
+                setNewFolderOpen(false);
+                setNewFolderName("");
+              }
+            }}
+            placeholder="New folder name"
+            className="h-11 rounded-xl bg-secondary/60 border-transparent text-[15px] flex-1"
+            maxLength={60}
+          />
+          <Button
             type="button"
-            onClick={() => setFolder(NO_FOLDER)}
-            className={cn(
-              "shrink-0 inline-flex items-center gap-1 h-8 px-3 rounded-full text-[13px] font-medium border transition-colors press",
-              folder === NO_FOLDER
-                ? "bg-primary text-primary-foreground border-primary"
-                : "bg-secondary/60 text-muted-foreground border-transparent hover:text-foreground"
-            )}
+            onClick={handleCreateFolder}
+            disabled={!newFolderName.trim() || createFolder.isPending}
+            className="h-11 rounded-xl px-4"
           >
-            <Inbox className="h-3.5 w-3.5" />
-            All
-          </button>
-          {folders.map((f) => {
-            const active = folder === f.id;
-            return (
-              <button
-                key={f.id}
-                type="button"
-                onClick={() => setFolder(f.id)}
-                className={cn(
-                  "shrink-0 inline-flex items-center gap-1 h-8 px-3 rounded-full text-[13px] font-medium border transition-colors press max-w-[160px]",
-                  active
-                    ? "bg-primary text-primary-foreground border-primary"
-                    : "bg-secondary/60 text-muted-foreground border-transparent hover:text-foreground"
-                )}
-                title={f.name}
-              >
-                <FolderIcon className="h-3.5 w-3.5 shrink-0" />
-                <span className="truncate">{f.name}</span>
-              </button>
-            );
-          })}
+            {createFolder.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Create"}
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={() => {
+              setNewFolderOpen(false);
+              setNewFolderName("");
+            }}
+            className="h-11 rounded-xl px-3"
+          >
+            Cancel
+          </Button>
         </div>
       )}
+
+      {/* Quick folder chips — tap to set folder above without opening the dropdown. */}
+      <div className="flex items-center gap-1.5 overflow-x-auto -mx-1 px-1 pb-0.5 scrollbar-none">
+        <button
+          type="button"
+          onClick={() => setFolder(NO_FOLDER)}
+          className={cn(
+            "shrink-0 inline-flex items-center gap-1 h-8 px-3 rounded-full text-[13px] font-medium border transition-colors press",
+            folder === NO_FOLDER
+              ? "bg-primary text-primary-foreground border-primary"
+              : "bg-secondary/60 text-muted-foreground border-transparent hover:text-foreground"
+          )}
+        >
+          <Inbox className="h-3.5 w-3.5" />
+          All
+        </button>
+        {folders.map((f) => {
+          const active = folder === f.id;
+          return (
+            <button
+              key={f.id}
+              type="button"
+              onClick={() => setFolder(f.id)}
+              className={cn(
+                "shrink-0 inline-flex items-center gap-1 h-8 px-3 rounded-full text-[13px] font-medium border transition-colors press max-w-[160px]",
+                active
+                  ? "bg-primary text-primary-foreground border-primary"
+                  : "bg-secondary/60 text-muted-foreground border-transparent hover:text-foreground"
+              )}
+              title={f.name}
+            >
+              <FolderIcon className="h-3.5 w-3.5 shrink-0" />
+              <span className="truncate">{f.name}</span>
+            </button>
+          );
+        })}
+        {/* New folder chip — always available */}
+        <button
+          type="button"
+          onClick={() => setNewFolderOpen(true)}
+          className="shrink-0 inline-flex items-center gap-1 h-8 px-3 rounded-full text-[13px] font-medium border border-dashed border-border/70 text-muted-foreground hover:text-foreground hover:border-primary/50 transition-colors press"
+        >
+          <Plus className="h-3.5 w-3.5" />
+          New
+        </button>
+      </div>
 
       <Button
         onClick={usesAiPreview ? handleGenerate : handleSave}
