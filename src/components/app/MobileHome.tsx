@@ -157,6 +157,8 @@ export const MobileHome = ({ captureSlot, onOpenFolder, onSelectIdea, onSeeAllRe
         )}
       </section>
 
+      {captureSlot && <section>{captureSlot}</section>}
+
       {/* Recent section */}
       <section>
         <div className="flex items-end justify-between mb-2 px-0.5">
