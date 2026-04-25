@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Sparkles, Loader2, AlertTriangle, Inbox, Folder as FolderIcon, CheckCircle2, XCircle, ArrowRight, Pencil, ArrowLeft } from "lucide-react";
+import { Sparkles, Loader2, AlertTriangle, Inbox, Folder as FolderIcon, CheckCircle2, XCircle, ArrowRight, Pencil, ArrowLeft, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useDuplicateUrl } from "@/hooks/useDuplicateUrl";
 import { useUrlCheck } from "@/hooks/useUrlCheck";
@@ -10,16 +10,18 @@ import {
   Select,
   SelectContent,
   SelectItem,
+  SelectSeparator,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useFolders } from "@/hooks/useFolders";
+import { useFolders, useCreateFolder } from "@/hooks/useFolders";
 import { useCreateIdea } from "@/hooks/useIdeas";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { SourcePicker, isSourceEnabled, type SourceKey } from "./SourcePicker";
 
 const NO_FOLDER = "__none__";
+const NEW_FOLDER = "__new__";
 
 type Props = {
   defaultFolderId?: string | null;
