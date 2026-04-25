@@ -6,6 +6,7 @@ import { IdeaList } from "@/components/app/IdeaList";
 import { IdeaDetail } from "@/components/app/IdeaDetail";
 import { ComposeIdea } from "@/components/app/ComposeIdea";
 import { MobileTabBar } from "@/components/app/MobileTabBar";
+import { MobileHome } from "@/components/app/MobileHome";
 import { SettingsSheet } from "@/components/app/SettingsSheet";
 import { FoldersPage } from "@/components/app/FoldersPage";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
