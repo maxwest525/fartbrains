@@ -119,19 +119,6 @@ const Shell = () => {
       onClick: () => handleFilterChange({ kind: "recent" }),
     },
   ];
-    {
-      label: "Favorites",
-      icon: Star,
-      active: view === "ideas" && filter.kind === "favorites",
-      onClick: () => handleFilterChange({ kind: "favorites" }),
-    },
-    {
-      label: "Recent",
-      icon: Clock,
-      active: view === "ideas" && filter.kind === "recent",
-      onClick: () => handleFilterChange({ kind: "recent" }),
-    },
-  ];
 
   return (
     <div className="flex flex-col h-[100dvh] w-full bg-background overflow-hidden relative">
