@@ -23,7 +23,8 @@ const Shell = () => {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [searchValue, setSearchValue] = useState("");
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [captureOpen, setCaptureOpen] = useState(false);
+  // Capture is the primary action — open by default so paste→generate is one tap.
+  const [captureOpen, setCaptureOpen] = useState(true);
   const isMobile = useIsMobile();
   const composeRef = useRef<HTMLDivElement>(null);
   const { user, signOut } = useAuth();
@@ -209,41 +210,17 @@ const Shell = () => {
         {/* Ideas view — compose + list. Hidden on mobile when detail is open or folders page is showing. */}
         {!showFolders && !showDetailOnly && (
           <div className="w-full flex-1 min-w-0 md:w-[28rem] md:flex-none md:shrink-0 md:border-r border-border flex flex-col min-h-0 bg-background">
-            {isMobile && !captureOpen ? (
-              <div ref={composeRef} className="px-4 pt-3 pb-2 shrink-0">
-                <button
-                  onClick={() => setCaptureOpen(true)}
-                  className="press w-full h-11 rounded-xl bg-primary text-primary-foreground flex items-center justify-center gap-2 text-[15px] font-semibold shadow-sm"
-                >
-                  <Plus className="h-4 w-4" />
-                  Capture idea
-                </button>
-              </div>
-            ) : (
             <div ref={composeRef} className="px-3 sm:px-5 pt-3 pb-2 shrink-0">
-              {isMobile && (
-                <div className="flex justify-end pb-2">
-                  <button
-                    onClick={() => setCaptureOpen(false)}
-                    className="press h-8 px-2 text-[13px] font-medium text-muted-foreground"
-                  >
-                    Hide capture
-                  </button>
-                </div>
-              )}
               <ComposeIdea
                 defaultFolderId={defaultFolderId}
                 onCreated={(id) => {
                   setSelectedId(id);
-                  setCaptureOpen(false);
                 }}
                 onOpenExisting={(id) => {
                   setSelectedId(id);
-                  setCaptureOpen(false);
                 }}
               />
             </div>
-            )}
             <div className="flex-1 min-h-0 overflow-hidden">
               <IdeaList
                 filter={filter}
