@@ -209,7 +209,7 @@ const Shell = () => {
 
         {/* Ideas view — compose + list. Hidden on mobile when detail is open or folders page is showing. */}
         {!showFolders && !showDetailOnly && (
-          <div className="w-full flex-1 min-w-0 md:w-[28rem] md:flex-none md:shrink-0 md:border-r border-border flex flex-col min-h-0 bg-background">
+          <div className="w-full flex-1 min-w-0 md:w-[28rem] md:flex-none md:shrink-0 md:border-r border-border flex flex-col min-h-0 bg-background md:overflow-hidden overflow-y-auto scroll-momentum touch-pan-y pb-[calc(5.75rem+env(safe-area-inset-bottom))] md:pb-0">
             <div ref={composeRef} className="px-3 sm:px-5 pt-3 pb-2 shrink-0">
               <ComposeIdea
                 defaultFolderId={defaultFolderId}
@@ -221,13 +221,14 @@ const Shell = () => {
                 }}
               />
             </div>
-            <div className="flex-1 min-h-0 overflow-hidden">
+            <div className="md:flex-1 md:min-h-0 md:overflow-hidden">
               <IdeaList
                 filter={filter}
                 selectedId={selectedId}
                 onSelect={setSelectedId}
                 onBackToFolders={openFoldersPage}
                 onFilterChange={handleFilterChange}
+                pageScroll={isMobile}
               />
             </div>
           </div>
