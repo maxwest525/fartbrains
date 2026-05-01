@@ -5,7 +5,6 @@ import { IdeaList } from "@/components/app/IdeaList";
 import { IdeaDetail } from "@/components/app/IdeaDetail";
 import { ComposeIdea } from "@/components/app/ComposeIdea";
 import { MobileTabBar } from "@/components/app/MobileTabBar";
-import { MobileHome } from "@/components/app/MobileHome";
 import { SettingsSheet } from "@/components/app/SettingsSheet";
 import { FoldersPage } from "@/components/app/FoldersPage";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
@@ -58,10 +57,6 @@ const Shell = () => {
   const showDetailOnly = isMobile && selectedId !== null;
   const showFolders = view === "folders" && !showDetailOnly;
   const defaultFolderId = filter.kind === "folder" ? filter.folderId : null;
-
-  // Mobile "home" view: folders-first grid + recent ideas, instead of the full list.
-  // Triggered when the user is on the default Ideas tab with no filter applied.
-  const showMobileHome = isMobile && view === "ideas" && filter.kind === "all" && !showDetailOnly;
 
   // Desktop top-bar nav items.
   const navItems: Array<{
@@ -181,50 +176,23 @@ const Shell = () => {
 
         {/* Ideas view — compose + list. Hidden on mobile when detail is open or folders page is showing. */}
         {!showFolders && !showDetailOnly && (
-          <div className="w-full md:w-[28rem] md:shrink-0 md:border-r border-border flex flex-col min-h-0 bg-background">
-            {showMobileHome ? (
-              // MOBILE HOME — one touch-friendly scroll surface. Folders stay first,
-              // capture sits inline below them, and the fixed tab bar has safe clearance.
-              <div className="flex-1 min-h-0 overflow-y-auto scroll-momentum touch-pan-y pb-[calc(7rem+env(safe-area-inset-bottom))]">
-                <MobileHome
-                  captureSlot={
-                    <div ref={composeRef} className="pt-1 pb-1">
-                      <ComposeIdea
-                        defaultFolderId={defaultFolderId}
-                        onCreated={(id) => setSelectedId(id)}
-                        onOpenExisting={(id) => setSelectedId(id)}
-                      />
-                    </div>
-                  }
-                  onOpenFolder={(folderId) => {
-                    setView("ideas");
-                    setFilter({ kind: "folder", folderId });
-                  }}
-                  onSelectIdea={(id) => setSelectedId(id)}
-                  onSeeAllRecent={() => handleFilterChange({ kind: "recent" })}
-                  onSeeAllIdeas={() => handleFilterChange({ kind: "all" })}
-                />
-              </div>
-            ) : (
-              <>
-                <div ref={composeRef} className="px-3 sm:px-5 pt-3 pb-2 shrink-0">
-                  <ComposeIdea
-                    defaultFolderId={defaultFolderId}
-                    onCreated={(id) => setSelectedId(id)}
-                    onOpenExisting={(id) => setSelectedId(id)}
-                  />
-                </div>
-                <div className="flex-1 min-h-0 overflow-hidden">
-                  <IdeaList
-                    filter={filter}
-                    selectedId={selectedId}
-                    onSelect={setSelectedId}
-                    onBackToFolders={openFoldersPage}
-                    onFilterChange={handleFilterChange}
-                  />
-                </div>
-              </>
-            )}
+          <div className="w-full flex-1 min-w-0 md:w-[28rem] md:flex-none md:shrink-0 md:border-r border-border flex flex-col min-h-0 bg-background">
+            <div ref={composeRef} className="px-3 sm:px-5 pt-3 pb-2 shrink-0">
+              <ComposeIdea
+                defaultFolderId={defaultFolderId}
+                onCreated={(id) => setSelectedId(id)}
+                onOpenExisting={(id) => setSelectedId(id)}
+              />
+            </div>
+            <div className="flex-1 min-h-0 overflow-hidden">
+              <IdeaList
+                filter={filter}
+                selectedId={selectedId}
+                onSelect={setSelectedId}
+                onBackToFolders={openFoldersPage}
+                onFilterChange={handleFilterChange}
+              />
+            </div>
           </div>
         )}
 
