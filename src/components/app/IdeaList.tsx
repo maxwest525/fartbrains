@@ -83,7 +83,7 @@ export const IdeaList = ({ filter, selectedId, onSelect, onBackToFolders, onFilt
             <span>Folders</span>
           </button>
         )}
-        <h2 className="text-[34px] leading-tight md:text-lg font-bold md:font-semibold tracking-tight">
+        <h2 className="text-[28px] leading-tight md:text-lg font-bold md:font-semibold tracking-tight">
           {heading}
         </h2>
         <p className="text-[13px] md:text-xs text-muted-foreground mt-0.5">
@@ -93,7 +93,7 @@ export const IdeaList = ({ filter, selectedId, onSelect, onBackToFolders, onFilt
 
       <div
         {...bind}
-        className="flex-1 min-h-0 overflow-y-auto scroll-momentum touch-pan-y px-0 pb-[calc(7rem+env(safe-area-inset-bottom))] md:pb-0 relative"
+        className="flex-1 min-h-0 overflow-y-auto scroll-momentum touch-pan-y px-0 pb-[calc(5.75rem+env(safe-area-inset-bottom))] md:pb-0 relative"
       >
         {/* Pull-to-refresh indicator (mobile only). Sits above the content and
             follows the finger; locks at threshold while refreshing. */}
@@ -128,9 +128,8 @@ export const IdeaList = ({ filter, selectedId, onSelect, onBackToFolders, onFilt
             transition: refreshing ? "transform 180ms ease" : undefined,
           }}
         >
-        {/* Inline folder strip — folders live where ideas are, no separate page needed.
-            Hidden during search to keep results focused. */}
-        {filter.kind !== "search" && onFilterChange && (
+        {/* Desktop-only folder shortcuts. Mobile keeps folders in the Folders tab. */}
+        {!isMobile && filter.kind !== "search" && onFilterChange && (
           <FolderStrip
             activeFolderId={filter.kind === "folder" ? filter.folderId : null}
             onSelectFolder={(folderId) => onFilterChange({ kind: "folder", folderId })}

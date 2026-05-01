@@ -1,11 +1,10 @@
 import { useRef, useState } from "react";
-import { Search, X, Inbox, Folder, Star, Clock, Settings as SettingsIcon, LogOut } from "lucide-react";
+import { Search, X, Inbox, Folder, Star, Clock, Settings as SettingsIcon, LogOut, Plus } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { IdeaList } from "@/components/app/IdeaList";
 import { IdeaDetail } from "@/components/app/IdeaDetail";
 import { ComposeIdea } from "@/components/app/ComposeIdea";
 import { MobileTabBar } from "@/components/app/MobileTabBar";
-import { MobileHome } from "@/components/app/MobileHome";
 import { SettingsSheet } from "@/components/app/SettingsSheet";
 import { FoldersPage } from "@/components/app/FoldersPage";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
@@ -23,6 +22,7 @@ const Shell = () => {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [searchValue, setSearchValue] = useState("");
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [captureOpen, setCaptureOpen] = useState(false);
   const isMobile = useIsMobile();
   const composeRef = useRef<HTMLDivElement>(null);
   const { user, signOut } = useAuth();
@@ -31,6 +31,7 @@ const Shell = () => {
 
   const onSearch = (v: string) => {
     setSearchValue(v);
+    setCaptureOpen(false);
     if (v.trim()) {
       setView("ideas");
       setFilter({ kind: "search", query: v });
@@ -41,27 +42,26 @@ const Shell = () => {
 
   const clearSearch = () => {
     setSearchValue("");
+    setCaptureOpen(false);
     setFilter({ kind: "all" });
   };
 
   const handleFilterChange = (f: IdeaFilter) => {
     setView("ideas");
     setFilter(f);
+    setCaptureOpen(false);
     if (f.kind !== "search") setSearchValue("");
   };
 
   const openFoldersPage = () => {
     setView("folders");
     setSelectedId(null);
+    setCaptureOpen(false);
   };
 
   const showDetailOnly = isMobile && selectedId !== null;
   const showFolders = view === "folders" && !showDetailOnly;
   const defaultFolderId = filter.kind === "folder" ? filter.folderId : null;
-
-  // Mobile "home" view: folders-first grid + recent ideas, instead of the full list.
-  // Triggered when the user is on the default Ideas tab with no filter applied.
-  const showMobileHome = isMobile && view === "ideas" && filter.kind === "all" && !showDetailOnly;
 
   // Desktop top-bar nav items.
   const navItems: Array<{
@@ -175,56 +175,60 @@ const Shell = () => {
               setView("ideas");
               setFilter({ kind: "folder", folderId });
             }}
-            onBack={isMobile ? () => setView("ideas") : undefined}
+            onBack={isMobile ? () => {
+              setView("ideas");
+              setCaptureOpen(false);
+            } : undefined}
           />
         )}
 
         {/* Ideas view — compose + list. Hidden on mobile when detail is open or folders page is showing. */}
         {!showFolders && !showDetailOnly && (
-          <div className="w-full md:w-[28rem] md:shrink-0 md:border-r border-border flex flex-col min-h-0 bg-background">
-            {showMobileHome ? (
-              // MOBILE HOME — one touch-friendly scroll surface. Folders stay first,
-              // capture sits inline below them, and the fixed tab bar has safe clearance.
-              <div className="flex-1 min-h-0 overflow-y-auto scroll-momentum touch-pan-y pb-[calc(7rem+env(safe-area-inset-bottom))]">
-                <MobileHome
-                  captureSlot={
-                    <div ref={composeRef} className="pt-1 pb-1">
-                      <ComposeIdea
-                        defaultFolderId={defaultFolderId}
-                        onCreated={(id) => setSelectedId(id)}
-                        onOpenExisting={(id) => setSelectedId(id)}
-                      />
-                    </div>
-                  }
-                  onOpenFolder={(folderId) => {
-                    setView("ideas");
-                    setFilter({ kind: "folder", folderId });
-                  }}
-                  onSelectIdea={(id) => setSelectedId(id)}
-                  onSeeAllRecent={() => handleFilterChange({ kind: "recent" })}
-                  onSeeAllIdeas={() => handleFilterChange({ kind: "all" })}
-                />
+          <div className="w-full flex-1 min-w-0 md:w-[28rem] md:flex-none md:shrink-0 md:border-r border-border flex flex-col min-h-0 bg-background">
+            {isMobile && !captureOpen ? (
+              <div ref={composeRef} className="px-4 pt-3 pb-2 shrink-0">
+                <button
+                  onClick={() => setCaptureOpen(true)}
+                  className="press w-full h-11 rounded-xl bg-primary text-primary-foreground flex items-center justify-center gap-2 text-[15px] font-semibold shadow-sm"
+                >
+                  <Plus className="h-4 w-4" />
+                  Capture idea
+                </button>
               </div>
             ) : (
-              <>
-                <div ref={composeRef} className="px-3 sm:px-5 pt-3 pb-2 shrink-0">
-                  <ComposeIdea
-                    defaultFolderId={defaultFolderId}
-                    onCreated={(id) => setSelectedId(id)}
-                    onOpenExisting={(id) => setSelectedId(id)}
-                  />
+            <div ref={composeRef} className="px-3 sm:px-5 pt-3 pb-2 shrink-0">
+              {isMobile && (
+                <div className="flex justify-end pb-2">
+                  <button
+                    onClick={() => setCaptureOpen(false)}
+                    className="press h-8 px-2 text-[13px] font-medium text-muted-foreground"
+                  >
+                    Hide capture
+                  </button>
                 </div>
-                <div className="flex-1 min-h-0 overflow-hidden">
-                  <IdeaList
-                    filter={filter}
-                    selectedId={selectedId}
-                    onSelect={setSelectedId}
-                    onBackToFolders={openFoldersPage}
-                    onFilterChange={handleFilterChange}
-                  />
-                </div>
-              </>
+              )}
+              <ComposeIdea
+                defaultFolderId={defaultFolderId}
+                onCreated={(id) => {
+                  setSelectedId(id);
+                  setCaptureOpen(false);
+                }}
+                onOpenExisting={(id) => {
+                  setSelectedId(id);
+                  setCaptureOpen(false);
+                }}
+              />
+            </div>
             )}
+            <div className="flex-1 min-h-0 overflow-hidden">
+              <IdeaList
+                filter={filter}
+                selectedId={selectedId}
+                onSelect={setSelectedId}
+                onBackToFolders={openFoldersPage}
+                onFilterChange={handleFilterChange}
+              />
+            </div>
           </div>
         )}
 
