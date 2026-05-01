@@ -113,18 +113,26 @@ export const FolderStrip = ({ activeFolderId, onSelectFolder, onSelectAll }: Pro
             return (
               <div
                 key={folder.id}
+                aria-pressed={active}
                 className={cn(
-                  "relative shrink-0 w-[170px] rounded-xl border transition-all",
+                  "relative shrink-0 w-[170px] rounded-xl transition-all",
                   active
-                    ? "bg-secondary border-primary/40 ring-1 ring-primary/30"
-                    : "bg-card border-border/60 hover:border-border"
+                    ? "border-2 border-primary ring-2 ring-primary/25 shadow-md -translate-y-0.5"
+                    : "border border-border/60 hover:border-border"
                 )}
                 style={{
                   background: active
-                    ? undefined
+                    ? `linear-gradient(155deg, hsl(${hue} 70% 92% / 0.85) 0%, hsl(var(--card)) 70%)`
                     : `linear-gradient(155deg, hsl(${hue} 70% 96% / 0.55) 0%, hsl(var(--card)) 60%)`,
                 }}
               >
+                {active && (
+                  <span
+                    className="absolute left-0 top-2 bottom-2 w-1 rounded-r-full"
+                    style={{ background: `hsl(${hue} 75% 50%)` }}
+                    aria-hidden
+                  />
+                )}
                 <button
                   onClick={() => onSelectFolder(folder.id)}
                   className="press w-full text-left p-2.5"
@@ -134,7 +142,7 @@ export const FolderStrip = ({ activeFolderId, onSelectFolder, onSelectAll }: Pro
                       className="h-7 w-7 rounded-[8px] flex items-center justify-center shrink-0"
                       style={{
                         background: `linear-gradient(140deg, hsl(${hue} 85% 62%) 0%, hsl(${hue} 75% 48%) 100%)`,
-                        boxShadow: `0 4px 10px -4px hsl(${hue} 70% 45% / 0.45)`,
+                        boxShadow: `0 4px 10px -4px hsl(${hue} 70% 45% / ${active ? 0.7 : 0.45})`,
                       }}
                     >
                       <FolderIcon
@@ -145,11 +153,18 @@ export const FolderStrip = ({ activeFolderId, onSelectFolder, onSelectAll }: Pro
                       />
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className="font-semibold text-[13px] truncate leading-tight">
+                      <p className={cn(
+                        "font-semibold text-[13px] truncate leading-tight",
+                        active && "text-foreground"
+                      )}>
                         {folder.name}
                       </p>
-                      <p className="text-[11px] text-muted-foreground tabular-nums leading-tight mt-0.5">
-                        {count} · {formatRelative(folder.updated_at)}
+                      <p className={cn(
+                        "text-[11px] tabular-nums leading-tight mt-0.5",
+                        active ? "font-medium" : "text-muted-foreground"
+                      )}
+                      style={active ? { color: `hsl(${hue} 60% 35%)` } : undefined}>
+                        {active ? `Viewing · ${count}` : `${count} · ${formatRelative(folder.updated_at)}`}
                       </p>
                     </div>
                   </div>
