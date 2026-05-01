@@ -86,8 +86,15 @@ export const IdeaList = ({ filter, selectedId, onSelect, onBackToFolders, onFilt
         <h2 className="text-[28px] leading-tight md:text-lg font-bold md:font-semibold tracking-tight">
           {heading}
         </h2>
-        <p className="text-[13px] md:text-xs text-muted-foreground mt-0.5">
-          {isLoading ? "Loading…" : `${ideas.length} idea${ideas.length === 1 ? "" : "s"}`}
+        <p className="text-[13px] md:text-xs text-muted-foreground mt-0.5 flex items-center gap-1.5">
+          {isLoading ? (
+            <>
+              <Loader2 className="h-3 w-3 animate-spin" />
+              <span>Loading ideas…</span>
+            </>
+          ) : (
+            <span>{ideas.length} idea{ideas.length === 1 ? "" : "s"}</span>
+          )}
         </p>
       </div>
 
