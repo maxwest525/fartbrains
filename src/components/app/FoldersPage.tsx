@@ -175,16 +175,33 @@ export const FoldersPage = ({ onOpenFolder, onBack }: Props) => {
       {/* Grid */}
       <div className="flex-1 min-h-0 overflow-y-auto scroll-momentum touch-pan-y px-4 sm:px-6 py-4 pb-[calc(5.75rem+env(safe-area-inset-bottom))] md:pb-8">
         {isLoading ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-            {[...Array(6)].map((_, i) => (
-              <div key={i} className="h-32 rounded-2xl bg-card animate-pulse" />
-            ))}
-          </div>
+          <>
+            <div className="flex items-center justify-center gap-2 text-[13px] text-muted-foreground mb-3">
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              <span>Loading folders…</span>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+              {[...Array(6)].map((_, i) => (
+                <div key={i} className="h-[180px] rounded-2xl bg-card border border-border/50 animate-pulse" />
+              ))}
+            </div>
+          </>
         ) : filtered.length === 0 ? (
-          <div className="text-center py-16 text-muted-foreground">
-            <Folder className="h-12 w-12 mx-auto mb-3 opacity-30" />
-            <p className="text-sm">
-              {query ? "No folders match that search." : "No folders yet."}
+          <div className="text-center py-16">
+            <div className="mx-auto h-14 w-14 rounded-2xl bg-muted/60 flex items-center justify-center mb-3">
+              {query ? (
+                <Search className="h-7 w-7 text-muted-foreground" />
+              ) : (
+                <Folder className="h-7 w-7 text-muted-foreground" />
+              )}
+            </div>
+            <p className="text-[15px] font-semibold text-foreground">
+              {query ? "No matching folders" : "No folders yet"}
+            </p>
+            <p className="text-[13px] text-muted-foreground mt-1 max-w-xs mx-auto">
+              {query
+                ? `Nothing matches "${query}". Try a different name.`
+                : "Group related ideas together for easier browsing."}
             </p>
             {!query && (
               <Button
