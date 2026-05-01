@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Sparkles, Loader2, AlertTriangle, Inbox, Folder as FolderIcon, CheckCircle2, XCircle, ArrowRight, Pencil, ArrowLeft, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useDuplicateUrl } from "@/hooks/useDuplicateUrl";
@@ -88,10 +88,34 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
   const [newFolderOpen, setNewFolderOpen] = useState(false);
   const [newFolderName, setNewFolderName] = useState("");
 
+  // Quick-capture: refs let us auto-focus the primary input on mount + on source change
+  // so the user can land on the page and immediately paste/type without an extra tap.
+  const urlInputRef = useRef<HTMLInputElement>(null);
+  const noteInputRef = useRef<HTMLInputElement>(null);
+  const noteTextareaRef = useRef<HTMLTextAreaElement>(null);
+
   // Keep folder selection in sync when the parent switches active folder filter.
   useEffect(() => {
     setFolder(defaultFolderId ?? NO_FOLDER);
   }, [defaultFolderId]);
+
+  // Auto-focus the primary capture field whenever the active source changes
+  // (and on first mount). Skip when the AI preview is on screen — that view
+  // owns its own focus.
+  useEffect(() => {
+    if (preview) return;
+    // Defer to next frame so the field is mounted/visible.
+    const id = requestAnimationFrame(() => {
+      if (source === "instagram" || source === "link") {
+        urlInputRef.current?.focus();
+      } else if (source === "note" || source === "list" || source === "transcript") {
+        noteTextareaRef.current?.focus();
+      } else {
+        noteInputRef.current?.focus();
+      }
+    });
+    return () => cancelAnimationFrame(id);
+  }, [source, preview]);
 
   const { data: urlDuplicate } = useDuplicateUrl(
     source === "instagram" || source === "link" ? url : ""
@@ -359,12 +383,14 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
 
       {needsUrl && (
         <Input
+          ref={urlInputRef}
           value={url}
           onChange={(e) => setUrl(e.target.value)}
           placeholder={ph.url}
           inputMode="url"
           autoCapitalize="none"
           autoCorrect="off"
+          autoFocus
           className="h-12 rounded-xl bg-secondary/60 border-transparent text-[15px]"
         />
       )}
@@ -427,6 +453,7 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
 
       {source === "note" || source === "list" || isTranscript ? (
         <Textarea
+          ref={noteTextareaRef}
           value={note}
           onChange={(e) => setNote(e.target.value)}
           placeholder={ph.note}
@@ -435,6 +462,7 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
         />
       ) : (
         <Input
+          ref={noteInputRef}
           value={note}
           onChange={(e) => setNote(e.target.value)}
           placeholder={ph.note}
