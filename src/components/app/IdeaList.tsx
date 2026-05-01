@@ -128,9 +128,8 @@ export const IdeaList = ({ filter, selectedId, onSelect, onBackToFolders, onFilt
             transition: refreshing ? "transform 180ms ease" : undefined,
           }}
         >
-        {/* Inline folder strip — folders live where ideas are, no separate page needed.
-            Hidden during search to keep results focused. */}
-        {filter.kind !== "search" && onFilterChange && (
+        {/* Desktop-only folder shortcuts. Mobile keeps folders in the Folders tab. */}
+        {!isMobile && filter.kind !== "search" && onFilterChange && (
           <FolderStrip
             activeFolderId={filter.kind === "folder" ? filter.folderId : null}
             onSelectFolder={(folderId) => onFilterChange({ kind: "folder", folderId })}
