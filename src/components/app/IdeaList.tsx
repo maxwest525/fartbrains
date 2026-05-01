@@ -35,9 +35,11 @@ type Props = {
   onBackToFolders?: () => void;
   /** Change the active filter from the inline folder strip. */
   onFilterChange?: (filter: IdeaFilter) => void;
+  /** Mobile can let the page own scrolling so compose + list move together. */
+  pageScroll?: boolean;
 };
 
-export const IdeaList = ({ filter, selectedId, onSelect, onBackToFolders, onFilterChange }: Props) => {
+export const IdeaList = ({ filter, selectedId, onSelect, onBackToFolders, onFilterChange, pageScroll = false }: Props) => {
   const { data: ideas = [], isLoading } = useIdeas(filter);
   const { data: folders = [] } = useFolders();
   const qc = useQueryClient();
@@ -45,7 +47,7 @@ export const IdeaList = ({ filter, selectedId, onSelect, onBackToFolders, onFilt
 
   // Pull-to-refresh — only on mobile, refetches the active ideas query.
   const { bind, pull, refreshing, threshold } = usePullToRefresh<HTMLDivElement>({
-    enabled: isMobile,
+    enabled: isMobile && !pageScroll,
     onRefresh: async () => {
       await qc.invalidateQueries({ queryKey: ["ideas"] });
     },
@@ -70,7 +72,7 @@ export const IdeaList = ({ filter, selectedId, onSelect, onBackToFolders, onFilt
             : (folderName ?? "Folder");
 
   return (
-    <div className="w-full h-full flex flex-col bg-background">
+    <div className={cn("w-full flex flex-col bg-background", pageScroll ? "h-auto" : "h-full")}>
       {/* iOS large title (mobile only). Desktop keeps the compact label. */}
       <div className="px-4 sm:px-5 pt-2 pb-2 md:py-4 md:border-b border-border">
         {filter.kind === "folder" && onBackToFolders && (
@@ -100,7 +102,12 @@ export const IdeaList = ({ filter, selectedId, onSelect, onBackToFolders, onFilt
 
       <div
         {...bind}
-        className="flex-1 min-h-0 overflow-y-auto scroll-momentum touch-pan-y px-0 pb-[calc(5.75rem+env(safe-area-inset-bottom))] md:pb-0 relative"
+        className={cn(
+          "px-0 relative",
+          pageScroll
+            ? "overflow-visible pb-3"
+            : "flex-1 min-h-0 overflow-y-auto scroll-momentum touch-pan-y pb-[calc(5.75rem+env(safe-area-inset-bottom))] md:pb-0"
+        )}
       >
         {/* Pull-to-refresh indicator (mobile only). Sits above the content and
             follows the finger; locks at threshold while refreshing. */}
