@@ -72,21 +72,33 @@ export const FolderStrip = ({ activeFolderId, onSelectFolder, onSelectAll }: Pro
           {/* All ideas tile */}
           <button
             onClick={onSelectAll}
+            aria-pressed={activeFolderId === null}
             className={cn(
-              "press shrink-0 w-[148px] rounded-xl border text-left p-2.5 transition-all",
+              "press relative shrink-0 w-[148px] rounded-xl border-2 text-left p-2.5 transition-all",
               activeFolderId === null
-                ? "bg-secondary border-primary/40 ring-1 ring-primary/30"
+                ? "bg-primary/10 border-primary ring-2 ring-primary/25 shadow-sm"
                 : "bg-card border-border/60 hover:border-border"
             )}
           >
+            {activeFolderId === null && (
+              <span className="absolute left-0 top-2 bottom-2 w-1 rounded-r-full bg-primary" aria-hidden />
+            )}
             <div className="flex items-center gap-2">
-              <div className="h-7 w-7 rounded-[8px] bg-foreground/85 text-background flex items-center justify-center shrink-0">
+              <div className={cn(
+                "h-7 w-7 rounded-[8px] flex items-center justify-center shrink-0",
+                activeFolderId === null
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-foreground/85 text-background"
+              )}>
                 <Inbox className="h-3.5 w-3.5" strokeWidth={2.4} />
               </div>
               <div className="min-w-0 flex-1">
-                <p className="font-semibold text-[13px] truncate leading-tight">All ideas</p>
+                <p className={cn(
+                  "font-semibold text-[13px] truncate leading-tight",
+                  activeFolderId === null && "text-primary"
+                )}>All ideas</p>
                 <p className="text-[11px] text-muted-foreground tabular-nums leading-tight mt-0.5">
-                  {totalIdeas}
+                  {activeFolderId === null ? `Viewing · ${totalIdeas}` : totalIdeas}
                 </p>
               </div>
             </div>
