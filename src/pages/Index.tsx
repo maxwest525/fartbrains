@@ -10,6 +10,7 @@ import { FoldersPage } from "@/components/app/FoldersPage";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useAuth } from "@/hooks/useAuth";
+import { useFolders } from "@/hooks/useFolders";
 import { useReminderNotifier } from "@/hooks/useReminderNotifier";
 import { cn } from "@/lib/utils";
 import type { IdeaFilter } from "@/hooks/useIdeas";
