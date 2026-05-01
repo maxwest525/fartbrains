@@ -138,8 +138,15 @@ export const FoldersPage = ({ onOpenFolder, onBack }: Props) => {
           <h1 className="text-[28px] md:text-2xl font-bold md:font-semibold tracking-tight leading-tight">
             Folders
           </h1>
-          <p className="text-[13px] text-muted-foreground mt-0.5">
-            {folders.length} folder{folders.length === 1 ? "" : "s"}
+          <p className="text-[13px] text-muted-foreground mt-0.5 flex items-center gap-1.5">
+            {isLoading ? (
+              <>
+                <Loader2 className="h-3 w-3 animate-spin" />
+                <span>Loading folders…</span>
+              </>
+            ) : (
+              <span>{folders.length} folder{folders.length === 1 ? "" : "s"}</span>
+            )}
           </p>
         </div>
         {/* Search */}
