@@ -161,11 +161,11 @@ export const IdeaDetail = ({ ideaId, onClose, backLabel = "Back" }: Props) => {
       <div className="safe-top sticky top-0 z-10 bg-background/80 backdrop-blur-xl px-1 sm:px-4 py-1 sm:py-2 md:border-b border-border flex items-center gap-1 min-h-[44px]">
         <button
           onClick={onClose}
-          className="press md:hidden flex items-center text-primary -ml-1 pl-1 pr-2 h-10 text-[17px]"
-          aria-label="Back"
+          className="press md:hidden flex items-center text-primary -ml-1 pl-1 pr-2 h-10 text-[17px] max-w-[55%]"
+          aria-label={`Back to ${backLabel}`}
         >
-          <ChevronLeft className="h-6 w-6 -mr-0.5" strokeWidth={2.4} />
-          <span className="font-normal">Back</span>
+          <ChevronLeft className="h-6 w-6 -mr-0.5 shrink-0" strokeWidth={2.4} />
+          <span className="font-normal truncate">{backLabel}</span>
         </button>
         <div className="hidden md:flex items-center gap-2 min-w-0 flex-1 px-2">
           <Badge variant="secondary" className="capitalize">
