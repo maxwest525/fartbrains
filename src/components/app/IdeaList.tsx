@@ -1,4 +1,4 @@
-import { Star, FileText, Link2, Mic, MessageSquare, ChevronRight, Loader2, ChevronLeft } from "lucide-react";
+import { Star, FileText, Link2, Mic, MessageSquare, ChevronRight, Loader2, ChevronLeft, Inbox, Search as SearchIcon, Folder as FolderIcon, Clock as ClockIcon } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 import { useIdeas, type Idea, type IdeaFilter } from "@/hooks/useIdeas";
