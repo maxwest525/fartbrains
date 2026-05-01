@@ -10,6 +10,7 @@ import { FoldersPage } from "@/components/app/FoldersPage";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useAuth } from "@/hooks/useAuth";
+import { useFolders } from "@/hooks/useFolders";
 import { useReminderNotifier } from "@/hooks/useReminderNotifier";
 import { cn } from "@/lib/utils";
 import type { IdeaFilter } from "@/hooks/useIdeas";
@@ -26,8 +27,26 @@ const Shell = () => {
   const isMobile = useIsMobile();
   const composeRef = useRef<HTMLDivElement>(null);
   const { user, signOut } = useAuth();
+  const { data: folders = [] } = useFolders();
   // Polls folders client-side; fires browser + toast notifications when due.
   useReminderNotifier();
+
+  const backLabel = (() => {
+    switch (filter.kind) {
+      case "all":
+        return "All ideas";
+      case "favorites":
+        return "Favorites";
+      case "recent":
+        return "Recent";
+      case "search":
+        return "Search";
+      case "folder": {
+        const f = folders.find((x) => x.id === filter.folderId);
+        return f?.name ?? "Folder";
+      }
+    }
+  })();
 
   const onSearch = (v: string) => {
     setSearchValue(v);
@@ -234,7 +253,7 @@ const Shell = () => {
 
         {/* Detail — desktop always shows, mobile only when an idea is selected */}
         {!showFolders && (!isMobile || showDetailOnly) && (
-          <IdeaDetail ideaId={selectedId} onClose={() => setSelectedId(null)} />
+          <IdeaDetail ideaId={selectedId} onClose={() => setSelectedId(null)} backLabel={backLabel} />
         )}
       </div>
 
