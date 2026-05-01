@@ -113,7 +113,7 @@ export const FoldersPage = ({ onOpenFolder, onBack }: Props) => {
   return (
     <div className="flex-1 flex flex-col h-full bg-background overflow-hidden">
       {/* iOS-style nav bar */}
-      <div className="safe-top sticky top-0 z-10 bg-background/80 backdrop-blur-xl px-1 sm:px-5 pt-1 sm:pt-3 pb-2 md:border-b border-border">
+      <div className="safe-top shrink-0 z-10 bg-background/80 backdrop-blur-xl px-1 sm:px-5 pt-1 sm:pt-3 pb-2 md:border-b border-border">
         <div className="flex items-center min-h-[44px] gap-1">
           {isMobile && onBack && (
             <button
@@ -135,7 +135,7 @@ export const FoldersPage = ({ onOpenFolder, onBack }: Props) => {
           </button>
         </div>
         <div className="px-3 sm:px-0 pt-1">
-          <h1 className="text-[34px] md:text-2xl font-bold md:font-semibold tracking-tight leading-tight">
+          <h1 className="text-[28px] md:text-2xl font-bold md:font-semibold tracking-tight leading-tight">
             Folders
           </h1>
           <p className="text-[13px] text-muted-foreground mt-0.5">
@@ -166,7 +166,7 @@ export const FoldersPage = ({ onOpenFolder, onBack }: Props) => {
       </div>
 
       {/* Grid */}
-      <div className="flex-1 min-h-0 overflow-y-auto scroll-momentum touch-pan-y px-4 sm:px-6 py-4 pb-[calc(7rem+env(safe-area-inset-bottom))] md:pb-8">
+      <div className="flex-1 min-h-0 overflow-y-auto scroll-momentum touch-pan-y px-4 sm:px-6 py-4 pb-[calc(5.75rem+env(safe-area-inset-bottom))] md:pb-8">
         {isLoading ? (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
             {[...Array(6)].map((_, i) => (
