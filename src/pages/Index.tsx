@@ -82,6 +82,11 @@ const Shell = () => {
   const showFolders = view === "folders" && !showDetailOnly;
   const defaultFolderId = filter.kind === "folder" ? filter.folderId : null;
 
+  const activeFolderName =
+    filter.kind === "folder"
+      ? (folders.find((f) => f.id === filter.folderId)?.name ?? "Folder")
+      : null;
+
   // Desktop top-bar nav items.
   const navItems: Array<{
     label: string;
@@ -96,9 +101,9 @@ const Shell = () => {
       onClick: () => handleFilterChange({ kind: "all" }),
     },
     {
-      label: "Folders",
+      label: activeFolderName ?? "Folders",
       icon: Folder,
-      active: view === "folders",
+      active: view === "folders" || filter.kind === "folder",
       onClick: openFoldersPage,
     },
     {
