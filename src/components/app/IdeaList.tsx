@@ -1,4 +1,4 @@
-import { Star, FileText, Link2, Mic, MessageSquare, ChevronRight, Loader2, ChevronLeft } from "lucide-react";
+import { Star, FileText, Link2, Mic, MessageSquare, ChevronRight, Loader2, ChevronLeft, Inbox, Search as SearchIcon, Folder as FolderIcon, Clock as ClockIcon } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 import { useIdeas, type Idea, type IdeaFilter } from "@/hooks/useIdeas";
@@ -86,8 +86,15 @@ export const IdeaList = ({ filter, selectedId, onSelect, onBackToFolders, onFilt
         <h2 className="text-[28px] leading-tight md:text-lg font-bold md:font-semibold tracking-tight">
           {heading}
         </h2>
-        <p className="text-[13px] md:text-xs text-muted-foreground mt-0.5">
-          {isLoading ? "Loading…" : `${ideas.length} idea${ideas.length === 1 ? "" : "s"}`}
+        <p className="text-[13px] md:text-xs text-muted-foreground mt-0.5 flex items-center gap-1.5">
+          {isLoading ? (
+            <>
+              <Loader2 className="h-3 w-3 animate-spin" />
+              <span>Loading ideas…</span>
+            </>
+          ) : (
+            <span>{ideas.length} idea{ideas.length === 1 ? "" : "s"}</span>
+          )}
         </p>
       </div>
 
@@ -144,11 +151,32 @@ export const IdeaList = ({ filter, selectedId, onSelect, onBackToFolders, onFilt
           </div>
         )}
 
-        {!isLoading && ideas.length === 0 && (
-          <div className="p-10 text-center text-sm text-muted-foreground">
-            No ideas here yet. Tap <span className="font-medium">＋</span> to capture one.
-          </div>
-        )}
+        {!isLoading && ideas.length === 0 && (() => {
+          const empty = (() => {
+            switch (filter.kind) {
+              case "favorites":
+                return { Icon: Star, title: "No favorites yet", body: "Tap the star on an idea to pin it here." };
+              case "recent":
+                return { Icon: ClockIcon, title: "Nothing recent", body: "Ideas you create or edit will show up here." };
+              case "search":
+                return { Icon: SearchIcon, title: "No matches", body: `Nothing found for "${filter.query}". Try a different keyword.` };
+              case "folder":
+                return { Icon: FolderIcon, title: "Empty folder", body: "Capture an idea and assign it to this folder." };
+              default:
+                return { Icon: Inbox, title: "No ideas yet", body: "Tap Capture idea to add your first one." };
+            }
+          })();
+          const Icon = empty.Icon;
+          return (
+            <div className="px-6 py-16 text-center">
+              <div className="mx-auto h-12 w-12 rounded-2xl bg-muted/60 flex items-center justify-center mb-3">
+                <Icon className="h-6 w-6 text-muted-foreground" />
+              </div>
+              <p className="text-[15px] font-semibold text-foreground">{empty.title}</p>
+              <p className="text-[13px] text-muted-foreground mt-1 max-w-xs mx-auto">{empty.body}</p>
+            </div>
+          );
+        })()}
 
         {/* Mobile: iOS grouped inset list. Desktop: flat row list. */}
         {ideas.length > 0 && (
