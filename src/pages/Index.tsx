@@ -27,8 +27,26 @@ const Shell = () => {
   const isMobile = useIsMobile();
   const composeRef = useRef<HTMLDivElement>(null);
   const { user, signOut } = useAuth();
+  const { data: folders = [] } = useFolders();
   // Polls folders client-side; fires browser + toast notifications when due.
   useReminderNotifier();
+
+  const backLabel = (() => {
+    switch (filter.kind) {
+      case "all":
+        return "All ideas";
+      case "favorites":
+        return "Favorites";
+      case "recent":
+        return "Recent";
+      case "search":
+        return "Search";
+      case "folder": {
+        const f = folders.find((x) => x.id === filter.folderId);
+        return f?.name ?? "Folder";
+      }
+    }
+  })();
 
   const onSearch = (v: string) => {
     setSearchValue(v);
