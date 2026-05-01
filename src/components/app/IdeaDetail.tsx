@@ -28,9 +28,10 @@ const NO_FOLDER = "__none__";
 type Props = {
   ideaId: string | null;
   onClose: () => void;
+  backLabel?: string;
 };
 
-export const IdeaDetail = ({ ideaId, onClose }: Props) => {
+export const IdeaDetail = ({ ideaId, onClose, backLabel = "Back" }: Props) => {
   const { data: idea, isLoading } = useIdea(ideaId);
   const { data: folders = [] } = useFolders();
   const updateIdea = useUpdateIdea();
