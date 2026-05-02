@@ -10,6 +10,8 @@ import { toast } from "sonner";
 
 const NO_FOLDER = "__none__";
 const MIN_CHARS = 20;
+const RECOMMENDED_CHARS = 400;
+const MAX_CHARS = 100_000;
 
 type Props = {
   defaultFolderId?: string | null;
