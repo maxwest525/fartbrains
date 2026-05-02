@@ -239,37 +239,14 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
     }
   };
 
-  /** Final save — for note/list (instant) and for previewed webpage/transcript ideas. */
+  /** Direct save for manual note or list captures. */
   const handleSave = async () => {
     if (saving) return;
 
-    // Preview-confirm save path (webpage / transcript)
-    if (preview) {
-      setSaving(true);
-      try {
-        const idea = await createIdea.mutateAsync({
-          title: (preview.title.trim() || "Untitled idea").slice(0, 200),
-          raw_note: null,
-          source_url: preview.sourceUrl,
-          source_type: preview.kind, // "webpage" | "transcript"
-          extracted_text: preview.extractedText || null,
-          ai_summary: preview.summary.trim() || null,
-          folder_id: folderOrNull(folder),
-          tags: [],
-        });
-        onCreated?.(idea.id);
-        reset();
-      } finally {
-        setSaving(false);
-      }
-      return;
-    }
-
-    // Direct save path (manual note or list)
     if (source === "note" && !note.trim() && !title.trim())
-      return toast.error("Add a title or a note");
+      return toast.error("Add a note");
     if (source === "list" && !note.trim() && !title.trim())
-      return toast.error("Add at least one list item or a title");
+      return toast.error("Add at least one list item");
 
     setSaving(true);
     try {
