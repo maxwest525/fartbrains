@@ -43,16 +43,16 @@ export const MovieTicker = () => {
             key={`${p.title}-${i}`}
             className="shrink-0 px-2 flex items-center gap-2"
           >
-            <div className="h-14 sm:h-16 aspect-[2/3] rounded-md overflow-hidden bg-card shadow-sm ring-1 ring-border/60">
+            <div className="h-14 sm:h-16 aspect-[2/3] rounded-md overflow-hidden bg-card shadow-sm ring-1 ring-border/60 shrink-0">
               <img
                 src={p.src}
                 alt={p.title}
-                loading="lazy"
+                loading="eager"
                 draggable={false}
                 className="h-full w-full object-cover"
               />
             </div>
-            <span className="text-xs sm:text-sm font-medium text-muted-foreground whitespace-nowrap">
+            <span className="text-xs sm:text-sm font-medium text-muted-foreground leading-tight w-20 sm:w-24 break-words">
               {p.title}
             </span>
           </div>
