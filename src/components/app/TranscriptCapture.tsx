@@ -84,7 +84,7 @@ export const TranscriptCapture = ({ defaultFolderId, onBack, onCreated }: Props)
       let aiTitle: string | undefined;
       try {
         const { data, error } = await supabase.functions.invoke("summarize", {
-          body: { text: transcript, kind: "transcript" },
+          body: { text: transcript, kind: "transcript", userNote: note.trim() || undefined },
         });
         if (error) throw new Error(error.message);
         if (data?.error) throw new Error(data.error);
@@ -102,7 +102,7 @@ export const TranscriptCapture = ({ defaultFolderId, onBack, onCreated }: Props)
 
       const idea = await createIdea.mutateAsync({
         title: finalTitle,
-        raw_note: null,
+        raw_note: note.trim() || null,
         source_url: null,
         source_type: "transcript",
         extracted_text: transcript,
