@@ -461,12 +461,6 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
           </>
         )}
       </Button>
-
-      {usesAiPreview && (
-        <p className="text-xs text-muted-foreground text-center">
-          We'll extract and summarize automatically — edit anytime after saving.
-        </p>
-      )}
     </div>
   );
 };
