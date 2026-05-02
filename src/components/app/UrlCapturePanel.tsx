@@ -250,12 +250,15 @@ export const UrlCapturePanel = ({ defaultFolderId, onCreated, onOpenExisting }: 
       {/* URL input */}
       <Input
         value={url}
-        onChange={(e) => setUrl(e.target.value)}
+        onChange={(e) => setUrl(cleanUrlInput(e.target.value))}
         onPaste={(e) => {
-          const pasted = e.clipboardData.getData("text").trim();
-          if (!pasted || url.trim().length > 0 || !isValidHttpUrl(pasted)) return;
+          e.preventDefault();
+          const pasted = cleanUrlInput(e.clipboardData.getData("text"));
+          if (!pasted) return;
           setUrl(pasted);
-          setTimeout(() => handleExtract(pasted), 0);
+          if (isValidHttpUrl(pasted)) {
+            setTimeout(() => handleExtract(pasted), 0);
+          }
         }}
         onKeyDown={(e) => {
           if (e.key === "Enter" && !preview) {
