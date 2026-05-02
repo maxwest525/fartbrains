@@ -41,7 +41,7 @@ export const MovieTicker = () => {
         {[...POSTERS, ...POSTERS].map((p, i) => (
           <div
             key={`${p.title}-${i}`}
-            className="shrink-0 px-2 flex items-center gap-2"
+            className="shrink-0 pl-2 pr-4 flex items-center gap-2"
           >
             <div className="h-14 sm:h-16 aspect-[2/3] rounded-md overflow-hidden bg-card shadow-sm ring-1 ring-border/60 shrink-0">
               <img
@@ -52,7 +52,7 @@ export const MovieTicker = () => {
                 className="h-full w-full object-cover"
               />
             </div>
-            <span className="text-xs sm:text-sm font-medium text-muted-foreground leading-tight w-20 sm:w-24 break-words">
+            <span className="shrink-0 text-xs sm:text-sm font-medium text-muted-foreground leading-tight w-20 sm:w-24 break-words hyphens-auto">
               {p.title}
             </span>
           </div>
