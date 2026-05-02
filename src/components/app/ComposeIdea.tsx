@@ -551,6 +551,147 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
     );
   }
 
+  if (source === "prompt") {
+    return (
+      <div className="rounded-2xl bg-card border border-border/60 p-3 sm:p-4 space-y-3 shadow-sm">
+        <SourcePicker value={source} onChange={handleSourceChange} />
+
+        <div className="rounded-xl bg-secondary/40 border border-border/50 px-3 py-2.5 flex items-start gap-2.5">
+          <Wand2 className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+          <div className="flex-1 text-[12.5px] leading-snug text-muted-foreground">
+            Paste a draft prompt and we'll restructure it (role, task, context,
+            constraints, output format) optimized for the LLM you're targeting.
+          </div>
+        </div>
+
+        <div className="space-y-1.5">
+          <label className="block text-[11px] font-semibold uppercase tracking-wide text-muted-foreground px-1">
+            Target LLM
+          </label>
+          <select
+            value={promptTarget}
+            onChange={(e) => setPromptTarget(e.target.value)}
+            className="w-full h-11 rounded-xl bg-secondary/60 border border-transparent px-3 text-[15px] font-medium focus:outline-none focus:border-primary/40"
+          >
+            {PROMPT_TARGETS.map((t) => (
+              <option key={t.value} value={t.value}>{t.label}</option>
+            ))}
+          </select>
+        </div>
+
+        <div className="space-y-1.5">
+          <label className="block text-[11px] font-semibold uppercase tracking-wide text-muted-foreground px-1">
+            Your draft prompt
+          </label>
+          <Textarea
+            ref={noteTextareaRef}
+            value={note}
+            onChange={(e) => {
+              setNote(e.target.value);
+              if (optimizedPrompt) setOptimizedPrompt(null);
+            }}
+            placeholder={ph.note}
+            rows={6}
+            className="rounded-2xl bg-secondary/60 border-transparent text-[16px] px-4 py-3 leading-snug resize-none placeholder:text-muted-foreground/70"
+          />
+          <div className="text-[11.5px] text-muted-foreground px-1 flex justify-between">
+            <span>{note.trim().length.toLocaleString()} chars</span>
+            <span className="opacity-70">Min 10 · max 8,000</span>
+          </div>
+        </div>
+
+        {optimizedPrompt && (
+          <div className="rounded-2xl border border-primary/30 bg-primary/5 p-3 sm:p-4 space-y-3">
+            <div className="flex items-start gap-2">
+              <div className="h-9 w-9 rounded-[10px] bg-primary/15 text-primary flex items-center justify-center shrink-0">
+                <Sparkles className="h-4 w-4" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="text-[11px] font-semibold uppercase tracking-wide text-primary">
+                  Optimized for {promptTarget}
+                </div>
+                <div className="text-[12px] text-muted-foreground">
+                  Edit anything below before saving.
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={async () => {
+                  try {
+                    await navigator.clipboard.writeText(optimizedPrompt);
+                    toast.success("Copied to clipboard");
+                  } catch {
+                    toast.error("Couldn't copy");
+                  }
+                }}
+                className="press text-muted-foreground hover:text-foreground p-1.5 -mr-1 -mt-1 rounded-md"
+                aria-label="Copy optimized prompt"
+                title="Copy"
+              >
+                <Copy className="h-4 w-4" />
+              </button>
+            </div>
+
+            <Input
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder={`Title (default: "Prompt for ${promptTarget}")`}
+              maxLength={200}
+              className="h-10 rounded-xl bg-card border-border/60 text-[14px]"
+            />
+
+            <Textarea
+              value={optimizedPrompt}
+              onChange={(e) => setOptimizedPrompt(e.target.value)}
+              rows={10}
+              className="rounded-xl bg-card border-border/60 text-[13.5px] leading-relaxed font-mono resize-y max-h-[50vh]"
+            />
+          </div>
+        )}
+
+        {folderChips}
+
+        {optimizedPrompt ? (
+          <div className="flex gap-2">
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => setOptimizedPrompt(null)}
+              className="h-12 rounded-xl flex-1"
+              disabled={saving}
+            >
+              Re-optimize
+            </Button>
+            <Button
+              type="button"
+              onClick={handleSaveOptimizedPrompt}
+              disabled={saving || !optimizedPrompt.trim()}
+              className="h-12 rounded-xl flex-[2] text-[16px] font-semibold"
+            >
+              {saving ? <Loader2 className="h-5 w-5 animate-spin" /> : "Save prompt"}
+            </Button>
+          </div>
+        ) : (
+          <Button
+            type="button"
+            onClick={handleOptimizePrompt}
+            disabled={optimizing || note.trim().length < 10}
+            className="w-full h-12 rounded-xl text-[16px] font-semibold"
+          >
+            {optimizing ? (
+              <Loader2 className="h-5 w-5 animate-spin" />
+            ) : (
+              <>
+                <Wand2 className="h-4 w-4 mr-1.5" />
+                Optimize prompt
+              </>
+            )}
+          </Button>
+        )}
+      </div>
+    );
+  }
+
   return (
     <div className="rounded-2xl bg-card border border-border/60 p-3 sm:p-4 space-y-3 shadow-sm">
       <SourcePicker value={source} onChange={handleSourceChange} />
