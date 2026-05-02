@@ -16,21 +16,61 @@ type Props = {
   onOpenExisting?: (id: string) => void;
 };
 
+/** Detected source for a pasted URL. Drives routing + UI labels. */
+type DetectedSource = "instagram" | "tiktok" | "youtube" | "webpage" | "unknown";
+
 type Preview = {
   url: string;
   text: string;
   suggestedTitle?: string;
-  /** True when text came from an Instagram reel transcription. */
-  isInstagramTranscript?: boolean;
+  /** Where the text came from. Determines DB source_type at save time. */
+  source: DetectedSource;
+  /** True when `text` is a transcript of audio/video (vs. extracted page text). */
+  isTranscript?: boolean;
 };
 
-const isInstagramUrl = (s: string): boolean => {
+/**
+ * Classify a URL by its host. Used to pick the right extraction backend
+ * (Instagram reel transcription vs. generic readable extraction) and to
+ * surface the source in the UI. The DB `source_type` enum only supports
+ * manual/webpage/transcript/audio, so we map detected sources at save time.
+ */
+const detectSource = (s: string): DetectedSource => {
   try {
     const u = new URL(s);
-    return /(^|\.)instagram\.com$/i.test(u.hostname);
+    const h = u.hostname.toLowerCase().replace(/^www\./, "");
+    if (h === "instagram.com" || h.endsWith(".instagram.com")) return "instagram";
+    if (h === "tiktok.com" || h.endsWith(".tiktok.com") || h === "vm.tiktok.com") return "tiktok";
+    if (
+      h === "youtube.com" ||
+      h.endsWith(".youtube.com") ||
+      h === "youtu.be" ||
+      h === "m.youtube.com"
+    ) return "youtube";
+    if (u.protocol === "http:" || u.protocol === "https:") return "webpage";
+    return "unknown";
   } catch {
-    return false;
+    return "unknown";
   }
+};
+
+const SOURCE_LABEL: Record<DetectedSource, string> = {
+  instagram: "Instagram",
+  tiktok: "TikTok",
+  youtube: "YouTube",
+  webpage: "Web page",
+  unknown: "Link",
+};
+
+/** Map a detected source + transcript flag to the existing DB enum. */
+const dbSourceType = (
+  src: DetectedSource,
+  isTranscript: boolean,
+): "manual" | "webpage" | "transcript" | "audio" => {
+  if (isTranscript) return "transcript";
+  if (src === "instagram" || src === "tiktok" || src === "youtube") return "transcript";
+  if (src === "webpage") return "webpage";
+  return "manual";
 };
 
 /**
@@ -119,9 +159,10 @@ export const UrlCapturePanel = ({ defaultFolderId, onCreated, onOpenExisting }: 
     setExtractFailed(null);
 
     setExtracting(true);
+    const detected = detectSource(target);
     try {
       // Instagram → fetch the reel via Apify and transcribe with ElevenLabs Scribe.
-      if (isInstagramUrl(target)) {
+      if (detected === "instagram") {
         const t = toast.loading("Fetching reel & transcribing…", {
           description: "This usually takes 10–30 seconds.",
         });
@@ -154,7 +195,8 @@ export const UrlCapturePanel = ({ defaultFolderId, onCreated, onOpenExisting }: 
             url: data?.finalUrl ?? target,
             text: body,
             suggestedTitle: suggested,
-            isInstagramTranscript: transcript.length > 0,
+            source: "instagram",
+            isTranscript: transcript.length > 0,
           });
           if (!title.trim()) setTitle(String(suggested).slice(0, 200));
 
@@ -173,6 +215,9 @@ export const UrlCapturePanel = ({ defaultFolderId, onCreated, onOpenExisting }: 
         return;
       }
 
+      // TikTok / YouTube currently fall through to the generic extractor.
+      // The page-level metadata (title, description) is still useful even
+      // without a transcript pipeline, and we tag the source for clarity.
       const { data, error } = await supabase.functions.invoke("extract-url", {
         body: { url: target },
       });
@@ -185,6 +230,8 @@ export const UrlCapturePanel = ({ defaultFolderId, onCreated, onOpenExisting }: 
         url: target,
         text,
         suggestedTitle: data?.title ?? undefined,
+        source: detected,
+        isTranscript: false,
       });
       if (!title.trim() && data?.title) setTitle(String(data.title).slice(0, 200));
     } catch (e) {
@@ -243,7 +290,7 @@ export const UrlCapturePanel = ({ defaultFolderId, onCreated, onOpenExisting }: 
         const { data, error } = await supabase.functions.invoke("summarize", {
           body: {
             text: preview.text,
-            kind: preview.isInstagramTranscript ? "transcript" : "webpage",
+            kind: preview.isTranscript ? "transcript" : "webpage",
             userNote: note.trim() || undefined,
           },
         });
@@ -263,7 +310,7 @@ export const UrlCapturePanel = ({ defaultFolderId, onCreated, onOpenExisting }: 
         title: finalTitle,
         raw_note: note.trim() || null,
         source_url: preview.url,
-        source_type: preview.isInstagramTranscript ? "transcript" : "webpage",
+        source_type: dbSourceType(preview.source, !!preview.isTranscript),
         extracted_text: preview.text || null,
         ai_summary: summary.trim() || null,
         folder_id: defaultFolderId ?? null,
@@ -352,6 +399,26 @@ export const UrlCapturePanel = ({ defaultFolderId, onCreated, onOpenExisting }: 
           </div>
         </div>
       )}
+
+      {/* Auto-detected source badge */}
+      {(() => {
+        if (preview || !url.trim()) return null;
+        const detected = detectSource(url);
+        if (detected === "unknown" || detected === "webpage") return null;
+        const willTranscribe = detected === "instagram";
+        return (
+          <div className="flex items-center gap-2 text-[12px] text-muted-foreground">
+            <span className="rounded-md bg-primary/10 text-primary px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide">
+              {SOURCE_LABEL[detected]}
+            </span>
+            <span className="leading-tight">
+              {willTranscribe
+                ? "We'll transcribe the audio for you."
+                : "Saved as a transcript-style source — paste the caption or notes after extracting."}
+            </span>
+          </div>
+        );
+      })()}
 
       {/* Live URL reachability */}
       {url.trim() && urlCheck.status !== "idle" && !preview && (
@@ -474,7 +541,7 @@ export const UrlCapturePanel = ({ defaultFolderId, onCreated, onOpenExisting }: 
               className="rounded-xl bg-card border-border/60 text-[13.5px] leading-relaxed resize-y"
             />
             <p className="text-[11px] text-muted-foreground opacity-80">
-              Saved alongside the {preview.isInstagramTranscript ? "transcript" : "extract"} so you can combine your idea with it later.
+              Saved alongside the {preview.isTranscript ? "transcript" : "extract"} so you can combine your idea with it later.
             </p>
           </div>
 
