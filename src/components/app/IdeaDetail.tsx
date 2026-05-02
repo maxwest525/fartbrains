@@ -419,7 +419,7 @@ export const IdeaDetail = ({ ideaId, onClose, backLabel = "Back" }: Props) => {
           </section>
         )}
 
-        {(editing || idea.ai_summary) && (
+        {(editing || idea.ai_summary || idea.raw_note || idea.extracted_text) && (
           <section>
             <div className="mb-2 flex items-center justify-between gap-2">
               <h3 className="text-sm font-semibold flex items-center gap-1.5">
@@ -447,10 +447,15 @@ export const IdeaDetail = ({ ideaId, onClose, backLabel = "Back" }: Props) => {
                 onChange={(e) => setSummary(e.target.value)}
                 rows={8}
                 className="font-mono text-sm"
+                placeholder="No summary yet — click Generate to create one from your note or extracted text."
               />
-            ) : (
+            ) : idea.ai_summary ? (
               <div className="rounded-md bg-muted/40 p-4 text-sm prose prose-sm dark:prose-invert max-w-none prose-headings:mt-3 prose-headings:mb-2 prose-headings:font-semibold prose-h1:text-lg prose-h2:text-base prose-h3:text-sm prose-p:my-2 prose-ul:my-2 prose-ol:my-2 prose-li:my-0.5 prose-strong:text-foreground prose-a:text-primary prose-code:text-xs prose-code:bg-muted prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:before:content-none prose-code:after:content-none">
                 <ReactMarkdown remarkPlugins={[remarkGfm]}>{idea.ai_summary}</ReactMarkdown>
+              </div>
+            ) : (
+              <div className="rounded-md border border-dashed border-border bg-muted/20 p-4 text-xs text-muted-foreground">
+                No summary yet — click <span className="font-medium text-foreground">Generate</span> above to create one from your note or extracted text.
               </div>
             )}
           </section>
