@@ -143,9 +143,19 @@ const Shell = () => {
 
   return (
     <div className="flex flex-col h-[100dvh] w-full bg-background overflow-hidden relative">
+      {/* Movie ticker — pinned at the very top on the Capture view, above the header. */}
+      {!showDetailOnly && !showFolders && !showTranscript && filter.kind === "all" && (
+        <div className="safe-top bg-background pt-2 sm:pt-3">
+          <MovieTicker />
+        </div>
+      )}
+
       {/* Top bar — search + (desktop) inline nav. Hidden on mobile when viewing detail or the folders page (folders has its own header). */}
       {!showDetailOnly && !(isMobile && showFolders) && !(isMobile && showTranscript) && (
-        <header className="safe-top sticky top-0 z-20 bg-background/80 backdrop-blur-xl border-b border-border">
+        <header className={cn(
+          "sticky top-0 z-20 bg-background/80 backdrop-blur-xl border-b border-border",
+          filter.kind !== "all" && "safe-top"
+        )}>
           <div className="px-3 sm:px-5 py-2 flex items-center gap-2 sm:gap-3">
             {/* Brand — desktop only */}
             <div className="hidden md:flex items-center gap-2 shrink-0 pr-2">
