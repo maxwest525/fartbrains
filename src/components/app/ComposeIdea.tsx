@@ -116,6 +116,7 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
     setUrl("");
     setNote("");
     setTitle("");
+    setPreview(null);
   };
 
   const folderOrNull = (v: string) => (v === NO_FOLDER ? null : v);
