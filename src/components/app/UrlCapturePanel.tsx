@@ -521,7 +521,7 @@ export const UrlCapturePanel = ({ defaultFolderId, onCreated, onOpenExisting }: 
               className="rounded-xl bg-card border-border/60 text-[13.5px] leading-relaxed resize-y"
             />
             <p className="text-[11px] text-muted-foreground opacity-80">
-              Saved alongside the {preview.isInstagramTranscript ? "transcript" : "extract"} so you can combine your idea with it later.
+              Saved alongside the {preview.isTranscript ? "transcript" : "extract"} so you can combine your idea with it later.
             </p>
           </div>
 
