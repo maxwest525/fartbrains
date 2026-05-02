@@ -311,6 +311,10 @@ export const UrlCapturePanel = ({ defaultFolderId, onCreated, onOpenExisting }: 
         raw_note: note.trim() || null,
         source_url: preview.url,
         source_type: dbSourceType(preview.source, !!preview.isTranscript),
+        // Human-readable source name (Instagram / TikTok / YouTube / Web page).
+        // Stored separately from `source_type` so we can filter and badge in the UI
+        // without overloading the DB enum.
+        source_label: preview.source === "unknown" ? null : SOURCE_LABEL[preview.source],
         extracted_text: preview.text || null,
         ai_summary: summary.trim() || null,
         folder_id: defaultFolderId ?? null,
