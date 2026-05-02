@@ -48,6 +48,10 @@ export const UrlCapturePanel = ({ defaultFolderId, onCreated, onOpenExisting }: 
   const [extracting, setExtracting] = useState(false);
   const [saving, setSaving] = useState(false);
   const [preview, setPreview] = useState<Preview | null>(null);
+  // Set when an extract attempt failed (invalid URL or extract error). Lets us
+  // surface a "Save link anyway" fallback so the user can still capture the URL
+  // as a manual idea even when we can't fetch its contents.
+  const [extractFailed, setExtractFailed] = useState<string | null>(null);
 
   const { data: urlDuplicate } = useDuplicateUrl(url);
   const urlCheck = useUrlCheck(url, true);
@@ -57,6 +61,7 @@ export const UrlCapturePanel = ({ defaultFolderId, onCreated, onOpenExisting }: 
     setTitle("");
     setNote("");
     setPreview(null);
+    setExtractFailed(null);
   };
 
   const isValidHttpUrl = (s: string) => {
