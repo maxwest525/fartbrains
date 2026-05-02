@@ -56,13 +56,9 @@ export function useUrlCheck(url: string, enabled: boolean): UrlCheckResult {
       return;
     }
     if (!looksLikeUrl(trimmed)) {
-      setResult({
-        status: "error",
-        httpStatus: null,
-        redirected: false,
-        finalUrl: null,
-        message: "Doesn't look like a URL",
-      });
+      // Stay idle while the user is still typing something that doesn't yet
+      // resemble a URL — avoids the jarring "Doesn't look like a URL" flash.
+      setResult(initial);
       return;
     }
 
