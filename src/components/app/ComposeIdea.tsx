@@ -270,6 +270,22 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
             ref={urlInputRef}
             value={url}
             onChange={(e) => setUrl(e.target.value)}
+            onPaste={(e) => {
+              // Auto-trigger save the moment a valid URL is pasted into an empty field.
+              // Only fires when the input is empty (otherwise it's an edit, not a fresh capture)
+              // and only if the pasted text parses as a real URL.
+              const pasted = e.clipboardData.getData("text").trim();
+              if (!pasted || url.trim().length > 0) return;
+              try {
+                const u = new URL(pasted);
+                if (u.protocol !== "http:" && u.protocol !== "https:") return;
+              } catch {
+                return;
+              }
+              setUrl(pasted);
+              // Defer so the input visibly updates before the network call starts.
+              setTimeout(() => handleGenerateAndSave(pasted), 0);
+            }}
             placeholder={ph.url}
             inputMode="url"
             autoCapitalize="none"
