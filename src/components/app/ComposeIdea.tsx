@@ -30,6 +30,7 @@ const PLACEHOLDERS: Record<SourceKey, { url?: string; note: string }> = {
   note:       {                            note: "Write your idea…" },
   list:       {                            note: "One item per line…\nBuy milk\nCall dentist\nShip v2" },
   transcript: {                            note: "Paste a transcript, video caption, or any long text…" },
+  project:    {                            note: "" },
   voice:      { note: "" },
   image:      { note: "" },
   prompt:     { note: "" },
