@@ -231,9 +231,9 @@ export const FolderProjectsBoard = ({ ideas, onOpenProject }: Props) => {
                                         onMouseDown={(e) => e.preventDefault()}
                                         onClick={() => commitEdit(idea, item)}
                                         aria-label="Save"
-                                        className="press h-7 w-7 inline-flex items-center justify-center text-muted-foreground hover:text-foreground"
+                                        className="press min-h-11 min-w-11 sm:h-9 sm:w-9 sm:min-h-0 sm:min-w-0 inline-flex items-center justify-center text-primary hover:text-primary/80"
                                       >
-                                        <Check className="h-4 w-4" />
+                                        <Check className="h-5 w-5 sm:h-4 sm:w-4" />
                                       </button>
                                       <button
                                         type="button"
