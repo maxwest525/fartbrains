@@ -219,6 +219,15 @@ export const TranscriptCapture = ({ defaultFolderId, onBack, onCreated }: Props)
                 </div>
               </div>
             )}
+
+            {busy && (
+              <div className="absolute inset-0 flex items-center justify-center rounded-md bg-background/70 backdrop-blur-[2px]">
+                <div className="flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1.5 text-sm font-medium shadow-sm">
+                  <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                  Generating AI summary…
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Progress + counters */}
