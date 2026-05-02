@@ -54,12 +54,18 @@ Be concise. Do not invent details that aren't in the source.`;
 
     const systemPrompt = kind === "transcript" ? transcriptSystemPrompt : defaultSystemPrompt;
 
-    const userPrompt =
+    const baseUserPrompt =
       kind === "webpage"
         ? `The following is text extracted from a webpage. Summarize it.\n\n---\n${text.slice(0, 60000)}`
         : kind === "transcript"
           ? `The following is a raw transcript from a short video or social post. It may include a "— Caption —" section appended at the end with the original post caption — use it as supporting context for the topic and title, but base the summary on the transcript itself.\n\n---\n${text.slice(0, 60000)}`
           : `Summarize the following.\n\n---\n${text.slice(0, 60000)}`;
+
+    // Optional user-supplied note: lets the saver steer angle/title toward what
+    // *they* care about, without letting the model invent facts not in the source.
+    const userPrompt = userNoteClean
+      ? `The reader added their own note about why this matters to them. Use it ONLY to steer focus, framing, and the suggested title. Do NOT treat it as a source of facts and do NOT echo it back verbatim — the summary must still come from the source content below.\n\n--- Reader's note ---\n${userNoteClean}\n\n${baseUserPrompt}`
+      : baseUserPrompt;
 
     const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
