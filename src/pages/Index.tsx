@@ -228,6 +228,18 @@ const Shell = () => {
           />
         )}
 
+        {/* Dedicated paste-transcript screen — bypasses the source picker */}
+        {showTranscript && (
+          <TranscriptCapture
+            defaultFolderId={defaultFolderId}
+            onBack={() => setView("ideas")}
+            onCreated={(id, needsReview) => {
+              setView("ideas");
+              if (needsReview) setSelectedId(id);
+            }}
+          />
+        )}
+
         {/* Capture view — compose only, full width. Shown when filter is "all" (the default landing). */}
         {!showFolders && !showDetailOnly && filter.kind === "all" && (
           <div className="w-full flex-1 min-w-0 flex flex-col min-h-0 bg-background overflow-y-auto scroll-momentum touch-pan-y pb-[calc(5.75rem+env(safe-area-inset-bottom))] md:pb-6">
