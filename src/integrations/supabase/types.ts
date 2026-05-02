@@ -143,6 +143,7 @@ export type Database = {
           raw_note: string | null
           remind_at: string | null
           reminder_fired_at: string | null
+          source_label: string | null
           source_type: Database["public"]["Enums"]["idea_source_type"]
           source_url: string | null
           tags: string[]
@@ -164,6 +165,7 @@ export type Database = {
           raw_note?: string | null
           remind_at?: string | null
           reminder_fired_at?: string | null
+          source_label?: string | null
           source_type?: Database["public"]["Enums"]["idea_source_type"]
           source_url?: string | null
           tags?: string[]
@@ -185,6 +187,7 @@ export type Database = {
           raw_note?: string | null
           remind_at?: string | null
           reminder_fired_at?: string | null
+          source_label?: string | null
           source_type?: Database["public"]["Enums"]["idea_source_type"]
           source_url?: string | null
           tags?: string[]
