@@ -139,8 +139,8 @@ export const IdeaDetail = ({ ideaId, onClose, backLabel = "Back" }: Props) => {
 
   const onGeneratePrompt = async () => {
     if (generating) return;
-    if (!idea.raw_note?.trim() && !idea.ai_summary?.trim()) {
-      toast.error("Add a note or summary first so the AI has something to work with.");
+    if (!idea.raw_note?.trim() && !idea.ai_summary?.trim() && !idea.extracted_text?.trim()) {
+      toast.error("Add a note, summary, or extracted text first so the AI has something to work with.");
       return;
     }
     setGenerating(true);
