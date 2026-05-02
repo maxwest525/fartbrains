@@ -48,6 +48,34 @@ export const IdeaList = ({ filter, selectedId, onSelect, onBackToFolders, onFilt
   const qc = useQueryClient();
   const isMobile = useIsMobile();
 
+  // Multi-select tag filter — applied client-side over the already-loaded
+  // ideas. AND semantics: an idea must include every selected tag to show.
+  // Resets implicitly when the parent filter changes via the keyed list.
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+
+  // Build the tag chip list from currently loaded ideas, sorted by frequency
+  // then alphabetically. Excludes the internal PROJECT_TAG marker so users
+  // don't see infrastructure tags in the filter strip.
+  const tagOptions = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const i of ideas) {
+      for (const t of i.tags ?? []) {
+        if (!t || t === PROJECT_TAG) continue;
+        counts.set(t, (counts.get(t) ?? 0) + 1);
+      }
+    }
+    return Array.from(counts.entries())
+      .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+      .map(([tag, count]) => ({ tag, count }));
+  }, [ideas]);
+
+  const toggleTag = (tag: string) => {
+    setSelectedTags((prev) =>
+      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag],
+    );
+  };
+  const clearTags = () => setSelectedTags([]);
+
   // Pull-to-refresh — only on mobile, refetches the active ideas query.
   const { bind, pull, refreshing, threshold } = usePullToRefresh<HTMLDivElement>({
     enabled: isMobile && !pageScroll,
