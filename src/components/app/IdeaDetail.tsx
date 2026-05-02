@@ -239,6 +239,11 @@ export const IdeaDetail = ({ ideaId, onClose, backLabel = "Back" }: Props) => {
           <Badge variant="secondary" className="capitalize">
             {idea.source_type}
           </Badge>
+          {idea.source_label && (
+            <Badge variant="outline" className="font-medium">
+              {idea.source_label}
+            </Badge>
+          )}
           {idea.source_url && (
             <a
               href={idea.source_url}
