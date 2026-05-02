@@ -1,5 +1,5 @@
-import { useRef, useState } from "react";
-import { Search, X, Inbox, Folder, Star, Clock, Settings as SettingsIcon, LogOut } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Search, X, Inbox, Folder, Star, Clock, Settings as SettingsIcon, LogOut, Eye, EyeOff } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { IdeaList } from "@/components/app/IdeaList";
 import { IdeaDetail } from "@/components/app/IdeaDetail";
@@ -25,6 +25,15 @@ const Shell = () => {
   const [settingsOpen, setSettingsOpen] = useState(false);
   // Capture is the primary action — open by default so paste→generate is one tap.
   const [captureOpen, setCaptureOpen] = useState(true);
+  // Focus mode: hide the idea list while capturing so the user isn't distracted
+  // by their history. Persisted across sessions.
+  const [focusMode, setFocusMode] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    return window.localStorage.getItem("captureFocusMode") === "1";
+  });
+  useEffect(() => {
+    window.localStorage.setItem("captureFocusMode", focusMode ? "1" : "0");
+  }, [focusMode]);
   const isMobile = useIsMobile();
   const composeRef = useRef<HTMLDivElement>(null);
   const { user, signOut } = useAuth();
@@ -220,17 +229,38 @@ const Shell = () => {
                   setSelectedId(id);
                 }}
               />
+              {/* Focus-mode toggle — hide the list below so paste/typing isn't distracted by history. */}
+              <button
+                type="button"
+                onClick={() => setFocusMode((v) => !v)}
+                className="mt-2 w-full inline-flex items-center justify-center gap-1.5 h-8 rounded-lg text-[12.5px] font-medium text-muted-foreground hover:text-foreground hover:bg-secondary/60 transition-colors"
+                aria-pressed={focusMode}
+              >
+                {focusMode ? (
+                  <>
+                    <Eye className="h-3.5 w-3.5" />
+                    Show ideas
+                  </>
+                ) : (
+                  <>
+                    <EyeOff className="h-3.5 w-3.5" />
+                    Hide ideas while capturing
+                  </>
+                )}
+              </button>
             </div>
-            <div className="md:flex-1 md:min-h-0 md:overflow-hidden">
-              <IdeaList
-                filter={filter}
-                selectedId={selectedId}
-                onSelect={setSelectedId}
-                onBackToFolders={openFoldersPage}
-                onFilterChange={handleFilterChange}
-                pageScroll={isMobile}
-              />
-            </div>
+            {!focusMode && (
+              <div className="md:flex-1 md:min-h-0 md:overflow-hidden">
+                <IdeaList
+                  filter={filter}
+                  selectedId={selectedId}
+                  onSelect={setSelectedId}
+                  onBackToFolders={openFoldersPage}
+                  onFilterChange={handleFilterChange}
+                  pageScroll={isMobile}
+                />
+              </div>
+            )}
           </div>
         )}
 
