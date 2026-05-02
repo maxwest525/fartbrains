@@ -44,6 +44,7 @@ export const UrlCapturePanel = ({ defaultFolderId, onCreated, onOpenExisting }: 
   const createIdea = useCreateIdea();
   const [url, setUrl] = useState("");
   const [title, setTitle] = useState("");
+  const [note, setNote] = useState("");
   const [extracting, setExtracting] = useState(false);
   const [saving, setSaving] = useState(false);
   const [preview, setPreview] = useState<Preview | null>(null);
@@ -54,6 +55,7 @@ export const UrlCapturePanel = ({ defaultFolderId, onCreated, onOpenExisting }: 
   const reset = () => {
     setUrl("");
     setTitle("");
+    setNote("");
     setPreview(null);
   };
 
