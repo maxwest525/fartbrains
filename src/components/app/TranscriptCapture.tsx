@@ -121,6 +121,7 @@ export const TranscriptCapture = ({ defaultFolderId, onBack, onCreated }: Props)
         });
       }
       setText("");
+      setNote("");
       onCreated(idea.id, needsReview);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Failed to save");
