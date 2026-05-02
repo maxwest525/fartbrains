@@ -68,10 +68,42 @@ export const UrlCapturePanel = ({ defaultFolderId, onCreated, onOpenExisting }: 
     }
   };
 
+  /**
+   * Clean text pasted/typed into the URL field before validation:
+   * - strip zero-width chars and trim whitespace
+   * - remove wrapping quotes/brackets users often copy with a link
+   *   (e.g. `"https://…"`, `<https://…>`, `(https://…)`, smart quotes)
+   * - drop trailing punctuation that's almost never part of a URL
+   * - collapse any internal whitespace/newlines (URLs can't contain them)
+   */
+  const cleanUrlInput = (s: string): string => {
+    let v = (s ?? "").replace(/[\u200B-\u200D\uFEFF]/g, "").trim();
+    if (!v) return "";
+    const pairs: Array<[string, string]> = [
+      ['"', '"'], ["'", "'"], ["`", "`"],
+      ["<", ">"], ["(", ")"], ["[", "]"], ["{", "}"],
+      ["\u201C", "\u201D"], ["\u2018", "\u2019"],
+    ];
+    let changed = true;
+    while (changed) {
+      changed = false;
+      for (const [open, close] of pairs) {
+        if (v.length >= 2 && v.startsWith(open) && v.endsWith(close)) {
+          v = v.slice(1, -1).trim();
+          changed = true;
+        }
+      }
+    }
+    v = v.replace(/^["'`<(\[{\u201C\u2018]+/, "").replace(/["'`>)\]}\u201D\u2019.,;]+$/, "");
+    v = v.replace(/\s+/g, "");
+    return v;
+  };
+
   const handleExtract = async (overrideUrl?: string) => {
-    const target = (overrideUrl ?? url).trim();
+    const target = cleanUrlInput(overrideUrl ?? url);
     if (!target) return toast.error("Paste a URL first");
     if (!isValidHttpUrl(target)) return toast.error("That doesn't look like a valid URL");
+    if (target !== (overrideUrl ?? url).trim()) setUrl(target);
     if (extracting || saving) return;
 
     setExtracting(true);
@@ -218,12 +250,15 @@ export const UrlCapturePanel = ({ defaultFolderId, onCreated, onOpenExisting }: 
       {/* URL input */}
       <Input
         value={url}
-        onChange={(e) => setUrl(e.target.value)}
+        onChange={(e) => setUrl(cleanUrlInput(e.target.value))}
         onPaste={(e) => {
-          const pasted = e.clipboardData.getData("text").trim();
-          if (!pasted || url.trim().length > 0 || !isValidHttpUrl(pasted)) return;
+          e.preventDefault();
+          const pasted = cleanUrlInput(e.clipboardData.getData("text"));
+          if (!pasted) return;
           setUrl(pasted);
-          setTimeout(() => handleExtract(pasted), 0);
+          if (isValidHttpUrl(pasted)) {
+            setTimeout(() => handleExtract(pasted), 0);
+          }
         }}
         onKeyDown={(e) => {
           if (e.key === "Enter" && !preview) {
