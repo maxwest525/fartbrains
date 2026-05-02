@@ -147,9 +147,12 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
     setPreview(null);
   };
 
-  /** Run extract (URL only) + summarize, then move into preview/edit step. */
-  const handleGenerate = async () => {
-    if (generating) return;
+  /**
+   * Instant capture: extract + summarize + save in one shot.
+   * No intermediate preview — user edits in detail view if needed.
+   */
+  const handleGenerateAndSave = async () => {
+    if (generating || saving) return;
 
     if (needsUrl) {
       if (!url.trim()) return toast.error("URL required");
@@ -164,7 +167,6 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
       const sourceUrl = needsUrl ? url.trim() : null;
 
       if (needsUrl) {
-        // Instagram has its own extractor — Readability can't parse the React-rendered page.
         const fnName = source === "instagram" ? "extract-instagram" : "extract-url";
         const { data: ext, error: extErr } = await supabase.functions.invoke(fnName, {
           body: { url: sourceUrl },
@@ -191,26 +193,33 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
         summary = sum?.summary ?? "";
         aiTitle = sum?.suggestedTitle ?? undefined;
       } catch (e) {
-        // Non-fatal: still let the user save with extracted text + manual title.
+        // Non-fatal: still save with extracted text.
         toast.warning(e instanceof Error ? `AI summary failed: ${e.message}` : "AI summary failed");
       }
 
-      const previewTitle =
+      const finalTitle = (
         title.trim() ||
         aiTitle ||
         suggestedTitleFromExtract ||
         (sourceUrl ?? extractedText.split("\n")[0] ?? "").slice(0, 80) ||
-        "Untitled idea";
+        "Untitled idea"
+      ).slice(0, 200);
 
-      setPreview({
-        kind: needsUrl ? "webpage" : "transcript",
-        extractedText,
-        summary,
-        title: previewTitle,
-        sourceUrl,
+      const idea = await createIdea.mutateAsync({
+        title: finalTitle,
+        raw_note: null,
+        source_url: sourceUrl,
+        source_type: needsUrl ? "webpage" : "transcript",
+        extracted_text: extractedText || null,
+        ai_summary: summary.trim() || null,
+        folder_id: folderOrNull(folder),
+        tags: [],
       });
+
+      onCreated?.(idea.id);
+      reset();
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Couldn't generate summary");
+      toast.error(e instanceof Error ? e.message : "Couldn't save idea");
     } finally {
       setGenerating(false);
     }
@@ -597,7 +606,7 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
       </div>
 
       <Button
-        onClick={usesAiPreview ? handleGenerate : handleSave}
+        onClick={usesAiPreview ? handleGenerateAndSave : handleSave}
         disabled={saving || generating || createIdea.isPending}
         className="w-full h-12 rounded-xl text-[16px] font-semibold"
       >
@@ -607,9 +616,9 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
           <>
             <Sparkles className="h-4 w-4 mr-1.5" />
             {needsUrl
-              ? "Extract & preview"
+              ? "Save & summarize"
               : isTranscript
-                ? "Summarize & preview"
+                ? "Save & summarize"
                 : source === "list"
                   ? "Save list"
                   : "Save idea"}
@@ -619,7 +628,7 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
 
       {usesAiPreview && (
         <p className="text-xs text-muted-foreground text-center">
-          We'll generate a summary you can edit before saving.
+          We'll extract and summarize automatically — edit anytime after saving.
         </p>
       )}
     </div>
