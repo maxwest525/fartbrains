@@ -13,8 +13,8 @@ type Tile = {
 };
 
 const TILES: Tile[] = [
-  { key: "instagram", label: "Instagram", icon: Instagram,  tone: "text-primary",     enabled: true  },
   { key: "note",      label: "Note",      icon: FileText,   tone: "text-foreground",  enabled: true  },
+  { key: "instagram", label: "Instagram", icon: Instagram,  tone: "text-primary",     enabled: true  },
   { key: "link",      label: "Link",      icon: Link2,      tone: "text-primary",     enabled: true  },
   { key: "list",      label: "List",      icon: ListChecks, tone: "text-primary",     enabled: true  },
   { key: "transcript",label: "Transcript",icon: ClipboardPaste, tone: "text-primary", enabled: true  },
