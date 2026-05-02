@@ -193,12 +193,17 @@ export const IdeaList = ({ filter, selectedId, onSelect, onBackToFolders, onFilt
             <div className="md:hidden px-4 pt-1">
               <div className="rounded-2xl bg-card overflow-hidden ios-separator-inset">
                 {ideas.map((idea) => {
-                  const { Icon, tone } = sourceMeta(idea.source_type);
-                  const preview =
-                    idea.ai_summary?.replace(/[#*]/g, "").trim() ||
-                    idea.raw_note ||
-                    idea.extracted_text ||
-                    "";
+                  const isProject = idea.tags.includes(PROJECT_TAG);
+                  const stats = isProject ? deliverableStats(idea.raw_note) : null;
+                  const { Icon, tone } = isProject
+                    ? { Icon: Briefcase, tone: "bg-primary text-primary-foreground" }
+                    : sourceMeta(idea.source_type);
+                  const preview = isProject
+                    ? `${stats!.done} of ${stats!.total} deliverables done`
+                    : idea.ai_summary?.replace(/[#*]/g, "").trim() ||
+                      idea.raw_note ||
+                      idea.extracted_text ||
+                      "";
                   return (
                     <button
                       key={idea.id}
@@ -213,6 +218,11 @@ export const IdeaList = ({ filter, selectedId, onSelect, onBackToFolders, onFilt
                           <h3 className="font-semibold text-[16px] flex-1 truncate leading-tight">
                             {idea.title}
                           </h3>
+                          {isProject && stats && (
+                            <span className="shrink-0 text-[11px] font-semibold px-1.5 py-0.5 rounded-md bg-primary/10 text-primary">
+                              {stats.done}/{stats.total}
+                            </span>
+                          )}
                           {idea.is_favorite && (
                             <Star className="h-3.5 w-3.5 shrink-0 fill-accent text-accent" />
                           )}
