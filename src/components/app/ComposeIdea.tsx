@@ -480,9 +480,9 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
             value={url}
             onChange={(e) => setUrl(e.target.value)}
             onPaste={(e) => {
-              // Auto-trigger save the moment a valid URL is pasted into an empty field.
-              // Only fires when the input is empty (otherwise it's an edit, not a fresh capture)
-              // and only if the pasted text parses as a real URL.
+              // Auto-trigger extraction the moment a valid URL is pasted into
+              // an empty field. The user then reviews the extracted text in the
+              // preview card before committing to save.
               const pasted = e.clipboardData.getData("text").trim();
               if (!pasted || url.trim().length > 0) return;
               try {
@@ -492,8 +492,7 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
                 return;
               }
               setUrl(pasted);
-              // Defer so the input visibly updates before the network call starts.
-              setTimeout(() => handleGenerateAndSave({ url: pasted }), 0);
+              setTimeout(() => handleExtract({ url: pasted }), 0);
             }}
             placeholder={ph.url}
             inputMode="url"
