@@ -124,15 +124,18 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
    * `urlOverride` lets paste handlers pass the freshly-pasted URL synchronously,
    * before React state has had a chance to update.
    */
-  const handleGenerateAndSave = async (urlOverride?: string) => {
+  const handleGenerateAndSave = async (
+    overrides?: { url?: string; note?: string }
+  ) => {
     if (generating || saving) return;
 
-    const effectiveUrl = (urlOverride ?? url).trim();
+    const effectiveUrl = (overrides?.url ?? url).trim();
+    const effectiveNote = (overrides?.note ?? note).trim();
 
     if (needsUrl) {
       if (!effectiveUrl) return toast.error("URL required");
     } else if (isTranscript) {
-      if (note.trim().length < 20) return toast.error("Paste at least a few sentences");
+      if (effectiveNote.length < 20) return toast.error("Paste at least a few sentences");
     }
 
     setGenerating(true);
@@ -151,7 +154,7 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
         extractedText = ext?.text ?? "";
         suggestedTitleFromExtract = ext?.title ?? undefined;
       } else {
-        extractedText = note.trim();
+        extractedText = effectiveNote;
       }
 
       let summary = "";
@@ -284,7 +287,7 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
               }
               setUrl(pasted);
               // Defer so the input visibly updates before the network call starts.
-              setTimeout(() => handleGenerateAndSave(pasted), 0);
+              setTimeout(() => handleGenerateAndSave({ url: pasted }), 0);
             }}
             placeholder={ph.url}
             inputMode="url"
@@ -361,6 +364,14 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
             ref={noteTextareaRef}
             value={note}
             onChange={(e) => setNote(e.target.value)}
+            onPaste={(e) => {
+              // Auto-trigger summarize+save when a substantial transcript is pasted into an empty field.
+              if (!isTranscript) return;
+              const pasted = e.clipboardData.getData("text").trim();
+              if (pasted.length < 20 || note.trim().length > 0) return;
+              setNote(pasted);
+              setTimeout(() => handleGenerateAndSave({ note: pasted }), 0);
+            }}
             placeholder={ph.note}
             rows={isTranscript ? 8 : source === "list" ? 5 : 4}
             className="rounded-2xl bg-secondary/60 border-transparent text-[18px] font-medium px-4 py-3 leading-snug resize-none placeholder:font-normal placeholder:text-muted-foreground/70"
