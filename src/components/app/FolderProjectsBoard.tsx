@@ -87,6 +87,18 @@ export const FolderProjectsBoard = ({ ideas, onOpenProject }: Props) => {
     cancelEdit();
   };
 
+  // Pending deletion target. Null when no confirmation dialog is open.
+  const [pendingDelete, setPendingDelete] = useState<
+    { idea: Idea; item: Deliverable } | null
+  >(null);
+  const confirmDelete = () => {
+    if (!pendingDelete) return;
+    const { idea, item } = pendingDelete;
+    const nextRaw = deleteDeliverable(idea.raw_note ?? "", item.index);
+    updateIdea.mutate({ id: idea.id, patch: { raw_note: nextRaw } });
+    setPendingDelete(null);
+  };
+
   if (projects.length === 0) return null;
 
   return (
