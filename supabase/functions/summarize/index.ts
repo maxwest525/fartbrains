@@ -8,13 +8,17 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   try {
-    const { text, kind } = await req.json();
+    const { text, kind, userNote } = await req.json();
     if (!text || typeof text !== "string" || text.trim().length < 20) {
       return new Response(JSON.stringify({ error: "Text too short to summarize" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+    const userNoteClean =
+      typeof userNote === "string" && userNote.trim().length > 0
+        ? userNote.trim().slice(0, 4000)
+        : "";
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY missing");
