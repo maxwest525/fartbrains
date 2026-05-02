@@ -46,9 +46,18 @@ export const TranscriptCapture = ({ defaultFolderId, onBack, onCreated }: Props)
     setFolder(defaultFolderId ?? NO_FOLDER);
   }, [defaultFolderId]);
 
-  const charCount = text.trim().length;
-  const wordCount = text.trim() ? text.trim().split(/\s+/).length : 0;
-  const canSave = charCount >= MIN_CHARS && !busy;
+  const trimmed = text.trim();
+  const charCount = trimmed.length;
+  const wordCount = trimmed ? trimmed.split(/\s+/).length : 0;
+  const overLimit = charCount > MAX_CHARS;
+  const tooShort = charCount > 0 && charCount < MIN_CHARS;
+  const isEmpty = charCount === 0;
+  const meetsRecommended = charCount >= RECOMMENDED_CHARS;
+  const progress = Math.min(100, Math.round((charCount / RECOMMENDED_CHARS) * 100));
+  const canSave = charCount >= MIN_CHARS && !overLimit && !busy;
+
+  const validationState: "empty" | "short" | "over" | "ok" | "great" =
+    isEmpty ? "empty" : tooShort ? "short" : overLimit ? "over" : meetsRecommended ? "great" : "ok";
 
   const pasteFromClipboard = async () => {
     try {
