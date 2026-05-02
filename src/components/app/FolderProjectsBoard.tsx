@@ -48,6 +48,34 @@ export const FolderProjectsBoard = ({ ideas, onOpenProject }: Props) => {
       return next;
     });
 
+  // Inline edit state, keyed by `${ideaId}:${itemIndex}`.
+  const [editingKey, setEditingKey] = useState<string | null>(null);
+  const [editText, setEditText] = useState("");
+  const editInputRef = useRef<HTMLInputElement | null>(null);
+
+  useEffect(() => {
+    if (editingKey) editInputRef.current?.focus();
+  }, [editingKey]);
+
+  const beginEdit = (ideaId: string, item: Deliverable) => {
+    setEditingKey(`${ideaId}:${item.index}`);
+    setEditText(item.text);
+  };
+  const cancelEdit = () => {
+    setEditingKey(null);
+    setEditText("");
+  };
+  const commitEdit = (idea: Idea, item: Deliverable) => {
+    const trimmed = editText.trim();
+    if (!trimmed || trimmed === item.text) {
+      cancelEdit();
+      return;
+    }
+    const nextRaw = updateDeliverable(idea.raw_note ?? "", item.index, { text: trimmed });
+    updateIdea.mutate({ id: idea.id, patch: { raw_note: nextRaw } });
+    cancelEdit();
+  };
+
   if (projects.length === 0) return null;
 
   return (
