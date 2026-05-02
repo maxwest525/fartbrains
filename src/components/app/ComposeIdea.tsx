@@ -616,9 +616,9 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
           <>
             <Sparkles className="h-4 w-4 mr-1.5" />
             {needsUrl
-              ? "Extract & preview"
+              ? "Save & summarize"
               : isTranscript
-                ? "Summarize & preview"
+                ? "Save & summarize"
                 : source === "list"
                   ? "Save list"
                   : "Save idea"}
@@ -628,7 +628,7 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
 
       {usesAiPreview && (
         <p className="text-xs text-muted-foreground text-center">
-          We'll generate a summary you can edit before saving.
+          We'll extract and summarize automatically — edit anytime after saving.
         </p>
       )}
     </div>
