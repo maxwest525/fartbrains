@@ -279,6 +279,27 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
     }
   };
 
+  const handleCreateProject = async ({ name, rawNote }: { name: string; rawNote: string }) => {
+    if (saving) return;
+    setSaving(true);
+    try {
+      const idea = await createIdea.mutateAsync({
+        title: name.slice(0, 200),
+        raw_note: rawNote,
+        source_url: null,
+        source_type: "manual",
+        folder_id: folderOrNull(folder),
+        tags: [PROJECT_TAG],
+      });
+      onCreated?.(idea.id);
+      reset();
+      // Switch back to default capture so the user sees their next blank slate.
+      setSource("note");
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const ph = PLACEHOLDERS[source];
 
   // (Preview/edit step removed — saves go through directly. Edit on the idea detail view.)
