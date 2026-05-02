@@ -7,6 +7,16 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -52,6 +62,7 @@ export const IdeaDetail = ({ ideaId, onClose, backLabel = "Back" }: Props) => {
   const [regenerating, setRegenerating] = useState(false);
   const [copied, setCopied] = useState(false);
   const [reminderOpen, setReminderOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
 
   // Swipe-right from the left edge to go back (mobile only, not while editing)
   useSwipeGesture(containerRef, {
@@ -117,10 +128,13 @@ export const IdeaDetail = ({ ideaId, onClose, backLabel = "Back" }: Props) => {
     updateIdea.mutate({ id: idea.id, patch: { is_favorite: !idea.is_favorite } });
   };
 
-  const onDelete = () => {
-    if (confirm("Delete this idea? This cannot be undone.")) {
-      deleteIdea.mutate(idea.id, { onSuccess: onClose });
-    }
+  const confirmDelete = () => {
+    deleteIdea.mutate(idea.id, {
+      onSuccess: () => {
+        setDeleteOpen(false);
+        onClose();
+      },
+    });
   };
 
   const onGeneratePrompt = async () => {
@@ -271,7 +285,7 @@ export const IdeaDetail = ({ ideaId, onClose, backLabel = "Back" }: Props) => {
             </button>
           )}
           <button
-            onClick={onDelete}
+            onClick={() => setDeleteOpen(true)}
             className="press h-10 w-10 flex items-center justify-center text-destructive"
             aria-label="Delete"
           >
@@ -573,6 +587,39 @@ export const IdeaDetail = ({ ideaId, onClose, backLabel = "Back" }: Props) => {
             : null
         }
       />
+
+      <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete this idea?</AlertDialogTitle>
+            <AlertDialogDescription>
+              "{idea.title}" will be permanently removed. This can't be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleteIdea.isPending}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                // Prevent the default radix close so we control it after the
+                // mutation succeeds (keeps the dialog open while deleting).
+                e.preventDefault();
+                confirmDelete();
+              }}
+              disabled={deleteIdea.isPending}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleteIdea.isPending ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
+                  Deleting…
+                </>
+              ) : (
+                "Delete"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
