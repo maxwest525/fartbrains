@@ -404,22 +404,32 @@ export const UrlCapturePanel = ({ defaultFolderId, onCreated, onOpenExisting }: 
         </div>
       )}
 
-      {/* Auto-detected source badge */}
+      {/* Auto-detected source badge — shows the extraction path the URL will
+          take (audio transcription vs. readable text) so the user knows what
+          to expect before hitting Extract. */}
       {(() => {
         if (preview || !url.trim()) return null;
         const detected = detectSource(url);
-        if (detected === "unknown" || detected === "webpage") return null;
-        const willTranscribe = detected === "instagram";
+        if (detected === "unknown") return null;
+        const isReel = detected === "instagram";
+        const isVideo = detected === "tiktok" || detected === "youtube";
+        const label = isReel ? "Instagram reel" : SOURCE_LABEL[detected];
+        const hint = isReel
+          ? "Audio will be transcribed."
+          : isVideo
+            ? "We'll fetch the transcript or captions."
+            : "We'll extract the readable article text.";
+        const tone = isReel
+          ? "bg-[hsl(322_75%_46%/0.12)] text-[hsl(322_75%_46%)]"
+          : isVideo
+            ? "bg-[hsl(28_100%_55%/0.15)] text-[hsl(28_100%_45%)]"
+            : "bg-[hsl(211_100%_50%/0.12)] text-[hsl(211_100%_50%)]";
         return (
           <div className="flex items-center gap-2 text-[12px] text-muted-foreground">
-            <span className="rounded-md bg-primary/10 text-primary px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide">
-              {SOURCE_LABEL[detected]}
+            <span className={cn("rounded-md px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide", tone)}>
+              {label}
             </span>
-            <span className="leading-tight">
-              {willTranscribe
-                ? "We'll transcribe the audio for you."
-                : "Saved as a transcript-style source — paste the caption or notes after extracting."}
-            </span>
+            <span className="leading-tight">{hint}</span>
           </div>
         );
       })()}
