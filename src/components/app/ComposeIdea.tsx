@@ -646,7 +646,7 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
         </div>
       )}
 
-      {source === "note" || source === "list" || isTranscript ? (
+      {!preview && (source === "note" || source === "list" || isTranscript) ? (
         <div className="space-y-1.5">
           <label className="block text-[11px] font-semibold uppercase tracking-wide text-muted-foreground px-1">
             {isTranscript ? "Transcript or long text" : source === "list" ? "Checklist items" : "Your idea"}
@@ -668,7 +668,7 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
             className="rounded-2xl bg-secondary/60 border-transparent text-[18px] font-medium px-4 py-3 leading-snug resize-none placeholder:font-normal placeholder:text-muted-foreground/70"
           />
         </div>
-      ) : (
+      ) : !preview ? (
         <Input
           ref={noteInputRef}
           value={note}
@@ -676,7 +676,7 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
           placeholder={ph.note}
           className="h-16 rounded-2xl bg-secondary/60 border-transparent text-[18px] font-medium px-4 placeholder:font-normal placeholder:text-muted-foreground/70"
         />
-      )}
+      ) : null}
 
       {folderChips}
 
