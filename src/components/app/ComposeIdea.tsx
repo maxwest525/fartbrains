@@ -124,15 +124,18 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
    * `urlOverride` lets paste handlers pass the freshly-pasted URL synchronously,
    * before React state has had a chance to update.
    */
-  const handleGenerateAndSave = async (urlOverride?: string) => {
+  const handleGenerateAndSave = async (
+    overrides?: { url?: string; note?: string }
+  ) => {
     if (generating || saving) return;
 
-    const effectiveUrl = (urlOverride ?? url).trim();
+    const effectiveUrl = (overrides?.url ?? url).trim();
+    const effectiveNote = (overrides?.note ?? note).trim();
 
     if (needsUrl) {
       if (!effectiveUrl) return toast.error("URL required");
     } else if (isTranscript) {
-      if (note.trim().length < 20) return toast.error("Paste at least a few sentences");
+      if (effectiveNote.length < 20) return toast.error("Paste at least a few sentences");
     }
 
     setGenerating(true);
@@ -151,7 +154,7 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
         extractedText = ext?.text ?? "";
         suggestedTitleFromExtract = ext?.title ?? undefined;
       } else {
-        extractedText = note.trim();
+        extractedText = effectiveNote;
       }
 
       let summary = "";
