@@ -143,7 +143,7 @@ const Shell = () => {
   return (
     <div className="flex flex-col h-[100dvh] w-full bg-background overflow-hidden relative">
       {/* Top bar — search + (desktop) inline nav. Hidden on mobile when viewing detail or the folders page (folders has its own header). */}
-      {!showDetailOnly && !(isMobile && showFolders) && (
+      {!showDetailOnly && !(isMobile && showFolders) && !(isMobile && showTranscript) && (
         <header className="safe-top sticky top-0 z-20 bg-background/80 backdrop-blur-xl border-b border-border">
           <div className="px-3 sm:px-5 py-2 flex items-center gap-2 sm:gap-3">
             {/* Brand — desktop only */}
