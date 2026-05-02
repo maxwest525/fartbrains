@@ -678,28 +678,27 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
         />
       ) : null}
 
-      {folderChips}
+      {!preview && folderChips}
 
-      <Button
-        onClick={usesAiPreview ? () => handleGenerateAndSave() : handleSave}
-        disabled={saving || generating || createIdea.isPending}
-        className="w-full h-12 rounded-xl text-[16px] font-semibold"
-      >
-        {saving || generating ? (
-          <Loader2 className="h-5 w-5 animate-spin" />
-        ) : (
-          <>
-            <Sparkles className="h-4 w-4 mr-1.5" />
-            {needsUrl
-              ? "Save & summarize"
-              : isTranscript
-                ? "Save & summarize"
-                : source === "list"
-                  ? "Save list"
-                  : "Save idea"}
-          </>
-        )}
-      </Button>
-    </div>
-  );
-};
+      {!preview && (
+        <Button
+          onClick={usesAiPreview ? () => handleGenerateAndSave() : handleSave}
+          disabled={saving || generating || extracting || createIdea.isPending}
+          className="w-full h-12 rounded-xl text-[16px] font-semibold"
+        >
+          {saving || generating || extracting ? (
+            <Loader2 className="h-5 w-5 animate-spin" />
+          ) : (
+            <>
+              <Sparkles className="h-4 w-4 mr-1.5" />
+              {needsUrl
+                ? "Extract preview"
+                : isTranscript
+                  ? "Save & summarize"
+                  : source === "list"
+                    ? "Save list"
+                    : "Save idea"}
+            </>
+          )}
+        </Button>
+      )}
