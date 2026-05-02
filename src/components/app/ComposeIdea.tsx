@@ -17,7 +17,10 @@ const NO_FOLDER = "__none__";
 
 type Props = {
   defaultFolderId?: string | null;
-  onCreated?: (id: string) => void;
+  /** Called after a successful save. `needsReview` is true when AI confidence
+   *  is low (short/empty summary, no suggested title, or thin extracted text)
+   *  so the parent can open the detail panel for one-tap edit. */
+  onCreated?: (id: string, needsReview?: boolean) => void;
   onOpenExisting?: (id: string) => void;
 };
 
