@@ -12,6 +12,8 @@ export type Idea = {
   raw_note: string | null;
   source_url: string | null;
   source_type: SourceType;
+  /** Human-readable source name (e.g. "Instagram", "TikTok", "YouTube", "Web page"). */
+  source_label: string | null;
   extracted_text: string | null;
   ai_summary: string | null;
   generated_prompt: string | null;
