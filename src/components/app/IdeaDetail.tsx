@@ -285,7 +285,7 @@ export const IdeaDetail = ({ ideaId, onClose, backLabel = "Back" }: Props) => {
             </button>
           )}
           <button
-            onClick={onDelete}
+            onClick={() => setDeleteOpen(true)}
             className="press h-10 w-10 flex items-center justify-center text-destructive"
             aria-label="Delete"
           >
