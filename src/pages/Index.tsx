@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { Search, X, Inbox, Folder, Star, Clock, Settings as SettingsIcon, LogOut } from "lucide-react";
+import { Search, X, Inbox, Folder, Star, Clock, Settings as SettingsIcon, LogOut, ClipboardPaste } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { IdeaList } from "@/components/app/IdeaList";
 import { IdeaDetail } from "@/components/app/IdeaDetail";
@@ -8,6 +8,7 @@ import { MovieTicker } from "@/components/app/MovieTicker";
 import { MobileTabBar } from "@/components/app/MobileTabBar";
 import { SettingsSheet } from "@/components/app/SettingsSheet";
 import { FoldersPage } from "@/components/app/FoldersPage";
+import { TranscriptCapture } from "@/components/app/TranscriptCapture";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useAuth } from "@/hooks/useAuth";
@@ -17,7 +18,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import type { IdeaFilter } from "@/hooks/useIdeas";
 
-type View = "ideas" | "folders";
+type View = "ideas" | "folders" | "transcript";
 
 const Shell = () => {
   const [view, setView] = useState<View>("ideas");
@@ -91,8 +92,14 @@ const Shell = () => {
     setSelectedId(null);
   };
 
+  const openTranscriptPage = () => {
+    setView("transcript");
+    setSelectedId(null);
+  };
+
   const showDetailOnly = isMobile && selectedId !== null;
   const showFolders = view === "folders" && !showDetailOnly;
+  const showTranscript = view === "transcript" && !showDetailOnly;
   const defaultFolderId = filter.kind === "folder" ? filter.folderId : null;
 
   const activeFolderName =
@@ -136,7 +143,7 @@ const Shell = () => {
   return (
     <div className="flex flex-col h-[100dvh] w-full bg-background overflow-hidden relative">
       {/* Top bar — search + (desktop) inline nav. Hidden on mobile when viewing detail or the folders page (folders has its own header). */}
-      {!showDetailOnly && !(isMobile && showFolders) && (
+      {!showDetailOnly && !(isMobile && showFolders) && !(isMobile && showTranscript) && (
         <header className="safe-top sticky top-0 z-20 bg-background/80 backdrop-blur-xl border-b border-border">
           <div className="px-3 sm:px-5 py-2 flex items-center gap-2 sm:gap-3">
             {/* Brand — desktop only */}
@@ -218,6 +225,18 @@ const Shell = () => {
             onBack={isMobile ? () => {
               setView("ideas");
             } : undefined}
+          />
+        )}
+
+        {/* Dedicated paste-transcript screen — bypasses the source picker */}
+        {showTranscript && (
+          <TranscriptCapture
+            defaultFolderId={defaultFolderId}
+            onBack={() => setView("ideas")}
+            onCreated={(id, needsReview) => {
+              setView("ideas");
+              if (needsReview) setSelectedId(id);
+            }}
           />
         )}
 
