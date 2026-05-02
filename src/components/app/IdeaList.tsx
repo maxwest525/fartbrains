@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Star, FileText, Link2, Mic, MessageSquare, ChevronRight, Loader2, ChevronLeft, Inbox, Search as SearchIcon, Folder as FolderIcon, Clock as ClockIcon, Briefcase, LayoutGrid, Tag as TagIcon, X } from "lucide-react";
+import { Star, FileText, Link2, Mic, MessageSquare, ChevronRight, Loader2, ChevronLeft, Inbox, Search as SearchIcon, Folder as FolderIcon, Clock as ClockIcon, Briefcase, LayoutGrid, Tag as TagIcon, X, Pin } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 import { useIdeas, type Idea, type IdeaFilter } from "@/hooks/useIdeas";
@@ -365,6 +365,9 @@ export const IdeaList = ({ filter, selectedId, onSelect, onBackToFolders, onFilt
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-1.5">
+                          {idea.pinned_at && (
+                            <Pin className="h-3.5 w-3.5 shrink-0 fill-accent text-accent -rotate-45" />
+                          )}
                           <h3 className="font-semibold text-[16px] flex-1 truncate leading-tight">
                             {idea.title}
                           </h3>
@@ -427,6 +430,9 @@ export const IdeaList = ({ filter, selectedId, onSelect, onBackToFolders, onFilt
                   >
                     <div className="flex items-start gap-2 mb-1">
                       <Icon className={cn("h-3.5 w-3.5 mt-0.5 shrink-0", isProject ? "text-primary" : "text-muted-foreground")} />
+                      {idea.pinned_at && (
+                        <Pin className="h-3.5 w-3.5 mt-0.5 shrink-0 fill-accent text-accent -rotate-45" />
+                      )}
                       <h3 className="font-medium text-sm flex-1 truncate">{idea.title}</h3>
                       {isProject && stats && (
                         <span className="shrink-0 text-[10px] font-semibold px-1.5 py-0.5 rounded bg-primary/10 text-primary">
