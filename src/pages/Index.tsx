@@ -23,6 +23,9 @@ const Shell = () => {
   // The Capture page is filter "all". Switching to any other filter (recent, folder, favorites, search)
   // takes the user to the Browse list. Folders page is its own top-level view.
   const [filter, setFilter] = useState<IdeaFilter>({ kind: "all" });
+  // Remembers the last non-search filter so clearing the search bar returns
+  // the user to where they were (e.g., the folder they were browsing).
+  const [preSearchFilter, setPreSearchFilter] = useState<IdeaFilter>({ kind: "all" });
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [searchValue, setSearchValue] = useState("");
   const [settingsOpen, setSettingsOpen] = useState(false);
