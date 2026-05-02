@@ -31,7 +31,7 @@ export type IdeaFilter =
   | { kind: "favorites" }
   | { kind: "recent" }
   | { kind: "folder"; folderId: string }
-  | { kind: "search"; query: string };
+  | { kind: "search"; query: string; folderId?: string };
 
 export function useIdeas(filter: IdeaFilter) {
   return useQuery({
