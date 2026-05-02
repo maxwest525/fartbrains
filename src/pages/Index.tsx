@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from "react";
-import { Search, X, Inbox, Folder, Star, Clock, Settings as SettingsIcon, LogOut, Eye, EyeOff } from "lucide-react";
+import { useRef, useState } from "react";
+import { Search, X, Inbox, Folder, Star, Clock, Settings as SettingsIcon, LogOut } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { IdeaList } from "@/components/app/IdeaList";
 import { IdeaDetail } from "@/components/app/IdeaDetail";
@@ -12,6 +12,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { useAuth } from "@/hooks/useAuth";
 import { useFolders } from "@/hooks/useFolders";
 import { useReminderNotifier } from "@/hooks/useReminderNotifier";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import type { IdeaFilter } from "@/hooks/useIdeas";
 
@@ -19,21 +20,12 @@ type View = "ideas" | "folders";
 
 const Shell = () => {
   const [view, setView] = useState<View>("ideas");
+  // The Capture page is filter "all". Switching to any other filter (recent, folder, favorites, search)
+  // takes the user to the Browse list. Folders page is its own top-level view.
   const [filter, setFilter] = useState<IdeaFilter>({ kind: "all" });
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [searchValue, setSearchValue] = useState("");
   const [settingsOpen, setSettingsOpen] = useState(false);
-  // Capture is the primary action — open by default so paste→generate is one tap.
-  const [captureOpen, setCaptureOpen] = useState(true);
-  // Focus mode: hide the idea list while capturing so the user isn't distracted
-  // by their history. Persisted across sessions.
-  const [focusMode, setFocusMode] = useState<boolean>(() => {
-    if (typeof window === "undefined") return false;
-    return window.localStorage.getItem("captureFocusMode") === "1";
-  });
-  useEffect(() => {
-    window.localStorage.setItem("captureFocusMode", focusMode ? "1" : "0");
-  }, [focusMode]);
   const isMobile = useIsMobile();
   const composeRef = useRef<HTMLDivElement>(null);
   const { user, signOut } = useAuth();
@@ -60,7 +52,6 @@ const Shell = () => {
 
   const onSearch = (v: string) => {
     setSearchValue(v);
-    setCaptureOpen(false);
     if (v.trim()) {
       setView("ideas");
       setFilter({ kind: "search", query: v });
@@ -71,21 +62,18 @@ const Shell = () => {
 
   const clearSearch = () => {
     setSearchValue("");
-    setCaptureOpen(false);
     setFilter({ kind: "all" });
   };
 
   const handleFilterChange = (f: IdeaFilter) => {
     setView("ideas");
     setFilter(f);
-    setCaptureOpen(false);
     if (f.kind !== "search") setSearchValue("");
   };
 
   const openFoldersPage = () => {
     setView("folders");
     setSelectedId(null);
-    setCaptureOpen(false);
   };
 
   const showDetailOnly = isMobile && selectedId !== null;
@@ -105,10 +93,16 @@ const Shell = () => {
     onClick: () => void;
   }> = [
     {
-      label: "Ideas",
+      label: "Capture",
       icon: Inbox,
       active: view === "ideas" && filter.kind === "all",
       onClick: () => handleFilterChange({ kind: "all" }),
+    },
+    {
+      label: "Recents",
+      icon: Clock,
+      active: view === "ideas" && filter.kind === "recent",
+      onClick: () => handleFilterChange({ kind: "recent" }),
     },
     {
       label: activeFolderName ?? "Folders",
@@ -121,12 +115,6 @@ const Shell = () => {
       icon: Star,
       active: view === "ideas" && filter.kind === "favorites",
       onClick: () => handleFilterChange({ kind: "favorites" }),
-    },
-    {
-      label: "Recent",
-      icon: Clock,
-      active: view === "ideas" && filter.kind === "recent",
-      onClick: () => handleFilterChange({ kind: "recent" }),
     },
   ];
 
@@ -211,56 +199,48 @@ const Shell = () => {
             }}
             onBack={isMobile ? () => {
               setView("ideas");
-              setCaptureOpen(false);
             } : undefined}
           />
         )}
 
-        {/* Ideas view — compose + list. Hidden on mobile when detail is open or folders page is showing. */}
-        {!showFolders && !showDetailOnly && (
-          <div className="w-full flex-1 min-w-0 md:w-[28rem] md:flex-none md:shrink-0 md:border-r border-border flex flex-col min-h-0 bg-background md:overflow-hidden overflow-y-auto scroll-momentum touch-pan-y pb-[calc(5.75rem+env(safe-area-inset-bottom))] md:pb-0">
-            <div ref={composeRef} className="px-3 sm:px-5 pt-3 pb-2 shrink-0">
+        {/* Capture view — compose only, full width. Shown when filter is "all" (the default landing). */}
+        {!showFolders && !showDetailOnly && filter.kind === "all" && (
+          <div className="w-full flex-1 min-w-0 flex flex-col min-h-0 bg-background overflow-y-auto scroll-momentum touch-pan-y pb-[calc(5.75rem+env(safe-area-inset-bottom))] md:pb-6">
+            <div ref={composeRef} className="w-full max-w-2xl mx-auto px-3 sm:px-5 pt-4 sm:pt-8">
               <ComposeIdea
                 defaultFolderId={defaultFolderId}
                 onCreated={(id) => {
-                  setSelectedId(id);
+                  // Stay on the capture page so the user can keep pasting.
+                  // Tapping the toast jumps to the new idea's detail.
+                  toast.success("Idea saved", {
+                    description: "Find it in Recents or the All folder.",
+                    action: { label: "Open", onClick: () => setSelectedId(id) },
+                  });
                 }}
                 onOpenExisting={(id) => {
                   setSelectedId(id);
                 }}
               />
-              {/* Focus-mode toggle — hide the list below so paste/typing isn't distracted by history. */}
-              <button
-                type="button"
-                onClick={() => setFocusMode((v) => !v)}
-                className="mt-2 w-full inline-flex items-center justify-center gap-1.5 h-8 rounded-lg text-[12.5px] font-medium text-muted-foreground hover:text-foreground hover:bg-secondary/60 transition-colors"
-                aria-pressed={focusMode}
-              >
-                {focusMode ? (
-                  <>
-                    <Eye className="h-3.5 w-3.5" />
-                    Show ideas
-                  </>
-                ) : (
-                  <>
-                    <EyeOff className="h-3.5 w-3.5" />
-                    Hide ideas while capturing
-                  </>
-                )}
-              </button>
+              <p className="mt-3 text-center text-[12px] text-muted-foreground">
+                Saved ideas land in <button onClick={() => handleFilterChange({ kind: "recent" })} className="underline underline-offset-2 hover:text-foreground">Recents</button> and the All folder.
+              </p>
             </div>
-            {!focusMode && (
-              <div className="md:flex-1 md:min-h-0 md:overflow-hidden">
-                <IdeaList
-                  filter={filter}
-                  selectedId={selectedId}
-                  onSelect={setSelectedId}
-                  onBackToFolders={openFoldersPage}
-                  onFilterChange={handleFilterChange}
-                  pageScroll={isMobile}
-                />
-              </div>
-            )}
+          </div>
+        )}
+
+        {/* Browse view — flat list of ideas (Recents, Favorites, Folder-filtered, Search). */}
+        {!showFolders && !showDetailOnly && filter.kind !== "all" && (
+          <div className="w-full flex-1 min-w-0 md:w-[28rem] md:flex-none md:shrink-0 md:border-r border-border flex flex-col min-h-0 bg-background md:overflow-hidden overflow-y-auto scroll-momentum touch-pan-y pb-[calc(5.75rem+env(safe-area-inset-bottom))] md:pb-0">
+            <div className="md:flex-1 md:min-h-0 md:overflow-hidden">
+              <IdeaList
+                filter={filter}
+                selectedId={selectedId}
+                onSelect={setSelectedId}
+                onBackToFolders={openFoldersPage}
+                onFilterChange={handleFilterChange}
+                pageScroll={isMobile}
+              />
+            </div>
           </div>
         )}
 

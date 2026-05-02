@@ -51,9 +51,9 @@ export const MobileTabBar = ({ filter, view, onFilterChange, onOpenFolders, onOp
       aria-label="Primary"
     >
       <div className="flex items-stretch h-[50px]">
-        <Tab active={isAll} icon={Inbox} label="Ideas" onClick={() => onFilterChange({ kind: "all" })} />
+        <Tab active={isAll} icon={Inbox} label="Capture" onClick={() => onFilterChange({ kind: "all" })} />
+        <Tab active={isHistory} icon={Clock} label="Recents" onClick={() => onFilterChange({ kind: "recent" })} />
         <Tab active={isFolders} icon={Folder} label="Folders" onClick={onOpenFolders} />
-        <Tab active={isHistory} icon={Clock} label="History" onClick={() => onFilterChange({ kind: "recent" })} />
         <Tab active={false} icon={SettingsIcon} label="Settings" onClick={onOpenSettings} />
       </div>
     </nav>
