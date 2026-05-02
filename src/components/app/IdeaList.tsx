@@ -161,6 +161,49 @@ export const IdeaList = ({ filter, selectedId, onSelect, onBackToFolders, onFilt
             })}
           </div>
         )}
+
+        {/* Tag filter chips — multi-select, AND semantics. Only renders when
+            the loaded ideas actually contain tags. */}
+        {tagOptions.length > 0 && (
+          <div className="mt-2 -mx-1 flex items-center gap-1.5 overflow-x-auto scroll-momentum">
+            <span className="shrink-0 inline-flex items-center gap-1 px-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+              <TagIcon className="h-3 w-3" />
+              Tags
+            </span>
+            {tagOptions.map(({ tag, count }) => {
+              const active = selectedTags.includes(tag);
+              return (
+                <button
+                  key={tag}
+                  onClick={() => toggleTag(tag)}
+                  className={cn(
+                    "press shrink-0 inline-flex items-center gap-1 h-7 px-2.5 rounded-full text-[12.5px] font-medium border transition-colors",
+                    active
+                      ? "bg-primary text-primary-foreground border-primary"
+                      : "bg-card text-foreground/80 border-border hover:bg-muted",
+                  )}
+                  aria-pressed={active}
+                  title={`${count} idea${count === 1 ? "" : "s"} tagged "${tag}"`}
+                >
+                  <span className="truncate max-w-[10rem]">#{tag}</span>
+                  <span className={cn("text-[10.5px] opacity-70", active && "opacity-90")}>
+                    {count}
+                  </span>
+                </button>
+              );
+            })}
+            {selectedTags.length > 0 && (
+              <button
+                onClick={clearTags}
+                className="press shrink-0 inline-flex items-center gap-1 h-7 px-2 rounded-full text-[12px] font-medium text-muted-foreground hover:text-foreground"
+                aria-label="Clear tag filters"
+              >
+                <X className="h-3 w-3" />
+                Clear
+              </button>
+            )}
+          </div>
+        )}
       </div>
 
       <div
