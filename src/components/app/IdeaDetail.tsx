@@ -470,12 +470,21 @@ export const IdeaDetail = ({ ideaId, onClose, backLabel = "Back" }: Props) => {
           );
         })()}
 
-        {idea.extracted_text && (
+        {(editing ? extractedText : idea.extracted_text) && (
           <section>
             <h3 className="text-sm font-semibold mb-2">Original extracted text</h3>
-            <div className="rounded-md border border-border bg-muted/20 p-4 text-xs whitespace-pre-wrap">
-              {idea.extracted_text}
-            </div>
+            {editing ? (
+              <Textarea
+                value={extractedText}
+                onChange={(e) => setExtractedText(e.target.value)}
+                rows={8}
+                className="text-xs leading-relaxed"
+              />
+            ) : (
+              <div className="rounded-md border border-border bg-muted/20 p-4 text-xs whitespace-pre-wrap">
+                {idea.extracted_text}
+              </div>
+            )}
           </section>
         )}
       </div>
