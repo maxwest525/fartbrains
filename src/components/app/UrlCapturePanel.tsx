@@ -290,7 +290,7 @@ export const UrlCapturePanel = ({ defaultFolderId, onCreated, onOpenExisting }: 
         const { data, error } = await supabase.functions.invoke("summarize", {
           body: {
             text: preview.text,
-            kind: preview.isInstagramTranscript ? "transcript" : "webpage",
+            kind: preview.isTranscript ? "transcript" : "webpage",
             userNote: note.trim() || undefined,
           },
         });
