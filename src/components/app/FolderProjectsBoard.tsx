@@ -231,18 +231,18 @@ export const FolderProjectsBoard = ({ ideas, onOpenProject }: Props) => {
                                         onMouseDown={(e) => e.preventDefault()}
                                         onClick={() => commitEdit(idea, item)}
                                         aria-label="Save"
-                                        className="press h-7 w-7 inline-flex items-center justify-center text-muted-foreground hover:text-foreground"
+                                        className="press min-h-11 min-w-11 sm:h-9 sm:w-9 sm:min-h-0 sm:min-w-0 inline-flex items-center justify-center text-primary hover:text-primary/80"
                                       >
-                                        <Check className="h-4 w-4" />
+                                        <Check className="h-5 w-5 sm:h-4 sm:w-4" />
                                       </button>
                                       <button
                                         type="button"
                                         onMouseDown={(e) => e.preventDefault()}
                                         onClick={cancelEdit}
                                         aria-label="Cancel"
-                                        className="press h-7 w-7 inline-flex items-center justify-center text-muted-foreground hover:text-foreground"
+                                        className="press min-h-11 min-w-11 sm:h-9 sm:w-9 sm:min-h-0 sm:min-w-0 inline-flex items-center justify-center text-muted-foreground hover:text-foreground"
                                       >
-                                        <X className="h-4 w-4" />
+                                        <X className="h-5 w-5 sm:h-4 sm:w-4" />
                                       </button>
                                     </>
                                   ) : (
@@ -261,9 +261,9 @@ export const FolderProjectsBoard = ({ ideas, onOpenProject }: Props) => {
                                         type="button"
                                         onClick={() => beginEdit(idea.id, item)}
                                         aria-label="Edit deliverable"
-                                        className="press h-7 w-7 inline-flex items-center justify-center text-muted-foreground hover:text-foreground opacity-100 sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100 transition-opacity"
+                                        className="press min-h-11 min-w-11 sm:h-9 sm:w-9 sm:min-h-0 sm:min-w-0 inline-flex items-center justify-center text-muted-foreground hover:text-foreground opacity-100 sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100 transition-opacity"
                                       >
-                                        <Pencil className="h-3.5 w-3.5" />
+                                        <Pencil className="h-4 w-4 sm:h-3.5 sm:w-3.5" />
                                       </button>
                                     </>
                                   )}
