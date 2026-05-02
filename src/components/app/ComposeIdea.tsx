@@ -68,6 +68,16 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
   const [saving, setSaving] = useState(false);
   const [generating, setGenerating] = useState(false);
 
+  // URL preview step: after extraction, hold the readable text + suggested title
+  // so the user can review (and tweak the title) before committing to save.
+  const [preview, setPreview] = useState<{
+    url: string;
+    text: string;
+    suggestedTitle?: string;
+    sourceKind: "webpage" | "instagram";
+  } | null>(null);
+  const [extracting, setExtracting] = useState(false);
+
   // Inline new-folder UI (triggered from chip).
   const [newFolderOpen, setNewFolderOpen] = useState(false);
   const [newFolderName, setNewFolderName] = useState("");
