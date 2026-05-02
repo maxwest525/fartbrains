@@ -1,4 +1,5 @@
-import { Star, FileText, Link2, Mic, MessageSquare, ChevronRight, Loader2, ChevronLeft, Inbox, Search as SearchIcon, Folder as FolderIcon, Clock as ClockIcon, Briefcase, LayoutGrid } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Star, FileText, Link2, Mic, MessageSquare, ChevronRight, Loader2, ChevronLeft, Inbox, Search as SearchIcon, Folder as FolderIcon, Clock as ClockIcon, Briefcase, LayoutGrid, Tag as TagIcon, X } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 import { useIdeas, type Idea, type IdeaFilter } from "@/hooks/useIdeas";
@@ -46,6 +47,34 @@ export const IdeaList = ({ filter, selectedId, onSelect, onBackToFolders, onFilt
   const { data: folders = [] } = useFolders();
   const qc = useQueryClient();
   const isMobile = useIsMobile();
+
+  // Multi-select tag filter — applied client-side over the already-loaded
+  // ideas. AND semantics: an idea must include every selected tag to show.
+  // Resets implicitly when the parent filter changes via the keyed list.
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+
+  // Build the tag chip list from currently loaded ideas, sorted by frequency
+  // then alphabetically. Excludes the internal PROJECT_TAG marker so users
+  // don't see infrastructure tags in the filter strip.
+  const tagOptions = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const i of ideas) {
+      for (const t of i.tags ?? []) {
+        if (!t || t === PROJECT_TAG) continue;
+        counts.set(t, (counts.get(t) ?? 0) + 1);
+      }
+    }
+    return Array.from(counts.entries())
+      .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+      .map(([tag, count]) => ({ tag, count }));
+  }, [ideas]);
+
+  const toggleTag = (tag: string) => {
+    setSelectedTags((prev) =>
+      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag],
+    );
+  };
+  const clearTags = () => setSelectedTags([]);
 
   // Pull-to-refresh — only on mobile, refetches the active ideas query.
   const { bind, pull, refreshing, threshold } = usePullToRefresh<HTMLDivElement>({
@@ -130,6 +159,49 @@ export const IdeaList = ({ filter, selectedId, onSelect, onBackToFolders, onFilt
                 </button>
               );
             })}
+          </div>
+        )}
+
+        {/* Tag filter chips — multi-select, AND semantics. Only renders when
+            the loaded ideas actually contain tags. */}
+        {tagOptions.length > 0 && (
+          <div className="mt-2 -mx-1 flex items-center gap-1.5 overflow-x-auto scroll-momentum">
+            <span className="shrink-0 inline-flex items-center gap-1 px-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+              <TagIcon className="h-3 w-3" />
+              Tags
+            </span>
+            {tagOptions.map(({ tag, count }) => {
+              const active = selectedTags.includes(tag);
+              return (
+                <button
+                  key={tag}
+                  onClick={() => toggleTag(tag)}
+                  className={cn(
+                    "press shrink-0 inline-flex items-center gap-1 h-7 px-2.5 rounded-full text-[12.5px] font-medium border transition-colors",
+                    active
+                      ? "bg-primary text-primary-foreground border-primary"
+                      : "bg-card text-foreground/80 border-border hover:bg-muted",
+                  )}
+                  aria-pressed={active}
+                  title={`${count} idea${count === 1 ? "" : "s"} tagged "${tag}"`}
+                >
+                  <span className="truncate max-w-[10rem]">#{tag}</span>
+                  <span className={cn("text-[10.5px] opacity-70", active && "opacity-90")}>
+                    {count}
+                  </span>
+                </button>
+              );
+            })}
+            {selectedTags.length > 0 && (
+              <button
+                onClick={clearTags}
+                className="press shrink-0 inline-flex items-center gap-1 h-7 px-2 rounded-full text-[12px] font-medium text-muted-foreground hover:text-foreground"
+                aria-label="Clear tag filters"
+              >
+                <X className="h-3 w-3" />
+                Clear
+              </button>
+            )}
           </div>
         )}
       </div>
@@ -228,11 +300,43 @@ export const IdeaList = ({ filter, selectedId, onSelect, onBackToFolders, onFilt
 
         {/* Mobile: iOS grouped inset list. Desktop: flat row list. */}
         {(() => {
-          const visibleIdeas =
+          const baseIdeas =
             filter.kind === "folder"
               ? ideas.filter((i) => !i.tags.includes(PROJECT_TAG))
               : ideas;
-          if (visibleIdeas.length === 0) return null;
+          // Apply the multi-select tag filter (AND across selected tags).
+          const visibleIdeas =
+            selectedTags.length === 0
+              ? baseIdeas
+              : baseIdeas.filter((i) => {
+                  const t = i.tags ?? [];
+                  return selectedTags.every((sel) => t.includes(sel));
+                });
+          if (visibleIdeas.length === 0) {
+            // Show a focused empty state when the tag filter zeroes the list,
+            // so it's obvious the filter (not the data) is what hid them.
+            if (selectedTags.length > 0 && baseIdeas.length > 0) {
+              return (
+                <div className="px-6 py-12 text-center">
+                  <div className="mx-auto h-12 w-12 rounded-2xl bg-muted/60 flex items-center justify-center mb-3">
+                    <TagIcon className="h-6 w-6 text-muted-foreground" />
+                  </div>
+                  <p className="text-[15px] font-semibold text-foreground">No matches</p>
+                  <p className="text-[13px] text-muted-foreground mt-1 max-w-xs mx-auto">
+                    No ideas match every selected tag. Remove a tag to broaden the results.
+                  </p>
+                  <button
+                    onClick={clearTags}
+                    className="press mt-3 inline-flex items-center gap-1 h-8 px-3 rounded-full text-[13px] font-medium bg-card border border-border hover:bg-muted"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                    Clear tag filters
+                  </button>
+                </div>
+              );
+            }
+            return null;
+          }
           return (
           <>
             {/* MOBILE — grouped inset card with hairline separators */}
@@ -303,13 +407,21 @@ export const IdeaList = ({ filter, selectedId, onSelect, onBackToFolders, onFilt
                     idea.extracted_text ||
                     "";
                 return (
-                  <button
+                  <div
                     key={idea.id}
+                    role="button"
+                    tabIndex={0}
                     onClick={() => onSelect(idea.id)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        onSelect(idea.id);
+                      }
+                    }}
                     className={cn(
-                      "w-full text-left min-h-[64px] transition-colors",
+                      "w-full text-left min-h-[64px] transition-colors cursor-pointer",
                       "border-b border-border/60 px-5 py-3.5",
-                      "hover:bg-muted/40",
+                      "hover:bg-muted/40 focus-visible:outline-none focus-visible:bg-muted/60",
                       active && "bg-muted"
                     )}
                   >
@@ -326,16 +438,33 @@ export const IdeaList = ({ filter, selectedId, onSelect, onBackToFolders, onFilt
                       )}
                     </div>
                     <p className="text-xs text-muted-foreground line-clamp-2 mb-1.5">{preview}</p>
-                    <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
+                    <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground flex-wrap">
                       <span>{formatDate(idea.updated_at)}</span>
-                      {idea.tags.length > 0 && (
-                        <>
-                          <span>•</span>
-                          <span className="truncate">{idea.tags.slice(0, 3).join(", ")}</span>
-                        </>
-                      )}
+                      {idea.tags.filter((t) => t !== PROJECT_TAG).slice(0, 4).map((t) => {
+                        const isActive = selectedTags.includes(t);
+                        return (
+                          <button
+                            key={t}
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleTag(t);
+                            }}
+                            className={cn(
+                              "press inline-flex items-center h-5 px-1.5 rounded-full text-[10.5px] font-medium border transition-colors",
+                              isActive
+                                ? "bg-primary text-primary-foreground border-primary"
+                                : "bg-card border-border hover:bg-muted",
+                            )}
+                            aria-pressed={isActive}
+                            title={`Filter by #${t}`}
+                          >
+                            #{t}
+                          </button>
+                        );
+                      })}
                     </div>
-                  </button>
+                  </div>
                 );
               })}
             </div>
