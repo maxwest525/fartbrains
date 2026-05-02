@@ -8,6 +8,7 @@ import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { FolderStrip } from "./FolderStrip";
 import { PROJECT_TAG, deliverableStats } from "@/lib/deliverables";
+import { FolderProjectsBoard } from "./FolderProjectsBoard";
 
 const sourceMeta = (s: Idea["source_type"]) => {
   // iOS-style colored squircles per source type
