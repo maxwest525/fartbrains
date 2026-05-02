@@ -407,13 +407,21 @@ export const IdeaList = ({ filter, selectedId, onSelect, onBackToFolders, onFilt
                     idea.extracted_text ||
                     "";
                 return (
-                  <button
+                  <div
                     key={idea.id}
+                    role="button"
+                    tabIndex={0}
                     onClick={() => onSelect(idea.id)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        onSelect(idea.id);
+                      }
+                    }}
                     className={cn(
-                      "w-full text-left min-h-[64px] transition-colors",
+                      "w-full text-left min-h-[64px] transition-colors cursor-pointer",
                       "border-b border-border/60 px-5 py-3.5",
-                      "hover:bg-muted/40",
+                      "hover:bg-muted/40 focus-visible:outline-none focus-visible:bg-muted/60",
                       active && "bg-muted"
                     )}
                   >
@@ -430,16 +438,33 @@ export const IdeaList = ({ filter, selectedId, onSelect, onBackToFolders, onFilt
                       )}
                     </div>
                     <p className="text-xs text-muted-foreground line-clamp-2 mb-1.5">{preview}</p>
-                    <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
+                    <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground flex-wrap">
                       <span>{formatDate(idea.updated_at)}</span>
-                      {idea.tags.length > 0 && (
-                        <>
-                          <span>•</span>
-                          <span className="truncate">{idea.tags.slice(0, 3).join(", ")}</span>
-                        </>
-                      )}
+                      {idea.tags.filter((t) => t !== PROJECT_TAG).slice(0, 4).map((t) => {
+                        const isActive = selectedTags.includes(t);
+                        return (
+                          <button
+                            key={t}
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleTag(t);
+                            }}
+                            className={cn(
+                              "press inline-flex items-center h-5 px-1.5 rounded-full text-[10.5px] font-medium border transition-colors",
+                              isActive
+                                ? "bg-primary text-primary-foreground border-primary"
+                                : "bg-card border-border hover:bg-muted",
+                            )}
+                            aria-pressed={isActive}
+                            title={`Filter by #${t}`}
+                          >
+                            #{t}
+                          </button>
+                        );
+                      })}
                     </div>
-                  </button>
+                  </div>
                 );
               })}
             </div>
