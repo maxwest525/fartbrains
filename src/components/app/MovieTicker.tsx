@@ -1,3 +1,4 @@
+import { ImageOff } from "lucide-react";
 import forgetClub from "@/assets/movie-posters/forget-club.png";
 import savePrivateIdeas from "@/assets/movie-posters/save-private-ideas.png";
 import fastForgetful from "@/assets/movie-posters/the-fast-and-the-forgetful.png";
@@ -43,14 +44,28 @@ export const MovieTicker = () => {
             key={`${p.title}-${i}`}
             className="shrink-0 pl-2 pr-4 flex items-center gap-2"
           >
-            <div className="h-14 sm:h-16 aspect-[2/3] rounded-md overflow-hidden bg-card shadow-sm ring-1 ring-border/60 shrink-0">
+            <div className="relative h-14 sm:h-16 aspect-[2/3] rounded-md overflow-hidden bg-muted shadow-sm ring-1 ring-border/60 shrink-0">
               <img
                 src={p.src}
                 alt={p.title}
                 loading="eager"
                 draggable={false}
                 className="h-full w-full object-cover"
+                onError={(e) => {
+                  const img = e.currentTarget;
+                  // Hide the broken image and reveal the placeholder underneath.
+                  img.style.display = "none";
+                  const fallback = img.nextElementSibling as HTMLElement | null;
+                  if (fallback) fallback.style.display = "flex";
+                }}
               />
+              {/* Placeholder shown when the poster fails to load */}
+              <div
+                className="absolute inset-0 hidden items-center justify-center bg-muted text-muted-foreground"
+                aria-hidden="true"
+              >
+                <ImageOff className="h-5 w-5" />
+              </div>
             </div>
             <span className="shrink-0 text-xs sm:text-sm font-medium text-muted-foreground leading-tight w-20 sm:w-24 break-words hyphens-auto">
               {p.title}
