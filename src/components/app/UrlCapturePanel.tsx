@@ -188,9 +188,48 @@ export const UrlCapturePanel = ({ defaultFolderId, onCreated, onOpenExisting }: 
       });
       if (!title.trim() && data?.title) setTitle(String(data.title).slice(0, 200));
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Couldn't extract content");
+      const msg = e instanceof Error ? e.message : "Couldn't extract content";
+      setExtractFailed(`${msg} — you can still save the link as-is.`);
+      toast.error(msg);
     } finally {
       setExtracting(false);
+    }
+  };
+
+  /**
+   * Fallback save: persist whatever the user typed/pasted as a manual idea
+   * even when validation or extraction failed. Ensures a user never loses a
+   * capture just because we couldn't fetch the page contents.
+   */
+  const handleSaveRaw = async () => {
+    if (saving) return;
+    const raw = cleanUrlInput(url);
+    if (!raw) return toast.error("Paste a URL first");
+    setSaving(true);
+    try {
+      const looksUrl = isValidHttpUrl(raw);
+      const finalTitle = (title.trim() || raw).slice(0, 200);
+      const idea = await createIdea.mutateAsync({
+        title: finalTitle,
+        raw_note: note.trim() || null,
+        // Only persist as source_url if it parses as http(s); otherwise keep
+        // the original text in extracted_text so source_url stays clean.
+        source_url: looksUrl ? raw : null,
+        source_type: "manual",
+        extracted_text: looksUrl ? null : raw,
+        ai_summary: null,
+        folder_id: defaultFolderId ?? null,
+        tags: [],
+      });
+      toast.success("Saved without preview", {
+        description: "We couldn't fetch the page — you can edit the idea later.",
+      });
+      onCreated?.(idea.id, true);
+      reset();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Couldn't save idea");
+    } finally {
+      setSaving(false);
     }
   };
 
