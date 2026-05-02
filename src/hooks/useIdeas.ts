@@ -85,6 +85,8 @@ export function useCreateIdea() {
       raw_note?: string | null;
       source_url?: string | null;
       source_type: SourceType;
+      /** Human-readable source name shown in lists / detail (e.g. "Instagram"). */
+      source_label?: string | null;
       extracted_text?: string | null;
       ai_summary?: string | null;
       folder_id?: string | null;
@@ -100,11 +102,12 @@ export function useCreateIdea() {
           raw_note: payload.raw_note ?? null,
           source_url: payload.source_url ?? null,
           source_type: payload.source_type,
+          source_label: payload.source_label ?? null,
           extracted_text: payload.extracted_text ?? null,
           ai_summary: payload.ai_summary ?? null,
           folder_id: payload.folder_id ?? null,
           tags: payload.tags ?? [],
-        })
+        } as never)
         .select()
         .single();
       if (error) throw error;
