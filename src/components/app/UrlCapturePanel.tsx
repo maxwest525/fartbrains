@@ -156,7 +156,10 @@ export const UrlCapturePanel = ({ defaultFolderId, onCreated, onOpenExisting }: 
       let aiTitle: string | undefined;
       try {
         const { data, error } = await supabase.functions.invoke("summarize", {
-          body: { text: preview.text, kind: "webpage" },
+          body: {
+            text: preview.text,
+            kind: preview.isInstagramTranscript ? "transcript" : "webpage",
+          },
         });
         if (error) throw new Error(error.message);
         if (data?.error) throw new Error(data.error);
@@ -174,7 +177,7 @@ export const UrlCapturePanel = ({ defaultFolderId, onCreated, onOpenExisting }: 
         title: finalTitle,
         raw_note: null,
         source_url: preview.url,
-        source_type: "webpage",
+        source_type: preview.isInstagramTranscript ? "instagram" : "webpage",
         extracted_text: preview.text || null,
         ai_summary: summary.trim() || null,
         folder_id: defaultFolderId ?? null,
