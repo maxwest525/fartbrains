@@ -560,6 +560,92 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
         </div>
       )}
 
+      {/* URL preview step — shows extracted readable text before saving. */}
+      {needsUrl && preview && (
+        <div className="rounded-2xl border border-border/70 bg-secondary/30 p-3 sm:p-4 space-y-3">
+          <div className="flex items-start gap-2">
+            <div className="h-9 w-9 rounded-[10px] bg-primary/10 text-primary flex items-center justify-center shrink-0 mt-0.5">
+              <FileText className="h-4 w-4" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                Preview
+              </div>
+              <div className="font-semibold text-[15px] truncate" title={preview.suggestedTitle || preview.url}>
+                {preview.suggestedTitle || "Untitled page"}
+              </div>
+              <div className="text-[12px] text-muted-foreground truncate" title={preview.url}>
+                {preview.url}
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setPreview(null)}
+              className="press text-muted-foreground hover:text-foreground p-1.5 -mr-1 -mt-1 rounded-md"
+              aria-label="Dismiss preview"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+
+          {/* Editable title for the preview */}
+          <Input
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="Title (optional — AI will suggest one)"
+            maxLength={200}
+            className="h-10 rounded-xl bg-card border-border/60 text-[14px]"
+          />
+
+          {/* Editable extracted text — user can trim before saving */}
+          <Textarea
+            value={preview.text}
+            onChange={(e) => setPreview({ ...preview, text: e.target.value })}
+            rows={8}
+            className="rounded-xl bg-card border-border/60 text-[13.5px] leading-relaxed resize-y max-h-[40vh]"
+          />
+
+          <div className="flex items-center justify-between text-[11.5px] text-muted-foreground">
+            <span>
+              {preview.text.length.toLocaleString()} chars ·{" "}
+              {preview.text.trim().split(/\s+/).filter(Boolean).length.toLocaleString()} words
+            </span>
+            <span className="opacity-70">Edit before saving if needed</span>
+          </div>
+
+          <div className="flex gap-2">
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => {
+                setPreview(null);
+                setUrl("");
+                setTitle("");
+              }}
+              className="h-11 rounded-xl flex-1"
+              disabled={generating || saving}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              onClick={handleSavePreview}
+              disabled={generating || saving || preview.text.trim().length < 20}
+              className="h-11 rounded-xl flex-[2] text-[15px] font-semibold"
+            >
+              {generating ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <>
+                  <Sparkles className="h-4 w-4 mr-1.5" />
+                  Summarize & save
+                </>
+              )}
+            </Button>
+          </div>
+        </div>
+      )}
+
       {source === "note" || source === "list" || isTranscript ? (
         <div className="space-y-1.5">
           <label className="block text-[11px] font-semibold uppercase tracking-wide text-muted-foreground px-1">
