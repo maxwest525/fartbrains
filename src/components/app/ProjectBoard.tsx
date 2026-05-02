@@ -14,11 +14,14 @@ import {
   type Deliverable,
   type DeliverableType,
 } from "@/lib/deliverables";
+import { VoiceCaptureButton } from "./VoiceCaptureButton";
 
 type Props = {
   rawNote: string | null;
   /** Persist a new raw_note value. Parent owns mutation state. */
   onChange: (next: string) => void;
+  /** Optional context for voice capture so the AI knows what project this is. */
+  projectName?: string;
 };
 
 /**
@@ -26,7 +29,7 @@ type Props = {
  * All edits flow through `onChange(rawNote')` so the parent (IdeaDetail)
  * keeps using its existing `useUpdateIdea` plumbing.
  */
-export const ProjectBoard = ({ rawNote, onChange }: Props) => {
+export const ProjectBoard = ({ rawNote, onChange, projectName }: Props) => {
   const items = parseDeliverables(rawNote);
   const [activeType, setActiveType] = useState<DeliverableType>("task");
   const [draft, setDraft] = useState("");
@@ -154,6 +157,16 @@ export const ProjectBoard = ({ rawNote, onChange }: Props) => {
             <Plus className="h-4 w-4" />
           </Button>
         </div>
+        <VoiceCaptureButton
+          projectName={projectName}
+          existingItems={items.map((i) => i.text)}
+          onItems={(voiceItems) => {
+            // Append all voice items in one mutation to avoid racey writes.
+            let next = rawNote ?? "";
+            for (const v of voiceItems) next = appendDeliverable(next, v.type, v.text);
+            onChange(next);
+          }}
+        />
       </div>
 
       {/* Groups */}
