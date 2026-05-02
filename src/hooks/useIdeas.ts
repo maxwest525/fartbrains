@@ -27,11 +27,11 @@ export type Idea = {
 };
 
 export type IdeaFilter =
-  | { kind: "all" }
-  | { kind: "favorites" }
-  | { kind: "recent" }
-  | { kind: "folder"; folderId: string }
-  | { kind: "search"; query: string; folderId?: string };
+  | { kind: "all"; sourceType?: SourceType }
+  | { kind: "favorites"; sourceType?: SourceType }
+  | { kind: "recent"; sourceType?: SourceType }
+  | { kind: "folder"; folderId: string; sourceType?: SourceType }
+  | { kind: "search"; query: string; folderId?: string; sourceType?: SourceType };
 
 export function useIdeas(filter: IdeaFilter) {
   return useQuery({
@@ -51,6 +51,9 @@ export function useIdeas(filter: IdeaFilter) {
           `title.ilike.${term},raw_note.ilike.${term},extracted_text.ilike.${term},ai_summary.ilike.${term}`
         );
       }
+
+      // Optional source-type facet (e.g. "Transcript only").
+      if (filter.sourceType) q = q.eq("source_type", filter.sourceType);
 
       const { data, error } = await q;
       if (error) throw error;
