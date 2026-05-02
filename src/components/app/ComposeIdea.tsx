@@ -332,21 +332,26 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
       )}
 
       {source === "note" || source === "list" || isTranscript ? (
-        <Textarea
-          ref={noteTextareaRef}
-          value={note}
-          onChange={(e) => setNote(e.target.value)}
-          placeholder={ph.note}
-          rows={isTranscript ? 8 : source === "list" ? 5 : 4}
-          className="rounded-xl bg-secondary/60 border-transparent text-[15px] resize-none"
-        />
+        <div className="space-y-1.5">
+          <label className="block text-[11px] font-semibold uppercase tracking-wide text-muted-foreground px-1">
+            {isTranscript ? "Transcript or long text" : source === "list" ? "Checklist items" : "Your idea"}
+          </label>
+          <Textarea
+            ref={noteTextareaRef}
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            placeholder={ph.note}
+            rows={isTranscript ? 8 : source === "list" ? 5 : 4}
+            className="rounded-2xl bg-secondary/60 border-transparent text-[18px] font-medium px-4 py-3 leading-snug resize-none placeholder:font-normal placeholder:text-muted-foreground/70"
+          />
+        </div>
       ) : (
         <Input
           ref={noteInputRef}
           value={note}
           onChange={(e) => setNote(e.target.value)}
           placeholder={ph.note}
-          className="h-12 rounded-xl bg-secondary/60 border-transparent text-[15px]"
+          className="h-16 rounded-2xl bg-secondary/60 border-transparent text-[18px] font-medium px-4 placeholder:font-normal placeholder:text-muted-foreground/70"
         />
       )}
 
