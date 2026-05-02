@@ -26,8 +26,15 @@ const initial: UrlCheckResult = {
 const looksLikeUrl = (s: string) => {
   const v = s.trim();
   if (v.length < 4) return false;
-  // Accept "example.com", "https://x.y", "http://x.y/path"
-  return /^(https?:\/\/)?[^\s.]+\.[^\s]{2,}$/i.test(v);
+  if (/\s/.test(v)) return false;
+  // If it parses as a URL (with or without scheme) and has a dot in the host, accept it.
+  try {
+    const u = new URL(v.includes("://") ? v : `https://${v}`);
+    if (!["http:", "https:"].includes(u.protocol)) return false;
+    return u.hostname.includes(".") && u.hostname.length >= 3;
+  } catch {
+    return false;
+  }
 };
 
 /**
@@ -49,13 +56,9 @@ export function useUrlCheck(url: string, enabled: boolean): UrlCheckResult {
       return;
     }
     if (!looksLikeUrl(trimmed)) {
-      setResult({
-        status: "error",
-        httpStatus: null,
-        redirected: false,
-        finalUrl: null,
-        message: "Doesn't look like a URL",
-      });
+      // Stay idle while the user is still typing something that doesn't yet
+      // resemble a URL — avoids the jarring "Doesn't look like a URL" flash.
+      setResult(initial);
       return;
     }
 
