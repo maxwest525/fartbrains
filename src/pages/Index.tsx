@@ -282,6 +282,25 @@ const Shell = () => {
                 }}
                 onOpenExisting={(id) => setSelectedId(id)}
               />
+              {/* Dedicated entry to the transcript paste screen — skips the source picker. */}
+              <button
+                type="button"
+                onClick={openTranscriptPage}
+                className="w-full text-left rounded-2xl bg-card border border-border/60 p-3 sm:p-4 shadow-sm hover:border-primary/40 hover:bg-accent/30 transition-colors press"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="h-8 w-8 rounded-[10px] bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                    <ClipboardPaste className="h-4 w-4" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-[13px] font-semibold leading-tight">Paste a transcript</div>
+                    <div className="text-[12px] text-muted-foreground leading-tight">
+                      Open a full-screen editor for video, podcast, or meeting transcripts.
+                    </div>
+                  </div>
+                  <span className="text-[12px] font-medium text-primary shrink-0">Open →</span>
+                </div>
+              </button>
               <ComposeIdea
                 defaultFolderId={defaultFolderId}
                 onCreated={(id, needsReview) => {
