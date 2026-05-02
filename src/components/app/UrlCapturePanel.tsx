@@ -74,6 +74,59 @@ export const UrlCapturePanel = ({ defaultFolderId, onCreated, onOpenExisting }: 
 
     setExtracting(true);
     try {
+      // Instagram → fetch the reel via Apify and transcribe with ElevenLabs Scribe.
+      if (isInstagramUrl(target)) {
+        const t = toast.loading("Fetching reel & transcribing…", {
+          description: "This usually takes 10–30 seconds.",
+        });
+        try {
+          const { data, error } = await supabase.functions.invoke("transcribe-instagram", {
+            body: { url: target },
+          });
+          if (error) throw new Error(error.message);
+          if (data?.error && !data?.transcript && !data?.caption) {
+            throw new Error(data.error);
+          }
+
+          const transcript: string = (data?.transcript ?? "").toString().trim();
+          const caption: string = (data?.caption ?? "").toString().trim();
+          // Prefer transcript; fall back to caption if STT returned nothing.
+          const body =
+            transcript.length > 0
+              ? caption
+                ? `${transcript}\n\n— Caption —\n${caption}`
+                : transcript
+              : caption;
+
+          if (!body) throw new Error("No transcript or caption available for this reel.");
+
+          const suggested =
+            data?.title ??
+            (data?.author ? `Instagram — ${data.author}` : "Instagram reel");
+
+          setPreview({
+            url: data?.finalUrl ?? target,
+            text: body,
+            suggestedTitle: suggested,
+            isInstagramTranscript: transcript.length > 0,
+          });
+          if (!title.trim()) setTitle(String(suggested).slice(0, 200));
+
+          toast.dismiss(t);
+          if (transcript.length > 0) {
+            toast.success("Reel transcribed", {
+              description: "Edit the transcript if needed, then save.",
+            });
+          } else {
+            toast.warning("Couldn't transcribe — using caption only");
+          }
+        } catch (e) {
+          toast.dismiss(t);
+          throw e;
+        }
+        return;
+      }
+
       const { data, error } = await supabase.functions.invoke("extract-url", {
         body: { url: target },
       });
