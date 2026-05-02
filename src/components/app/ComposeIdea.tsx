@@ -257,17 +257,22 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
       <SourcePicker value={source} onChange={handleSourceChange} />
 
       {needsUrl && (
-        <Input
-          ref={urlInputRef}
-          value={url}
-          onChange={(e) => setUrl(e.target.value)}
-          placeholder={ph.url}
-          inputMode="url"
-          autoCapitalize="none"
-          autoCorrect="off"
-          autoFocus
-          className="h-12 rounded-xl bg-secondary/60 border-transparent text-[15px]"
-        />
+        <div className="space-y-1.5">
+          <label className="block text-[11px] font-semibold uppercase tracking-wide text-muted-foreground px-1">
+            {source === "instagram" ? "Instagram URL" : "Website URL"}
+          </label>
+          <Input
+            ref={urlInputRef}
+            value={url}
+            onChange={(e) => setUrl(e.target.value)}
+            placeholder={ph.url}
+            inputMode="url"
+            autoCapitalize="none"
+            autoCorrect="off"
+            autoFocus
+            className="h-16 rounded-2xl bg-secondary/60 border-transparent text-[18px] font-medium px-4 placeholder:font-normal placeholder:text-muted-foreground/70"
+          />
+        </div>
       )}
 
       {/* Live URL reachability — only shown when the user has typed something */}
