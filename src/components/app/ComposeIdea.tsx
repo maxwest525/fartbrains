@@ -13,7 +13,7 @@ import { toast } from "sonner";
 import { SourcePicker, isSourceEnabled, type SourceKey } from "./SourcePicker";
 
 const NO_FOLDER = "__none__";
-const NEW_FOLDER = "__new__";
+
 
 type Props = {
   defaultFolderId?: string | null;
