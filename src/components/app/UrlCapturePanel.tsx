@@ -208,9 +208,9 @@ export const UrlCapturePanel = ({ defaultFolderId, onCreated, onOpenExisting }: 
           <Link2 className="h-4 w-4" />
         </div>
         <div className="flex-1 min-w-0">
-          <div className="text-[13px] font-semibold leading-tight">Paste a URL</div>
+          <div className="text-[13px] font-semibold leading-tight">Paste a link or Instagram reel</div>
           <div className="text-[12px] text-muted-foreground leading-tight">
-            Extract the readable text and save it as an idea.
+            Articles, blog posts, or Instagram reels — we'll pull the text (or transcribe the audio) so you can save it as an idea.
           </div>
         </div>
       </div>
@@ -231,12 +231,37 @@ export const UrlCapturePanel = ({ defaultFolderId, onCreated, onOpenExisting }: 
             handleExtract();
           }
         }}
-        placeholder="https://…"
+        placeholder="https://example.com/article  or  https://instagram.com/reel/…"
         inputMode="url"
         autoCapitalize="none"
         autoCorrect="off"
         className="h-12 rounded-xl bg-secondary/60 border-transparent text-[15px] font-medium px-4"
       />
+
+      {/* Helper text + quick examples — only when there's no input or preview yet */}
+      {!preview && !url.trim() && (
+        <div className="space-y-1.5 text-[12px] text-muted-foreground leading-snug">
+          <p>
+            Must start with <span className="font-mono text-foreground/80">http://</span> or{" "}
+            <span className="font-mono text-foreground/80">https://</span>. We'll check that the page is reachable before you save.
+          </p>
+          <div className="flex flex-wrap gap-1.5 pt-0.5">
+            <span className="text-[11px] uppercase tracking-wide opacity-70 mr-0.5 self-center">Try:</span>
+            {[
+              "https://www.nytimes.com/…",
+              "https://instagram.com/reel/…",
+              "https://yourblog.com/post",
+            ].map((ex) => (
+              <span
+                key={ex}
+                className="rounded-md bg-secondary/60 px-2 py-0.5 text-[11.5px] font-mono text-foreground/70"
+              >
+                {ex}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Live URL reachability */}
       {url.trim() && urlCheck.status !== "idle" && !preview && (
