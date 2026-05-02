@@ -13,7 +13,7 @@ export type Idea = {
   source_url: string | null;
   source_type: SourceType;
   /** Human-readable source name (e.g. "Instagram", "TikTok", "YouTube", "Web page"). */
-  source_label: string | null;
+  source_label?: string | null;
   extracted_text: string | null;
   ai_summary: string | null;
   generated_prompt: string | null;
