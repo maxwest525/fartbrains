@@ -1,3 +1,4 @@
+import { ImageOff } from "lucide-react";
 import forgetClub from "@/assets/movie-posters/forget-club.png";
 import savePrivateIdeas from "@/assets/movie-posters/save-private-ideas.png";
 import fastForgetful from "@/assets/movie-posters/the-fast-and-the-forgetful.png";
