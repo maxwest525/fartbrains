@@ -209,9 +209,14 @@ const Shell = () => {
             <div ref={composeRef} className="w-full max-w-2xl mx-auto px-3 sm:px-5 pt-4 sm:pt-8">
               <ComposeIdea
                 defaultFolderId={defaultFolderId}
-                onCreated={(id) => {
-                  // Stay on the capture page so the user can keep pasting.
-                  // Tapping the toast jumps to the new idea's detail.
+                onCreated={(id, needsReview) => {
+                  if (needsReview) {
+                    // Low AI confidence — open the detail panel so the user can
+                    // review and edit before moving on. (Toast handled in ComposeIdea.)
+                    setSelectedId(id);
+                    return;
+                  }
+                  // High confidence — stay on capture; tap toast to open if wanted.
                   toast.success("Idea saved", {
                     description: "Find it in Recents or the All folder.",
                     action: { label: "Open", onClick: () => setSelectedId(id) },
