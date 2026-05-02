@@ -14,11 +14,14 @@ import {
   type Deliverable,
   type DeliverableType,
 } from "@/lib/deliverables";
+import { VoiceCaptureButton } from "./VoiceCaptureButton";
 
 type Props = {
   rawNote: string | null;
   /** Persist a new raw_note value. Parent owns mutation state. */
   onChange: (next: string) => void;
+  /** Optional context for voice capture so the AI knows what project this is. */
+  projectName?: string;
 };
 
 /**
