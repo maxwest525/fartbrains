@@ -210,7 +210,12 @@ const Shell = () => {
               <ComposeIdea
                 defaultFolderId={defaultFolderId}
                 onCreated={(id) => {
-                  setSelectedId(id);
+                  // Stay on the capture page so the user can keep pasting.
+                  // Tapping the toast jumps to the new idea's detail.
+                  toast.success("Idea saved", {
+                    description: "Find it in Recents or the All folder.",
+                    action: { label: "Open", onClick: () => setSelectedId(id) },
+                  });
                 }}
                 onOpenExisting={(id) => {
                   setSelectedId(id);
