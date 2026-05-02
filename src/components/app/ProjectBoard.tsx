@@ -36,14 +36,35 @@ export const ProjectBoard = ({ rawNote, onChange, projectName }: Props) => {
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [editText, setEditText] = useState("");
 
+  // --- Filters: free-text query + type chip set. Empty set = "all types". ---
+  const [query, setQuery] = useState("");
+  const [typeFilter, setTypeFilter] = useState<Set<DeliverableType>>(new Set());
+  const hasFilters = query.trim().length > 0 || typeFilter.size > 0;
+
   const total = items.length;
   const done = items.filter((i) => i.done).length;
   const pct = total === 0 ? 0 : Math.round((done / total) * 100);
 
-  const grouped = (() => {
+  // Counts per type across the FULL list, so chip badges stay stable while filtering.
+  const typeCounts = useMemo(() => {
+    const m = new Map<DeliverableType, number>();
+    for (const it of items) m.set(it.type, (m.get(it.type) ?? 0) + 1);
+    return m;
+  }, [items]);
+
+  const filteredItems = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    return items.filter((it) => {
+      if (typeFilter.size > 0 && !typeFilter.has(it.type)) return false;
+      if (q && !it.text.toLowerCase().includes(q)) return false;
+      return true;
+    });
+  }, [items, query, typeFilter]);
+
+  const grouped = useMemo(() => {
     const order: DeliverableType[] = [];
     const map = new Map<DeliverableType, Deliverable[]>();
-    items.forEach((item) => {
+    filteredItems.forEach((item) => {
       if (!map.has(item.type)) {
         map.set(item.type, []);
         order.push(item.type);
@@ -51,7 +72,21 @@ export const ProjectBoard = ({ rawNote, onChange, projectName }: Props) => {
       map.get(item.type)!.push(item);
     });
     return order.map((type) => ({ type, entries: map.get(type)! }));
-  })();
+  }, [filteredItems]);
+
+  const toggleTypeFilter = (key: DeliverableType) => {
+    setTypeFilter((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  };
+
+  const clearFilters = () => {
+    setQuery("");
+    setTypeFilter(new Set());
+  };
 
   const addItem = (type: DeliverableType, text: string) => {
     const trimmed = text.trim();
