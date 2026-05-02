@@ -267,7 +267,21 @@ const Shell = () => {
                 )}
               </div>
             </div>
-            <div ref={composeRef} className="w-full px-3 sm:px-6 lg:px-10 pt-4 sm:pt-6">
+            <div ref={composeRef} className="w-full px-3 sm:px-6 lg:px-10 pt-4 sm:pt-6 space-y-3 sm:space-y-4">
+              <UrlCapturePanel
+                defaultFolderId={defaultFolderId}
+                onCreated={(id, needsReview) => {
+                  if (needsReview) {
+                    setSelectedId(id);
+                    return;
+                  }
+                  toast.success("Link saved", {
+                    description: "Find it in Recents or the All folder.",
+                    action: { label: "Open", onClick: () => setSelectedId(id) },
+                  });
+                }}
+                onOpenExisting={(id) => setSelectedId(id)}
+              />
               <ComposeIdea
                 defaultFolderId={defaultFolderId}
                 onCreated={(id, needsReview) => {
