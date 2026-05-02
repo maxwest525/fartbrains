@@ -229,17 +229,38 @@ const Shell = () => {
                   setSelectedId(id);
                 }}
               />
+              {/* Focus-mode toggle — hide the list below so paste/typing isn't distracted by history. */}
+              <button
+                type="button"
+                onClick={() => setFocusMode((v) => !v)}
+                className="mt-2 w-full inline-flex items-center justify-center gap-1.5 h-8 rounded-lg text-[12.5px] font-medium text-muted-foreground hover:text-foreground hover:bg-secondary/60 transition-colors"
+                aria-pressed={focusMode}
+              >
+                {focusMode ? (
+                  <>
+                    <Eye className="h-3.5 w-3.5" />
+                    Show ideas
+                  </>
+                ) : (
+                  <>
+                    <EyeOff className="h-3.5 w-3.5" />
+                    Hide ideas while capturing
+                  </>
+                )}
+              </button>
             </div>
-            <div className="md:flex-1 md:min-h-0 md:overflow-hidden">
-              <IdeaList
-                filter={filter}
-                selectedId={selectedId}
-                onSelect={setSelectedId}
-                onBackToFolders={openFoldersPage}
-                onFilterChange={handleFilterChange}
-                pageScroll={isMobile}
-              />
-            </div>
+            {!focusMode && (
+              <div className="md:flex-1 md:min-h-0 md:overflow-hidden">
+                <IdeaList
+                  filter={filter}
+                  selectedId={selectedId}
+                  onSelect={setSelectedId}
+                  onBackToFolders={openFoldersPage}
+                  onFilterChange={handleFilterChange}
+                  pageScroll={isMobile}
+                />
+              </div>
+            )}
           </div>
         )}
 
