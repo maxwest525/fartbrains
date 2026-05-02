@@ -157,6 +157,16 @@ export const ProjectBoard = ({ rawNote, onChange, projectName }: Props) => {
             <Plus className="h-4 w-4" />
           </Button>
         </div>
+        <VoiceCaptureButton
+          projectName={projectName}
+          existingItems={items.map((i) => i.text)}
+          onItems={(voiceItems) => {
+            // Append all voice items in one mutation to avoid racey writes.
+            let next = rawNote ?? "";
+            for (const v of voiceItems) next = appendDeliverable(next, v.type, v.text);
+            onChange(next);
+          }}
+        />
       </div>
 
       {/* Groups */}
