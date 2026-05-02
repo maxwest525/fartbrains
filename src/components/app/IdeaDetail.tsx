@@ -49,6 +49,7 @@ export const IdeaDetail = ({ ideaId, onClose, backLabel = "Back" }: Props) => {
   const [tags, setTags] = useState("");
   const [folderId, setFolderId] = useState<string>(NO_FOLDER);
   const [generating, setGenerating] = useState(false);
+  const [regenerating, setRegenerating] = useState(false);
   const [copied, setCopied] = useState(false);
   const [reminderOpen, setReminderOpen] = useState(false);
 
@@ -159,6 +160,52 @@ export const IdeaDetail = ({ ideaId, onClose, backLabel = "Back" }: Props) => {
       setTimeout(() => setCopied(false), 1500);
     } catch {
       toast.error("Couldn't copy — try selecting the text manually.");
+    }
+  };
+
+  /**
+   * Re-run the summarizer against the current source material and replace
+   * `ai_summary` on the saved idea. Prefers `extracted_text` (URL/transcript
+   * captures) and falls back to `raw_note` (manual notes/lists). Uses the
+   * idea's `source_type` to pick the right summarizer prompt.
+   */
+  const onRegenerateSummary = async () => {
+    if (regenerating) return;
+    // When editing, use the in-progress edits so the user can tweak inputs
+    // first, hit regenerate, and see the new summary land — without a save.
+    const sourceText = (
+      editing ? extractedText : (idea.extracted_text ?? "")
+    ).trim() || (editing ? rawNote : (idea.raw_note ?? "")).trim();
+
+    if (sourceText.length < 20) {
+      toast.error("Add a note or extracted text first (at least a few sentences).");
+      return;
+    }
+
+    const kind: "webpage" | "transcript" =
+      idea.source_type === "webpage" ? "webpage" : "transcript";
+
+    setRegenerating(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("summarize", {
+        body: { text: sourceText, kind },
+      });
+      if (error) throw new Error(error.message);
+      if (data?.error) throw new Error(data.error);
+      const next = (data?.summary ?? "").toString().trim();
+      if (!next) throw new Error("Empty summary returned");
+
+      await updateIdea.mutateAsync({
+        id: idea.id,
+        patch: { ai_summary: next },
+      });
+      // Reflect the new summary in the editor immediately if user is editing.
+      setSummary(next);
+      toast.success("Summary regenerated");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed to regenerate summary");
+    } finally {
+      setRegenerating(false);
     }
   };
 
@@ -372,21 +419,43 @@ export const IdeaDetail = ({ ideaId, onClose, backLabel = "Back" }: Props) => {
           </section>
         )}
 
-        {(editing || idea.ai_summary) && (
+        {(editing || idea.ai_summary || idea.raw_note || idea.extracted_text) && (
           <section>
-            <h3 className="text-sm font-semibold mb-2 flex items-center gap-1.5">
-              <Sparkles className="h-3.5 w-3.5 text-accent" /> Summary
-            </h3>
+            <div className="mb-2 flex items-center justify-between gap-2">
+              <h3 className="text-sm font-semibold flex items-center gap-1.5">
+                <Sparkles className="h-3.5 w-3.5 text-accent" /> Summary
+              </h3>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onRegenerateSummary}
+                disabled={regenerating || updateIdea.isPending}
+                className="h-7 px-2 text-xs gap-1 text-muted-foreground hover:text-foreground"
+                title="Re-run AI summary from the current note or extracted text"
+              >
+                {regenerating ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <RefreshCw className="h-3.5 w-3.5" />
+                )}
+                {idea.ai_summary ? "Regenerate" : "Generate"}
+              </Button>
+            </div>
             {editing ? (
               <Textarea
                 value={summary}
                 onChange={(e) => setSummary(e.target.value)}
                 rows={8}
                 className="font-mono text-sm"
+                placeholder="No summary yet — click Generate to create one from your note or extracted text."
               />
-            ) : (
+            ) : idea.ai_summary ? (
               <div className="rounded-md bg-muted/40 p-4 text-sm prose prose-sm dark:prose-invert max-w-none prose-headings:mt-3 prose-headings:mb-2 prose-headings:font-semibold prose-h1:text-lg prose-h2:text-base prose-h3:text-sm prose-p:my-2 prose-ul:my-2 prose-ol:my-2 prose-li:my-0.5 prose-strong:text-foreground prose-a:text-primary prose-code:text-xs prose-code:bg-muted prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:before:content-none prose-code:after:content-none">
                 <ReactMarkdown remarkPlugins={[remarkGfm]}>{idea.ai_summary}</ReactMarkdown>
+              </div>
+            ) : (
+              <div className="rounded-md border border-dashed border-border bg-muted/20 p-4 text-xs text-muted-foreground">
+                No summary yet — click <span className="font-medium text-foreground">Generate</span> above to create one from your note or extracted text.
               </div>
             )}
           </section>
