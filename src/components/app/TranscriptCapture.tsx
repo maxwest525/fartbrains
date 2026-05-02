@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { ArrowLeft, ClipboardPaste, Loader2, Sparkles } from "lucide-react";
+import { AlertCircle, ArrowLeft, CheckCircle2, ClipboardPaste, FileText, Loader2, Lightbulb, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
