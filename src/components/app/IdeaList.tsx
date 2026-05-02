@@ -8,6 +8,7 @@ import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { FolderStrip } from "./FolderStrip";
 import { PROJECT_TAG, deliverableStats } from "@/lib/deliverables";
+import { FolderProjectsBoard } from "./FolderProjectsBoard";
 
 const sourceMeta = (s: Idea["source_type"]) => {
   // iOS-style colored squircles per source type
@@ -186,13 +187,26 @@ export const IdeaList = ({ filter, selectedId, onSelect, onBackToFolders, onFilt
           );
         })()}
 
+        {/* Folder view: surface project deliverables grouped by project & type
+            above the regular ideas list. Project rows themselves are hidden
+            from the row list below to avoid duplication. */}
+        {filter.kind === "folder" && ideas.length > 0 && (
+          <FolderProjectsBoard ideas={ideas} onOpenProject={onSelect} />
+        )}
+
         {/* Mobile: iOS grouped inset list. Desktop: flat row list. */}
-        {ideas.length > 0 && (
+        {(() => {
+          const visibleIdeas =
+            filter.kind === "folder"
+              ? ideas.filter((i) => !i.tags.includes(PROJECT_TAG))
+              : ideas;
+          if (visibleIdeas.length === 0) return null;
+          return (
           <>
             {/* MOBILE — grouped inset card with hairline separators */}
             <div className="md:hidden px-4 pt-1">
               <div className="rounded-2xl bg-card overflow-hidden ios-separator-inset">
-                {ideas.map((idea) => {
+                {visibleIdeas.map((idea) => {
                   const isProject = idea.tags.includes(PROJECT_TAG);
                   const stats = isProject ? deliverableStats(idea.raw_note) : null;
                   const { Icon, tone } = isProject
@@ -245,7 +259,7 @@ export const IdeaList = ({ filter, selectedId, onSelect, onBackToFolders, onFilt
 
             {/* DESKTOP — flat list */}
             <div className="hidden md:block">
-              {ideas.map((idea) => {
+              {visibleIdeas.map((idea) => {
                 const isProject = idea.tags.includes(PROJECT_TAG);
                 const stats = isProject ? deliverableStats(idea.raw_note) : null;
                 const Icon = isProject ? Briefcase : sourceMeta(idea.source_type).Icon;
@@ -294,7 +308,8 @@ export const IdeaList = ({ filter, selectedId, onSelect, onBackToFolders, onFilt
               })}
             </div>
           </>
-        )}
+          );
+        })()}
         </div>
       </div>
     </div>
