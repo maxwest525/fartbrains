@@ -1,5 +1,5 @@
-import { useMemo, useState } from "react";
-import { Briefcase, ChevronDown, ChevronRight } from "lucide-react";
+import { useMemo, useState, useEffect, useRef } from "react";
+import { Briefcase, ChevronDown, ChevronRight, Pencil, Check, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   DELIVERABLE_TYPES,
@@ -8,6 +8,7 @@ import {
   getTypeMeta,
   parseDeliverables,
   toggleDeliverable,
+  updateDeliverable,
   type Deliverable,
   type DeliverableType,
 } from "@/lib/deliverables";
@@ -46,6 +47,34 @@ export const FolderProjectsBoard = ({ ideas, onOpenProject }: Props) => {
       else next.add(id);
       return next;
     });
+
+  // Inline edit state, keyed by `${ideaId}:${itemIndex}`.
+  const [editingKey, setEditingKey] = useState<string | null>(null);
+  const [editText, setEditText] = useState("");
+  const editInputRef = useRef<HTMLInputElement | null>(null);
+
+  useEffect(() => {
+    if (editingKey) editInputRef.current?.focus();
+  }, [editingKey]);
+
+  const beginEdit = (ideaId: string, item: Deliverable) => {
+    setEditingKey(`${ideaId}:${item.index}`);
+    setEditText(item.text);
+  };
+  const cancelEdit = () => {
+    setEditingKey(null);
+    setEditText("");
+  };
+  const commitEdit = (idea: Idea, item: Deliverable) => {
+    const trimmed = editText.trim();
+    if (!trimmed || trimmed === item.text) {
+      cancelEdit();
+      return;
+    }
+    const nextRaw = updateDeliverable(idea.raw_note ?? "", item.index, { text: trimmed });
+    updateIdea.mutate({ id: idea.id, patch: { raw_note: nextRaw } });
+    cancelEdit();
+  };
 
   if (projects.length === 0) return null;
 
@@ -159,30 +188,88 @@ export const FolderProjectsBoard = ({ ideas, onOpenProject }: Props) => {
                             </span>
                           </div>
                           <ul>
-                            {entries.map((item) => (
-                              <li
-                                key={item.index}
-                                className="flex items-center gap-2 px-3 py-1.5"
-                              >
-                                <input
-                                  type="checkbox"
-                                  checked={item.done}
-                                  onChange={() => handleToggle(item)}
-                                  className="h-4 w-4 cursor-pointer accent-primary shrink-0"
-                                  aria-label={
-                                    item.done ? "Mark as not done" : "Mark as done"
-                                  }
-                                />
-                                <span
-                                  className={cn(
-                                    "flex-1 text-[13.5px] leading-snug",
-                                    item.done && "line-through text-muted-foreground",
-                                  )}
+                            {entries.map((item) => {
+                              const key = `${idea.id}:${item.index}`;
+                              const isEditing = editingKey === key;
+                              return (
+                                <li
+                                  key={item.index}
+                                  className="group flex items-center gap-2 px-3 py-1.5"
                                 >
-                                  {item.text}
-                                </span>
-                              </li>
-                            ))}
+                                  <input
+                                    type="checkbox"
+                                    checked={item.done}
+                                    onChange={() => handleToggle(item)}
+                                    disabled={isEditing}
+                                    className="h-4 w-4 cursor-pointer accent-primary shrink-0"
+                                    aria-label={
+                                      item.done ? "Mark as not done" : "Mark as done"
+                                    }
+                                  />
+                                  {isEditing ? (
+                                    <>
+                                      <input
+                                        ref={editInputRef}
+                                        type="text"
+                                        value={editText}
+                                        onChange={(e) => setEditText(e.target.value)}
+                                        onKeyDown={(e) => {
+                                          if (e.key === "Enter") {
+                                            e.preventDefault();
+                                            commitEdit(idea, item);
+                                          } else if (e.key === "Escape") {
+                                            e.preventDefault();
+                                            cancelEdit();
+                                          }
+                                        }}
+                                        onBlur={() => commitEdit(idea, item)}
+                                        className="flex-1 min-w-0 bg-background border border-input rounded px-2 py-1 text-[13.5px] leading-snug focus:outline-none focus:ring-2 focus:ring-ring"
+                                        aria-label="Edit deliverable text"
+                                      />
+                                      <button
+                                        type="button"
+                                        onMouseDown={(e) => e.preventDefault()}
+                                        onClick={() => commitEdit(idea, item)}
+                                        aria-label="Save"
+                                        className="press h-7 w-7 inline-flex items-center justify-center text-muted-foreground hover:text-foreground"
+                                      >
+                                        <Check className="h-4 w-4" />
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onMouseDown={(e) => e.preventDefault()}
+                                        onClick={cancelEdit}
+                                        aria-label="Cancel"
+                                        className="press h-7 w-7 inline-flex items-center justify-center text-muted-foreground hover:text-foreground"
+                                      >
+                                        <X className="h-4 w-4" />
+                                      </button>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <button
+                                        type="button"
+                                        onClick={() => beginEdit(idea.id, item)}
+                                        className={cn(
+                                          "flex-1 min-w-0 text-left text-[13.5px] leading-snug press",
+                                          item.done && "line-through text-muted-foreground",
+                                        )}
+                                      >
+                                        {item.text}
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() => beginEdit(idea.id, item)}
+                                        aria-label="Edit deliverable"
+                                        className="press h-7 w-7 inline-flex items-center justify-center text-muted-foreground hover:text-foreground opacity-60 sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100 transition-opacity"
+                                      >
+                                        <Pencil className="h-3.5 w-3.5" />
+                                      </button>
+                                    </>
+                                  )}
+                                </li>
+                              );
+                            })}
                           </ul>
                         </div>
                       );
