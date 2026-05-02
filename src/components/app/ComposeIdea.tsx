@@ -11,6 +11,8 @@ import { useCreateIdea } from "@/hooks/useIdeas";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { SourcePicker, isSourceEnabled, type SourceKey } from "./SourcePicker";
+import { ProjectComposer } from "./ProjectComposer";
+import { PROJECT_TAG } from "@/lib/deliverables";
 
 const NO_FOLDER = "__none__";
 
@@ -30,6 +32,7 @@ const PLACEHOLDERS: Record<SourceKey, { url?: string; note: string }> = {
   note:       {                            note: "Write your idea…" },
   list:       {                            note: "One item per line…\nBuy milk\nCall dentist\nShip v2" },
   transcript: {                            note: "Paste a transcript, video caption, or any long text…" },
+  project:    {                            note: "" },
   voice:      { note: "" },
   image:      { note: "" },
   prompt:     { note: "" },
@@ -276,11 +279,131 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
     }
   };
 
+  const handleCreateProject = async ({ name, rawNote }: { name: string; rawNote: string }) => {
+    if (saving) return;
+    setSaving(true);
+    try {
+      const idea = await createIdea.mutateAsync({
+        title: name.slice(0, 200),
+        raw_note: rawNote,
+        source_url: null,
+        source_type: "manual",
+        folder_id: folderOrNull(folder),
+        tags: [PROJECT_TAG],
+      });
+      onCreated?.(idea.id);
+      reset();
+      // Switch back to default capture so the user sees their next blank slate.
+      setSource("note");
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const ph = PLACEHOLDERS[source];
 
   // (Preview/edit step removed — saves go through directly. Edit on the idea detail view.)
 
+  // Folder chips block, reused for both default capture and project mode.
+  const folderChips = (
+    <>
+      {newFolderOpen && (
+        <div className="flex items-center gap-2">
+          <Input
+            autoFocus
+            value={newFolderName}
+            onChange={(e) => setNewFolderName(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                handleCreateFolder();
+              } else if (e.key === "Escape") {
+                setNewFolderOpen(false);
+                setNewFolderName("");
+              }
+            }}
+            placeholder="New folder name"
+            className="h-11 rounded-xl bg-secondary/60 border-transparent text-[15px] flex-1"
+            maxLength={60}
+          />
+          <Button
+            type="button"
+            onClick={handleCreateFolder}
+            disabled={!newFolderName.trim() || createFolder.isPending}
+            className="h-11 rounded-xl px-4"
+          >
+            {createFolder.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Create"}
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={() => {
+              setNewFolderOpen(false);
+              setNewFolderName("");
+            }}
+            className="h-11 rounded-xl px-3"
+          >
+            Cancel
+          </Button>
+        </div>
+      )}
+      <div className="flex items-center gap-1.5 overflow-x-auto -mx-1 px-1 pb-0.5 no-scrollbar scroll-momentum">
+        <button
+          type="button"
+          onClick={() => setFolder(NO_FOLDER)}
+          className={cn(
+            "shrink-0 inline-flex items-center gap-1 h-8 px-3 rounded-full text-[13px] font-medium border transition-colors press",
+            folder === NO_FOLDER
+              ? "bg-primary text-primary-foreground border-primary"
+              : "bg-secondary/60 text-muted-foreground border-transparent hover:text-foreground"
+          )}
+        >
+          <Inbox className="h-3.5 w-3.5" />
+          All
+        </button>
+        {folders.map((f) => {
+          const active = folder === f.id;
+          return (
+            <button
+              key={f.id}
+              type="button"
+              onClick={() => setFolder(f.id)}
+              className={cn(
+                "shrink-0 inline-flex items-center gap-1 h-8 px-3 rounded-full text-[13px] font-medium border transition-colors press max-w-[160px]",
+                active
+                  ? "bg-primary text-primary-foreground border-primary"
+                  : "bg-secondary/60 text-muted-foreground border-transparent hover:text-foreground"
+              )}
+              title={f.name}
+            >
+              <FolderIcon className="h-3.5 w-3.5 shrink-0" />
+              <span className="truncate">{f.name}</span>
+            </button>
+          );
+        })}
+        <button
+          type="button"
+          onClick={() => setNewFolderOpen(true)}
+          className="shrink-0 inline-flex items-center gap-1 h-8 px-3 rounded-full text-[13px] font-medium border border-dashed border-border/70 text-muted-foreground hover:text-foreground hover:border-primary/50 transition-colors press"
+        >
+          <Plus className="h-3.5 w-3.5" />
+          New
+        </button>
+      </div>
+    </>
+  );
+
   // ── Default capture view ─────────────────────────────────────────────────────
+  if (source === "project") {
+    return (
+      <div className="rounded-2xl bg-card border border-border/60 p-3 sm:p-4 space-y-3 shadow-sm">
+        <SourcePicker value={source} onChange={handleSourceChange} />
+        <ProjectComposer saving={saving || createIdea.isPending} onCreate={handleCreateProject} />
+        {folderChips}
+      </div>
+    );
+  }
+
   return (
     <div className="rounded-2xl bg-card border border-border/60 p-3 sm:p-4 space-y-3 shadow-sm">
       <SourcePicker value={source} onChange={handleSourceChange} />
@@ -408,93 +531,7 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
         />
       )}
 
-      {/* Inline new-folder name field — opens from dropdown item or chip. */}
-      {newFolderOpen && (
-        <div className="flex items-center gap-2">
-          <Input
-            autoFocus
-            value={newFolderName}
-            onChange={(e) => setNewFolderName(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                e.preventDefault();
-                handleCreateFolder();
-              } else if (e.key === "Escape") {
-                setNewFolderOpen(false);
-                setNewFolderName("");
-              }
-            }}
-            placeholder="New folder name"
-            className="h-11 rounded-xl bg-secondary/60 border-transparent text-[15px] flex-1"
-            maxLength={60}
-          />
-          <Button
-            type="button"
-            onClick={handleCreateFolder}
-            disabled={!newFolderName.trim() || createFolder.isPending}
-            className="h-11 rounded-xl px-4"
-          >
-            {createFolder.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Create"}
-          </Button>
-          <Button
-            type="button"
-            variant="ghost"
-            onClick={() => {
-              setNewFolderOpen(false);
-              setNewFolderName("");
-            }}
-            className="h-11 rounded-xl px-3"
-          >
-            Cancel
-          </Button>
-        </div>
-      )}
-
-      {/* Quick folder chips — tap to set folder above without opening the dropdown. */}
-      <div className="flex items-center gap-1.5 overflow-x-auto -mx-1 px-1 pb-0.5 no-scrollbar scroll-momentum">
-        <button
-          type="button"
-          onClick={() => setFolder(NO_FOLDER)}
-          className={cn(
-            "shrink-0 inline-flex items-center gap-1 h-8 px-3 rounded-full text-[13px] font-medium border transition-colors press",
-            folder === NO_FOLDER
-              ? "bg-primary text-primary-foreground border-primary"
-              : "bg-secondary/60 text-muted-foreground border-transparent hover:text-foreground"
-          )}
-        >
-          <Inbox className="h-3.5 w-3.5" />
-          All
-        </button>
-        {folders.map((f) => {
-          const active = folder === f.id;
-          return (
-            <button
-              key={f.id}
-              type="button"
-              onClick={() => setFolder(f.id)}
-              className={cn(
-                "shrink-0 inline-flex items-center gap-1 h-8 px-3 rounded-full text-[13px] font-medium border transition-colors press max-w-[160px]",
-                active
-                  ? "bg-primary text-primary-foreground border-primary"
-                  : "bg-secondary/60 text-muted-foreground border-transparent hover:text-foreground"
-              )}
-              title={f.name}
-            >
-              <FolderIcon className="h-3.5 w-3.5 shrink-0" />
-              <span className="truncate">{f.name}</span>
-            </button>
-          );
-        })}
-        {/* New folder chip — always available */}
-        <button
-          type="button"
-          onClick={() => setNewFolderOpen(true)}
-          className="shrink-0 inline-flex items-center gap-1 h-8 px-3 rounded-full text-[13px] font-medium border border-dashed border-border/70 text-muted-foreground hover:text-foreground hover:border-primary/50 transition-colors press"
-        >
-          <Plus className="h-3.5 w-3.5" />
-          New
-        </button>
-      </div>
+      {folderChips}
 
       <Button
         onClick={usesAiPreview ? () => handleGenerateAndSave() : handleSave}

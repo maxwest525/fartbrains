@@ -1,4 +1,4 @@
-import { Star, FileText, Link2, Mic, MessageSquare, ChevronRight, Loader2, ChevronLeft, Inbox, Search as SearchIcon, Folder as FolderIcon, Clock as ClockIcon } from "lucide-react";
+import { Star, FileText, Link2, Mic, MessageSquare, ChevronRight, Loader2, ChevronLeft, Inbox, Search as SearchIcon, Folder as FolderIcon, Clock as ClockIcon, Briefcase } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 import { useIdeas, type Idea, type IdeaFilter } from "@/hooks/useIdeas";
@@ -7,6 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { FolderStrip } from "./FolderStrip";
+import { PROJECT_TAG, deliverableStats } from "@/lib/deliverables";
 
 const sourceMeta = (s: Idea["source_type"]) => {
   // iOS-style colored squircles per source type
@@ -192,12 +193,17 @@ export const IdeaList = ({ filter, selectedId, onSelect, onBackToFolders, onFilt
             <div className="md:hidden px-4 pt-1">
               <div className="rounded-2xl bg-card overflow-hidden ios-separator-inset">
                 {ideas.map((idea) => {
-                  const { Icon, tone } = sourceMeta(idea.source_type);
-                  const preview =
-                    idea.ai_summary?.replace(/[#*]/g, "").trim() ||
-                    idea.raw_note ||
-                    idea.extracted_text ||
-                    "";
+                  const isProject = idea.tags.includes(PROJECT_TAG);
+                  const stats = isProject ? deliverableStats(idea.raw_note) : null;
+                  const { Icon, tone } = isProject
+                    ? { Icon: Briefcase, tone: "bg-primary text-primary-foreground" }
+                    : sourceMeta(idea.source_type);
+                  const preview = isProject
+                    ? `${stats!.done} of ${stats!.total} deliverables done`
+                    : idea.ai_summary?.replace(/[#*]/g, "").trim() ||
+                      idea.raw_note ||
+                      idea.extracted_text ||
+                      "";
                   return (
                     <button
                       key={idea.id}
@@ -212,6 +218,11 @@ export const IdeaList = ({ filter, selectedId, onSelect, onBackToFolders, onFilt
                           <h3 className="font-semibold text-[16px] flex-1 truncate leading-tight">
                             {idea.title}
                           </h3>
+                          {isProject && stats && (
+                            <span className="shrink-0 text-[11px] font-semibold px-1.5 py-0.5 rounded-md bg-primary/10 text-primary">
+                              {stats.done}/{stats.total}
+                            </span>
+                          )}
                           {idea.is_favorite && (
                             <Star className="h-3.5 w-3.5 shrink-0 fill-accent text-accent" />
                           )}
@@ -235,13 +246,16 @@ export const IdeaList = ({ filter, selectedId, onSelect, onBackToFolders, onFilt
             {/* DESKTOP — flat list */}
             <div className="hidden md:block">
               {ideas.map((idea) => {
-                const { Icon } = sourceMeta(idea.source_type);
+                const isProject = idea.tags.includes(PROJECT_TAG);
+                const stats = isProject ? deliverableStats(idea.raw_note) : null;
+                const Icon = isProject ? Briefcase : sourceMeta(idea.source_type).Icon;
                 const active = idea.id === selectedId;
-                const preview =
-                  idea.ai_summary?.replace(/[#*]/g, "").trim() ||
-                  idea.raw_note ||
-                  idea.extracted_text ||
-                  "";
+                const preview = isProject
+                  ? `${stats!.done} of ${stats!.total} deliverables done`
+                  : idea.ai_summary?.replace(/[#*]/g, "").trim() ||
+                    idea.raw_note ||
+                    idea.extracted_text ||
+                    "";
                 return (
                   <button
                     key={idea.id}
@@ -254,8 +268,13 @@ export const IdeaList = ({ filter, selectedId, onSelect, onBackToFolders, onFilt
                     )}
                   >
                     <div className="flex items-start gap-2 mb-1">
-                      <Icon className="h-3.5 w-3.5 mt-0.5 shrink-0 text-muted-foreground" />
+                      <Icon className={cn("h-3.5 w-3.5 mt-0.5 shrink-0", isProject ? "text-primary" : "text-muted-foreground")} />
                       <h3 className="font-medium text-sm flex-1 truncate">{idea.title}</h3>
+                      {isProject && stats && (
+                        <span className="shrink-0 text-[10px] font-semibold px-1.5 py-0.5 rounded bg-primary/10 text-primary">
+                          {stats.done}/{stats.total}
+                        </span>
+                      )}
                       {idea.is_favorite && (
                         <Star className="h-3.5 w-3.5 shrink-0 fill-accent text-accent" />
                       )}
