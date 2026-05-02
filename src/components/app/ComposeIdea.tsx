@@ -197,7 +197,25 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
         tags: [],
       });
 
-      onCreated?.(idea.id);
+      // Heuristic confidence check — when low, send the user straight to edit.
+      const summaryClean = summary.trim();
+      const hasMainIdea = /\*\*Main idea:\*\*/i.test(summaryClean);
+      const hasKeyPoints = /\*\*Key points:\*\*/i.test(summaryClean);
+      const needsReview =
+        !summaryClean ||
+        summaryClean.length < 150 ||
+        !hasMainIdea ||
+        !hasKeyPoints ||
+        !aiTitle ||
+        extractedText.trim().length < 200;
+
+      if (needsReview) {
+        toast.message("Saved — needs a quick review", {
+          description: "AI wasn't fully confident, so we opened the idea for you to edit.",
+        });
+      }
+
+      onCreated?.(idea.id, needsReview);
       reset();
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Couldn't save idea");
