@@ -100,6 +100,38 @@ export const IdeaList = ({ filter, selectedId, onSelect, onBackToFolders, onFilt
             <span>{ideas.length} idea{ideas.length === 1 ? "" : "s"}</span>
           )}
         </p>
+
+        {/* Source-type filter chips. Lets the user narrow the active list to a
+            single capture source (e.g. transcripts) without leaving the view. */}
+        {onFilterChange && (
+          <div className="mt-2.5 -mx-1 flex items-center gap-1.5 overflow-x-auto scroll-momentum">
+            {([
+              { key: undefined, label: "All", Icon: LayoutGrid },
+              { key: "transcript" as const, label: "Transcript", Icon: MessageSquare },
+              { key: "webpage" as const, label: "Web", Icon: Link2 },
+              { key: "audio" as const, label: "Audio", Icon: Mic },
+              { key: "manual" as const, label: "Note", Icon: FileText },
+            ]).map(({ key, label, Icon }) => {
+              const active = (filter.sourceType ?? undefined) === key;
+              return (
+                <button
+                  key={label}
+                  onClick={() => onFilterChange({ ...filter, sourceType: key } as IdeaFilter)}
+                  className={cn(
+                    "press shrink-0 inline-flex items-center gap-1.5 h-7 px-2.5 rounded-full text-[12.5px] font-medium border transition-colors",
+                    active
+                      ? "bg-primary text-primary-foreground border-primary"
+                      : "bg-card text-foreground/80 border-border hover:bg-muted"
+                  )}
+                  aria-pressed={active}
+                >
+                  <Icon className="h-3.5 w-3.5" />
+                  {label}
+                </button>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       <div
