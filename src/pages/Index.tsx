@@ -216,10 +216,10 @@ const Shell = () => {
           />
         )}
 
-        {/* Ideas view — compose + list. Hidden on mobile when detail is open or folders page is showing. */}
-        {!showFolders && !showDetailOnly && (
-          <div className="w-full flex-1 min-w-0 md:w-[28rem] md:flex-none md:shrink-0 md:border-r border-border flex flex-col min-h-0 bg-background md:overflow-hidden overflow-y-auto scroll-momentum touch-pan-y pb-[calc(5.75rem+env(safe-area-inset-bottom))] md:pb-0">
-            <div ref={composeRef} className="px-3 sm:px-5 pt-3 pb-2 shrink-0">
+        {/* Capture view — compose only, full width. Shown when filter is "all" (the default landing). */}
+        {!showFolders && !showDetailOnly && filter.kind === "all" && (
+          <div className="w-full flex-1 min-w-0 flex flex-col min-h-0 bg-background overflow-y-auto scroll-momentum touch-pan-y pb-[calc(5.75rem+env(safe-area-inset-bottom))] md:pb-6">
+            <div ref={composeRef} className="w-full max-w-2xl mx-auto px-3 sm:px-5 pt-4 sm:pt-8">
               <ComposeIdea
                 defaultFolderId={defaultFolderId}
                 onCreated={(id) => {
@@ -229,38 +229,26 @@ const Shell = () => {
                   setSelectedId(id);
                 }}
               />
-              {/* Focus-mode toggle — hide the list below so paste/typing isn't distracted by history. */}
-              <button
-                type="button"
-                onClick={() => setFocusMode((v) => !v)}
-                className="mt-2 w-full inline-flex items-center justify-center gap-1.5 h-8 rounded-lg text-[12.5px] font-medium text-muted-foreground hover:text-foreground hover:bg-secondary/60 transition-colors"
-                aria-pressed={focusMode}
-              >
-                {focusMode ? (
-                  <>
-                    <Eye className="h-3.5 w-3.5" />
-                    Show ideas
-                  </>
-                ) : (
-                  <>
-                    <EyeOff className="h-3.5 w-3.5" />
-                    Hide ideas while capturing
-                  </>
-                )}
-              </button>
+              <p className="mt-3 text-center text-[12px] text-muted-foreground">
+                Saved ideas land in <button onClick={() => handleFilterChange({ kind: "recent" })} className="underline underline-offset-2 hover:text-foreground">Recents</button> and the All folder.
+              </p>
             </div>
-            {!focusMode && (
-              <div className="md:flex-1 md:min-h-0 md:overflow-hidden">
-                <IdeaList
-                  filter={filter}
-                  selectedId={selectedId}
-                  onSelect={setSelectedId}
-                  onBackToFolders={openFoldersPage}
-                  onFilterChange={handleFilterChange}
-                  pageScroll={isMobile}
-                />
-              </div>
-            )}
+          </div>
+        )}
+
+        {/* Browse view — flat list of ideas (Recents, Favorites, Folder-filtered, Search). */}
+        {!showFolders && !showDetailOnly && filter.kind !== "all" && (
+          <div className="w-full flex-1 min-w-0 md:w-[28rem] md:flex-none md:shrink-0 md:border-r border-border flex flex-col min-h-0 bg-background md:overflow-hidden overflow-y-auto scroll-momentum touch-pan-y pb-[calc(5.75rem+env(safe-area-inset-bottom))] md:pb-0">
+            <div className="md:flex-1 md:min-h-0 md:overflow-hidden">
+              <IdeaList
+                filter={filter}
+                selectedId={selectedId}
+                onSelect={setSelectedId}
+                onBackToFolders={openFoldersPage}
+                onFilterChange={handleFilterChange}
+                pageScroll={isMobile}
+              />
+            </div>
           </div>
         )}
 
