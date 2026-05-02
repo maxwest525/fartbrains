@@ -19,9 +19,8 @@ const TILES: Tile[] = [
   { key: "link",      label: "Link",      icon: Link2,      tone: "text-primary",     enabled: true  },
   { key: "list",      label: "List",      icon: ListChecks, tone: "text-primary",     enabled: true  },
   { key: "transcript",label: "Transcript",icon: ClipboardPaste, tone: "text-primary", enabled: true  },
-  { key: "voice",     label: "Voice",     icon: Mic,        tone: "text-foreground",  enabled: false },
+  { key: "prompt",    label: "Prompt",    icon: Wand2,      tone: "text-primary",     enabled: true  },
   { key: "image",     label: "Image",     icon: ImageIcon,  tone: "text-foreground",  enabled: false },
-  { key: "prompt",    label: "Prompt",    icon: Wand2,      tone: "text-foreground",  enabled: false },
 ];
 
 type Props = {
