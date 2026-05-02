@@ -246,13 +246,16 @@ export const IdeaList = ({ filter, selectedId, onSelect, onBackToFolders, onFilt
             {/* DESKTOP — flat list */}
             <div className="hidden md:block">
               {ideas.map((idea) => {
-                const { Icon } = sourceMeta(idea.source_type);
+                const isProject = idea.tags.includes(PROJECT_TAG);
+                const stats = isProject ? deliverableStats(idea.raw_note) : null;
+                const Icon = isProject ? Briefcase : sourceMeta(idea.source_type).Icon;
                 const active = idea.id === selectedId;
-                const preview =
-                  idea.ai_summary?.replace(/[#*]/g, "").trim() ||
-                  idea.raw_note ||
-                  idea.extracted_text ||
-                  "";
+                const preview = isProject
+                  ? `${stats!.done} of ${stats!.total} deliverables done`
+                  : idea.ai_summary?.replace(/[#*]/g, "").trim() ||
+                    idea.raw_note ||
+                    idea.extracted_text ||
+                    "";
                 return (
                   <button
                     key={idea.id}
@@ -265,8 +268,13 @@ export const IdeaList = ({ filter, selectedId, onSelect, onBackToFolders, onFilt
                     )}
                   >
                     <div className="flex items-start gap-2 mb-1">
-                      <Icon className="h-3.5 w-3.5 mt-0.5 shrink-0 text-muted-foreground" />
+                      <Icon className={cn("h-3.5 w-3.5 mt-0.5 shrink-0", isProject ? "text-primary" : "text-muted-foreground")} />
                       <h3 className="font-medium text-sm flex-1 truncate">{idea.title}</h3>
+                      {isProject && stats && (
+                        <span className="shrink-0 text-[10px] font-semibold px-1.5 py-0.5 rounded bg-primary/10 text-primary">
+                          {stats.done}/{stats.total}
+                        </span>
+                      )}
                       {idea.is_favorite && (
                         <Star className="h-3.5 w-3.5 shrink-0 fill-accent text-accent" />
                       )}
