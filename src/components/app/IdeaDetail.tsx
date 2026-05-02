@@ -128,10 +128,13 @@ export const IdeaDetail = ({ ideaId, onClose, backLabel = "Back" }: Props) => {
     updateIdea.mutate({ id: idea.id, patch: { is_favorite: !idea.is_favorite } });
   };
 
-  const onDelete = () => {
-    if (confirm("Delete this idea? This cannot be undone.")) {
-      deleteIdea.mutate(idea.id, { onSuccess: onClose });
-    }
+  const confirmDelete = () => {
+    deleteIdea.mutate(idea.id, {
+      onSuccess: () => {
+        setDeleteOpen(false);
+        onClose();
+      },
+    });
   };
 
   const onGeneratePrompt = async () => {
