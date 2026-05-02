@@ -106,10 +106,17 @@ export const UrlCapturePanel = ({ defaultFolderId, onCreated, onOpenExisting }: 
 
   const handleExtract = async (overrideUrl?: string) => {
     const target = cleanUrlInput(overrideUrl ?? url);
-    if (!target) return toast.error("Paste a URL first");
-    if (!isValidHttpUrl(target)) return toast.error("That doesn't look like a valid URL");
+    if (!target) {
+      setExtractFailed(null);
+      return toast.error("Paste a URL first");
+    }
+    if (!isValidHttpUrl(target)) {
+      setExtractFailed("That doesn't look like a valid URL — you can still save it as-is.");
+      return toast.error("That doesn't look like a valid URL");
+    }
     if (target !== (overrideUrl ?? url).trim()) setUrl(target);
     if (extracting || saving) return;
+    setExtractFailed(null);
 
     setExtracting(true);
     try {
