@@ -44,6 +44,7 @@ export const UrlCapturePanel = ({ defaultFolderId, onCreated, onOpenExisting }: 
   const createIdea = useCreateIdea();
   const [url, setUrl] = useState("");
   const [title, setTitle] = useState("");
+  const [note, setNote] = useState("");
   const [extracting, setExtracting] = useState(false);
   const [saving, setSaving] = useState(false);
   const [preview, setPreview] = useState<Preview | null>(null);
@@ -54,6 +55,7 @@ export const UrlCapturePanel = ({ defaultFolderId, onCreated, onOpenExisting }: 
   const reset = () => {
     setUrl("");
     setTitle("");
+    setNote("");
     setPreview(null);
   };
 
@@ -159,6 +161,7 @@ export const UrlCapturePanel = ({ defaultFolderId, onCreated, onOpenExisting }: 
           body: {
             text: preview.text,
             kind: preview.isInstagramTranscript ? "transcript" : "webpage",
+            userNote: note.trim() || undefined,
           },
         });
         if (error) throw new Error(error.message);
@@ -175,7 +178,7 @@ export const UrlCapturePanel = ({ defaultFolderId, onCreated, onOpenExisting }: 
 
       const idea = await createIdea.mutateAsync({
         title: finalTitle,
-        raw_note: null,
+        raw_note: note.trim() || null,
         source_url: preview.url,
         source_type: preview.isInstagramTranscript ? "transcript" : "webpage",
         extracted_text: preview.text || null,
@@ -332,6 +335,23 @@ export const UrlCapturePanel = ({ defaultFolderId, onCreated, onOpenExisting }: 
               {preview.text.length.toLocaleString()} chars · {wordCount.toLocaleString()} words
             </span>
             <span className="opacity-70">Edit before saving if needed</span>
+          </div>
+
+          {/* User notes — combined with the extracted text/transcript when generating prompts later */}
+          <div className="space-y-1.5">
+            <label className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+              Your notes <span className="opacity-60 normal-case font-normal">(optional)</span>
+            </label>
+            <Textarea
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              rows={3}
+              placeholder="Your angle, what caught your attention, how you'd use this…"
+              className="rounded-xl bg-card border-border/60 text-[13.5px] leading-relaxed resize-y"
+            />
+            <p className="text-[11px] text-muted-foreground opacity-80">
+              Saved alongside the {preview.isInstagramTranscript ? "transcript" : "extract"} so you can combine your idea with it later.
+            </p>
           </div>
 
           <div className="flex gap-2">

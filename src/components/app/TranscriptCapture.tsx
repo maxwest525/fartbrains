@@ -32,6 +32,7 @@ export const TranscriptCapture = ({ defaultFolderId, onBack, onCreated }: Props)
   const createIdea = useCreateIdea();
 
   const [text, setText] = useState("");
+  const [note, setNote] = useState("");
   const [folder, setFolder] = useState<string>(defaultFolderId ?? NO_FOLDER);
   const [busy, setBusy] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -83,7 +84,7 @@ export const TranscriptCapture = ({ defaultFolderId, onBack, onCreated }: Props)
       let aiTitle: string | undefined;
       try {
         const { data, error } = await supabase.functions.invoke("summarize", {
-          body: { text: transcript, kind: "transcript" },
+          body: { text: transcript, kind: "transcript", userNote: note.trim() || undefined },
         });
         if (error) throw new Error(error.message);
         if (data?.error) throw new Error(data.error);
@@ -101,7 +102,7 @@ export const TranscriptCapture = ({ defaultFolderId, onBack, onCreated }: Props)
 
       const idea = await createIdea.mutateAsync({
         title: finalTitle,
-        raw_note: null,
+        raw_note: note.trim() || null,
         source_url: null,
         source_type: "transcript",
         extracted_text: transcript,
@@ -120,6 +121,7 @@ export const TranscriptCapture = ({ defaultFolderId, onBack, onCreated }: Props)
         });
       }
       setText("");
+      setNote("");
       onCreated(idea.id, needsReview);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Failed to save");
@@ -295,7 +297,24 @@ export const TranscriptCapture = ({ defaultFolderId, onBack, onCreated }: Props)
             </div>
           </div>
 
-          {/* Desktop/tablet actions — mobile uses the sticky bar below */}
+          {/* Your notes — combined with the transcript/summary later when generating prompts */}
+          <div className="mt-4 space-y-1.5">
+            <label className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+              Your notes <span className="opacity-60 normal-case font-normal">(optional)</span>
+            </label>
+            <Textarea
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              rows={3}
+              placeholder="Your angle, what caught your attention, how you'd use this…"
+              className="text-[14px] leading-relaxed resize-y"
+              disabled={busy}
+            />
+            <p className="text-[11px] text-muted-foreground opacity-80">
+              Saved alongside the transcript so you can combine your idea with it when generating a prompt.
+            </p>
+          </div>
+
           <div className="mt-4 hidden sm:flex items-center justify-end gap-2">
             {text && !busy && (
               <Button variant="ghost" size="sm" onClick={() => setText("")} className="h-10">
