@@ -54,7 +54,7 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
   const createIdea = useCreateIdea();
   const createFolder = useCreateFolder();
 
-  const [source, setSource] = useState<SourceKey>("instagram");
+  const [source, setSource] = useState<SourceKey>("note");
   const [url, setUrl] = useState("");
   const [note, setNote] = useState("");
   const [title, setTitle] = useState("");
