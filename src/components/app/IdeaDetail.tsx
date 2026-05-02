@@ -393,6 +393,7 @@ export const IdeaDetail = ({ ideaId, onClose, backLabel = "Back" }: Props) => {
             return (
               <ProjectBoard
                 rawNote={idea.raw_note}
+                projectName={idea.title}
                 onChange={(next) =>
                   updateIdea.mutate({ id: idea.id, patch: { raw_note: next } })
                 }
