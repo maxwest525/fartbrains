@@ -52,7 +52,6 @@ const Shell = () => {
 
   const onSearch = (v: string) => {
     setSearchValue(v);
-    setCaptureOpen(false);
     if (v.trim()) {
       setView("ideas");
       setFilter({ kind: "search", query: v });
@@ -63,21 +62,18 @@ const Shell = () => {
 
   const clearSearch = () => {
     setSearchValue("");
-    setCaptureOpen(false);
     setFilter({ kind: "all" });
   };
 
   const handleFilterChange = (f: IdeaFilter) => {
     setView("ideas");
     setFilter(f);
-    setCaptureOpen(false);
     if (f.kind !== "search") setSearchValue("");
   };
 
   const openFoldersPage = () => {
     setView("folders");
     setSelectedId(null);
-    setCaptureOpen(false);
   };
 
   const showDetailOnly = isMobile && selectedId !== null;
@@ -203,7 +199,6 @@ const Shell = () => {
             }}
             onBack={isMobile ? () => {
               setView("ideas");
-              setCaptureOpen(false);
             } : undefined}
           />
         )}
