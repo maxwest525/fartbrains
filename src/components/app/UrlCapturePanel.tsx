@@ -161,6 +161,7 @@ export const UrlCapturePanel = ({ defaultFolderId, onCreated, onOpenExisting }: 
           body: {
             text: preview.text,
             kind: preview.isInstagramTranscript ? "transcript" : "webpage",
+            userNote: note.trim() || undefined,
           },
         });
         if (error) throw new Error(error.message);
@@ -177,7 +178,7 @@ export const UrlCapturePanel = ({ defaultFolderId, onCreated, onOpenExisting }: 
 
       const idea = await createIdea.mutateAsync({
         title: finalTitle,
-        raw_note: null,
+        raw_note: note.trim() || null,
         source_url: preview.url,
         source_type: preview.isInstagramTranscript ? "transcript" : "webpage",
         extracted_text: preview.text || null,
