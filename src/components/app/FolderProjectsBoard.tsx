@@ -83,7 +83,7 @@ export const FolderProjectsBoard = ({ ideas, onOpenProject }: Props) => {
 
           const handleToggle = (item: Deliverable) => {
             const nextRaw = toggleDeliverable(idea.raw_note ?? "", item.index);
-            updateIdea.mutate({ id: idea.id, raw_note: nextRaw });
+            updateIdea.mutate({ id: idea.id, patch: { raw_note: nextRaw } });
           };
 
           return (
