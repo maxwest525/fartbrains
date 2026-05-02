@@ -35,8 +35,18 @@ const PLACEHOLDERS: Record<SourceKey, { url?: string; note: string }> = {
   project:    {                            note: "" },
   voice:      { note: "" },
   image:      { note: "" },
-  prompt:     { note: "" },
+  prompt:     { note: "Paste a draft prompt to optimize…" },
 };
+
+/** Target LLMs offered in the Prompt optimizer. */
+const PROMPT_TARGETS = [
+  { value: "GPT-5",                  label: "ChatGPT (GPT-5 / 5.2)" },
+  { value: "Claude Sonnet / Opus",   label: "Claude (Sonnet / Opus)" },
+  { value: "Gemini 2.5 / 3 Pro",     label: "Gemini (2.5 / 3 Pro)" },
+  { value: "Grok",                   label: "Grok" },
+  { value: "Llama 3.x",              label: "Llama 3.x" },
+  { value: "Generic / any LLM",      label: "Generic / any LLM" },
+] as const;
 
 /** Convert raw textarea lines into a markdown checklist. Blank lines are skipped. */
 const linesToChecklist = (raw: string): string =>
