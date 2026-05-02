@@ -108,7 +108,7 @@ export const ProjectComposer = ({ saving, onCreate }: Props) => {
           })}
         </div>
 
-        {/* Quick add input */}
+        {/* Quick add input + voice */}
         <div className="flex items-center gap-2">
           <Input
             value={draft}
@@ -131,6 +131,17 @@ export const ProjectComposer = ({ saving, onCreate }: Props) => {
             <Plus className="h-4 w-4 mr-1" /> Add
           </Button>
         </div>
+        <VoiceCaptureButton
+          projectName={name.trim() || undefined}
+          existingItems={items.map((i) => i.text)}
+          onItems={(voiceItems) =>
+            setItems((prev) => [
+              ...prev,
+              ...voiceItems.map((vi) => ({ type: vi.type, text: vi.text, done: false })),
+            ])
+          }
+          className="-mt-1"
+        />
       </div>
 
       {/* Live preview, grouped by type */}
