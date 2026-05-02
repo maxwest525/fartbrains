@@ -54,9 +54,76 @@ const linesToChecklist = (raw: string): string =>
  * Always-visible compose card. Lives on the main page above the idea list
  * so capture is one tap away — no modal required.
  *
- * Web URL and Transcript flows show an editable AI-summary preview before saving.
+ * URL and transcript captures extract + summarize + save in a single tap.
+ * The optional title is auto-filled by AI; users edit on the idea detail view.
  */
 export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Props) => {
+  const { data: folders = [] } = useFolders();
+  const createIdea = useCreateIdea();
+  const createFolder = useCreateFolder();
+
+  const [source, setSource] = useState<SourceKey>("instagram");
+  const [url, setUrl] = useState("");
+  const [note, setNote] = useState("");
+  const [title, setTitle] = useState("");
+  const [folder, setFolder] = useState<string>(defaultFolderId ?? NO_FOLDER);
+  const [saving, setSaving] = useState(false);
+  const [generating, setGenerating] = useState(false);
+
+  // Inline new-folder UI (triggered from chip).
+  const [newFolderOpen, setNewFolderOpen] = useState(false);
+  const [newFolderName, setNewFolderName] = useState("");
+
+  // Quick-capture: refs let us auto-focus the primary input on mount + on source change.
+  const urlInputRef = useRef<HTMLInputElement>(null);
+  const noteInputRef = useRef<HTMLInputElement>(null);
+  const noteTextareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Keep folder selection in sync when the parent switches active folder filter.
+  useEffect(() => {
+    setFolder(defaultFolderId ?? NO_FOLDER);
+  }, [defaultFolderId]);
+
+  // Auto-focus the primary capture field whenever the active source changes.
+  useEffect(() => {
+    const id = requestAnimationFrame(() => {
+      if (source === "instagram" || source === "link") {
+        urlInputRef.current?.focus();
+      } else if (source === "note" || source === "list" || source === "transcript") {
+        noteTextareaRef.current?.focus();
+      } else {
+        noteInputRef.current?.focus();
+      }
+    });
+    return () => cancelAnimationFrame(id);
+  }, [source]);
+
+  const { data: urlDuplicate } = useDuplicateUrl(
+    source === "instagram" || source === "link" ? url : ""
+  );
+
+  const urlCheck = useUrlCheck(url, source === "instagram" || source === "link");
+
+  const reset = () => {
+    setUrl("");
+    setNote("");
+    setTitle("");
+  };
+
+  const folderOrNull = (v: string) => (v === NO_FOLDER ? null : v);
+  const needsUrl = source === "instagram" || source === "link";
+  const isTranscript = source === "transcript";
+  const usesAiPreview = needsUrl || isTranscript;
+
+  const handleSourceChange = (key: SourceKey) => {
+    if (!isSourceEnabled(key)) {
+      toast("Coming soon", {
+        description: `${key.charAt(0).toUpperCase() + key.slice(1)} captures are on the roadmap.`,
+      });
+      return;
+    }
+    setSource(key);
+  };
   const { data: folders = [] } = useFolders();
   const createIdea = useCreateIdea();
   const createFolder = useCreateFolder();
