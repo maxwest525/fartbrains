@@ -43,6 +43,9 @@ export function useIdeas(filter: IdeaFilter) {
       if (filter.kind === "folder") q = q.eq("folder_id", filter.folderId);
       if (filter.kind === "recent") q = q.order("created_at", { ascending: false }).limit(20);
       if (filter.kind === "search" && filter.query.trim()) {
+        // Keep the search scoped to the active folder when one is provided,
+        // so users don't lose context by typing in the search bar.
+        if (filter.folderId) q = q.eq("folder_id", filter.folderId);
         const term = `%${filter.query.trim()}%`;
         q = q.or(
           `title.ilike.${term},raw_note.ilike.${term},extracted_text.ilike.${term},ai_summary.ilike.${term}`
