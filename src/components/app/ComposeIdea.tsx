@@ -1,19 +1,11 @@
 import { useEffect, useRef, useState } from "react";
-import { Sparkles, Loader2, AlertTriangle, Inbox, Folder as FolderIcon, CheckCircle2, XCircle, ArrowRight, Pencil, ArrowLeft, Plus } from "lucide-react";
+import { Sparkles, Loader2, AlertTriangle, Inbox, Folder as FolderIcon, CheckCircle2, XCircle, ArrowRight, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useDuplicateUrl } from "@/hooks/useDuplicateUrl";
 import { useUrlCheck } from "@/hooks/useUrlCheck";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectSeparator,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { useFolders, useCreateFolder } from "@/hooks/useFolders";
 import { useCreateIdea } from "@/hooks/useIdeas";
 import { supabase } from "@/integrations/supabase/client";
@@ -21,7 +13,7 @@ import { toast } from "sonner";
 import { SourcePicker, isSourceEnabled, type SourceKey } from "./SourcePicker";
 
 const NO_FOLDER = "__none__";
-const NEW_FOLDER = "__new__";
+
 
 type Props = {
   defaultFolderId?: string | null;
@@ -49,24 +41,13 @@ const linesToChecklist = (raw: string): string =>
     .map((l) => (/^- \[[ xX]\] /.test(l) ? l : `- [ ] ${l}`))
     .join("\n");
 
-type PreviewState = {
-  /** What we're previewing — drives whether source_type is webpage or transcript on save. */
-  kind: "webpage" | "transcript";
-  /** Text we extracted (URL) or pasted (transcript). Stored on save. */
-  extractedText: string;
-  /** Editable AI summary in markdown. */
-  summary: string;
-  /** Editable title. */
-  title: string;
-  /** For webpage: the original URL. */
-  sourceUrl: string | null;
-};
 
 /**
  * Always-visible compose card. Lives on the main page above the idea list
  * so capture is one tap away — no modal required.
  *
- * Web URL and Transcript flows show an editable AI-summary preview before saving.
+ * URL and transcript captures extract + summarize + save in a single tap.
+ * The optional title is auto-filled by AI; users edit on the idea detail view.
  */
 export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Props) => {
   const { data: folders = [] } = useFolders();
@@ -79,17 +60,13 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
   const [title, setTitle] = useState("");
   const [folder, setFolder] = useState<string>(defaultFolderId ?? NO_FOLDER);
   const [saving, setSaving] = useState(false);
-
-  // AI preview workflow state.
   const [generating, setGenerating] = useState(false);
-  const [preview, setPreview] = useState<PreviewState | null>(null);
 
-  // Inline new-folder UI (triggered from dropdown item or chip).
+  // Inline new-folder UI (triggered from chip).
   const [newFolderOpen, setNewFolderOpen] = useState(false);
   const [newFolderName, setNewFolderName] = useState("");
 
-  // Quick-capture: refs let us auto-focus the primary input on mount + on source change
-  // so the user can land on the page and immediately paste/type without an extra tap.
+  // Quick-capture: refs let us auto-focus the primary input on mount + on source change.
   const urlInputRef = useRef<HTMLInputElement>(null);
   const noteInputRef = useRef<HTMLInputElement>(null);
   const noteTextareaRef = useRef<HTMLTextAreaElement>(null);
@@ -99,12 +76,8 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
     setFolder(defaultFolderId ?? NO_FOLDER);
   }, [defaultFolderId]);
 
-  // Auto-focus the primary capture field whenever the active source changes
-  // (and on first mount). Skip when the AI preview is on screen — that view
-  // owns its own focus.
+  // Auto-focus the primary capture field whenever the active source changes.
   useEffect(() => {
-    if (preview) return;
-    // Defer to next frame so the field is mounted/visible.
     const id = requestAnimationFrame(() => {
       if (source === "instagram" || source === "link") {
         urlInputRef.current?.focus();
@@ -115,20 +88,18 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
       }
     });
     return () => cancelAnimationFrame(id);
-  }, [source, preview]);
+  }, [source]);
 
   const { data: urlDuplicate } = useDuplicateUrl(
     source === "instagram" || source === "link" ? url : ""
   );
 
-  // Live reachability check on the URL field — debounced server call.
   const urlCheck = useUrlCheck(url, source === "instagram" || source === "link");
 
   const reset = () => {
     setUrl("");
     setNote("");
     setTitle("");
-    setPreview(null);
   };
 
   const folderOrNull = (v: string) => (v === NO_FOLDER ? null : v);
@@ -144,7 +115,6 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
       return;
     }
     setSource(key);
-    setPreview(null);
   };
 
   /**
@@ -239,37 +209,14 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
     }
   };
 
-  /** Final save — for note/list (instant) and for previewed webpage/transcript ideas. */
+  /** Direct save for manual note or list captures. */
   const handleSave = async () => {
     if (saving) return;
 
-    // Preview-confirm save path (webpage / transcript)
-    if (preview) {
-      setSaving(true);
-      try {
-        const idea = await createIdea.mutateAsync({
-          title: (preview.title.trim() || "Untitled idea").slice(0, 200),
-          raw_note: null,
-          source_url: preview.sourceUrl,
-          source_type: preview.kind, // "webpage" | "transcript"
-          extracted_text: preview.extractedText || null,
-          ai_summary: preview.summary.trim() || null,
-          folder_id: folderOrNull(folder),
-          tags: [],
-        });
-        onCreated?.(idea.id);
-        reset();
-      } finally {
-        setSaving(false);
-      }
-      return;
-    }
-
-    // Direct save path (manual note or list)
     if (source === "note" && !note.trim() && !title.trim())
-      return toast.error("Add a title or a note");
+      return toast.error("Add a note");
     if (source === "list" && !note.trim() && !title.trim())
-      return toast.error("Add at least one list item or a title");
+      return toast.error("Add at least one list item");
 
     setSaving(true);
     try {
@@ -302,88 +249,7 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
 
   const ph = PLACEHOLDERS[source];
 
-  // ── Preview / Edit AI Summary view ───────────────────────────────────────────
-  if (preview) {
-    return (
-      <div className="rounded-2xl bg-card border border-border/60 p-3 sm:p-4 space-y-3 shadow-sm">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            <Pencil className="h-3.5 w-3.5" />
-            Review & edit
-          </div>
-          <button
-            type="button"
-            onClick={() => setPreview(null)}
-            className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
-          >
-            <ArrowLeft className="h-3.5 w-3.5" />
-            Back
-          </button>
-        </div>
-
-        <div className="space-y-1">
-          <label className="text-xs font-medium text-muted-foreground">Title</label>
-          <Input
-            value={preview.title}
-            onChange={(e) => setPreview({ ...preview, title: e.target.value })}
-            placeholder="Title"
-            className="h-12 rounded-xl bg-secondary/60 border-transparent text-[15px]"
-            maxLength={200}
-          />
-        </div>
-
-        <div className="space-y-1">
-          <label className="text-xs font-medium text-muted-foreground">
-            AI summary <span className="text-muted-foreground/70">(editable, markdown)</span>
-          </label>
-          <Textarea
-            value={preview.summary}
-            onChange={(e) => setPreview({ ...preview, summary: e.target.value })}
-            placeholder="No summary generated — write your own or save without one."
-            rows={10}
-            className="rounded-xl bg-secondary/60 border-transparent text-[14px] leading-relaxed font-mono resize-none"
-          />
-        </div>
-
-        {preview.sourceUrl && (
-          <div className="flex items-center gap-1.5 text-[11.5px] text-muted-foreground truncate">
-            <ArrowRight className="h-3 w-3 shrink-0" />
-            <span className="truncate">{preview.sourceUrl}</span>
-          </div>
-        )}
-
-        <Select value={folder} onValueChange={setFolder}>
-          <SelectTrigger className="h-12 rounded-xl bg-secondary/60 border-transparent text-[15px]">
-            <div className="flex items-center gap-2">
-              <Inbox className="h-4 w-4 text-muted-foreground" />
-              <SelectValue />
-            </div>
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value={NO_FOLDER}>All ideas</SelectItem>
-            {folders.map((f) => (
-              <SelectItem key={f.id} value={f.id}>{f.name}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        <Button
-          onClick={handleSave}
-          disabled={saving || createIdea.isPending}
-          className="w-full h-12 rounded-xl text-[16px] font-semibold"
-        >
-          {saving ? (
-            <Loader2 className="h-5 w-5 animate-spin" />
-          ) : (
-            <>
-              <Sparkles className="h-4 w-4 mr-1.5" />
-              Save idea
-            </>
-          )}
-        </Button>
-      </div>
-    );
-  }
+  // (Preview/edit step removed — saves go through directly. Edit on the idea detail view.)
 
   // ── Default capture view ─────────────────────────────────────────────────────
   return (
@@ -478,44 +344,6 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
           className="h-12 rounded-xl bg-secondary/60 border-transparent text-[15px]"
         />
       )}
-
-      <Input
-        value={title}
-        onChange={(e) => setTitle(e.target.value)}
-        placeholder="Title (optional — AI will fill in)"
-        className="h-12 rounded-xl bg-secondary/60 border-transparent text-[15px]"
-      />
-
-      <Select
-        value={folder}
-        onValueChange={(v) => {
-          if (v === NEW_FOLDER) {
-            setNewFolderOpen(true);
-            return;
-          }
-          setFolder(v);
-        }}
-      >
-        <SelectTrigger className="h-12 rounded-xl bg-secondary/60 border-transparent text-[15px]">
-          <div className="flex items-center gap-2">
-            <Inbox className="h-4 w-4 text-muted-foreground" />
-            <SelectValue />
-          </div>
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value={NEW_FOLDER}>
-            <span className="flex items-center gap-2 text-primary font-medium">
-              <Plus className="h-4 w-4" />
-              New folder…
-            </span>
-          </SelectItem>
-          <SelectSeparator />
-          <SelectItem value={NO_FOLDER}>All ideas</SelectItem>
-          {folders.map((f) => (
-            <SelectItem key={f.id} value={f.id}>{f.name}</SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
 
       {/* Inline new-folder name field — opens from dropdown item or chip. */}
       {newFolderOpen && (
@@ -625,12 +453,6 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
           </>
         )}
       </Button>
-
-      {usesAiPreview && (
-        <p className="text-xs text-muted-foreground text-center">
-          We'll extract and summarize automatically — edit anytime after saving.
-        </p>
-      )}
     </div>
   );
 };
