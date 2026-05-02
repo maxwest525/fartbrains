@@ -24,6 +24,8 @@ export type Idea = {
   notify_push: boolean;
   notify_email: boolean;
   reminder_fired_at: string | null;
+  /** When set, the idea is pinned and sorts above unpinned items. */
+  pinned_at: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -39,7 +41,13 @@ export function useIdeas(filter: IdeaFilter) {
   return useQuery({
     queryKey: ["ideas", filter],
     queryFn: async (): Promise<Idea[]> => {
-      let q = supabase.from("ideas").select("*").order("updated_at", { ascending: false });
+      // Pinned items always float to the top (most recently pinned first),
+      // then fall back to recency. NULLS LAST keeps unpinned below.
+      let q = supabase
+        .from("ideas")
+        .select("*")
+        .order("pinned_at", { ascending: false, nullsFirst: false })
+        .order("updated_at", { ascending: false });
 
       if (filter.kind === "favorites") q = q.eq("is_favorite", true);
       if (filter.kind === "folder") q = q.eq("folder_id", filter.folderId);

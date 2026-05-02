@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { Star, Trash2, ExternalLink, Sparkles, ChevronLeft, Wand2, Copy, Check, Loader2, RefreshCw, Bell } from "lucide-react";
+import { Star, Trash2, ExternalLink, Sparkles, ChevronLeft, Wand2, Copy, Check, Loader2, RefreshCw, Bell, Pin, PinOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -126,6 +126,16 @@ export const IdeaDetail = ({ ideaId, onClose, backLabel = "Back" }: Props) => {
 
   const onToggleFavorite = () => {
     updateIdea.mutate({ id: idea.id, patch: { is_favorite: !idea.is_favorite } });
+  };
+
+  const onTogglePin = () => {
+    const next = idea.pinned_at ? null : new Date().toISOString();
+    updateIdea.mutate(
+      { id: idea.id, patch: { pinned_at: next } },
+      {
+        onSuccess: () => toast.success(next ? "Pinned to top" : "Unpinned"),
+      },
+    );
   };
 
   const confirmDelete = () => {
@@ -269,6 +279,18 @@ export const IdeaDetail = ({ ideaId, onClose, backLabel = "Back" }: Props) => {
             title={idea.remind_at ? `Reminder ${formatReminder(idea.remind_at)}` : "Set reminder"}
           >
             <Bell className={`h-[20px] w-[20px] ${idea.remind_at ? "fill-accent/30" : ""}`} />
+          </button>
+          <button
+            onClick={onTogglePin}
+            className={`press h-10 w-10 flex items-center justify-center ${idea.pinned_at ? "text-accent" : "text-primary"}`}
+            aria-label={idea.pinned_at ? "Unpin idea" : "Pin idea to top"}
+            title={idea.pinned_at ? "Unpin from top" : "Pin to top"}
+          >
+            {idea.pinned_at ? (
+              <PinOff className="h-[20px] w-[20px]" />
+            ) : (
+              <Pin className="h-[20px] w-[20px]" />
+            )}
           </button>
           <button
             onClick={onToggleFavorite}
