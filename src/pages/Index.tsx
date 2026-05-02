@@ -93,10 +93,16 @@ const Shell = () => {
     onClick: () => void;
   }> = [
     {
-      label: "Ideas",
+      label: "Capture",
       icon: Inbox,
       active: view === "ideas" && filter.kind === "all",
       onClick: () => handleFilterChange({ kind: "all" }),
+    },
+    {
+      label: "Recents",
+      icon: Clock,
+      active: view === "ideas" && filter.kind === "recent",
+      onClick: () => handleFilterChange({ kind: "recent" }),
     },
     {
       label: activeFolderName ?? "Folders",
@@ -109,12 +115,6 @@ const Shell = () => {
       icon: Star,
       active: view === "ideas" && filter.kind === "favorites",
       onClick: () => handleFilterChange({ kind: "favorites" }),
-    },
-    {
-      label: "Recent",
-      icon: Clock,
-      active: view === "ideas" && filter.kind === "recent",
-      onClick: () => handleFilterChange({ kind: "recent" }),
     },
   ];
 
