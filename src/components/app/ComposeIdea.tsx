@@ -135,100 +135,151 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
   };
 
   /**
-   * Instant capture: extract + summarize + save in one shot.
-   * No intermediate preview — user edits in detail view if needed.
+   * Step 1 (URL only): extract readable text and show a preview card.
+   * The user reviews the extracted content before committing to save.
    *
-   * `urlOverride` lets paste handlers pass the freshly-pasted URL synchronously,
-   * before React state has had a chance to update.
+   * `urlOverride` lets paste handlers pass the freshly-pasted URL synchronously.
+   */
+  const handleExtract = async (overrides?: { url?: string }) => {
+    if (extracting || generating || saving) return;
+    const effectiveUrl = (overrides?.url ?? url).trim();
+    if (!effectiveUrl) return toast.error("URL required");
+
+    setExtracting(true);
+    try {
+      const fnName = source === "instagram" ? "extract-instagram" : "extract-url";
+      const { data: ext, error: extErr } = await supabase.functions.invoke(fnName, {
+        body: { url: effectiveUrl },
+      });
+      if (extErr) throw new Error(extErr.message);
+      if (ext?.error) throw new Error(ext.error);
+      const text = (ext?.text ?? "").trim();
+      if (!text) throw new Error("Couldn't extract any readable text from this page");
+
+      setPreview({
+        url: effectiveUrl,
+        text,
+        suggestedTitle: ext?.title ?? undefined,
+        sourceKind: source === "instagram" ? "instagram" : "webpage",
+      });
+      // Pre-fill the title field with the extracted title (only if user hasn't typed one).
+      if (!title.trim() && ext?.title) setTitle(String(ext.title).slice(0, 200));
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Couldn't extract content");
+    } finally {
+      setExtracting(false);
+    }
+  };
+
+  /**
+   * Transcript flow stays a single tap: extract+summarize+save.
+   * URL flow is now two-step (extract → preview → save).
    */
   const handleGenerateAndSave = async (
     overrides?: { url?: string; note?: string }
   ) => {
     if (generating || saving) return;
 
-    const effectiveUrl = (overrides?.url ?? url).trim();
-    const effectiveNote = (overrides?.note ?? note).trim();
+    // Route URL captures through the new preview step.
+    if (needsUrl) return handleExtract({ url: overrides?.url });
 
-    if (needsUrl) {
-      if (!effectiveUrl) return toast.error("URL required");
-    } else if (isTranscript) {
-      if (effectiveNote.length < 20) return toast.error("Paste at least a few sentences");
+    const effectiveNote = (overrides?.note ?? note).trim();
+    if (isTranscript && effectiveNote.length < 20) {
+      return toast.error("Paste at least a few sentences");
     }
 
     setGenerating(true);
     try {
-      let extractedText = "";
-      let suggestedTitleFromExtract: string | undefined;
-      const sourceUrl = needsUrl ? effectiveUrl : null;
-
-      if (needsUrl) {
-        const fnName = source === "instagram" ? "extract-instagram" : "extract-url";
-        const { data: ext, error: extErr } = await supabase.functions.invoke(fnName, {
-          body: { url: sourceUrl },
-        });
-        if (extErr) throw new Error(extErr.message);
-        if (ext?.error) throw new Error(ext.error);
-        extractedText = ext?.text ?? "";
-        suggestedTitleFromExtract = ext?.title ?? undefined;
-      } else {
-        extractedText = effectiveNote;
-      }
-
+      const extractedText = effectiveNote;
       let summary = "";
       let aiTitle: string | undefined;
       try {
         const { data: sum, error: sumErr } = await supabase.functions.invoke("summarize", {
-          body: {
-            text: extractedText,
-            kind: needsUrl ? "webpage" : "transcript",
-          },
+          body: { text: extractedText, kind: "transcript" },
         });
         if (sumErr) throw new Error(sumErr.message);
         if (sum?.error) throw new Error(sum.error);
         summary = sum?.summary ?? "";
         aiTitle = sum?.suggestedTitle ?? undefined;
       } catch (e) {
-        // Non-fatal: still save with extracted text.
         toast.warning(e instanceof Error ? `AI summary failed: ${e.message}` : "AI summary failed");
       }
 
       const finalTitle = (
-        title.trim() ||
-        aiTitle ||
-        suggestedTitleFromExtract ||
-        (sourceUrl ?? extractedText.split("\n")[0] ?? "").slice(0, 80) ||
-        "Untitled idea"
+        title.trim() || aiTitle || extractedText.split("\n")[0]?.slice(0, 80) || "Untitled idea"
       ).slice(0, 200);
 
       const idea = await createIdea.mutateAsync({
         title: finalTitle,
         raw_note: null,
-        source_url: sourceUrl,
-        source_type: needsUrl ? "webpage" : "transcript",
+        source_url: null,
+        source_type: "transcript",
         extracted_text: extractedText || null,
         ai_summary: summary.trim() || null,
         folder_id: folderOrNull(folder),
         tags: [],
       });
 
-      // Heuristic confidence check — when low, send the user straight to edit.
       const summaryClean = summary.trim();
-      const hasMainIdea = /\*\*Main idea:\*\*/i.test(summaryClean);
-      const hasKeyPoints = /\*\*Key points:\*\*/i.test(summaryClean);
-      const needsReview =
-        !summaryClean ||
-        summaryClean.length < 150 ||
-        !hasMainIdea ||
-        !hasKeyPoints ||
-        !aiTitle ||
-        extractedText.trim().length < 200;
-
+      const needsReview = !summaryClean || summaryClean.length < 150;
       if (needsReview) {
         toast.message("Saved — needs a quick review", {
           description: "AI wasn't fully confident, so we opened the idea for you to edit.",
         });
       }
+      onCreated?.(idea.id, needsReview);
+      reset();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Couldn't save idea");
+    } finally {
+      setGenerating(false);
+    }
+  };
 
+  /**
+   * Step 2 (URL only): commit the previewed extraction. Summarize + save.
+   * `editedText` lets the user trim or tweak the extracted text before saving.
+   */
+  const handleSavePreview = async () => {
+    if (!preview || generating || saving) return;
+    setGenerating(true);
+    try {
+      let summary = "";
+      let aiTitle: string | undefined;
+      try {
+        const { data: sum, error: sumErr } = await supabase.functions.invoke("summarize", {
+          body: { text: preview.text, kind: "webpage" },
+        });
+        if (sumErr) throw new Error(sumErr.message);
+        if (sum?.error) throw new Error(sum.error);
+        summary = sum?.summary ?? "";
+        aiTitle = sum?.suggestedTitle ?? undefined;
+      } catch (e) {
+        toast.warning(e instanceof Error ? `AI summary failed: ${e.message}` : "AI summary failed");
+      }
+
+      const finalTitle = (
+        title.trim() || aiTitle || preview.suggestedTitle || preview.url
+      ).slice(0, 200);
+
+      const idea = await createIdea.mutateAsync({
+        title: finalTitle,
+        raw_note: null,
+        source_url: preview.url,
+        source_type: "webpage",
+        extracted_text: preview.text || null,
+        ai_summary: summary.trim() || null,
+        folder_id: folderOrNull(folder),
+        tags: [],
+      });
+
+      const summaryClean = summary.trim();
+      const needsReview = !summaryClean || summaryClean.length < 150;
+      if (needsReview) {
+        toast.message("Saved — needs a quick review", {
+          description: "AI wasn't fully confident, so we opened the idea for you to edit.",
+        });
+      }
       onCreated?.(idea.id, needsReview);
       reset();
     } catch (e) {
