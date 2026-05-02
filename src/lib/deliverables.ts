@@ -51,7 +51,7 @@ export const DELIVERABLE_TYPES: DeliverableTypeMeta[] = [
   { key: "other",    label: "Other",    icon: Circle,       tone: "bg-[hsl(240_4%_46%)] text-white" },
 ];
 
-const TYPE_KEYS = new Set(DELIVERABLE_TYPES.map((t) => t.key));
+const TYPE_KEYS: Set<string> = new Set(DELIVERABLE_TYPES.map((t) => t.key));
 
 export const getTypeMeta = (key: string): DeliverableTypeMeta =>
   DELIVERABLE_TYPES.find((t) => t.key === key) ?? DELIVERABLE_TYPES[DELIVERABLE_TYPES.length - 1];
