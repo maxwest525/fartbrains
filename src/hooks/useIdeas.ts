@@ -127,7 +127,7 @@ export function useUpdateIdea() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, patch }: { id: string; patch: Partial<Idea> }) => {
-      const { error } = await supabase.from("ideas").update(patch).eq("id", id);
+      const { error } = await supabase.from("ideas").update(patch as never).eq("id", id);
       if (error) throw error;
     },
     onSuccess: (_d, vars) => {
