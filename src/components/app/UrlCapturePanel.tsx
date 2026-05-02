@@ -16,21 +16,61 @@ type Props = {
   onOpenExisting?: (id: string) => void;
 };
 
+/** Detected source for a pasted URL. Drives routing + UI labels. */
+type DetectedSource = "instagram" | "tiktok" | "youtube" | "webpage" | "unknown";
+
 type Preview = {
   url: string;
   text: string;
   suggestedTitle?: string;
-  /** True when text came from an Instagram reel transcription. */
-  isInstagramTranscript?: boolean;
+  /** Where the text came from. Determines DB source_type at save time. */
+  source: DetectedSource;
+  /** True when `text` is a transcript of audio/video (vs. extracted page text). */
+  isTranscript?: boolean;
 };
 
-const isInstagramUrl = (s: string): boolean => {
+/**
+ * Classify a URL by its host. Used to pick the right extraction backend
+ * (Instagram reel transcription vs. generic readable extraction) and to
+ * surface the source in the UI. The DB `source_type` enum only supports
+ * manual/webpage/transcript/audio, so we map detected sources at save time.
+ */
+const detectSource = (s: string): DetectedSource => {
   try {
     const u = new URL(s);
-    return /(^|\.)instagram\.com$/i.test(u.hostname);
+    const h = u.hostname.toLowerCase().replace(/^www\./, "");
+    if (h === "instagram.com" || h.endsWith(".instagram.com")) return "instagram";
+    if (h === "tiktok.com" || h.endsWith(".tiktok.com") || h === "vm.tiktok.com") return "tiktok";
+    if (
+      h === "youtube.com" ||
+      h.endsWith(".youtube.com") ||
+      h === "youtu.be" ||
+      h === "m.youtube.com"
+    ) return "youtube";
+    if (u.protocol === "http:" || u.protocol === "https:") return "webpage";
+    return "unknown";
   } catch {
-    return false;
+    return "unknown";
   }
+};
+
+const SOURCE_LABEL: Record<DetectedSource, string> = {
+  instagram: "Instagram",
+  tiktok: "TikTok",
+  youtube: "YouTube",
+  webpage: "Web page",
+  unknown: "Link",
+};
+
+/** Map a detected source + transcript flag to the existing DB enum. */
+const dbSourceType = (
+  src: DetectedSource,
+  isTranscript: boolean,
+): "manual" | "webpage" | "transcript" | "audio" => {
+  if (isTranscript) return "transcript";
+  if (src === "instagram" || src === "tiktok" || src === "youtube") return "transcript";
+  if (src === "webpage") return "webpage";
+  return "manual";
 };
 
 /**
