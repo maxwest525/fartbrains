@@ -163,6 +163,52 @@ export const IdeaDetail = ({ ideaId, onClose, backLabel = "Back" }: Props) => {
     }
   };
 
+  /**
+   * Re-run the summarizer against the current source material and replace
+   * `ai_summary` on the saved idea. Prefers `extracted_text` (URL/transcript
+   * captures) and falls back to `raw_note` (manual notes/lists). Uses the
+   * idea's `source_type` to pick the right summarizer prompt.
+   */
+  const onRegenerateSummary = async () => {
+    if (regenerating) return;
+    // When editing, use the in-progress edits so the user can tweak inputs
+    // first, hit regenerate, and see the new summary land — without a save.
+    const sourceText = (
+      editing ? extractedText : (idea.extracted_text ?? "")
+    ).trim() || (editing ? rawNote : (idea.raw_note ?? "")).trim();
+
+    if (sourceText.length < 20) {
+      toast.error("Add a note or extracted text first (at least a few sentences).");
+      return;
+    }
+
+    const kind: "webpage" | "transcript" =
+      idea.source_type === "webpage" ? "webpage" : "transcript";
+
+    setRegenerating(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("summarize", {
+        body: { text: sourceText, kind },
+      });
+      if (error) throw new Error(error.message);
+      if (data?.error) throw new Error(data.error);
+      const next = (data?.summary ?? "").toString().trim();
+      if (!next) throw new Error("Empty summary returned");
+
+      await updateIdea.mutateAsync({
+        id: idea.id,
+        patch: { ai_summary: next },
+      });
+      // Reflect the new summary in the editor immediately if user is editing.
+      setSummary(next);
+      toast.success("Summary regenerated");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed to regenerate summary");
+    } finally {
+      setRegenerating(false);
+    }
+  };
+
   return (
     <div ref={containerRef} className="flex-1 flex flex-col h-full overflow-hidden bg-background md:animate-none anim-slide-in">
       {/* iOS-style nav bar: text "Back" on left, action cluster on right */}
