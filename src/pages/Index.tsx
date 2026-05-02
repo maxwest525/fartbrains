@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from "react";
-import { Search, X, Inbox, Folder, Star, Clock, Settings as SettingsIcon, LogOut, Eye, EyeOff } from "lucide-react";
+import { useRef, useState } from "react";
+import { Search, X, Inbox, Folder, Star, Clock, Settings as SettingsIcon, LogOut } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { IdeaList } from "@/components/app/IdeaList";
 import { IdeaDetail } from "@/components/app/IdeaDetail";
@@ -12,6 +12,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { useAuth } from "@/hooks/useAuth";
 import { useFolders } from "@/hooks/useFolders";
 import { useReminderNotifier } from "@/hooks/useReminderNotifier";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import type { IdeaFilter } from "@/hooks/useIdeas";
 
@@ -19,21 +20,12 @@ type View = "ideas" | "folders";
 
 const Shell = () => {
   const [view, setView] = useState<View>("ideas");
+  // The Capture page is filter "all". Switching to any other filter (recent, folder, favorites, search)
+  // takes the user to the Browse list. Folders page is its own top-level view.
   const [filter, setFilter] = useState<IdeaFilter>({ kind: "all" });
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [searchValue, setSearchValue] = useState("");
   const [settingsOpen, setSettingsOpen] = useState(false);
-  // Capture is the primary action — open by default so paste→generate is one tap.
-  const [captureOpen, setCaptureOpen] = useState(true);
-  // Focus mode: hide the idea list while capturing so the user isn't distracted
-  // by their history. Persisted across sessions.
-  const [focusMode, setFocusMode] = useState<boolean>(() => {
-    if (typeof window === "undefined") return false;
-    return window.localStorage.getItem("captureFocusMode") === "1";
-  });
-  useEffect(() => {
-    window.localStorage.setItem("captureFocusMode", focusMode ? "1" : "0");
-  }, [focusMode]);
   const isMobile = useIsMobile();
   const composeRef = useRef<HTMLDivElement>(null);
   const { user, signOut } = useAuth();
