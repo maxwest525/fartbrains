@@ -150,7 +150,11 @@ export const IdeaDetail = ({ ideaId, onClose, backLabel = "Back" }: Props) => {
           title: idea.title,
           note: idea.raw_note,
           summary: idea.ai_summary,
+          // Send the raw transcript/article too so the prompt can pull in
+          // specific quotes/details that aren't in the distilled summary.
+          extractedText: idea.extracted_text,
           sourceUrl: idea.source_url,
+          sourceLabel: idea.source_label,
         },
       });
       if (error) throw new Error(error.message);
