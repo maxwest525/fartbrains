@@ -206,7 +206,7 @@ export const IdeaList = ({ filter, selectedId, onSelect, onBackToFolders, onFilt
             {/* MOBILE — grouped inset card with hairline separators */}
             <div className="md:hidden px-4 pt-1">
               <div className="rounded-2xl bg-card overflow-hidden ios-separator-inset">
-                {ideas.map((idea) => {
+                {visibleIdeas.map((idea) => {
                   const isProject = idea.tags.includes(PROJECT_TAG);
                   const stats = isProject ? deliverableStats(idea.raw_note) : null;
                   const { Icon, tone } = isProject
@@ -259,7 +259,7 @@ export const IdeaList = ({ filter, selectedId, onSelect, onBackToFolders, onFilt
 
             {/* DESKTOP — flat list */}
             <div className="hidden md:block">
-              {ideas.map((idea) => {
+              {visibleIdeas.map((idea) => {
                 const isProject = idea.tags.includes(PROJECT_TAG);
                 const stats = isProject ? deliverableStats(idea.raw_note) : null;
                 const Icon = isProject ? Briefcase : sourceMeta(idea.source_type).Icon;
@@ -308,7 +308,8 @@ export const IdeaList = ({ filter, selectedId, onSelect, onBackToFolders, onFilt
               })}
             </div>
           </>
-        )}
+          );
+        })()}
         </div>
       </div>
     </div>
