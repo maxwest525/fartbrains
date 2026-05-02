@@ -227,6 +227,26 @@ const Shell = () => {
             <div className="pt-3 sm:pt-5">
               <MovieTicker />
             </div>
+            <div className="w-full px-3 sm:px-6 lg:px-10 pt-3 sm:pt-4">
+              <div className="relative max-w-xl mx-auto">
+                <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  value={searchValue}
+                  onChange={(e) => onSearch(e.target.value)}
+                  placeholder="Search"
+                  className="pl-9 pr-9 h-9 rounded-[10px] bg-secondary border-transparent focus-visible:bg-card text-[15px]"
+                />
+                {searchValue && (
+                  <button
+                    onClick={clearSearch}
+                    className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 flex items-center justify-center text-muted-foreground hover:text-foreground"
+                    aria-label="Clear search"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                )}
+              </div>
+            </div>
             <div ref={composeRef} className="w-full px-3 sm:px-6 lg:px-10 pt-4 sm:pt-6">
               <ComposeIdea
                 defaultFolderId={defaultFolderId}
