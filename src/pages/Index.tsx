@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { IdeaList } from "@/components/app/IdeaList";
 import { IdeaDetail } from "@/components/app/IdeaDetail";
 import { ComposeIdea } from "@/components/app/ComposeIdea";
+import { UrlCapturePanel } from "@/components/app/UrlCapturePanel";
 import { MovieTicker } from "@/components/app/MovieTicker";
 import { MobileTabBar } from "@/components/app/MobileTabBar";
 import { SettingsSheet } from "@/components/app/SettingsSheet";
