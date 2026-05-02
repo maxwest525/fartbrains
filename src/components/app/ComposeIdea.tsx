@@ -120,12 +120,17 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
   /**
    * Instant capture: extract + summarize + save in one shot.
    * No intermediate preview — user edits in detail view if needed.
+   *
+   * `urlOverride` lets paste handlers pass the freshly-pasted URL synchronously,
+   * before React state has had a chance to update.
    */
-  const handleGenerateAndSave = async () => {
+  const handleGenerateAndSave = async (urlOverride?: string) => {
     if (generating || saving) return;
 
+    const effectiveUrl = (urlOverride ?? url).trim();
+
     if (needsUrl) {
-      if (!url.trim()) return toast.error("URL required");
+      if (!effectiveUrl) return toast.error("URL required");
     } else if (isTranscript) {
       if (note.trim().length < 20) return toast.error("Paste at least a few sentences");
     }
@@ -134,7 +139,7 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
     try {
       let extractedText = "";
       let suggestedTitleFromExtract: string | undefined;
-      const sourceUrl = needsUrl ? url.trim() : null;
+      const sourceUrl = needsUrl ? effectiveUrl : null;
 
       if (needsUrl) {
         const fnName = source === "instagram" ? "extract-instagram" : "extract-url";
@@ -265,6 +270,22 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
             ref={urlInputRef}
             value={url}
             onChange={(e) => setUrl(e.target.value)}
+            onPaste={(e) => {
+              // Auto-trigger save the moment a valid URL is pasted into an empty field.
+              // Only fires when the input is empty (otherwise it's an edit, not a fresh capture)
+              // and only if the pasted text parses as a real URL.
+              const pasted = e.clipboardData.getData("text").trim();
+              if (!pasted || url.trim().length > 0) return;
+              try {
+                const u = new URL(pasted);
+                if (u.protocol !== "http:" && u.protocol !== "https:") return;
+              } catch {
+                return;
+              }
+              setUrl(pasted);
+              // Defer so the input visibly updates before the network call starts.
+              setTimeout(() => handleGenerateAndSave(pasted), 0);
+            }}
             placeholder={ph.url}
             inputMode="url"
             autoCapitalize="none"
@@ -444,7 +465,7 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
       </div>
 
       <Button
-        onClick={usesAiPreview ? handleGenerateAndSave : handleSave}
+        onClick={usesAiPreview ? () => handleGenerateAndSave() : handleSave}
         disabled={saving || generating || createIdea.isPending}
         className="w-full h-12 rounded-xl text-[16px] font-semibold"
       >
