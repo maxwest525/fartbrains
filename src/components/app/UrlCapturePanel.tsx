@@ -48,6 +48,10 @@ export const UrlCapturePanel = ({ defaultFolderId, onCreated, onOpenExisting }: 
   const [extracting, setExtracting] = useState(false);
   const [saving, setSaving] = useState(false);
   const [preview, setPreview] = useState<Preview | null>(null);
+  // Set when an extract attempt failed (invalid URL or extract error). Lets us
+  // surface a "Save link anyway" fallback so the user can still capture the URL
+  // as a manual idea even when we can't fetch its contents.
+  const [extractFailed, setExtractFailed] = useState<string | null>(null);
 
   const { data: urlDuplicate } = useDuplicateUrl(url);
   const urlCheck = useUrlCheck(url, true);
@@ -57,6 +61,7 @@ export const UrlCapturePanel = ({ defaultFolderId, onCreated, onOpenExisting }: 
     setTitle("");
     setNote("");
     setPreview(null);
+    setExtractFailed(null);
   };
 
   const isValidHttpUrl = (s: string) => {
@@ -101,10 +106,17 @@ export const UrlCapturePanel = ({ defaultFolderId, onCreated, onOpenExisting }: 
 
   const handleExtract = async (overrideUrl?: string) => {
     const target = cleanUrlInput(overrideUrl ?? url);
-    if (!target) return toast.error("Paste a URL first");
-    if (!isValidHttpUrl(target)) return toast.error("That doesn't look like a valid URL");
+    if (!target) {
+      setExtractFailed(null);
+      return toast.error("Paste a URL first");
+    }
+    if (!isValidHttpUrl(target)) {
+      setExtractFailed("That doesn't look like a valid URL — you can still save it as-is.");
+      return toast.error("That doesn't look like a valid URL");
+    }
     if (target !== (overrideUrl ?? url).trim()) setUrl(target);
     if (extracting || saving) return;
+    setExtractFailed(null);
 
     setExtracting(true);
     try {
@@ -176,9 +188,48 @@ export const UrlCapturePanel = ({ defaultFolderId, onCreated, onOpenExisting }: 
       });
       if (!title.trim() && data?.title) setTitle(String(data.title).slice(0, 200));
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Couldn't extract content");
+      const msg = e instanceof Error ? e.message : "Couldn't extract content";
+      setExtractFailed(`${msg} — you can still save the link as-is.`);
+      toast.error(msg);
     } finally {
       setExtracting(false);
+    }
+  };
+
+  /**
+   * Fallback save: persist whatever the user typed/pasted as a manual idea
+   * even when validation or extraction failed. Ensures a user never loses a
+   * capture just because we couldn't fetch the page contents.
+   */
+  const handleSaveRaw = async () => {
+    if (saving) return;
+    const raw = cleanUrlInput(url);
+    if (!raw) return toast.error("Paste a URL first");
+    setSaving(true);
+    try {
+      const looksUrl = isValidHttpUrl(raw);
+      const finalTitle = (title.trim() || raw).slice(0, 200);
+      const idea = await createIdea.mutateAsync({
+        title: finalTitle,
+        raw_note: note.trim() || null,
+        // Only persist as source_url if it parses as http(s); otherwise keep
+        // the original text in extracted_text so source_url stays clean.
+        source_url: looksUrl ? raw : null,
+        source_type: "manual",
+        extracted_text: looksUrl ? null : raw,
+        ai_summary: null,
+        folder_id: defaultFolderId ?? null,
+        tags: [],
+      });
+      toast.success("Saved without preview", {
+        description: "We couldn't fetch the page — you can edit the idea later.",
+      });
+      onCreated?.(idea.id, true);
+      reset();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Couldn't save idea");
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -250,12 +301,16 @@ export const UrlCapturePanel = ({ defaultFolderId, onCreated, onOpenExisting }: 
       {/* URL input */}
       <Input
         value={url}
-        onChange={(e) => setUrl(cleanUrlInput(e.target.value))}
+        onChange={(e) => {
+          setUrl(cleanUrlInput(e.target.value));
+          if (extractFailed) setExtractFailed(null);
+        }}
         onPaste={(e) => {
           e.preventDefault();
           const pasted = cleanUrlInput(e.clipboardData.getData("text"));
           if (!pasted) return;
           setUrl(pasted);
+          setExtractFailed(null);
           if (isValidHttpUrl(pasted)) {
             setTimeout(() => handleExtract(pasted), 0);
           }
@@ -349,7 +404,16 @@ export const UrlCapturePanel = ({ defaultFolderId, onCreated, onOpenExisting }: 
         </div>
       )}
 
-      {/* Preview card */}
+      {/* Extract failure fallback — shown when validation or extraction failed */}
+      {extractFailed && !preview && url.trim() && (
+        <div className="flex items-start gap-2 rounded-xl border border-amber-500/40 bg-amber-500/10 p-3 text-sm">
+          <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-400 mt-0.5 shrink-0" />
+          <div className="flex-1 min-w-0">
+            <div className="font-medium text-foreground">Couldn't preview this link</div>
+            <div className="text-muted-foreground text-[12.5px] leading-snug mt-0.5">{extractFailed}</div>
+          </div>
+        </div>
+      )}
       {preview && (
         <div className="rounded-2xl border border-border/70 bg-secondary/30 p-3 sm:p-4 space-y-3">
           <div className="flex items-start gap-2">
@@ -445,21 +509,42 @@ export const UrlCapturePanel = ({ defaultFolderId, onCreated, onOpenExisting }: 
 
       {/* Primary CTA when no preview yet */}
       {!preview && (
-        <Button
-          type="button"
-          onClick={() => handleExtract()}
-          disabled={!url.trim() || extracting || saving}
-          className="w-full h-11 rounded-xl text-[15px] font-semibold"
-        >
-          {extracting ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            <>
-              <Sparkles className="h-4 w-4 mr-1.5" />
-              Extract preview
-            </>
+        <div className="flex flex-col gap-2">
+          <Button
+            type="button"
+            onClick={() => handleExtract()}
+            disabled={!url.trim() || extracting || saving}
+            className="w-full h-11 rounded-xl text-[15px] font-semibold"
+          >
+            {extracting ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <>
+                <Sparkles className="h-4 w-4 mr-1.5" />
+                Extract preview
+              </>
+            )}
+          </Button>
+
+          {/* Fallback: save the raw value as a manual idea, no preview required.
+              Surfaced when extraction failed or the URL is unreachable, so the
+              user never loses a capture they took the trouble to paste. */}
+          {url.trim() && (extractFailed || urlCheck.status === "error") && (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleSaveRaw}
+              disabled={saving || extracting}
+              className="w-full h-11 rounded-xl text-[14px] font-semibold"
+            >
+              {saving ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                "Save link anyway"
+              )}
+            </Button>
           )}
-        </Button>
+        </div>
       )}
     </div>
   );
