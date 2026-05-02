@@ -29,7 +29,7 @@ type Props = {
  * All edits flow through `onChange(rawNote')` so the parent (IdeaDetail)
  * keeps using its existing `useUpdateIdea` plumbing.
  */
-export const ProjectBoard = ({ rawNote, onChange }: Props) => {
+export const ProjectBoard = ({ rawNote, onChange, projectName }: Props) => {
   const items = parseDeliverables(rawNote);
   const [activeType, setActiveType] = useState<DeliverableType>("task");
   const [draft, setDraft] = useState("");
