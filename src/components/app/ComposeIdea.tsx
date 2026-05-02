@@ -398,44 +398,6 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
         />
       )}
 
-      <Input
-        value={title}
-        onChange={(e) => setTitle(e.target.value)}
-        placeholder="Title (optional — AI will fill in)"
-        className="h-12 rounded-xl bg-secondary/60 border-transparent text-[15px]"
-      />
-
-      <Select
-        value={folder}
-        onValueChange={(v) => {
-          if (v === NEW_FOLDER) {
-            setNewFolderOpen(true);
-            return;
-          }
-          setFolder(v);
-        }}
-      >
-        <SelectTrigger className="h-12 rounded-xl bg-secondary/60 border-transparent text-[15px]">
-          <div className="flex items-center gap-2">
-            <Inbox className="h-4 w-4 text-muted-foreground" />
-            <SelectValue />
-          </div>
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value={NEW_FOLDER}>
-            <span className="flex items-center gap-2 text-primary font-medium">
-              <Plus className="h-4 w-4" />
-              New folder…
-            </span>
-          </SelectItem>
-          <SelectSeparator />
-          <SelectItem value={NO_FOLDER}>All ideas</SelectItem>
-          {folders.map((f) => (
-            <SelectItem key={f.id} value={f.id}>{f.name}</SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-
       {/* Inline new-folder name field — opens from dropdown item or chip. */}
       {newFolderOpen && (
         <div className="flex items-center gap-2">
