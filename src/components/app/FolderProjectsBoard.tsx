@@ -261,7 +261,7 @@ export const FolderProjectsBoard = ({ ideas, onOpenProject }: Props) => {
                                         type="button"
                                         onClick={() => beginEdit(idea.id, item)}
                                         aria-label="Edit deliverable"
-                                        className="press h-7 w-7 inline-flex items-center justify-center text-muted-foreground hover:text-foreground opacity-60 sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100 transition-opacity"
+                                        className="press h-7 w-7 inline-flex items-center justify-center text-muted-foreground hover:text-foreground opacity-100 sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100 transition-opacity"
                                       >
                                         <Pencil className="h-3.5 w-3.5" />
                                       </button>
