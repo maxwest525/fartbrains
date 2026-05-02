@@ -159,9 +159,10 @@ export const UrlCapturePanel = ({ defaultFolderId, onCreated, onOpenExisting }: 
     setExtractFailed(null);
 
     setExtracting(true);
+    const detected = detectSource(target);
     try {
       // Instagram → fetch the reel via Apify and transcribe with ElevenLabs Scribe.
-      if (isInstagramUrl(target)) {
+      if (detected === "instagram") {
         const t = toast.loading("Fetching reel & transcribing…", {
           description: "This usually takes 10–30 seconds.",
         });
@@ -194,7 +195,8 @@ export const UrlCapturePanel = ({ defaultFolderId, onCreated, onOpenExisting }: 
             url: data?.finalUrl ?? target,
             text: body,
             suggestedTitle: suggested,
-            isInstagramTranscript: transcript.length > 0,
+            source: "instagram",
+            isTranscript: transcript.length > 0,
           });
           if (!title.trim()) setTitle(String(suggested).slice(0, 200));
 
@@ -213,6 +215,9 @@ export const UrlCapturePanel = ({ defaultFolderId, onCreated, onOpenExisting }: 
         return;
       }
 
+      // TikTok / YouTube currently fall through to the generic extractor.
+      // The page-level metadata (title, description) is still useful even
+      // without a transcript pipeline, and we tag the source for clarity.
       const { data, error } = await supabase.functions.invoke("extract-url", {
         body: { url: target },
       });
@@ -225,6 +230,8 @@ export const UrlCapturePanel = ({ defaultFolderId, onCreated, onOpenExisting }: 
         url: target,
         text,
         suggestedTitle: data?.title ?? undefined,
+        source: detected,
+        isTranscript: false,
       });
       if (!title.trim() && data?.title) setTitle(String(data.title).slice(0, 200));
     } catch (e) {
