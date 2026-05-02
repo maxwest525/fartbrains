@@ -45,6 +45,7 @@ export const IdeaDetail = ({ ideaId, onClose, backLabel = "Back" }: Props) => {
   const [title, setTitle] = useState("");
   const [rawNote, setRawNote] = useState("");
   const [summary, setSummary] = useState("");
+  const [extractedText, setExtractedText] = useState("");
   const [tags, setTags] = useState("");
   const [folderId, setFolderId] = useState<string>(NO_FOLDER);
   const [generating, setGenerating] = useState(false);
@@ -59,16 +60,19 @@ export const IdeaDetail = ({ ideaId, onClose, backLabel = "Back" }: Props) => {
     enabled: isMobile && !editing && !!ideaId,
   });
 
+  // Re-sync local edit state when the idea changes OR is updated server-side
+  // (e.g. summarize re-runs from another flow). We skip the sync while the user
+  // is mid-edit to avoid clobbering unsaved changes.
   useEffect(() => {
-    if (idea) {
+    if (idea && !editing) {
       setTitle(idea.title);
       setRawNote(idea.raw_note ?? "");
       setSummary(idea.ai_summary ?? "");
+      setExtractedText(idea.extracted_text ?? "");
       setTags(idea.tags.join(", "));
       setFolderId(idea.folder_id ?? NO_FOLDER);
-      setEditing(false);
     }
-  }, [idea?.id]);
+  }, [idea?.id, idea?.updated_at, editing]);
 
   if (!ideaId) {
     return (
