@@ -1,9 +1,10 @@
 import { useMemo, useState, useEffect, useRef } from "react";
-import { Briefcase, ChevronDown, ChevronRight, Pencil, Check, X } from "lucide-react";
+import { Briefcase, ChevronDown, ChevronRight, Pencil, Check, X, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   DELIVERABLE_TYPES,
   PROJECT_TAG,
+  deleteDeliverable,
   deliverableStats,
   getTypeMeta,
   parseDeliverables,
@@ -14,6 +15,16 @@ import {
 } from "@/lib/deliverables";
 import type { Idea } from "@/hooks/useIdeas";
 import { useUpdateIdea } from "@/hooks/useIdeas";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 type Props = {
   /** All ideas in the current folder, in the order returned by the query. */
