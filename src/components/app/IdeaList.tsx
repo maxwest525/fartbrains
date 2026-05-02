@@ -300,11 +300,43 @@ export const IdeaList = ({ filter, selectedId, onSelect, onBackToFolders, onFilt
 
         {/* Mobile: iOS grouped inset list. Desktop: flat row list. */}
         {(() => {
-          const visibleIdeas =
+          const baseIdeas =
             filter.kind === "folder"
               ? ideas.filter((i) => !i.tags.includes(PROJECT_TAG))
               : ideas;
-          if (visibleIdeas.length === 0) return null;
+          // Apply the multi-select tag filter (AND across selected tags).
+          const visibleIdeas =
+            selectedTags.length === 0
+              ? baseIdeas
+              : baseIdeas.filter((i) => {
+                  const t = i.tags ?? [];
+                  return selectedTags.every((sel) => t.includes(sel));
+                });
+          if (visibleIdeas.length === 0) {
+            // Show a focused empty state when the tag filter zeroes the list,
+            // so it's obvious the filter (not the data) is what hid them.
+            if (selectedTags.length > 0 && baseIdeas.length > 0) {
+              return (
+                <div className="px-6 py-12 text-center">
+                  <div className="mx-auto h-12 w-12 rounded-2xl bg-muted/60 flex items-center justify-center mb-3">
+                    <TagIcon className="h-6 w-6 text-muted-foreground" />
+                  </div>
+                  <p className="text-[15px] font-semibold text-foreground">No matches</p>
+                  <p className="text-[13px] text-muted-foreground mt-1 max-w-xs mx-auto">
+                    No ideas match every selected tag. Remove a tag to broaden the results.
+                  </p>
+                  <button
+                    onClick={clearTags}
+                    className="press mt-3 inline-flex items-center gap-1 h-8 px-3 rounded-full text-[13px] font-medium bg-card border border-border hover:bg-muted"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                    Clear tag filters
+                  </button>
+                </div>
+              );
+            }
+            return null;
+          }
           return (
           <>
             {/* MOBILE — grouped inset card with hairline separators */}
