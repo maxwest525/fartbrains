@@ -25,6 +25,15 @@ const Shell = () => {
   const [settingsOpen, setSettingsOpen] = useState(false);
   // Capture is the primary action — open by default so paste→generate is one tap.
   const [captureOpen, setCaptureOpen] = useState(true);
+  // Focus mode: hide the idea list while capturing so the user isn't distracted
+  // by their history. Persisted across sessions.
+  const [focusMode, setFocusMode] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    return window.localStorage.getItem("captureFocusMode") === "1";
+  });
+  useEffect(() => {
+    window.localStorage.setItem("captureFocusMode", focusMode ? "1" : "0");
+  }, [focusMode]);
   const isMobile = useIsMobile();
   const composeRef = useRef<HTMLDivElement>(null);
   const { user, signOut } = useAuth();
