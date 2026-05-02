@@ -130,8 +130,8 @@ export const TranscriptCapture = ({ defaultFolderId, onBack, onCreated }: Props)
 
   return (
     <div className="w-full flex-1 min-w-0 flex flex-col min-h-0 bg-background">
-      {/* Header */}
-      <div className="px-3 sm:px-6 lg:px-10 pt-3 sm:pt-5 flex items-center gap-2">
+      {/* Header — sticky on mobile so Back stays reachable while scrolling */}
+      <div className="safe-top sticky top-0 z-10 bg-background/85 backdrop-blur-xl border-b border-border/60 px-3 sm:px-6 lg:px-10 py-2 flex items-center gap-2">
         <Button
           variant="ghost"
           size="sm"
@@ -141,33 +141,37 @@ export const TranscriptCapture = ({ defaultFolderId, onBack, onCreated }: Props)
           <ArrowLeft className="h-4 w-4" />
           Back
         </Button>
+        <div className="ml-1 text-[15px] font-semibold truncate sm:hidden">Paste a transcript</div>
       </div>
 
-      <div className="flex-1 min-h-0 overflow-y-auto scroll-momentum touch-pan-y pb-[calc(5.75rem+env(safe-area-inset-bottom))] md:pb-6">
-        <div className="w-full max-w-3xl mx-auto px-3 sm:px-6 lg:px-10 pt-2 pb-6">
-          {/* Title block */}
-          <div className="mb-4">
+      <div className="flex-1 min-h-0 overflow-y-auto scroll-momentum touch-pan-y pb-[calc(7.5rem+env(safe-area-inset-bottom))] sm:pb-[calc(5.75rem+env(safe-area-inset-bottom))] md:pb-6">
+        <div className="w-full max-w-3xl mx-auto px-3 sm:px-6 lg:px-10 pt-3 sm:pt-2 pb-4">
+          {/* Title block — desktop/tablet only; mobile uses the sticky header title */}
+          <div className="mb-4 hidden sm:block">
             <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight">Paste a transcript</h1>
             <p className="mt-1 text-sm text-muted-foreground">
               Drop in a video transcript, podcast notes, meeting notes, or any long text.
               We'll summarize it and save it as an idea.
             </p>
           </div>
+          <p className="mb-3 text-[13px] text-muted-foreground sm:hidden">
+            Drop in a transcript or long text. We'll summarize it and save it as an idea.
+          </p>
 
-          {/* Toolbar */}
-          <div className="mb-2 flex items-center gap-2">
+          {/* Toolbar — stacks on mobile so the folder picker has room */}
+          <div className="mb-2 flex flex-col sm:flex-row sm:items-center gap-2">
             <Button
               variant="outline"
               size="sm"
               onClick={pasteFromClipboard}
               disabled={busy}
-              className="h-9 gap-1.5"
+              className="h-10 sm:h-9 gap-1.5 w-full sm:w-auto justify-center"
             >
               <ClipboardPaste className="h-4 w-4" />
-              Paste
+              Paste from clipboard
             </Button>
             <Select value={folder} onValueChange={setFolder} disabled={busy}>
-              <SelectTrigger className="h-9 w-auto min-w-[10rem] text-sm">
+              <SelectTrigger className="h-10 sm:h-9 w-full sm:w-auto sm:min-w-[10rem] text-sm">
                 <SelectValue placeholder="No folder" />
               </SelectTrigger>
               <SelectContent>
@@ -188,11 +192,11 @@ export const TranscriptCapture = ({ defaultFolderId, onBack, onCreated }: Props)
               value={text}
               onChange={(e) => setText(e.target.value)}
               placeholder="Paste the transcript here…"
-              rows={16}
+              rows={12}
               aria-invalid={tooShort || overLimit}
               aria-describedby="transcript-validation"
               maxLength={MAX_CHARS + 1000}
-              className={`min-h-[40vh] sm:min-h-[50vh] text-[15px] leading-relaxed resize-y ${
+              className={`min-h-[35vh] sm:min-h-[50vh] text-[15px] leading-relaxed resize-y ${
                 tooShort || overLimit ? "border-destructive focus-visible:ring-destructive" : ""
               }`}
               disabled={busy}
@@ -208,7 +212,9 @@ export const TranscriptCapture = ({ defaultFolderId, onBack, onCreated }: Props)
                   <ul className="mt-2 space-y-1 list-disc list-inside marker:text-muted-foreground/60">
                     <li>Paste the full transcript, not a snippet</li>
                     <li>Include speaker names if available</li>
-                    <li>Aim for at least {RECOMMENDED_CHARS.toLocaleString()} characters for a richer summary</li>
+                    <li className="hidden sm:list-item">
+                      Aim for at least {RECOMMENDED_CHARS.toLocaleString()} characters for a richer summary
+                    </li>
                   </ul>
                 </div>
               </div>
@@ -270,10 +276,7 @@ export const TranscriptCapture = ({ defaultFolderId, onBack, onCreated }: Props)
                 </span>
               )}
             </div>
-          </div>
 
-          {/* Meta + actions */}
-          <div className="mt-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div className="text-xs text-muted-foreground tabular-nums">
               <span className={overLimit ? "text-destructive font-medium" : ""}>
                 {charCount.toLocaleString()}
@@ -281,31 +284,61 @@ export const TranscriptCapture = ({ defaultFolderId, onBack, onCreated }: Props)
               {" / "}
               {MAX_CHARS.toLocaleString()} chars · {wordCount.toLocaleString()} words
             </div>
-            <div className="flex items-center gap-2">
-              {text && !busy && (
-                <Button variant="ghost" size="sm" onClick={() => setText("")} className="h-10">
-                  Clear
-                </Button>
-              )}
-              <Button
-                onClick={handleSubmit}
-                disabled={!canSave}
-                className="h-10 gap-1.5 min-w-[10rem]"
-              >
-                {busy ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    Summarizing…
-                  </>
-                ) : (
-                  <>
-                    <Sparkles className="h-4 w-4" />
-                    Summarize & save
-                  </>
-                )}
-              </Button>
-            </div>
           </div>
+
+          {/* Desktop/tablet actions — mobile uses the sticky bar below */}
+          <div className="mt-4 hidden sm:flex items-center justify-end gap-2">
+            {text && !busy && (
+              <Button variant="ghost" size="sm" onClick={() => setText("")} className="h-10">
+                Clear
+              </Button>
+            )}
+            <Button
+              onClick={handleSubmit}
+              disabled={!canSave}
+              className="h-10 gap-1.5 min-w-[10rem]"
+            >
+              {busy ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Summarizing…
+                </>
+              ) : (
+                <>
+                  <Sparkles className="h-4 w-4" />
+                  Summarize & save
+                </>
+              )}
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      {/* Mobile sticky action bar — keeps Save reachable without scrolling past a long textarea */}
+      <div className="sm:hidden fixed bottom-0 inset-x-0 z-20 bg-background/90 backdrop-blur-xl border-t border-border safe-bottom">
+        <div className="px-3 py-2 flex items-center gap-2">
+          {text && !busy && (
+            <Button variant="ghost" size="sm" onClick={() => setText("")} className="h-11 px-3">
+              Clear
+            </Button>
+          )}
+          <Button
+            onClick={handleSubmit}
+            disabled={!canSave}
+            className="h-11 flex-1 gap-1.5"
+          >
+            {busy ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Summarizing…
+              </>
+            ) : (
+              <>
+                <Sparkles className="h-4 w-4" />
+                Summarize & save
+              </>
+            )}
+          </Button>
         </div>
       </div>
     </div>
