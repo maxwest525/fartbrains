@@ -1,5 +1,5 @@
-import { useMemo, useState } from "react";
-import { Briefcase, ChevronDown, ChevronRight } from "lucide-react";
+import { useMemo, useState, useEffect, useRef } from "react";
+import { Briefcase, ChevronDown, ChevronRight, Pencil, Check, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   DELIVERABLE_TYPES,
@@ -8,6 +8,7 @@ import {
   getTypeMeta,
   parseDeliverables,
   toggleDeliverable,
+  updateDeliverable,
   type Deliverable,
   type DeliverableType,
 } from "@/lib/deliverables";
