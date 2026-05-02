@@ -104,6 +104,7 @@ export const IdeaDetail = ({ ideaId, onClose, backLabel = "Back" }: Props) => {
         title: title.trim(),
         raw_note: rawNote || null,
         ai_summary: summary || null,
+        extracted_text: extractedText || null,
         tags: tags.split(",").map((t) => t.trim()).filter(Boolean),
         folder_id: folderId === NO_FOLDER ? null : folderId,
       },
