@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Sparkles, Loader2, AlertTriangle, Inbox, Folder as FolderIcon, CheckCircle2, XCircle, ArrowRight, Plus } from "lucide-react";
+import { Sparkles, Loader2, AlertTriangle, Inbox, Folder as FolderIcon, CheckCircle2, XCircle, ArrowRight, Plus, FileText, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useDuplicateUrl } from "@/hooks/useDuplicateUrl";
 import { useUrlCheck } from "@/hooks/useUrlCheck";
@@ -68,6 +68,16 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
   const [saving, setSaving] = useState(false);
   const [generating, setGenerating] = useState(false);
 
+  // URL preview step: after extraction, hold the readable text + suggested title
+  // so the user can review (and tweak the title) before committing to save.
+  const [preview, setPreview] = useState<{
+    url: string;
+    text: string;
+    suggestedTitle?: string;
+    sourceKind: "webpage" | "instagram";
+  } | null>(null);
+  const [extracting, setExtracting] = useState(false);
+
   // Inline new-folder UI (triggered from chip).
   const [newFolderOpen, setNewFolderOpen] = useState(false);
   const [newFolderName, setNewFolderName] = useState("");
@@ -106,6 +116,7 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
     setUrl("");
     setNote("");
     setTitle("");
+    setPreview(null);
   };
 
   const folderOrNull = (v: string) => (v === NO_FOLDER ? null : v);
@@ -124,100 +135,151 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
   };
 
   /**
-   * Instant capture: extract + summarize + save in one shot.
-   * No intermediate preview — user edits in detail view if needed.
+   * Step 1 (URL only): extract readable text and show a preview card.
+   * The user reviews the extracted content before committing to save.
    *
-   * `urlOverride` lets paste handlers pass the freshly-pasted URL synchronously,
-   * before React state has had a chance to update.
+   * `urlOverride` lets paste handlers pass the freshly-pasted URL synchronously.
+   */
+  const handleExtract = async (overrides?: { url?: string }) => {
+    if (extracting || generating || saving) return;
+    const effectiveUrl = (overrides?.url ?? url).trim();
+    if (!effectiveUrl) return toast.error("URL required");
+
+    setExtracting(true);
+    try {
+      const fnName = source === "instagram" ? "extract-instagram" : "extract-url";
+      const { data: ext, error: extErr } = await supabase.functions.invoke(fnName, {
+        body: { url: effectiveUrl },
+      });
+      if (extErr) throw new Error(extErr.message);
+      if (ext?.error) throw new Error(ext.error);
+      const text = (ext?.text ?? "").trim();
+      if (!text) throw new Error("Couldn't extract any readable text from this page");
+
+      setPreview({
+        url: effectiveUrl,
+        text,
+        suggestedTitle: ext?.title ?? undefined,
+        sourceKind: source === "instagram" ? "instagram" : "webpage",
+      });
+      // Pre-fill the title field with the extracted title (only if user hasn't typed one).
+      if (!title.trim() && ext?.title) setTitle(String(ext.title).slice(0, 200));
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Couldn't extract content");
+    } finally {
+      setExtracting(false);
+    }
+  };
+
+  /**
+   * Transcript flow stays a single tap: extract+summarize+save.
+   * URL flow is now two-step (extract → preview → save).
    */
   const handleGenerateAndSave = async (
     overrides?: { url?: string; note?: string }
   ) => {
     if (generating || saving) return;
 
-    const effectiveUrl = (overrides?.url ?? url).trim();
-    const effectiveNote = (overrides?.note ?? note).trim();
+    // Route URL captures through the new preview step.
+    if (needsUrl) return handleExtract({ url: overrides?.url });
 
-    if (needsUrl) {
-      if (!effectiveUrl) return toast.error("URL required");
-    } else if (isTranscript) {
-      if (effectiveNote.length < 20) return toast.error("Paste at least a few sentences");
+    const effectiveNote = (overrides?.note ?? note).trim();
+    if (isTranscript && effectiveNote.length < 20) {
+      return toast.error("Paste at least a few sentences");
     }
 
     setGenerating(true);
     try {
-      let extractedText = "";
-      let suggestedTitleFromExtract: string | undefined;
-      const sourceUrl = needsUrl ? effectiveUrl : null;
-
-      if (needsUrl) {
-        const fnName = source === "instagram" ? "extract-instagram" : "extract-url";
-        const { data: ext, error: extErr } = await supabase.functions.invoke(fnName, {
-          body: { url: sourceUrl },
-        });
-        if (extErr) throw new Error(extErr.message);
-        if (ext?.error) throw new Error(ext.error);
-        extractedText = ext?.text ?? "";
-        suggestedTitleFromExtract = ext?.title ?? undefined;
-      } else {
-        extractedText = effectiveNote;
-      }
-
+      const extractedText = effectiveNote;
       let summary = "";
       let aiTitle: string | undefined;
       try {
         const { data: sum, error: sumErr } = await supabase.functions.invoke("summarize", {
-          body: {
-            text: extractedText,
-            kind: needsUrl ? "webpage" : "transcript",
-          },
+          body: { text: extractedText, kind: "transcript" },
         });
         if (sumErr) throw new Error(sumErr.message);
         if (sum?.error) throw new Error(sum.error);
         summary = sum?.summary ?? "";
         aiTitle = sum?.suggestedTitle ?? undefined;
       } catch (e) {
-        // Non-fatal: still save with extracted text.
         toast.warning(e instanceof Error ? `AI summary failed: ${e.message}` : "AI summary failed");
       }
 
       const finalTitle = (
-        title.trim() ||
-        aiTitle ||
-        suggestedTitleFromExtract ||
-        (sourceUrl ?? extractedText.split("\n")[0] ?? "").slice(0, 80) ||
-        "Untitled idea"
+        title.trim() || aiTitle || extractedText.split("\n")[0]?.slice(0, 80) || "Untitled idea"
       ).slice(0, 200);
 
       const idea = await createIdea.mutateAsync({
         title: finalTitle,
         raw_note: null,
-        source_url: sourceUrl,
-        source_type: needsUrl ? "webpage" : "transcript",
+        source_url: null,
+        source_type: "transcript",
         extracted_text: extractedText || null,
         ai_summary: summary.trim() || null,
         folder_id: folderOrNull(folder),
         tags: [],
       });
 
-      // Heuristic confidence check — when low, send the user straight to edit.
       const summaryClean = summary.trim();
-      const hasMainIdea = /\*\*Main idea:\*\*/i.test(summaryClean);
-      const hasKeyPoints = /\*\*Key points:\*\*/i.test(summaryClean);
-      const needsReview =
-        !summaryClean ||
-        summaryClean.length < 150 ||
-        !hasMainIdea ||
-        !hasKeyPoints ||
-        !aiTitle ||
-        extractedText.trim().length < 200;
-
+      const needsReview = !summaryClean || summaryClean.length < 150;
       if (needsReview) {
         toast.message("Saved — needs a quick review", {
           description: "AI wasn't fully confident, so we opened the idea for you to edit.",
         });
       }
+      onCreated?.(idea.id, needsReview);
+      reset();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Couldn't save idea");
+    } finally {
+      setGenerating(false);
+    }
+  };
 
+  /**
+   * Step 2 (URL only): commit the previewed extraction. Summarize + save.
+   * `editedText` lets the user trim or tweak the extracted text before saving.
+   */
+  const handleSavePreview = async () => {
+    if (!preview || generating || saving) return;
+    setGenerating(true);
+    try {
+      let summary = "";
+      let aiTitle: string | undefined;
+      try {
+        const { data: sum, error: sumErr } = await supabase.functions.invoke("summarize", {
+          body: { text: preview.text, kind: "webpage" },
+        });
+        if (sumErr) throw new Error(sumErr.message);
+        if (sum?.error) throw new Error(sum.error);
+        summary = sum?.summary ?? "";
+        aiTitle = sum?.suggestedTitle ?? undefined;
+      } catch (e) {
+        toast.warning(e instanceof Error ? `AI summary failed: ${e.message}` : "AI summary failed");
+      }
+
+      const finalTitle = (
+        title.trim() || aiTitle || preview.suggestedTitle || preview.url
+      ).slice(0, 200);
+
+      const idea = await createIdea.mutateAsync({
+        title: finalTitle,
+        raw_note: null,
+        source_url: preview.url,
+        source_type: "webpage",
+        extracted_text: preview.text || null,
+        ai_summary: summary.trim() || null,
+        folder_id: folderOrNull(folder),
+        tags: [],
+      });
+
+      const summaryClean = summary.trim();
+      const needsReview = !summaryClean || summaryClean.length < 150;
+      if (needsReview) {
+        toast.message("Saved — needs a quick review", {
+          description: "AI wasn't fully confident, so we opened the idea for you to edit.",
+        });
+      }
       onCreated?.(idea.id, needsReview);
       reset();
     } catch (e) {
@@ -418,9 +480,9 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
             value={url}
             onChange={(e) => setUrl(e.target.value)}
             onPaste={(e) => {
-              // Auto-trigger save the moment a valid URL is pasted into an empty field.
-              // Only fires when the input is empty (otherwise it's an edit, not a fresh capture)
-              // and only if the pasted text parses as a real URL.
+              // Auto-trigger extraction the moment a valid URL is pasted into
+              // an empty field. The user then reviews the extracted text in the
+              // preview card before committing to save.
               const pasted = e.clipboardData.getData("text").trim();
               if (!pasted || url.trim().length > 0) return;
               try {
@@ -430,8 +492,7 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
                 return;
               }
               setUrl(pasted);
-              // Defer so the input visibly updates before the network call starts.
-              setTimeout(() => handleGenerateAndSave({ url: pasted }), 0);
+              setTimeout(() => handleExtract({ url: pasted }), 0);
             }}
             placeholder={ph.url}
             inputMode="url"
@@ -499,7 +560,93 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
         </div>
       )}
 
-      {source === "note" || source === "list" || isTranscript ? (
+      {/* URL preview step — shows extracted readable text before saving. */}
+      {needsUrl && preview && (
+        <div className="rounded-2xl border border-border/70 bg-secondary/30 p-3 sm:p-4 space-y-3">
+          <div className="flex items-start gap-2">
+            <div className="h-9 w-9 rounded-[10px] bg-primary/10 text-primary flex items-center justify-center shrink-0 mt-0.5">
+              <FileText className="h-4 w-4" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                Preview
+              </div>
+              <div className="font-semibold text-[15px] truncate" title={preview.suggestedTitle || preview.url}>
+                {preview.suggestedTitle || "Untitled page"}
+              </div>
+              <div className="text-[12px] text-muted-foreground truncate" title={preview.url}>
+                {preview.url}
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setPreview(null)}
+              className="press text-muted-foreground hover:text-foreground p-1.5 -mr-1 -mt-1 rounded-md"
+              aria-label="Dismiss preview"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+
+          {/* Editable title for the preview */}
+          <Input
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="Title (optional — AI will suggest one)"
+            maxLength={200}
+            className="h-10 rounded-xl bg-card border-border/60 text-[14px]"
+          />
+
+          {/* Editable extracted text — user can trim before saving */}
+          <Textarea
+            value={preview.text}
+            onChange={(e) => setPreview({ ...preview, text: e.target.value })}
+            rows={8}
+            className="rounded-xl bg-card border-border/60 text-[13.5px] leading-relaxed resize-y max-h-[40vh]"
+          />
+
+          <div className="flex items-center justify-between text-[11.5px] text-muted-foreground">
+            <span>
+              {preview.text.length.toLocaleString()} chars ·{" "}
+              {preview.text.trim().split(/\s+/).filter(Boolean).length.toLocaleString()} words
+            </span>
+            <span className="opacity-70">Edit before saving if needed</span>
+          </div>
+
+          <div className="flex gap-2">
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => {
+                setPreview(null);
+                setUrl("");
+                setTitle("");
+              }}
+              className="h-11 rounded-xl flex-1"
+              disabled={generating || saving}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              onClick={handleSavePreview}
+              disabled={generating || saving || preview.text.trim().length < 20}
+              className="h-11 rounded-xl flex-[2] text-[15px] font-semibold"
+            >
+              {generating ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <>
+                  <Sparkles className="h-4 w-4 mr-1.5" />
+                  Summarize & save
+                </>
+              )}
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {!preview && (source === "note" || source === "list" || isTranscript) ? (
         <div className="space-y-1.5">
           <label className="block text-[11px] font-semibold uppercase tracking-wide text-muted-foreground px-1">
             {isTranscript ? "Transcript or long text" : source === "list" ? "Checklist items" : "Your idea"}
@@ -521,7 +668,7 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
             className="rounded-2xl bg-secondary/60 border-transparent text-[18px] font-medium px-4 py-3 leading-snug resize-none placeholder:font-normal placeholder:text-muted-foreground/70"
           />
         </div>
-      ) : (
+      ) : !preview ? (
         <Input
           ref={noteInputRef}
           value={note}
@@ -529,30 +676,32 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
           placeholder={ph.note}
           className="h-16 rounded-2xl bg-secondary/60 border-transparent text-[18px] font-medium px-4 placeholder:font-normal placeholder:text-muted-foreground/70"
         />
+      ) : null}
+
+      {!preview && folderChips}
+
+      {!preview && (
+        <Button
+          onClick={usesAiPreview ? () => handleGenerateAndSave() : handleSave}
+          disabled={saving || generating || extracting || createIdea.isPending}
+          className="w-full h-12 rounded-xl text-[16px] font-semibold"
+        >
+          {saving || generating || extracting ? (
+            <Loader2 className="h-5 w-5 animate-spin" />
+          ) : (
+            <>
+              <Sparkles className="h-4 w-4 mr-1.5" />
+              {needsUrl
+                ? "Extract preview"
+                : isTranscript
+                  ? "Save & summarize"
+                  : source === "list"
+                    ? "Save list"
+                    : "Save idea"}
+            </>
+          )}
+        </Button>
       )}
-
-      {folderChips}
-
-      <Button
-        onClick={usesAiPreview ? () => handleGenerateAndSave() : handleSave}
-        disabled={saving || generating || createIdea.isPending}
-        className="w-full h-12 rounded-xl text-[16px] font-semibold"
-      >
-        {saving || generating ? (
-          <Loader2 className="h-5 w-5 animate-spin" />
-        ) : (
-          <>
-            <Sparkles className="h-4 w-4 mr-1.5" />
-            {needsUrl
-              ? "Save & summarize"
-              : isTranscript
-                ? "Save & summarize"
-                : source === "list"
-                  ? "Save list"
-                  : "Save idea"}
-          </>
-        )}
-      </Button>
     </div>
   );
 };
