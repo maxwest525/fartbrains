@@ -385,7 +385,19 @@ export const IdeaDetail = ({ ideaId, onClose, backLabel = "Back" }: Props) => {
           </section>
         )}
 
-        {(editing || idea.raw_note) && (() => {
+        {(() => {
+          const isProject = idea.tags.includes(PROJECT_TAG);
+          if (isProject && !editing) {
+            return (
+              <ProjectBoard
+                rawNote={idea.raw_note}
+                onChange={(next) =>
+                  updateIdea.mutate({ id: idea.id, patch: { raw_note: next } })
+                }
+              />
+            );
+          }
+          if (!editing && !idea.raw_note) return null;
           const isChecklist = !!idea.raw_note && /^\s*- \[[ xX]\] /m.test(idea.raw_note);
           const toggleItem = (index: number) => {
             if (!idea.raw_note) return;
@@ -406,12 +418,15 @@ export const IdeaDetail = ({ ideaId, onClose, backLabel = "Back" }: Props) => {
           let checkboxIndex = -1;
           return (
             <section>
-              <h3 className="text-sm font-semibold mb-2">{isChecklist ? "Checklist" : "Note"}</h3>
+              <h3 className="text-sm font-semibold mb-2">
+                {isProject ? "Deliverables (raw)" : isChecklist ? "Checklist" : "Note"}
+              </h3>
               {editing ? (
                 <Textarea
                   value={rawNote}
                   onChange={(e) => setRawNote(e.target.value)}
-                  rows={6}
+                  rows={isProject ? 12 : 6}
+                  className={isProject ? "font-mono text-xs" : undefined}
                 />
               ) : isChecklist ? (
                 <div className="rounded-md bg-muted/40 p-4 text-sm prose prose-sm dark:prose-invert max-w-none prose-ul:my-0 prose-li:my-0.5">
