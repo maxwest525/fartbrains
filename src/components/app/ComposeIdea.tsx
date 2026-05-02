@@ -449,7 +449,7 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
       </div>
 
       <Button
-        onClick={usesAiPreview ? handleGenerateAndSave : handleSave}
+        onClick={usesAiPreview ? () => handleGenerateAndSave() : handleSave}
         disabled={saving || generating || createIdea.isPending}
         className="w-full h-12 rounded-xl text-[16px] font-semibold"
       >
