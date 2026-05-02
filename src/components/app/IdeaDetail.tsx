@@ -421,9 +421,26 @@ export const IdeaDetail = ({ ideaId, onClose, backLabel = "Back" }: Props) => {
 
         {(editing || idea.ai_summary) && (
           <section>
-            <h3 className="text-sm font-semibold mb-2 flex items-center gap-1.5">
-              <Sparkles className="h-3.5 w-3.5 text-accent" /> Summary
-            </h3>
+            <div className="mb-2 flex items-center justify-between gap-2">
+              <h3 className="text-sm font-semibold flex items-center gap-1.5">
+                <Sparkles className="h-3.5 w-3.5 text-accent" /> Summary
+              </h3>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onRegenerateSummary}
+                disabled={regenerating || updateIdea.isPending}
+                className="h-7 px-2 text-xs gap-1 text-muted-foreground hover:text-foreground"
+                title="Re-run AI summary from the current note or extracted text"
+              >
+                {regenerating ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <RefreshCw className="h-3.5 w-3.5" />
+                )}
+                {idea.ai_summary ? "Regenerate" : "Generate"}
+              </Button>
+            </div>
             {editing ? (
               <Textarea
                 value={summary}
