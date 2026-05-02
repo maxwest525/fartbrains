@@ -1,15 +1,13 @@
 import { useRef, useState } from "react";
-import { Search, X, Inbox, Folder, Star, Clock, Settings as SettingsIcon, LogOut, ClipboardPaste } from "lucide-react";
+import { Search, X, Inbox, Folder, Star, Clock, Settings as SettingsIcon, LogOut } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { IdeaList } from "@/components/app/IdeaList";
 import { IdeaDetail } from "@/components/app/IdeaDetail";
 import { ComposeIdea } from "@/components/app/ComposeIdea";
-import { UrlCapturePanel } from "@/components/app/UrlCapturePanel";
 import { MovieTicker } from "@/components/app/MovieTicker";
 import { MobileTabBar } from "@/components/app/MobileTabBar";
 import { SettingsSheet } from "@/components/app/SettingsSheet";
 import { FoldersPage } from "@/components/app/FoldersPage";
-import { TranscriptCapture } from "@/components/app/TranscriptCapture";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useAuth } from "@/hooks/useAuth";
@@ -19,7 +17,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import type { IdeaFilter } from "@/hooks/useIdeas";
 
-type View = "ideas" | "folders" | "transcript";
+type View = "ideas" | "folders";
 
 const Shell = () => {
   const [view, setView] = useState<View>("ideas");
@@ -93,14 +91,8 @@ const Shell = () => {
     setSelectedId(null);
   };
 
-  const openTranscriptPage = () => {
-    setView("transcript");
-    setSelectedId(null);
-  };
-
   const showDetailOnly = isMobile && selectedId !== null;
   const showFolders = view === "folders" && !showDetailOnly;
-  const showTranscript = view === "transcript" && !showDetailOnly;
   const defaultFolderId = filter.kind === "folder" ? filter.folderId : null;
 
   const activeFolderName =
@@ -144,14 +136,14 @@ const Shell = () => {
   return (
     <div className="flex flex-col h-[100dvh] w-full bg-background overflow-hidden relative">
       {/* Movie ticker — pinned at the very top on the Capture view, above the header. */}
-      {!showDetailOnly && !showFolders && !showTranscript && filter.kind === "all" && (
+      {!showDetailOnly && !showFolders && filter.kind === "all" && (
         <div className="safe-top bg-background pt-2 sm:pt-3">
           <MovieTicker />
         </div>
       )}
 
       {/* Top bar — search + (desktop) inline nav. Hidden on mobile when viewing detail or the folders page (folders has its own header). */}
-      {!showDetailOnly && !(isMobile && showFolders) && !(isMobile && showTranscript) && (
+      {!showDetailOnly && !(isMobile && showFolders) && (
         <header className={cn(
           "sticky top-0 z-20 bg-background/80 backdrop-blur-xl border-b border-border",
           filter.kind !== "all" && "safe-top"
@@ -239,17 +231,6 @@ const Shell = () => {
           />
         )}
 
-        {/* Dedicated paste-transcript screen — bypasses the source picker */}
-        {showTranscript && (
-          <TranscriptCapture
-            defaultFolderId={defaultFolderId}
-            onBack={() => setView("ideas")}
-            onCreated={(id, needsReview) => {
-              setView("ideas");
-              if (needsReview) setSelectedId(id);
-            }}
-          />
-        )}
 
         {/* Capture view — compose only, full width. Shown when filter is "all" (the default landing). */}
         {!showFolders && !showDetailOnly && filter.kind === "all" && (
@@ -294,39 +275,6 @@ const Shell = () => {
                   setSelectedId(id);
                 }}
               />
-              <UrlCapturePanel
-                defaultFolderId={defaultFolderId}
-                onCreated={(id, needsReview) => {
-                  if (needsReview) {
-                    setSelectedId(id);
-                    return;
-                  }
-                  toast.success("Link saved", {
-                    description: "Find it in Recents or the All folder.",
-                    action: { label: "Open", onClick: () => setSelectedId(id) },
-                  });
-                }}
-                onOpenExisting={(id) => setSelectedId(id)}
-              />
-              {/* Dedicated entry to the transcript paste screen — skips the source picker. */}
-              <button
-                type="button"
-                onClick={openTranscriptPage}
-                className="w-full text-left rounded-2xl bg-card border border-border/60 p-3 sm:p-4 shadow-sm hover:border-primary/40 hover:bg-accent/30 transition-colors press"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="h-8 w-8 rounded-[10px] bg-primary/10 text-primary flex items-center justify-center shrink-0">
-                    <ClipboardPaste className="h-4 w-4" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="text-[13px] font-semibold leading-tight">Paste a transcript</div>
-                    <div className="text-[12px] text-muted-foreground leading-tight">
-                      Open a full-screen editor for video, podcast, or meeting transcripts.
-                    </div>
-                  </div>
-                  <span className="text-[12px] font-medium text-primary shrink-0">Open →</span>
-                </div>
-              </button>
               <p className="mt-3 text-center text-[12px] text-muted-foreground">
                 Saved ideas land in <button onClick={() => handleFilterChange({ kind: "recent" })} className="underline underline-offset-2 hover:text-foreground">Recents</button> and the All folder.
               </p>
