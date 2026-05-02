@@ -1,4 +1,4 @@
-import { Instagram, FileText, Link2, Mic, Image as ImageIcon, Wand2, ListChecks, ClipboardPaste, Briefcase, type LucideIcon } from "lucide-react";
+import { Instagram, FileText, Link2, Image as ImageIcon, Wand2, ListChecks, ClipboardPaste, Briefcase, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export type SourceKey = "instagram" | "note" | "link" | "list" | "transcript" | "project" | "voice" | "image" | "prompt";
