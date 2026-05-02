@@ -32,6 +32,7 @@ export const TranscriptCapture = ({ defaultFolderId, onBack, onCreated }: Props)
   const createIdea = useCreateIdea();
 
   const [text, setText] = useState("");
+  const [note, setNote] = useState("");
   const [folder, setFolder] = useState<string>(defaultFolderId ?? NO_FOLDER);
   const [busy, setBusy] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
