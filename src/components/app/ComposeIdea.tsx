@@ -319,6 +319,61 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
     }
   };
 
+  /** Prompt optimizer: rewrite the user's draft for the chosen target LLM. */
+  const handleOptimizePrompt = async () => {
+    if (optimizing || saving) return;
+    const draft = note.trim();
+    if (draft.length < 10) {
+      return toast.error("Paste a draft prompt first (min 10 characters).");
+    }
+    setOptimizing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("optimize-prompt", {
+        body: { draft, targetModel: promptTarget },
+      });
+      if (error) throw new Error(error.message);
+      if (data?.error) throw new Error(data.error);
+      const optimized = (data?.optimized ?? "").trim();
+      if (!optimized) throw new Error("AI returned an empty prompt. Try again.");
+      setOptimizedPrompt(optimized);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Couldn't optimize prompt");
+    } finally {
+      setOptimizing(false);
+    }
+  };
+
+  /** Save the optimized prompt as an idea (tagged "prompt"). */
+  const handleSaveOptimizedPrompt = async () => {
+    if (!optimizedPrompt || saving) return;
+    setSaving(true);
+    try {
+      const finalTitle = (
+        title.trim() ||
+        `Prompt for ${promptTarget}` ||
+        "Prompt"
+      ).slice(0, 200);
+
+      const idea = await createIdea.mutateAsync({
+        title: finalTitle,
+        raw_note: note.trim() || null,
+        source_url: null,
+        source_type: "manual",
+        extracted_text: optimizedPrompt,
+        ai_summary: `Optimized for ${promptTarget}.`,
+        folder_id: folderOrNull(folder),
+        tags: ["prompt"],
+      });
+      onCreated?.(idea.id);
+      reset();
+      setSource("note");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Couldn't save prompt");
+    } finally {
+      setSaving(false);
+    }
+  };
+
   /** Create a folder inline and immediately select it. */
   const handleCreateFolder = async () => {
     const name = newFolderName.trim();
