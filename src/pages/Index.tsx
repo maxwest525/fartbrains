@@ -231,17 +231,6 @@ const Shell = () => {
           />
         )}
 
-        {/* Dedicated paste-transcript screen — bypasses the source picker */}
-        {showTranscript && (
-          <TranscriptCapture
-            defaultFolderId={defaultFolderId}
-            onBack={() => setView("ideas")}
-            onCreated={(id, needsReview) => {
-              setView("ideas");
-              if (needsReview) setSelectedId(id);
-            }}
-          />
-        )}
 
         {/* Capture view — compose only, full width. Shown when filter is "all" (the default landing). */}
         {!showFolders && !showDetailOnly && filter.kind === "all" && (
