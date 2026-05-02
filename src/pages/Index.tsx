@@ -91,14 +91,8 @@ const Shell = () => {
     setSelectedId(null);
   };
 
-  const openTranscriptPage = () => {
-    setView("transcript");
-    setSelectedId(null);
-  };
-
   const showDetailOnly = isMobile && selectedId !== null;
   const showFolders = view === "folders" && !showDetailOnly;
-  const showTranscript = view === "transcript" && !showDetailOnly;
   const defaultFolderId = filter.kind === "folder" ? filter.folderId : null;
 
   const activeFolderName =
