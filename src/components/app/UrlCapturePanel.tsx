@@ -310,7 +310,7 @@ export const UrlCapturePanel = ({ defaultFolderId, onCreated, onOpenExisting }: 
         title: finalTitle,
         raw_note: note.trim() || null,
         source_url: preview.url,
-        source_type: preview.isInstagramTranscript ? "transcript" : "webpage",
+        source_type: dbSourceType(preview.source, !!preview.isTranscript),
         extracted_text: preview.text || null,
         ai_summary: summary.trim() || null,
         folder_id: defaultFolderId ?? null,
