@@ -45,6 +45,7 @@ export const IdeaDetail = ({ ideaId, onClose, backLabel = "Back" }: Props) => {
   const [title, setTitle] = useState("");
   const [rawNote, setRawNote] = useState("");
   const [summary, setSummary] = useState("");
+  const [extractedText, setExtractedText] = useState("");
   const [tags, setTags] = useState("");
   const [folderId, setFolderId] = useState<string>(NO_FOLDER);
   const [generating, setGenerating] = useState(false);
@@ -59,16 +60,19 @@ export const IdeaDetail = ({ ideaId, onClose, backLabel = "Back" }: Props) => {
     enabled: isMobile && !editing && !!ideaId,
   });
 
+  // Re-sync local edit state when the idea changes OR is updated server-side
+  // (e.g. summarize re-runs from another flow). We skip the sync while the user
+  // is mid-edit to avoid clobbering unsaved changes.
   useEffect(() => {
-    if (idea) {
+    if (idea && !editing) {
       setTitle(idea.title);
       setRawNote(idea.raw_note ?? "");
       setSummary(idea.ai_summary ?? "");
+      setExtractedText(idea.extracted_text ?? "");
       setTags(idea.tags.join(", "));
       setFolderId(idea.folder_id ?? NO_FOLDER);
-      setEditing(false);
     }
-  }, [idea?.id]);
+  }, [idea?.id, idea?.updated_at, editing]);
 
   if (!ideaId) {
     return (
@@ -100,6 +104,7 @@ export const IdeaDetail = ({ ideaId, onClose, backLabel = "Back" }: Props) => {
         title: title.trim(),
         raw_note: rawNote || null,
         ai_summary: summary || null,
+        extracted_text: extractedText || null,
         tags: tags.split(",").map((t) => t.trim()).filter(Boolean),
         folder_id: folderId === NO_FOLDER ? null : folderId,
       },
@@ -465,12 +470,21 @@ export const IdeaDetail = ({ ideaId, onClose, backLabel = "Back" }: Props) => {
           );
         })()}
 
-        {idea.extracted_text && (
+        {(editing ? extractedText : idea.extracted_text) && (
           <section>
             <h3 className="text-sm font-semibold mb-2">Original extracted text</h3>
-            <div className="rounded-md border border-border bg-muted/20 p-4 text-xs whitespace-pre-wrap">
-              {idea.extracted_text}
-            </div>
+            {editing ? (
+              <Textarea
+                value={extractedText}
+                onChange={(e) => setExtractedText(e.target.value)}
+                rows={8}
+                className="text-xs leading-relaxed"
+              />
+            ) : (
+              <div className="rounded-md border border-border bg-muted/20 p-4 text-xs whitespace-pre-wrap">
+                {idea.extracted_text}
+              </div>
+            )}
           </section>
         )}
       </div>
