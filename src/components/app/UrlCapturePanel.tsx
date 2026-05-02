@@ -337,6 +337,23 @@ export const UrlCapturePanel = ({ defaultFolderId, onCreated, onOpenExisting }: 
             <span className="opacity-70">Edit before saving if needed</span>
           </div>
 
+          {/* User notes — combined with the extracted text/transcript when generating prompts later */}
+          <div className="space-y-1.5">
+            <label className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+              Your notes <span className="opacity-60 normal-case font-normal">(optional)</span>
+            </label>
+            <Textarea
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              rows={3}
+              placeholder="Your angle, what caught your attention, how you'd use this…"
+              className="rounded-xl bg-card border-border/60 text-[13.5px] leading-relaxed resize-y"
+            />
+            <p className="text-[11px] text-muted-foreground opacity-80">
+              Saved alongside the {preview.isInstagramTranscript ? "transcript" : "extract"} so you can combine your idea with it later.
+            </p>
+          </div>
+
           <div className="flex gap-2">
             <Button
               type="button"
