@@ -9,6 +9,7 @@ import {
   serializeDeliverables,
   type DeliverableType,
 } from "@/lib/deliverables";
+import { VoiceCaptureButton } from "./VoiceCaptureButton";
 
 type DraftItem = { type: DeliverableType; text: string; done: boolean };
 
