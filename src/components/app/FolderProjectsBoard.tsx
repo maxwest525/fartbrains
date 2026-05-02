@@ -320,6 +320,45 @@ export const FolderProjectsBoard = ({ ideas, onOpenProject }: Props) => {
           All ideas
         </p>
       </div>
+
+      <AlertDialog
+        open={pendingDelete !== null}
+        onOpenChange={(open) => {
+          if (!open) setPendingDelete(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete this item?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {pendingDelete ? (
+                <>
+                  This will permanently remove
+                  {" "}
+                  <span className="font-medium text-foreground">
+                    “{pendingDelete.item.text}”
+                  </span>
+                  {" "}
+                  from{" "}
+                  <span className="font-medium text-foreground">
+                    {pendingDelete.idea.title}
+                  </span>
+                  . This action can't be undone.
+                </>
+              ) : null}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </section>
   );
 };
