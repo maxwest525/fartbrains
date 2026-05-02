@@ -49,18 +49,6 @@ const linesToChecklist = (raw: string): string =>
     .map((l) => (/^- \[[ xX]\] /.test(l) ? l : `- [ ] ${l}`))
     .join("\n");
 
-type PreviewState = {
-  /** What we're previewing — drives whether source_type is webpage or transcript on save. */
-  kind: "webpage" | "transcript";
-  /** Text we extracted (URL) or pasted (transcript). Stored on save. */
-  extractedText: string;
-  /** Editable AI summary in markdown. */
-  summary: string;
-  /** Editable title. */
-  title: string;
-  /** For webpage: the original URL. */
-  sourceUrl: string | null;
-};
 
 /**
  * Always-visible compose card. Lives on the main page above the idea list
