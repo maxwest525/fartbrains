@@ -147,23 +147,37 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
 
     setExtracting(true);
     try {
-      const fnName = source === "instagram" ? "extract-instagram" : "extract-url";
+      const fnName = source === "instagram" ? "transcribe-instagram" : "extract-url";
       const { data: ext, error: extErr } = await supabase.functions.invoke(fnName, {
         body: { url: effectiveUrl },
       });
       if (extErr) throw new Error(extErr.message);
       if (ext?.error) throw new Error(ext.error);
-      const text = (ext?.text ?? "").trim();
+
+      // transcribe-instagram returns { transcript, caption, ... }; extract-url returns { text }.
+      let text = "";
+      let suggestedTitle: string | undefined;
+      if (source === "instagram") {
+        const transcript = (ext?.transcript ?? "").trim();
+        const caption = (ext?.caption ?? "").trim();
+        text = transcript && caption
+          ? `${transcript}\n\n— Caption —\n${caption}`
+          : (transcript || caption);
+        suggestedTitle = ext?.title ?? undefined;
+      } else {
+        text = (ext?.text ?? "").trim();
+        suggestedTitle = ext?.title ?? undefined;
+      }
       if (!text) throw new Error("Couldn't extract any readable text from this page");
 
       setPreview({
-        url: effectiveUrl,
+        url: ext?.finalUrl ?? effectiveUrl,
         text,
-        suggestedTitle: ext?.title ?? undefined,
+        suggestedTitle,
         sourceKind: source === "instagram" ? "instagram" : "webpage",
       });
       // Pre-fill the title field with the extracted title (only if user hasn't typed one).
-      if (!title.trim() && ext?.title) setTitle(String(ext.title).slice(0, 200));
+      if (!title.trim() && suggestedTitle) setTitle(String(suggestedTitle).slice(0, 200));
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Couldn't extract content");
     } finally {
