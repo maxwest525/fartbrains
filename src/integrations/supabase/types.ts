@@ -139,6 +139,7 @@ export type Database = {
           is_favorite: boolean
           notify_email: boolean
           notify_push: boolean
+          pinned_at: string | null
           priority: Database["public"]["Enums"]["idea_priority"]
           raw_note: string | null
           remind_at: string | null
@@ -161,6 +162,7 @@ export type Database = {
           is_favorite?: boolean
           notify_email?: boolean
           notify_push?: boolean
+          pinned_at?: string | null
           priority?: Database["public"]["Enums"]["idea_priority"]
           raw_note?: string | null
           remind_at?: string | null
@@ -183,6 +185,7 @@ export type Database = {
           is_favorite?: boolean
           notify_email?: boolean
           notify_push?: boolean
+          pinned_at?: string | null
           priority?: Database["public"]["Enums"]["idea_priority"]
           raw_note?: string | null
           remind_at?: string | null
