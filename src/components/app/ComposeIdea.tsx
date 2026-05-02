@@ -364,6 +364,14 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
             ref={noteTextareaRef}
             value={note}
             onChange={(e) => setNote(e.target.value)}
+            onPaste={(e) => {
+              // Auto-trigger summarize+save when a substantial transcript is pasted into an empty field.
+              if (!isTranscript) return;
+              const pasted = e.clipboardData.getData("text").trim();
+              if (pasted.length < 20 || note.trim().length > 0) return;
+              setNote(pasted);
+              setTimeout(() => handleGenerateAndSave({ note: pasted }), 0);
+            }}
             placeholder={ph.note}
             rows={isTranscript ? 8 : source === "list" ? 5 : 4}
             className="rounded-2xl bg-secondary/60 border-transparent text-[18px] font-medium px-4 py-3 leading-snug resize-none placeholder:font-normal placeholder:text-muted-foreground/70"
