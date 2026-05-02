@@ -1,9 +1,10 @@
 import { useMemo, useState, useEffect, useRef } from "react";
-import { Briefcase, ChevronDown, ChevronRight, Pencil, Check, X } from "lucide-react";
+import { Briefcase, ChevronDown, ChevronRight, Pencil, Check, X, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   DELIVERABLE_TYPES,
   PROJECT_TAG,
+  deleteDeliverable,
   deliverableStats,
   getTypeMeta,
   parseDeliverables,
@@ -14,6 +15,16 @@ import {
 } from "@/lib/deliverables";
 import type { Idea } from "@/hooks/useIdeas";
 import { useUpdateIdea } from "@/hooks/useIdeas";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 type Props = {
   /** All ideas in the current folder, in the order returned by the query. */
@@ -74,6 +85,18 @@ export const FolderProjectsBoard = ({ ideas, onOpenProject }: Props) => {
     const nextRaw = updateDeliverable(idea.raw_note ?? "", item.index, { text: trimmed });
     updateIdea.mutate({ id: idea.id, patch: { raw_note: nextRaw } });
     cancelEdit();
+  };
+
+  // Pending deletion target. Null when no confirmation dialog is open.
+  const [pendingDelete, setPendingDelete] = useState<
+    { idea: Idea; item: Deliverable } | null
+  >(null);
+  const confirmDelete = () => {
+    if (!pendingDelete) return;
+    const { idea, item } = pendingDelete;
+    const nextRaw = deleteDeliverable(idea.raw_note ?? "", item.index);
+    updateIdea.mutate({ id: idea.id, patch: { raw_note: nextRaw } });
+    setPendingDelete(null);
   };
 
   if (projects.length === 0) return null;
@@ -265,6 +288,14 @@ export const FolderProjectsBoard = ({ ideas, onOpenProject }: Props) => {
                                       >
                                         <Pencil className="h-4 w-4 sm:h-3.5 sm:w-3.5" />
                                       </button>
+                                      <button
+                                        type="button"
+                                        onClick={() => setPendingDelete({ idea, item })}
+                                        aria-label="Delete deliverable"
+                                        className="press min-h-11 min-w-11 sm:h-9 sm:w-9 sm:min-h-0 sm:min-w-0 inline-flex items-center justify-center text-muted-foreground hover:text-destructive opacity-100 sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100 transition-opacity"
+                                      >
+                                        <Trash2 className="h-4 w-4 sm:h-3.5 sm:w-3.5" />
+                                      </button>
                                     </>
                                   )}
                                 </li>
@@ -289,6 +320,45 @@ export const FolderProjectsBoard = ({ ideas, onOpenProject }: Props) => {
           All ideas
         </p>
       </div>
+
+      <AlertDialog
+        open={pendingDelete !== null}
+        onOpenChange={(open) => {
+          if (!open) setPendingDelete(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete this item?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {pendingDelete ? (
+                <>
+                  This will permanently remove
+                  {" "}
+                  <span className="font-medium text-foreground">
+                    “{pendingDelete.item.text}”
+                  </span>
+                  {" "}
+                  from{" "}
+                  <span className="font-medium text-foreground">
+                    {pendingDelete.idea.title}
+                  </span>
+                  . This action can't be undone.
+                </>
+              ) : null}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </section>
   );
 };
