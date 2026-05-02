@@ -319,7 +319,7 @@ const Shell = () => {
       {isMobile && !showDetailOnly && (
         <MobileTabBar
           filter={filter}
-          view={view}
+          view={view === "folders" ? "folders" : "ideas"}
           onFilterChange={handleFilterChange}
           onOpenFolders={openFoldersPage}
           onOpenSettings={() => setSettingsOpen(true)}
