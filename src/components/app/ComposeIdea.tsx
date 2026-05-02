@@ -287,7 +287,7 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
               }
               setUrl(pasted);
               // Defer so the input visibly updates before the network call starts.
-              setTimeout(() => handleGenerateAndSave(pasted), 0);
+              setTimeout(() => handleGenerateAndSave({ url: pasted }), 0);
             }}
             placeholder={ph.url}
             inputMode="url"
