@@ -57,21 +57,32 @@ const Shell = () => {
     setSearchValue(v);
     if (v.trim()) {
       setView("ideas");
-      setFilter({ kind: "search", query: v });
+      // Remember where we were so clearing the search restores that scope.
+      setFilter((current) => {
+        if (current.kind !== "search") setPreSearchFilter(current);
+        const base = current.kind === "search" ? preSearchFilter : current;
+        if (base.kind === "folder") {
+          return { kind: "search", query: v, folderId: base.folderId } as IdeaFilter;
+        }
+        return { kind: "search", query: v };
+      });
     } else {
-      setFilter({ kind: "all" });
+      setFilter(preSearchFilter);
     }
   };
 
   const clearSearch = () => {
     setSearchValue("");
-    setFilter({ kind: "all" });
+    setFilter(preSearchFilter);
   };
 
   const handleFilterChange = (f: IdeaFilter) => {
     setView("ideas");
     setFilter(f);
-    if (f.kind !== "search") setSearchValue("");
+    if (f.kind !== "search") {
+      setSearchValue("");
+      setPreSearchFilter(f);
+    }
   };
 
   const openFoldersPage = () => {
