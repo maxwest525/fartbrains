@@ -509,21 +509,42 @@ export const UrlCapturePanel = ({ defaultFolderId, onCreated, onOpenExisting }: 
 
       {/* Primary CTA when no preview yet */}
       {!preview && (
-        <Button
-          type="button"
-          onClick={() => handleExtract()}
-          disabled={!url.trim() || extracting || saving}
-          className="w-full h-11 rounded-xl text-[15px] font-semibold"
-        >
-          {extracting ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            <>
-              <Sparkles className="h-4 w-4 mr-1.5" />
-              Extract preview
-            </>
+        <div className="flex flex-col gap-2">
+          <Button
+            type="button"
+            onClick={() => handleExtract()}
+            disabled={!url.trim() || extracting || saving}
+            className="w-full h-11 rounded-xl text-[15px] font-semibold"
+          >
+            {extracting ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <>
+                <Sparkles className="h-4 w-4 mr-1.5" />
+                Extract preview
+              </>
+            )}
+          </Button>
+
+          {/* Fallback: save the raw value as a manual idea, no preview required.
+              Surfaced when extraction failed or the URL is unreachable, so the
+              user never loses a capture they took the trouble to paste. */}
+          {url.trim() && (extractFailed || urlCheck.status === "error") && (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleSaveRaw}
+              disabled={saving || extracting}
+              className="w-full h-11 rounded-xl text-[14px] font-semibold"
+            >
+              {saving ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                "Save link anyway"
+              )}
+            </Button>
           )}
-        </Button>
+        </div>
       )}
     </div>
   );
