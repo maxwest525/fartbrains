@@ -17,7 +17,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import type { IdeaFilter } from "@/hooks/useIdeas";
 
-type View = "ideas" | "folders" | "transcript";
+type View = "ideas" | "folders";
 
 const Shell = () => {
   const [view, setView] = useState<View>("ideas");
