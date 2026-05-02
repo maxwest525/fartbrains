@@ -20,6 +20,17 @@ type Preview = {
   url: string;
   text: string;
   suggestedTitle?: string;
+  /** True when text came from an Instagram reel transcription. */
+  isInstagramTranscript?: boolean;
+};
+
+const isInstagramUrl = (s: string): boolean => {
+  try {
+    const u = new URL(s);
+    return /(^|\.)instagram\.com$/i.test(u.hostname);
+  } catch {
+    return false;
+  }
 };
 
 /**
