@@ -275,7 +275,9 @@ export const ProjectBoard = ({ rawNote, onChange, projectName }: Props) => {
       {/* Groups */}
       {grouped.length === 0 ? (
         <p className="text-sm text-muted-foreground italic px-1">
-          No deliverables yet. Add the first one above.
+          {total === 0
+            ? "No deliverables yet. Add the first one above."
+            : "No deliverables match your filters."}
         </p>
       ) : (
         <div className="space-y-4">
