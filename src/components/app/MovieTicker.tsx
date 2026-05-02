@@ -20,7 +20,7 @@ const POSTERS: Poster[] = [
   { title: "No Idea for Old Men", src: noIdeaOldMen },
   { title: "Forget Fiction", src: forgetFiction },
   { title: "A Beautiful Forget Mind", src: beautifulForgetMind },
-  { title: "I Know What You Forgot", src: iKnowWhatYouForgot },
+  { title: "I Know What You Forgot Last Summer", src: iKnowWhatYouForgot },
 ];
 
 /**
