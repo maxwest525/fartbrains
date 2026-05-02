@@ -301,12 +301,16 @@ export const UrlCapturePanel = ({ defaultFolderId, onCreated, onOpenExisting }: 
       {/* URL input */}
       <Input
         value={url}
-        onChange={(e) => setUrl(cleanUrlInput(e.target.value))}
+        onChange={(e) => {
+          setUrl(cleanUrlInput(e.target.value));
+          if (extractFailed) setExtractFailed(null);
+        }}
         onPaste={(e) => {
           e.preventDefault();
           const pasted = cleanUrlInput(e.clipboardData.getData("text"));
           if (!pasted) return;
           setUrl(pasted);
+          setExtractFailed(null);
           if (isValidHttpUrl(pasted)) {
             setTimeout(() => handleExtract(pasted), 0);
           }
