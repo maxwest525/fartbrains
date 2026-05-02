@@ -23,6 +23,9 @@ const Shell = () => {
   // The Capture page is filter "all". Switching to any other filter (recent, folder, favorites, search)
   // takes the user to the Browse list. Folders page is its own top-level view.
   const [filter, setFilter] = useState<IdeaFilter>({ kind: "all" });
+  // Remembers the last non-search filter so clearing the search bar returns
+  // the user to where they were (e.g., the folder they were browsing).
+  const [preSearchFilter, setPreSearchFilter] = useState<IdeaFilter>({ kind: "all" });
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [searchValue, setSearchValue] = useState("");
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -54,21 +57,32 @@ const Shell = () => {
     setSearchValue(v);
     if (v.trim()) {
       setView("ideas");
-      setFilter({ kind: "search", query: v });
+      // Remember where we were so clearing the search restores that scope.
+      setFilter((current) => {
+        if (current.kind !== "search") setPreSearchFilter(current);
+        const base = current.kind === "search" ? preSearchFilter : current;
+        if (base.kind === "folder") {
+          return { kind: "search", query: v, folderId: base.folderId } as IdeaFilter;
+        }
+        return { kind: "search", query: v };
+      });
     } else {
-      setFilter({ kind: "all" });
+      setFilter(preSearchFilter);
     }
   };
 
   const clearSearch = () => {
     setSearchValue("");
-    setFilter({ kind: "all" });
+    setFilter(preSearchFilter);
   };
 
   const handleFilterChange = (f: IdeaFilter) => {
     setView("ideas");
     setFilter(f);
-    if (f.kind !== "search") setSearchValue("");
+    if (f.kind !== "search") {
+      setSearchValue("");
+      setPreSearchFilter(f);
+    }
   };
 
   const openFoldersPage = () => {
