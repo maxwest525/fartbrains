@@ -220,7 +220,10 @@ const Shell = () => {
         {/* Capture view — compose only, full width. Shown when filter is "all" (the default landing). */}
         {!showFolders && !showDetailOnly && filter.kind === "all" && (
           <div className="w-full flex-1 min-w-0 flex flex-col min-h-0 bg-background overflow-y-auto scroll-momentum touch-pan-y pb-[calc(5.75rem+env(safe-area-inset-bottom))] md:pb-6">
-            <div ref={composeRef} className="w-full px-3 sm:px-6 lg:px-10 pt-4 sm:pt-8">
+            <div className="pt-3 sm:pt-5">
+              <MovieTicker />
+            </div>
+            <div ref={composeRef} className="w-full px-3 sm:px-6 lg:px-10 pt-4 sm:pt-6">
               <ComposeIdea
                 defaultFolderId={defaultFolderId}
                 onCreated={(id, needsReview) => {
