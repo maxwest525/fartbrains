@@ -120,12 +120,17 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
   /**
    * Instant capture: extract + summarize + save in one shot.
    * No intermediate preview — user edits in detail view if needed.
+   *
+   * `urlOverride` lets paste handlers pass the freshly-pasted URL synchronously,
+   * before React state has had a chance to update.
    */
-  const handleGenerateAndSave = async () => {
+  const handleGenerateAndSave = async (urlOverride?: string) => {
     if (generating || saving) return;
 
+    const effectiveUrl = (urlOverride ?? url).trim();
+
     if (needsUrl) {
-      if (!url.trim()) return toast.error("URL required");
+      if (!effectiveUrl) return toast.error("URL required");
     } else if (isTranscript) {
       if (note.trim().length < 20) return toast.error("Paste at least a few sentences");
     }
@@ -134,7 +139,7 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
     try {
       let extractedText = "";
       let suggestedTitleFromExtract: string | undefined;
-      const sourceUrl = needsUrl ? url.trim() : null;
+      const sourceUrl = needsUrl ? effectiveUrl : null;
 
       if (needsUrl) {
         const fnName = source === "instagram" ? "extract-instagram" : "extract-url";
