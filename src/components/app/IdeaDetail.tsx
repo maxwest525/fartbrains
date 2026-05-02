@@ -139,8 +139,8 @@ export const IdeaDetail = ({ ideaId, onClose, backLabel = "Back" }: Props) => {
 
   const onGeneratePrompt = async () => {
     if (generating) return;
-    if (!idea.raw_note?.trim() && !idea.ai_summary?.trim()) {
-      toast.error("Add a note or summary first so the AI has something to work with.");
+    if (!idea.raw_note?.trim() && !idea.ai_summary?.trim() && !idea.extracted_text?.trim()) {
+      toast.error("Add a note, summary, or extracted text first so the AI has something to work with.");
       return;
     }
     setGenerating(true);
@@ -150,7 +150,11 @@ export const IdeaDetail = ({ ideaId, onClose, backLabel = "Back" }: Props) => {
           title: idea.title,
           note: idea.raw_note,
           summary: idea.ai_summary,
+          // Send the raw transcript/article too so the prompt can pull in
+          // specific quotes/details that aren't in the distilled summary.
+          extractedText: idea.extracted_text,
           sourceUrl: idea.source_url,
+          sourceLabel: idea.source_label,
         },
       });
       if (error) throw new Error(error.message);

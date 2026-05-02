@@ -13,13 +13,14 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   try {
-    const { title, note, summary, sourceUrl } = await req.json();
+    const { title, note, summary, extractedText, sourceUrl, sourceLabel } = await req.json();
 
     const hasNote = typeof note === "string" && note.trim().length > 0;
     const hasSummary = typeof summary === "string" && summary.trim().length > 0;
-    if (!hasNote && !hasSummary) {
+    const hasExtracted = typeof extractedText === "string" && extractedText.trim().length > 0;
+    if (!hasNote && !hasSummary && !hasExtracted) {
       return new Response(
-        JSON.stringify({ error: "Need either a note or a summary to generate a prompt." }),
+        JSON.stringify({ error: "Need a note, summary, or extracted text to generate a prompt." }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -33,16 +34,19 @@ Rules:
 - Output ONLY the prompt text. No preamble, no quotes, no markdown fences.
 - Write in second person to the target AI ("You are...", "Help me...").
 - Open with a short role/persona line tailored to the idea.
-- Include the user's intent (from their note) as the goal.
-- Include the relevant context from the summary, distilled — do not dump the whole summary.
+- The user's note is the PRIMARY intent — what they actually want done. Lead with it.
+- Use the AI summary for high-level framing and the extracted text for specific quotes/details/examples worth referencing.
+- Distill, don't dump — never paste the full extracted text or summary verbatim.
 - End with 2-4 numbered deliverables the AI should produce.
-- Keep it under ~250 words. Plain text. No emojis.`;
+- Keep it under ~300 words. Plain text. No emojis.`;
 
     const parts: string[] = [];
     if (title) parts.push(`Title of the idea: ${String(title).slice(0, 200)}`);
+    if (sourceLabel) parts.push(`Source type: ${String(sourceLabel).slice(0, 60)}`);
     if (sourceUrl) parts.push(`Source URL: ${String(sourceUrl).slice(0, 500)}`);
-    if (hasNote) parts.push(`User's own note (their intent / what they want done):\n${String(note).slice(0, 4000)}`);
+    if (hasNote) parts.push(`User's own note (their intent / what they want done — PRIMARY):\n${String(note).slice(0, 4000)}`);
     if (hasSummary) parts.push(`AI summary of the source material:\n${String(summary).slice(0, 8000)}`);
+    if (hasExtracted) parts.push(`Raw extracted text / transcript (use for specific details, do not dump verbatim):\n${String(extractedText).slice(0, 12000)}`);
 
     const userPrompt = `Build a ready-to-paste prompt from the following captured idea.\n\n${parts.join("\n\n")}`;
 
