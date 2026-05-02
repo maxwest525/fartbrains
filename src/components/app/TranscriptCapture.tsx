@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { ArrowLeft, ClipboardPaste, Loader2, Sparkles } from "lucide-react";
+import { AlertCircle, ArrowLeft, CheckCircle2, ClipboardPaste, FileText, Loader2, Lightbulb, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -10,6 +10,8 @@ import { toast } from "sonner";
 
 const NO_FOLDER = "__none__";
 const MIN_CHARS = 20;
+const RECOMMENDED_CHARS = 400;
+const MAX_CHARS = 100_000;
 
 type Props = {
   defaultFolderId?: string | null;
@@ -44,9 +46,18 @@ export const TranscriptCapture = ({ defaultFolderId, onBack, onCreated }: Props)
     setFolder(defaultFolderId ?? NO_FOLDER);
   }, [defaultFolderId]);
 
-  const charCount = text.trim().length;
-  const wordCount = text.trim() ? text.trim().split(/\s+/).length : 0;
-  const canSave = charCount >= MIN_CHARS && !busy;
+  const trimmed = text.trim();
+  const charCount = trimmed.length;
+  const wordCount = trimmed ? trimmed.split(/\s+/).length : 0;
+  const overLimit = charCount > MAX_CHARS;
+  const tooShort = charCount > 0 && charCount < MIN_CHARS;
+  const isEmpty = charCount === 0;
+  const meetsRecommended = charCount >= RECOMMENDED_CHARS;
+  const progress = Math.min(100, Math.round((charCount / RECOMMENDED_CHARS) * 100));
+  const canSave = charCount >= MIN_CHARS && !overLimit && !busy;
+
+  const validationState: "empty" | "short" | "over" | "ok" | "great" =
+    isEmpty ? "empty" : tooShort ? "short" : overLimit ? "over" : meetsRecommended ? "great" : "ok";
 
   const pasteFromClipboard = async () => {
     try {
@@ -170,26 +181,105 @@ export const TranscriptCapture = ({ defaultFolderId, onBack, onCreated }: Props)
             </Select>
           </div>
 
-          {/* Textarea */}
-          <Textarea
-            ref={textareaRef}
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            placeholder="Paste the transcript here…"
-            rows={16}
-            className="min-h-[40vh] sm:min-h-[50vh] text-[15px] leading-relaxed resize-y"
-            disabled={busy}
-          />
+          {/* Textarea with empty-state overlay hint */}
+          <div className="relative">
+            <Textarea
+              ref={textareaRef}
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              placeholder="Paste the transcript here…"
+              rows={16}
+              aria-invalid={tooShort || overLimit}
+              aria-describedby="transcript-validation"
+              maxLength={MAX_CHARS + 1000}
+              className={`min-h-[40vh] sm:min-h-[50vh] text-[15px] leading-relaxed resize-y ${
+                tooShort || overLimit ? "border-destructive focus-visible:ring-destructive" : ""
+              }`}
+              disabled={busy}
+            />
+
+            {isEmpty && !busy && (
+              <div className="pointer-events-none absolute inset-x-3 bottom-3 sm:inset-x-4 sm:bottom-4">
+                <div className="rounded-md border border-dashed border-border/70 bg-muted/30 p-3 sm:p-4 text-xs sm:text-sm text-muted-foreground">
+                  <div className="flex items-center gap-2 font-medium text-foreground/80">
+                    <Lightbulb className="h-4 w-4" />
+                    Tips for a good summary
+                  </div>
+                  <ul className="mt-2 space-y-1 list-disc list-inside marker:text-muted-foreground/60">
+                    <li>Paste the full transcript, not a snippet</li>
+                    <li>Include speaker names if available</li>
+                    <li>Aim for at least {RECOMMENDED_CHARS.toLocaleString()} characters for a richer summary</li>
+                  </ul>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Progress + counters */}
+          <div className="mt-3 space-y-2">
+            <div className="h-1 w-full overflow-hidden rounded-full bg-muted">
+              <div
+                className={`h-full transition-all duration-300 ${
+                  overLimit
+                    ? "bg-destructive"
+                    : tooShort
+                    ? "bg-destructive/70"
+                    : meetsRecommended
+                    ? "bg-primary"
+                    : "bg-primary/60"
+                }`}
+                style={{ width: `${overLimit ? 100 : progress}%` }}
+              />
+            </div>
+
+            <div
+              id="transcript-validation"
+              className="flex items-start gap-1.5 text-xs min-h-[1rem]"
+              role="status"
+              aria-live="polite"
+            >
+              {validationState === "empty" && (
+                <span className="text-muted-foreground inline-flex items-center gap-1.5">
+                  <FileText className="h-3.5 w-3.5" />
+                  Waiting for text — paste or type to get started.
+                </span>
+              )}
+              {validationState === "short" && (
+                <span className="text-destructive inline-flex items-center gap-1.5">
+                  <AlertCircle className="h-3.5 w-3.5" />
+                  Too short — add at least {MIN_CHARS - charCount} more character
+                  {MIN_CHARS - charCount === 1 ? "" : "s"} to summarize.
+                </span>
+              )}
+              {validationState === "ok" && (
+                <span className="text-muted-foreground inline-flex items-center gap-1.5">
+                  <Sparkles className="h-3.5 w-3.5" />
+                  Looks good. {RECOMMENDED_CHARS - charCount} more chars recommended for a stronger summary.
+                </span>
+              )}
+              {validationState === "great" && (
+                <span className="text-primary inline-flex items-center gap-1.5">
+                  <CheckCircle2 className="h-3.5 w-3.5" />
+                  Ready to summarize.
+                </span>
+              )}
+              {validationState === "over" && (
+                <span className="text-destructive inline-flex items-center gap-1.5">
+                  <AlertCircle className="h-3.5 w-3.5" />
+                  Over the {MAX_CHARS.toLocaleString()}-character limit. Trim {(charCount - MAX_CHARS).toLocaleString()} chars.
+                </span>
+              )}
+            </div>
+          </div>
 
           {/* Meta + actions */}
           <div className="mt-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-            <div className="text-xs text-muted-foreground">
-              {charCount.toLocaleString()} chars · {wordCount.toLocaleString()} words
-              {charCount > 0 && charCount < MIN_CHARS && (
-                <span className="ml-2 text-destructive">
-                  Need at least {MIN_CHARS} characters
-                </span>
-              )}
+            <div className="text-xs text-muted-foreground tabular-nums">
+              <span className={overLimit ? "text-destructive font-medium" : ""}>
+                {charCount.toLocaleString()}
+              </span>
+              {" / "}
+              {MAX_CHARS.toLocaleString()} chars · {wordCount.toLocaleString()} words
             </div>
             <div className="flex items-center gap-2">
               {text && !busy && (
