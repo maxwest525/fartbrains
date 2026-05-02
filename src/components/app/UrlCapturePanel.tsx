@@ -400,6 +400,26 @@ export const UrlCapturePanel = ({ defaultFolderId, onCreated, onOpenExisting }: 
         </div>
       )}
 
+      {/* Auto-detected source badge */}
+      {(() => {
+        if (preview || !url.trim()) return null;
+        const detected = detectSource(url);
+        if (detected === "unknown" || detected === "webpage") return null;
+        const willTranscribe = detected === "instagram";
+        return (
+          <div className="flex items-center gap-2 text-[12px] text-muted-foreground">
+            <span className="rounded-md bg-primary/10 text-primary px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide">
+              {SOURCE_LABEL[detected]}
+            </span>
+            <span className="leading-tight">
+              {willTranscribe
+                ? "We'll transcribe the audio for you."
+                : "Saved as a transcript-style source — paste the caption or notes after extracting."}
+            </span>
+          </div>
+        );
+      })()}
+
       {/* Live URL reachability */}
       {url.trim() && urlCheck.status !== "idle" && !preview && (
         <div
