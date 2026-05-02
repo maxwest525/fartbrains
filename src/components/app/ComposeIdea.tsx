@@ -12,6 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { SourcePicker, isSourceEnabled, type SourceKey } from "./SourcePicker";
 import { ProjectComposer } from "./ProjectComposer";
+import { TranscriptCaptureScreen } from "./TranscriptCaptureScreen";
 import { PROJECT_TAG } from "@/lib/deliverables";
 
 const NO_FOLDER = "__none__";
@@ -541,6 +542,25 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
   );
 
   // ── Default capture view ─────────────────────────────────────────────────────
+  if (source === "transcript") {
+    return (
+      <>
+        <div className="rounded-2xl bg-card border border-border/60 p-3 sm:p-4 space-y-3 shadow-sm">
+          <SourcePicker value={source} onChange={handleSourceChange} />
+          {folderChips}
+        </div>
+        <TranscriptCaptureScreen
+          defaultFolderId={folderOrNull(folder)}
+          onBack={() => setSource("note")}
+          onCreated={(id, needsReview) => {
+            onCreated?.(id, needsReview);
+            reset();
+          }}
+        />
+      </>
+    );
+  }
+
   if (source === "project") {
     return (
       <div className="rounded-2xl bg-card border border-border/60 p-3 sm:p-4 space-y-3 shadow-sm">
