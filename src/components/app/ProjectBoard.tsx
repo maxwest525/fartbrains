@@ -146,6 +146,74 @@ export const ProjectBoard = ({ rawNote, onChange, projectName }: Props) => {
         </div>
       </div>
 
+      {/* Filters: search + type chips. Only useful once there are items. */}
+      {total > 0 && (
+        <div className="space-y-2 rounded-xl border border-border/60 bg-card p-3">
+          <div className="relative">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+            <Input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search deliverables…"
+              className="h-10 pl-8 pr-9 rounded-lg bg-secondary/60 border-transparent text-[14px]"
+              aria-label="Search deliverables"
+            />
+            {query && (
+              <button
+                type="button"
+                onClick={() => setQuery("")}
+                aria-label="Clear search"
+                className="press absolute right-1.5 top-1/2 -translate-y-1/2 h-7 w-7 inline-flex items-center justify-center text-muted-foreground hover:text-foreground"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            )}
+          </div>
+          <div className="flex items-center gap-1.5 overflow-x-auto -mx-1 px-1 pb-0.5 no-scrollbar scroll-momentum">
+            {DELIVERABLE_TYPES.filter((t) => (typeCounts.get(t.key) ?? 0) > 0).map((t) => {
+              const Icon = t.icon;
+              const active = typeFilter.has(t.key);
+              const count = typeCounts.get(t.key) ?? 0;
+              return (
+                <button
+                  key={t.key}
+                  type="button"
+                  onClick={() => toggleTypeFilter(t.key)}
+                  aria-pressed={active}
+                  className={cn(
+                    "shrink-0 inline-flex items-center gap-1 h-7 px-2.5 rounded-full text-[12px] font-medium border transition-colors press",
+                    active
+                      ? "bg-primary text-primary-foreground border-primary"
+                      : "bg-secondary/60 text-muted-foreground border-transparent hover:text-foreground"
+                  )}
+                >
+                  <Icon className="h-3 w-3" />
+                  {t.label}
+                  <span className={cn("ml-0.5 text-[11px]", active ? "opacity-80" : "opacity-60")}>
+                    {count}
+                  </span>
+                </button>
+              );
+            })}
+            {hasFilters && (
+              <button
+                type="button"
+                onClick={clearFilters}
+                className="press shrink-0 ml-auto inline-flex items-center gap-1 h-7 px-2.5 rounded-full text-[12px] font-medium text-muted-foreground hover:text-foreground"
+              >
+                <X className="h-3 w-3" />
+                Clear
+              </button>
+            )}
+          </div>
+          {hasFilters && (
+            <p className="text-[12px] text-muted-foreground px-0.5">
+              Showing {filteredItems.length} of {total}
+            </p>
+          )}
+        </div>
+      )}
+
       {/* Quick add */}
       <div className="space-y-2 rounded-xl border border-border/60 bg-card p-3">
         <div className="flex items-center gap-1.5 overflow-x-auto -mx-1 px-1 pb-0.5 no-scrollbar scroll-momentum">
