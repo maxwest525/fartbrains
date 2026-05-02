@@ -112,7 +112,7 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
     const id = requestAnimationFrame(() => {
       if (source === "instagram" || source === "link") {
         urlInputRef.current?.focus();
-      } else if (source === "note" || source === "list" || source === "transcript") {
+      } else if (source === "note" || source === "list" || source === "transcript" || source === "prompt") {
         noteTextareaRef.current?.focus();
       } else {
         noteInputRef.current?.focus();
