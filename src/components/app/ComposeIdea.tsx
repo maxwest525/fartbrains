@@ -88,6 +88,11 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
   } | null>(null);
   const [extracting, setExtracting] = useState(false);
 
+  // Prompt optimizer state.
+  const [promptTarget, setPromptTarget] = useState<string>(PROMPT_TARGETS[0].value);
+  const [optimizedPrompt, setOptimizedPrompt] = useState<string | null>(null);
+  const [optimizing, setOptimizing] = useState(false);
+
   // Inline new-folder UI (triggered from chip).
   const [newFolderOpen, setNewFolderOpen] = useState(false);
   const [newFolderName, setNewFolderName] = useState("");
