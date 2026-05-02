@@ -143,9 +143,19 @@ const Shell = () => {
 
   return (
     <div className="flex flex-col h-[100dvh] w-full bg-background overflow-hidden relative">
+      {/* Movie ticker — pinned at the very top on the Capture view, above the header. */}
+      {!showDetailOnly && !showFolders && !showTranscript && filter.kind === "all" && (
+        <div className="safe-top bg-background pt-2 sm:pt-3">
+          <MovieTicker />
+        </div>
+      )}
+
       {/* Top bar — search + (desktop) inline nav. Hidden on mobile when viewing detail or the folders page (folders has its own header). */}
       {!showDetailOnly && !(isMobile && showFolders) && !(isMobile && showTranscript) && (
-        <header className="safe-top sticky top-0 z-20 bg-background/80 backdrop-blur-xl border-b border-border">
+        <header className={cn(
+          "sticky top-0 z-20 bg-background/80 backdrop-blur-xl border-b border-border",
+          filter.kind !== "all" && "safe-top"
+        )}>
           <div className="px-3 sm:px-5 py-2 flex items-center gap-2 sm:gap-3">
             {/* Brand — desktop only */}
             <div className="hidden md:flex items-center gap-2 shrink-0 pr-2">
@@ -244,9 +254,6 @@ const Shell = () => {
         {/* Capture view — compose only, full width. Shown when filter is "all" (the default landing). */}
         {!showFolders && !showDetailOnly && filter.kind === "all" && (
           <div className="w-full flex-1 min-w-0 flex flex-col min-h-0 bg-background overflow-y-auto scroll-momentum touch-pan-y pb-[calc(5.75rem+env(safe-area-inset-bottom))] md:pb-6">
-            <div className="pt-3 sm:pt-5">
-              <MovieTicker />
-            </div>
             <div className="w-full px-3 sm:px-6 lg:px-10 pt-3 sm:pt-4">
               <div className="relative max-w-xl mx-auto">
                 <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
