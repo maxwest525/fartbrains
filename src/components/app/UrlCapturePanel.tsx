@@ -404,7 +404,16 @@ export const UrlCapturePanel = ({ defaultFolderId, onCreated, onOpenExisting }: 
         </div>
       )}
 
-      {/* Preview card */}
+      {/* Extract failure fallback — shown when validation or extraction failed */}
+      {extractFailed && !preview && url.trim() && (
+        <div className="flex items-start gap-2 rounded-xl border border-amber-500/40 bg-amber-500/10 p-3 text-sm">
+          <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-400 mt-0.5 shrink-0" />
+          <div className="flex-1 min-w-0">
+            <div className="font-medium text-foreground">Couldn't preview this link</div>
+            <div className="text-muted-foreground text-[12.5px] leading-snug mt-0.5">{extractFailed}</div>
+          </div>
+        </div>
+      )}
       {preview && (
         <div className="rounded-2xl border border-border/70 bg-secondary/30 p-3 sm:p-4 space-y-3">
           <div className="flex items-start gap-2">
