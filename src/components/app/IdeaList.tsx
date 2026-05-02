@@ -187,8 +187,21 @@ export const IdeaList = ({ filter, selectedId, onSelect, onBackToFolders, onFilt
           );
         })()}
 
+        {/* Folder view: surface project deliverables grouped by project & type
+            above the regular ideas list. Project rows themselves are hidden
+            from the row list below to avoid duplication. */}
+        {filter.kind === "folder" && ideas.length > 0 && (
+          <FolderProjectsBoard ideas={ideas} onOpenProject={onSelect} />
+        )}
+
         {/* Mobile: iOS grouped inset list. Desktop: flat row list. */}
-        {ideas.length > 0 && (
+        {(() => {
+          const visibleIdeas =
+            filter.kind === "folder"
+              ? ideas.filter((i) => !i.tags.includes(PROJECT_TAG))
+              : ideas;
+          if (visibleIdeas.length === 0) return null;
+          return (
           <>
             {/* MOBILE — grouped inset card with hairline separators */}
             <div className="md:hidden px-4 pt-1">
