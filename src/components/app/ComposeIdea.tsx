@@ -330,7 +330,7 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
         title: finalTitle,
         raw_note: null,
         source_url: preview.url,
-        source_type: preview.sourceKind === "instagram" ? "instagram" : "webpage",
+        source_type: "webpage",
         extracted_text: preview.text || null,
         ai_summary: summary.trim() || null,
         folder_id: folderOrNull(folder),
