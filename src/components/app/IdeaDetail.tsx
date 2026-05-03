@@ -34,6 +34,7 @@ import { IdeaReminderDialog } from "./IdeaReminderDialog";
 import { ProjectBoard } from "./ProjectBoard";
 import { PROJECT_TAG } from "@/lib/deliverables";
 import { formatReminder } from "@/lib/formatTime";
+import { SourceMetaCard } from "./SourceMetaCard";
 
 const NO_FOLDER = "__none__";
 
@@ -251,24 +252,8 @@ export const IdeaDetail = ({ ideaId, onClose, backLabel = "Back" }: Props) => {
         </button>
         <div className="hidden md:flex items-center gap-2 min-w-0 flex-1 px-2">
           <Badge variant="secondary" className="capitalize">
-            {idea.source_type}
+            {idea.source_label || idea.source_type}
           </Badge>
-          {idea.source_label && (
-            <Badge variant="outline" className="font-medium">
-              {idea.source_label}
-            </Badge>
-          )}
-          {idea.source_url && (
-            <a
-              href={idea.source_url}
-              target="_blank"
-              rel="noreferrer"
-              className="text-xs text-muted-foreground hover:text-foreground hidden sm:flex items-center gap-1 truncate"
-            >
-              <ExternalLink className="h-3 w-3 shrink-0" />
-              <span className="truncate">{idea.source_url}</span>
-            </a>
-          )}
         </div>
         <div className="flex-1 md:hidden" />
         <div className="flex items-center gap-0 sm:gap-1 shrink-0 pr-1">
@@ -337,6 +322,9 @@ export const IdeaDetail = ({ ideaId, onClose, backLabel = "Back" }: Props) => {
             {idea.title}
           </h1>
         )}
+
+        <SourceMetaCard idea={idea} />
+
 
         <div className="flex items-center gap-2 flex-wrap">
           <span className="text-xs font-medium text-muted-foreground mr-1">Priority</span>

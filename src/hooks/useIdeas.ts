@@ -5,6 +5,15 @@ import { toast } from "sonner";
 export type SourceType = "manual" | "webpage" | "transcript" | "audio";
 export type Priority = "none" | "low" | "medium" | "high";
 
+export type SourceMeta = {
+  /** Which extractor produced this — drives icon + label in detail view. */
+  kind?: "instagram" | "tiktok" | "youtube" | "webpage";
+  author?: string | null;
+  siteName?: string | null;
+  thumbnail?: string | null;
+  hasTranscript?: boolean;
+};
+
 export type Idea = {
   id: string;
   folder_id: string | null;
@@ -14,6 +23,8 @@ export type Idea = {
   source_type: SourceType;
   /** Human-readable source name (e.g. "Instagram", "TikTok", "YouTube", "Web page"). */
   source_label?: string | null;
+  /** Normalized metadata from the extractor (author, thumbnail, etc.). */
+  source_meta?: SourceMeta | null;
   extracted_text: string | null;
   ai_summary: string | null;
   generated_prompt: string | null;
@@ -29,6 +40,7 @@ export type Idea = {
   created_at: string;
   updated_at: string;
 };
+
 
 export type IdeaFilter =
   | { kind: "all"; sourceType?: SourceType }
@@ -95,6 +107,7 @@ export function useCreateIdea() {
       source_type: SourceType;
       /** Human-readable source name shown in lists / detail (e.g. "Instagram"). */
       source_label?: string | null;
+      source_meta?: SourceMeta | null;
       extracted_text?: string | null;
       ai_summary?: string | null;
       folder_id?: string | null;
@@ -111,6 +124,7 @@ export function useCreateIdea() {
           source_url: payload.source_url ?? null,
           source_type: payload.source_type,
           source_label: payload.source_label ?? null,
+          source_meta: payload.source_meta ?? null,
           extracted_text: payload.extracted_text ?? null,
           ai_summary: payload.ai_summary ?? null,
           folder_id: payload.folder_id ?? null,
