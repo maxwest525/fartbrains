@@ -1,4 +1,5 @@
-import { LogOut, Mail, Sparkles, Bell, BellOff, Loader2 } from "lucide-react";
+import { LogOut, Mail, Sparkles, Bell, BellOff, Loader2, ShieldCheck, ChevronRight } from "lucide-react";
+import { Link } from "react-router-dom";
 import {
   Sheet,
   SheetContent,
