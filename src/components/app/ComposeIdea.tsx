@@ -992,6 +992,9 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
               <X className="h-4 w-4" />
             </button>
           </div>
+            );
+          })()}
+
 
           {/* Editable title for the preview */}
           <Input
