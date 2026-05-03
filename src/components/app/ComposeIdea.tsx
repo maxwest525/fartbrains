@@ -15,6 +15,7 @@ import { ProjectComposer } from "./ProjectComposer";
 import { TranscriptCaptureScreen } from "./TranscriptCaptureScreen";
 import { PROJECT_TAG } from "@/lib/deliverables";
 import { validateOptimizedPrompt, type ValidationResult } from "@/lib/promptValidation";
+import { normalizeExtraction, type NormalizedExtraction } from "@/lib/extractedContent";
 
 const NO_FOLDER = "__none__";
 
@@ -118,12 +119,7 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
 
   // URL preview step: after extraction, hold the readable text + suggested title
   // so the user can review (and tweak the title) before committing to save.
-  const [preview, setPreview] = useState<{
-    url: string;
-    text: string;
-    suggestedTitle?: string;
-    sourceKind: "webpage" | "instagram";
-  } | null>(null);
+  const [preview, setPreview] = useState<NormalizedExtraction | null>(null);
   const [extracting, setExtracting] = useState(false);
   const previewRef = useRef<HTMLDivElement>(null);
 
@@ -230,30 +226,19 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
       if (extErr) throw new Error(extErr.message);
       if (ext?.error) throw new Error(ext.error);
 
-      // transcribe-instagram returns { transcript, caption, ... }; extract-url returns { text }.
-      let text = "";
-      let suggestedTitle: string | undefined;
-      if (isInsta) {
-        const transcript = (ext?.transcript ?? "").trim();
-        const caption = (ext?.caption ?? "").trim();
-        text = transcript && caption
-          ? `${transcript}\n\n— Caption —\n${caption}`
-          : (transcript || caption);
-        suggestedTitle = ext?.title ?? undefined;
-      } else {
-        text = (ext?.text ?? "").trim();
-        suggestedTitle = ext?.title ?? undefined;
-      }
-      if (!text) throw new Error("Couldn't extract any readable text from this page");
+      // Collapse the platform-specific payload into a single shape so the
+      // preview UI and save flow don't branch on source.
+      const normalized = normalizeExtraction(
+        isInsta ? "instagram" : "webpage",
+        ext,
+        effectiveUrl,
+      );
 
-      setPreview({
-        url: ext?.finalUrl ?? effectiveUrl,
-        text,
-        suggestedTitle,
-        sourceKind: isInsta ? "instagram" : "webpage",
-      });
+      setPreview(normalized);
       // Pre-fill the title field with the extracted title (only if user hasn't typed one).
-      if (!title.trim() && suggestedTitle) setTitle(String(suggestedTitle).slice(0, 200));
+      if (!title.trim() && normalized.suggestedTitle) {
+        setTitle(normalized.suggestedTitle);
+      }
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Couldn't extract content");
     } finally {
@@ -338,7 +323,7 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
       let aiTitle: string | undefined;
       try {
         const { data: sum, error: sumErr } = await supabase.functions.invoke("summarize", {
-          body: { text: preview.text, kind: "webpage" },
+          body: { text: preview.text, kind: preview.sourceKind === "instagram" ? "transcript" : "webpage" },
         });
         if (sumErr) throw new Error(sumErr.message);
         if (sum?.error) throw new Error(sum.error);
