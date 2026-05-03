@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Sparkles, Loader2, AlertTriangle, Inbox, Folder as FolderIcon, CheckCircle2, XCircle, ArrowRight, Plus, FileText, X, Wand2, Copy } from "lucide-react";
+import { Sparkles, Loader2, AlertTriangle, Inbox, Folder as FolderIcon, CheckCircle2, XCircle, ArrowRight, Plus, FileText, X, Wand2, Copy, Instagram, Music2, Youtube, Link2, Globe } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useDuplicateUrl } from "@/hooks/useDuplicateUrl";
 import { useUrlCheck } from "@/hooks/useUrlCheck";
@@ -40,15 +40,41 @@ const PLACEHOLDERS: Record<SourceKey, { url?: string; note: string }> = {
   prompt:     { note: "Paste a draft prompt to optimize…" },
 };
 
-/** Detect whether a URL points to Instagram (reel/post/tv). */
-const isInstagramUrl = (raw: string): boolean => {
+/**
+ * Auto-detect the source platform from a pasted URL so the compose flow can
+ * route to the right extractor and show the user what we'll do with it.
+ *
+ *  - instagram → transcribe-instagram (audio + caption via Apify + ElevenLabs)
+ *  - tiktok    → extract-url (best-effort meta + page text; no audio yet)
+ *  - youtube   → extract-url (best-effort title + description scrape)
+ *  - webpage   → extract-url (generic article reader)
+ */
+type UrlPlatform = "instagram" | "tiktok" | "youtube" | "webpage" | "invalid";
+
+const detectUrlPlatform = (raw: string): { kind: UrlPlatform; label: string; hint: string } => {
+  const trimmed = raw.trim();
+  if (!trimmed) return { kind: "invalid", label: "URL", hint: "" };
+  let u: URL;
   try {
-    const u = new URL(raw.trim());
-    return /(^|\.)instagram\.com$/i.test(u.hostname);
+    u = new URL(trimmed.includes("://") ? trimmed : `https://${trimmed}`);
   } catch {
-    return false;
+    return { kind: "invalid", label: "Invalid URL", hint: "Paste a full http(s) link" };
   }
+  const host = u.hostname.toLowerCase().replace(/^www\./, "");
+  if (/(^|\.)instagram\.com$/.test(host)) {
+    return { kind: "instagram", label: "Instagram", hint: "Will transcribe audio + pull caption" };
+  }
+  if (/(^|\.)tiktok\.com$/.test(host) || host === "vm.tiktok.com") {
+    return { kind: "tiktok", label: "TikTok", hint: "Will pull title & description (no audio yet)" };
+  }
+  if (/(^|\.)youtube\.com$/.test(host) || host === "youtu.be") {
+    return { kind: "youtube", label: "YouTube", hint: "Will pull title & description (no audio yet)" };
+  }
+  return { kind: "webpage", label: "Web page", hint: "Will extract readable article text" };
 };
+
+const isInstagramUrl = (raw: string): boolean =>
+  detectUrlPlatform(raw).kind === "instagram";
 
 /** Target LLMs offered in the Prompt optimizer. */
 const PROMPT_TARGETS = [
@@ -853,6 +879,30 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
             autoFocus
             className="h-16 rounded-2xl bg-secondary/60 border-transparent text-[18px] font-medium px-4 placeholder:font-normal placeholder:text-muted-foreground/70"
           />
+          {url.trim() && (() => {
+            const det = detectUrlPlatform(url);
+            if (det.kind === "invalid" && !url.includes(".")) return null;
+            const Icon =
+              det.kind === "instagram" ? Instagram :
+              det.kind === "tiktok"    ? Music2 :
+              det.kind === "youtube"   ? Youtube :
+              det.kind === "webpage"   ? Globe :
+                                         Link2;
+            const tone =
+              det.kind === "invalid"
+                ? "text-destructive bg-destructive/10 border-destructive/30"
+                : "text-primary bg-primary/10 border-primary/20";
+            return (
+              <div className={cn(
+                "flex items-center gap-2 rounded-lg border px-2.5 py-1.5 text-[12px]",
+                tone,
+              )}>
+                <Icon className="h-3.5 w-3.5 shrink-0" />
+                <span className="font-semibold">{det.label}</span>
+                {det.hint && <span className="opacity-75 truncate">· {det.hint}</span>}
+              </div>
+            );
+          })()}
         </div>
       )}
 
