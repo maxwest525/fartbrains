@@ -15,7 +15,7 @@ import { ProjectComposer } from "./ProjectComposer";
 import { TranscriptCaptureScreen } from "./TranscriptCaptureScreen";
 import { PROJECT_TAG } from "@/lib/deliverables";
 import { validateOptimizedPrompt, type ValidationResult } from "@/lib/promptValidation";
-import { normalizeExtraction, type NormalizedExtraction } from "@/lib/extractedContent";
+import { normalizeExtraction, summarizeKindFor, type NormalizedExtraction } from "@/lib/extractedContent";
 
 const NO_FOLDER = "__none__";
 
