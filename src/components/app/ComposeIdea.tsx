@@ -950,15 +950,33 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
       {/* URL preview step — shows extracted readable text before saving. */}
       {needsUrl && preview && (
         <div ref={previewRef} className="rounded-2xl border border-border/70 bg-secondary/30 p-3 sm:p-4 space-y-3 scroll-mt-20">
+          {(() => {
+            const meta = {
+              instagram: { Icon: Instagram, label: "Instagram", desc: "Audio transcription + caption", tone: "bg-pink-500/10 text-pink-500" },
+              tiktok:    { Icon: Music2,    label: "TikTok",    desc: "Title & description",           tone: "bg-foreground/10 text-foreground" },
+              youtube:   { Icon: Youtube,   label: "YouTube",   desc: "Title & description",           tone: "bg-red-500/10 text-red-500" },
+              webpage:   { Icon: Globe,     label: "Webpage",   desc: "Article extract",                tone: "bg-primary/10 text-primary" },
+            }[preview.sourceKind];
+            const SrcIcon = meta.Icon;
+            return (
           <div className="flex items-start gap-2">
-            <div className="h-9 w-9 rounded-[10px] bg-primary/10 text-primary flex items-center justify-center shrink-0 mt-0.5">
-              <FileText className="h-4 w-4" />
+            <div className={cn("h-9 w-9 rounded-[10px] flex items-center justify-center shrink-0 mt-0.5", meta.tone)}>
+              <SrcIcon className="h-4 w-4" />
             </div>
             <div className="flex-1 min-w-0">
-              <div className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-                Preview
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <span className={cn("inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10.5px] font-semibold uppercase tracking-wide", meta.tone)}>
+                  <SrcIcon className="h-3 w-3" />
+                  {meta.label}
+                </span>
+                {preview.hasTranscript && (
+                  <span className="inline-flex items-center rounded-full bg-secondary px-2 py-0.5 text-[10.5px] font-semibold uppercase tracking-wide text-muted-foreground">
+                    Transcribed
+                  </span>
+                )}
+                <span className="text-[11px] text-muted-foreground">· {meta.desc}</span>
               </div>
-              <div className="font-semibold text-[15px] truncate" title={preview.suggestedTitle || preview.url}>
+              <div className="font-semibold text-[15px] truncate mt-1" title={preview.suggestedTitle || preview.url}>
                 {preview.suggestedTitle || "Untitled page"}
               </div>
               <div className="text-[12px] text-muted-foreground truncate" title={preview.url}>
