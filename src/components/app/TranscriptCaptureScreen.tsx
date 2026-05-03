@@ -61,7 +61,7 @@ export const TranscriptCaptureScreen = ({ defaultFolderId, onBack, onCreated }: 
     }
   };
 
-  const handleSave = async () => {
+  const handleSave = async ({ summarize }: { summarize: boolean }) => {
     if (generating) return;
     const trimmed = note.trim();
     if (trimmed.length < 20) {
@@ -72,16 +72,18 @@ export const TranscriptCaptureScreen = ({ defaultFolderId, onBack, onCreated }: 
     try {
       let summary = "";
       let aiTitle: string | undefined;
-      try {
-        const { data: sum, error: sumErr } = await supabase.functions.invoke("summarize", {
-          body: { text: trimmed, kind: "transcript" },
-        });
-        if (sumErr) throw new Error(sumErr.message);
-        if (sum?.error) throw new Error(sum.error);
-        summary = sum?.summary ?? "";
-        aiTitle = sum?.suggestedTitle ?? undefined;
-      } catch (e) {
-        toast.warning(e instanceof Error ? `AI summary failed: ${e.message}` : "AI summary failed");
+      if (summarize) {
+        try {
+          const { data: sum, error: sumErr } = await supabase.functions.invoke("summarize", {
+            body: { text: trimmed, kind: "transcript" },
+          });
+          if (sumErr) throw new Error(sumErr.message);
+          if (sum?.error) throw new Error(sum.error);
+          summary = sum?.summary ?? "";
+          aiTitle = sum?.suggestedTitle ?? undefined;
+        } catch (e) {
+          toast.warning(e instanceof Error ? `AI summary failed: ${e.message}` : "AI summary failed");
+        }
       }
 
       const finalTitle = (
@@ -102,7 +104,7 @@ export const TranscriptCaptureScreen = ({ defaultFolderId, onBack, onCreated }: 
       });
 
       const summaryClean = summary.trim();
-      const needsReview = !summaryClean || summaryClean.length < 150;
+      const needsReview = summarize && (!summaryClean || summaryClean.length < 150);
       if (needsReview) {
         toast.message("Saved — needs a quick review", {
           description: "AI wasn't fully confident, so we opened the idea for you to edit.",
@@ -264,12 +266,22 @@ export const TranscriptCaptureScreen = ({ defaultFolderId, onBack, onCreated }: 
 
       {/* Sticky bottom action bar */}
       <div className="sticky bottom-0 left-0 right-0 border-t border-border bg-background/90 backdrop-blur-xl px-4 sm:px-6 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
-        <div className="max-w-3xl mx-auto">
+        <div className="max-w-3xl mx-auto flex items-center gap-2">
           <Button
             type="button"
-            onClick={handleSave}
+            variant="outline"
+            onClick={() => handleSave({ summarize: false })}
             disabled={generating || charCount < 20}
-            className="w-full h-12 rounded-xl text-[16px] font-semibold"
+            className="h-12 rounded-xl text-[15px] font-semibold px-4"
+            title="Save without running the AI summary"
+          >
+            Save only
+          </Button>
+          <Button
+            type="button"
+            onClick={() => handleSave({ summarize: true })}
+            disabled={generating || charCount < 20}
+            className="flex-1 h-12 rounded-xl text-[16px] font-semibold"
           >
             {generating ? (
               <Loader2 className="h-5 w-5 animate-spin" />
