@@ -879,6 +879,30 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
             autoFocus
             className="h-16 rounded-2xl bg-secondary/60 border-transparent text-[18px] font-medium px-4 placeholder:font-normal placeholder:text-muted-foreground/70"
           />
+          {url.trim() && (() => {
+            const det = detectUrlPlatform(url);
+            if (det.kind === "invalid" && !url.includes(".")) return null;
+            const Icon =
+              det.kind === "instagram" ? Instagram :
+              det.kind === "tiktok"    ? Music2 :
+              det.kind === "youtube"   ? Youtube :
+              det.kind === "webpage"   ? Globe :
+                                         Link2;
+            const tone =
+              det.kind === "invalid"
+                ? "text-destructive bg-destructive/10 border-destructive/30"
+                : "text-primary bg-primary/10 border-primary/20";
+            return (
+              <div className={cn(
+                "flex items-center gap-2 rounded-lg border px-2.5 py-1.5 text-[12px]",
+                tone,
+              )}>
+                <Icon className="h-3.5 w-3.5 shrink-0" />
+                <span className="font-semibold">{det.label}</span>
+                {det.hint && <span className="opacity-75 truncate">· {det.hint}</span>}
+              </div>
+            );
+          })()}
         </div>
       )}
 
