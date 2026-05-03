@@ -89,6 +89,19 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
     sourceKind: "webpage" | "instagram";
   } | null>(null);
   const [extracting, setExtracting] = useState(false);
+  const previewRef = useRef<HTMLDivElement>(null);
+
+  // When the URL preview card appears, scroll it into view so the Save button
+  // isn't hidden behind the mobile bottom tab bar.
+  useEffect(() => {
+    if (preview && previewRef.current) {
+      // Wait one frame so layout settles before scrolling.
+      requestAnimationFrame(() => {
+        previewRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [preview?.url]);
 
   // Prompt optimizer state.
   const [promptTarget, setPromptTarget] = useState<string>(PROMPT_TARGETS[0].value);
