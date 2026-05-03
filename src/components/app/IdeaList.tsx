@@ -408,8 +408,8 @@ export const IdeaList = ({ filter, selectedId, onSelect, onBackToFolders, onFilt
                 const active = idea.id === selectedId;
                 const preview = isProject
                   ? `${stats!.done} of ${stats!.total} deliverables done`
-                  : idea.ai_summary?.replace(/[#*]/g, "").trim() ||
-                    idea.raw_note ||
+                  : idea.raw_note ||
+                    idea.ai_summary?.replace(/[#*]/g, "").trim() ||
                     idea.extracted_text ||
                     "";
                 return (
