@@ -194,7 +194,10 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
 
     setExtracting(true);
     try {
-      const fnName = source === "instagram" ? "transcribe-instagram" : "extract-url";
+      // Auto-detect: Instagram URLs go to the transcribe pipeline; everything
+      // else uses the generic readable-text extractor.
+      const isInsta = isInstagramUrl(effectiveUrl);
+      const fnName = isInsta ? "transcribe-instagram" : "extract-url";
       const { data: ext, error: extErr } = await supabase.functions.invoke(fnName, {
         body: { url: effectiveUrl },
       });
@@ -204,7 +207,7 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
       // transcribe-instagram returns { transcript, caption, ... }; extract-url returns { text }.
       let text = "";
       let suggestedTitle: string | undefined;
-      if (source === "instagram") {
+      if (isInsta) {
         const transcript = (ext?.transcript ?? "").trim();
         const caption = (ext?.caption ?? "").trim();
         text = transcript && caption
@@ -221,7 +224,7 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
         url: ext?.finalUrl ?? effectiveUrl,
         text,
         suggestedTitle,
-        sourceKind: source === "instagram" ? "instagram" : "webpage",
+        sourceKind: isInsta ? "instagram" : "webpage",
       });
       // Pre-fill the title field with the extracted title (only if user hasn't typed one).
       if (!title.trim() && suggestedTitle) setTitle(String(suggestedTitle).slice(0, 200));
