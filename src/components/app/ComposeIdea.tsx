@@ -226,30 +226,19 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
       if (extErr) throw new Error(extErr.message);
       if (ext?.error) throw new Error(ext.error);
 
-      // transcribe-instagram returns { transcript, caption, ... }; extract-url returns { text }.
-      let text = "";
-      let suggestedTitle: string | undefined;
-      if (isInsta) {
-        const transcript = (ext?.transcript ?? "").trim();
-        const caption = (ext?.caption ?? "").trim();
-        text = transcript && caption
-          ? `${transcript}\n\n— Caption —\n${caption}`
-          : (transcript || caption);
-        suggestedTitle = ext?.title ?? undefined;
-      } else {
-        text = (ext?.text ?? "").trim();
-        suggestedTitle = ext?.title ?? undefined;
-      }
-      if (!text) throw new Error("Couldn't extract any readable text from this page");
+      // Collapse the platform-specific payload into a single shape so the
+      // preview UI and save flow don't branch on source.
+      const normalized = normalizeExtraction(
+        isInsta ? "instagram" : "webpage",
+        ext,
+        effectiveUrl,
+      );
 
-      setPreview({
-        url: ext?.finalUrl ?? effectiveUrl,
-        text,
-        suggestedTitle,
-        sourceKind: isInsta ? "instagram" : "webpage",
-      });
+      setPreview(normalized);
       // Pre-fill the title field with the extracted title (only if user hasn't typed one).
-      if (!title.trim() && suggestedTitle) setTitle(String(suggestedTitle).slice(0, 200));
+      if (!title.trim() && normalized.suggestedTitle) {
+        setTitle(normalized.suggestedTitle);
+      }
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Couldn't extract content");
     } finally {
