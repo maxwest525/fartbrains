@@ -323,7 +323,7 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
       let aiTitle: string | undefined;
       try {
         const { data: sum, error: sumErr } = await supabase.functions.invoke("summarize", {
-          body: { text: preview.text, kind: "webpage" },
+          body: { text: preview.text, kind: preview.sourceKind === "instagram" ? "transcript" : "webpage" },
         });
         if (sumErr) throw new Error(sumErr.message);
         if (sum?.error) throw new Error(sum.error);
