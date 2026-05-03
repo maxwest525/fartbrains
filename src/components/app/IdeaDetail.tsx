@@ -34,6 +34,7 @@ import { IdeaReminderDialog } from "./IdeaReminderDialog";
 import { ProjectBoard } from "./ProjectBoard";
 import { PROJECT_TAG } from "@/lib/deliverables";
 import { formatReminder } from "@/lib/formatTime";
+import { SourceMetaCard } from "./SourceMetaCard";
 
 const NO_FOLDER = "__none__";
 
