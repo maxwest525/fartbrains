@@ -342,6 +342,18 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
         raw_note: null,
         source_url: preview.url,
         source_type: "webpage",
+        source_label: preview.siteName ?? (
+          preview.sourceKind === "instagram" ? "Instagram" :
+          preview.sourceKind === "tiktok"    ? "TikTok"    :
+          preview.sourceKind === "youtube"   ? "YouTube"   : "Web page"
+        ),
+        source_meta: {
+          kind: preview.sourceKind,
+          author: preview.author,
+          siteName: preview.siteName,
+          thumbnail: preview.thumbnail,
+          hasTranscript: preview.hasTranscript,
+        },
         extracted_text: preview.text || null,
         ai_summary: summary.trim() || null,
         folder_id: folderOrNull(folder),
