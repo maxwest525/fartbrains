@@ -689,10 +689,58 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
 
             <Textarea
               value={optimizedPrompt}
-              onChange={(e) => setOptimizedPrompt(e.target.value)}
+              onChange={(e) => {
+                setOptimizedPrompt(e.target.value);
+                const r = validateOptimizedPrompt(e.target.value, draftAtOptimize || note.trim());
+                setPromptValidation(r);
+                setOverrideWarnings(false);
+              }}
               rows={10}
               className="rounded-xl bg-card border-border/60 text-[13.5px] leading-relaxed font-mono resize-y max-h-[50vh]"
             />
+
+            {promptValidation && (promptValidation.errors.length > 0 || promptValidation.warnings.length > 0) && (
+              <div
+                className={cn(
+                  "rounded-xl border p-3 space-y-2 text-[12.5px]",
+                  promptValidation.errors.length > 0
+                    ? "border-destructive/40 bg-destructive/10"
+                    : "border-amber-500/40 bg-amber-500/10",
+                )}
+              >
+                <div className="flex items-center gap-1.5 font-semibold">
+                  <AlertTriangle className={cn(
+                    "h-3.5 w-3.5",
+                    promptValidation.errors.length > 0 ? "text-destructive" : "text-amber-600",
+                  )} />
+                  <span>
+                    {promptValidation.errors.length > 0
+                      ? `${promptValidation.errors.length} issue${promptValidation.errors.length === 1 ? "" : "s"} blocking save`
+                      : `${promptValidation.warnings.length} warning${promptValidation.warnings.length === 1 ? "" : "s"}`}
+                  </span>
+                </div>
+                <ul className="space-y-1 pl-1">
+                  {[...promptValidation.errors, ...promptValidation.warnings].map((r) => (
+                    <li key={r.id} className="flex gap-2">
+                      <span className="opacity-60">•</span>
+                      <span>
+                        <span className="font-medium">{r.label}.</span>{" "}
+                        <span className="opacity-80">{r.description}</span>
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+                {promptValidation.errors.length === 0 && promptValidation.warnings.length > 0 && !overrideWarnings && (
+                  <button
+                    type="button"
+                    onClick={() => setOverrideWarnings(true)}
+                    className="text-[12px] font-semibold underline underline-offset-2 hover:opacity-80"
+                  >
+                    Save anyway
+                  </button>
+                )}
+              </div>
+            )}
           </div>
         )}
 
