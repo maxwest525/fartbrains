@@ -15,8 +15,7 @@ type Tile = {
 const TILES: Tile[] = [
   { key: "note",      label: "Note",      icon: FileText,   tone: "text-foreground",  enabled: true  },
   { key: "project",   label: "Project",   icon: Briefcase,  tone: "text-primary",     enabled: true  },
-  { key: "instagram", label: "Instagram", icon: Instagram,  tone: "text-primary",     enabled: true  },
-  { key: "link",      label: "Link",      icon: Link2,      tone: "text-primary",     enabled: true  },
+  { key: "link",      label: "Link / URL",icon: Link2,      tone: "text-primary",     enabled: true  },
   { key: "list",      label: "List",      icon: ListChecks, tone: "text-primary",     enabled: true  },
   { key: "transcript",label: "Transcript",icon: ClipboardPaste, tone: "text-primary", enabled: true  },
   { key: "prompt",    label: "Prompt",    icon: Wand2,      tone: "text-primary",     enabled: true  },

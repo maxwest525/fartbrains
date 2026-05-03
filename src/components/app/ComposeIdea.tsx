@@ -29,8 +29,8 @@ type Props = {
 };
 
 const PLACEHOLDERS: Record<SourceKey, { url?: string; note: string }> = {
-  instagram:  { url: "Instagram Reel URL", note: "Quick note (optional)" },
-  link:       { url: "Paste a URL",        note: "Quick note (optional)" },
+  instagram:  { url: "Paste a URL (Instagram, article, video…)", note: "Quick note (optional)" },
+  link:       { url: "Paste a URL (Instagram, article, video…)", note: "Quick note (optional)" },
   note:       {                            note: "Write your idea…" },
   list:       {                            note: "One item per line…\nBuy milk\nCall dentist\nShip v2" },
   transcript: {                            note: "Paste a transcript, video caption, or any long text…" },
@@ -38,6 +38,16 @@ const PLACEHOLDERS: Record<SourceKey, { url?: string; note: string }> = {
   voice:      { note: "" },
   image:      { note: "" },
   prompt:     { note: "Paste a draft prompt to optimize…" },
+};
+
+/** Detect whether a URL points to Instagram (reel/post/tv). */
+const isInstagramUrl = (raw: string): boolean => {
+  try {
+    const u = new URL(raw.trim());
+    return /(^|\.)instagram\.com$/i.test(u.hostname);
+  } catch {
+    return false;
+  }
 };
 
 /** Target LLMs offered in the Prompt optimizer. */
@@ -184,7 +194,10 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
 
     setExtracting(true);
     try {
-      const fnName = source === "instagram" ? "transcribe-instagram" : "extract-url";
+      // Auto-detect: Instagram URLs go to the transcribe pipeline; everything
+      // else uses the generic readable-text extractor.
+      const isInsta = isInstagramUrl(effectiveUrl);
+      const fnName = isInsta ? "transcribe-instagram" : "extract-url";
       const { data: ext, error: extErr } = await supabase.functions.invoke(fnName, {
         body: { url: effectiveUrl },
       });
@@ -194,7 +207,7 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
       // transcribe-instagram returns { transcript, caption, ... }; extract-url returns { text }.
       let text = "";
       let suggestedTitle: string | undefined;
-      if (source === "instagram") {
+      if (isInsta) {
         const transcript = (ext?.transcript ?? "").trim();
         const caption = (ext?.caption ?? "").trim();
         text = transcript && caption
@@ -211,7 +224,7 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
         url: ext?.finalUrl ?? effectiveUrl,
         text,
         suggestedTitle,
-        sourceKind: source === "instagram" ? "instagram" : "webpage",
+        sourceKind: isInsta ? "instagram" : "webpage",
       });
       // Pre-fill the title field with the extracted title (only if user hasn't typed one).
       if (!title.trim() && suggestedTitle) setTitle(String(suggestedTitle).slice(0, 200));
@@ -812,7 +825,7 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
       {needsUrl && (
         <div className="space-y-1.5">
           <label className="block text-[11px] font-semibold uppercase tracking-wide text-muted-foreground px-1">
-            {source === "instagram" ? "Instagram URL" : "Website URL"}
+            URL
           </label>
           <Input
             ref={urlInputRef}
