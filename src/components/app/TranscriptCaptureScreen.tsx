@@ -61,7 +61,7 @@ export const TranscriptCaptureScreen = ({ defaultFolderId, onBack, onCreated }: 
     }
   };
 
-  const handleSave = async () => {
+  const handleSave = async ({ summarize }: { summarize: boolean }) => {
     if (generating) return;
     const trimmed = note.trim();
     if (trimmed.length < 20) {
@@ -72,16 +72,18 @@ export const TranscriptCaptureScreen = ({ defaultFolderId, onBack, onCreated }: 
     try {
       let summary = "";
       let aiTitle: string | undefined;
-      try {
-        const { data: sum, error: sumErr } = await supabase.functions.invoke("summarize", {
-          body: { text: trimmed, kind: "transcript" },
-        });
-        if (sumErr) throw new Error(sumErr.message);
-        if (sum?.error) throw new Error(sum.error);
-        summary = sum?.summary ?? "";
-        aiTitle = sum?.suggestedTitle ?? undefined;
-      } catch (e) {
-        toast.warning(e instanceof Error ? `AI summary failed: ${e.message}` : "AI summary failed");
+      if (summarize) {
+        try {
+          const { data: sum, error: sumErr } = await supabase.functions.invoke("summarize", {
+            body: { text: trimmed, kind: "transcript" },
+          });
+          if (sumErr) throw new Error(sumErr.message);
+          if (sum?.error) throw new Error(sum.error);
+          summary = sum?.summary ?? "";
+          aiTitle = sum?.suggestedTitle ?? undefined;
+        } catch (e) {
+          toast.warning(e instanceof Error ? `AI summary failed: ${e.message}` : "AI summary failed");
+        }
       }
 
       const finalTitle = (
@@ -102,7 +104,7 @@ export const TranscriptCaptureScreen = ({ defaultFolderId, onBack, onCreated }: 
       });
 
       const summaryClean = summary.trim();
-      const needsReview = !summaryClean || summaryClean.length < 150;
+      const needsReview = summarize && (!summaryClean || summaryClean.length < 150);
       if (needsReview) {
         toast.message("Saved — needs a quick review", {
           description: "AI wasn't fully confident, so we opened the idea for you to edit.",
