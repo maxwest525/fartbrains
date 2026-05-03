@@ -90,7 +90,9 @@ export const TranscriptCaptureScreen = ({ defaultFolderId, onBack, onCreated }: 
 
       const idea = await createIdea.mutateAsync({
         title: finalTitle,
-        raw_note: null,
+        // Keep the user's original text as the visible "Note" so it stays
+        // front-and-center after the AI summary lands (in detail + list preview).
+        raw_note: trimmed,
         source_url: null,
         source_type: "transcript",
         extracted_text: trimmed,

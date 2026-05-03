@@ -350,8 +350,11 @@ export const IdeaList = ({ filter, selectedId, onSelect, onBackToFolders, onFilt
                     : sourceMeta(idea.source_type);
                   const preview = isProject
                     ? `${stats!.done} of ${stats!.total} deliverables done`
-                    : idea.ai_summary?.replace(/[#*]/g, "").trim() ||
-                      idea.raw_note ||
+                    // Prefer the user's own note so transcripts/manual captures
+                    // show what they wrote, not the AI rewrite. Fall back to
+                    // the summary (URL captures) and finally extracted text.
+                    : idea.raw_note ||
+                      idea.ai_summary?.replace(/[#*]/g, "").trim() ||
                       idea.extracted_text ||
                       "";
                   return (
