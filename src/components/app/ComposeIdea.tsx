@@ -29,8 +29,8 @@ type Props = {
 };
 
 const PLACEHOLDERS: Record<SourceKey, { url?: string; note: string }> = {
-  instagram:  { url: "Instagram Reel URL", note: "Quick note (optional)" },
-  link:       { url: "Paste a URL",        note: "Quick note (optional)" },
+  instagram:  { url: "Paste a URL (Instagram, article, video…)", note: "Quick note (optional)" },
+  link:       { url: "Paste a URL (Instagram, article, video…)", note: "Quick note (optional)" },
   note:       {                            note: "Write your idea…" },
   list:       {                            note: "One item per line…\nBuy milk\nCall dentist\nShip v2" },
   transcript: {                            note: "Paste a transcript, video caption, or any long text…" },
@@ -38,6 +38,16 @@ const PLACEHOLDERS: Record<SourceKey, { url?: string; note: string }> = {
   voice:      { note: "" },
   image:      { note: "" },
   prompt:     { note: "Paste a draft prompt to optimize…" },
+};
+
+/** Detect whether a URL points to Instagram (reel/post/tv). */
+const isInstagramUrl = (raw: string): boolean => {
+  try {
+    const u = new URL(raw.trim());
+    return /(^|\.)instagram\.com$/i.test(u.hostname);
+  } catch {
+    return false;
+  }
 };
 
 /** Target LLMs offered in the Prompt optimizer. */
