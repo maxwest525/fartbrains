@@ -118,12 +118,7 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
 
   // URL preview step: after extraction, hold the readable text + suggested title
   // so the user can review (and tweak the title) before committing to save.
-  const [preview, setPreview] = useState<{
-    url: string;
-    text: string;
-    suggestedTitle?: string;
-    sourceKind: "webpage" | "instagram";
-  } | null>(null);
+  const [preview, setPreview] = useState<NormalizedExtraction | null>(null);
   const [extracting, setExtracting] = useState(false);
   const previewRef = useRef<HTMLDivElement>(null);
 
