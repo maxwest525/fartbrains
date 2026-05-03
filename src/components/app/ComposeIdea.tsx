@@ -89,6 +89,19 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
     sourceKind: "webpage" | "instagram";
   } | null>(null);
   const [extracting, setExtracting] = useState(false);
+  const previewRef = useRef<HTMLDivElement>(null);
+
+  // When the URL preview card appears, scroll it into view so the Save button
+  // isn't hidden behind the mobile bottom tab bar.
+  useEffect(() => {
+    if (preview && previewRef.current) {
+      // Wait one frame so layout settles before scrolling.
+      requestAnimationFrame(() => {
+        previewRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [preview?.url]);
 
   // Prompt optimizer state.
   const [promptTarget, setPromptTarget] = useState<string>(PROMPT_TARGETS[0].value);
@@ -888,7 +901,7 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
 
       {/* URL preview step — shows extracted readable text before saving. */}
       {needsUrl && preview && (
-        <div className="rounded-2xl border border-border/70 bg-secondary/30 p-3 sm:p-4 space-y-3">
+        <div ref={previewRef} className="rounded-2xl border border-border/70 bg-secondary/30 p-3 sm:p-4 space-y-3 scroll-mt-20">
           <div className="flex items-start gap-2">
             <div className="h-9 w-9 rounded-[10px] bg-primary/10 text-primary flex items-center justify-center shrink-0 mt-0.5">
               <FileText className="h-4 w-4" />
