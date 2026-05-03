@@ -825,7 +825,7 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
       {needsUrl && (
         <div className="space-y-1.5">
           <label className="block text-[11px] font-semibold uppercase tracking-wide text-muted-foreground px-1">
-            {source === "instagram" ? "Instagram URL" : "Website URL"}
+            URL
           </label>
           <Input
             ref={urlInputRef}
