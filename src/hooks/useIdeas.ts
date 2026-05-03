@@ -107,6 +107,7 @@ export function useCreateIdea() {
       source_type: SourceType;
       /** Human-readable source name shown in lists / detail (e.g. "Instagram"). */
       source_label?: string | null;
+      source_meta?: SourceMeta | null;
       extracted_text?: string | null;
       ai_summary?: string | null;
       folder_id?: string | null;
@@ -123,6 +124,7 @@ export function useCreateIdea() {
           source_url: payload.source_url ?? null,
           source_type: payload.source_type,
           source_label: payload.source_label ?? null,
+          source_meta: payload.source_meta ?? null,
           extracted_text: payload.extracted_text ?? null,
           ai_summary: payload.ai_summary ?? null,
           folder_id: payload.folder_id ?? null,
