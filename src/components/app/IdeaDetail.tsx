@@ -323,6 +323,9 @@ export const IdeaDetail = ({ ideaId, onClose, backLabel = "Back" }: Props) => {
           </h1>
         )}
 
+        <SourceMetaCard idea={idea} />
+
+
         <div className="flex items-center gap-2 flex-wrap">
           <span className="text-xs font-medium text-muted-foreground mr-1">Priority</span>
           <PrioritySelector
