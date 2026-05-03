@@ -14,6 +14,7 @@ import { SourcePicker, isSourceEnabled, type SourceKey } from "./SourcePicker";
 import { ProjectComposer } from "./ProjectComposer";
 import { TranscriptCaptureScreen } from "./TranscriptCaptureScreen";
 import { PROJECT_TAG } from "@/lib/deliverables";
+import { validateOptimizedPrompt, type ValidationResult } from "@/lib/promptValidation";
 
 const NO_FOLDER = "__none__";
 
@@ -93,6 +94,9 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
   const [promptTarget, setPromptTarget] = useState<string>(PROMPT_TARGETS[0].value);
   const [optimizedPrompt, setOptimizedPrompt] = useState<string | null>(null);
   const [optimizing, setOptimizing] = useState(false);
+  const [promptValidation, setPromptValidation] = useState<ValidationResult | null>(null);
+  const [overrideWarnings, setOverrideWarnings] = useState(false);
+  const [draftAtOptimize, setDraftAtOptimize] = useState<string>("");
 
   // Inline new-folder UI (triggered from chip).
   const [newFolderOpen, setNewFolderOpen] = useState(false);
@@ -134,6 +138,9 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
     setTitle("");
     setPreview(null);
     setOptimizedPrompt(null);
+    setPromptValidation(null);
+    setOverrideWarnings(false);
+    setDraftAtOptimize("");
   };
 
   const folderOrNull = (v: string) => (v === NO_FOLDER ? null : v);
@@ -336,7 +343,16 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
       if (data?.error) throw new Error(data.error);
       const optimized = (data?.optimized ?? "").trim();
       if (!optimized) throw new Error("AI returned an empty prompt. Try again.");
+      const result = validateOptimizedPrompt(optimized, draft);
+      setDraftAtOptimize(draft);
       setOptimizedPrompt(optimized);
+      setPromptValidation(result);
+      setOverrideWarnings(false);
+      if (!result.ok) {
+        toast.error("Optimized prompt failed safety checks — see details below.");
+      } else if (result.warnings.length > 0) {
+        toast.warning("Optimized prompt has warnings — review before saving.");
+      }
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Couldn't optimize prompt");
     } finally {
@@ -347,6 +363,17 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
   /** Save the optimized prompt as an idea (tagged "prompt"). */
   const handleSaveOptimizedPrompt = async () => {
     if (!optimizedPrompt || saving) return;
+    // Re-validate at save time in case the user edited the textarea after optimize.
+    const result = validateOptimizedPrompt(optimizedPrompt, draftAtOptimize || note.trim());
+    setPromptValidation(result);
+    if (!result.ok) {
+      toast.error("Can't save — fix the issues flagged below or re-optimize.");
+      return;
+    }
+    if (result.warnings.length > 0 && !overrideWarnings) {
+      toast.warning("Tap 'Save anyway' to confirm despite warnings.");
+      return;
+    }
     setSaving(true);
     try {
       const finalTitle = (
@@ -662,10 +689,58 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
 
             <Textarea
               value={optimizedPrompt}
-              onChange={(e) => setOptimizedPrompt(e.target.value)}
+              onChange={(e) => {
+                setOptimizedPrompt(e.target.value);
+                const r = validateOptimizedPrompt(e.target.value, draftAtOptimize || note.trim());
+                setPromptValidation(r);
+                setOverrideWarnings(false);
+              }}
               rows={10}
               className="rounded-xl bg-card border-border/60 text-[13.5px] leading-relaxed font-mono resize-y max-h-[50vh]"
             />
+
+            {promptValidation && (promptValidation.errors.length > 0 || promptValidation.warnings.length > 0) && (
+              <div
+                className={cn(
+                  "rounded-xl border p-3 space-y-2 text-[12.5px]",
+                  promptValidation.errors.length > 0
+                    ? "border-destructive/40 bg-destructive/10"
+                    : "border-amber-500/40 bg-amber-500/10",
+                )}
+              >
+                <div className="flex items-center gap-1.5 font-semibold">
+                  <AlertTriangle className={cn(
+                    "h-3.5 w-3.5",
+                    promptValidation.errors.length > 0 ? "text-destructive" : "text-amber-600",
+                  )} />
+                  <span>
+                    {promptValidation.errors.length > 0
+                      ? `${promptValidation.errors.length} issue${promptValidation.errors.length === 1 ? "" : "s"} blocking save`
+                      : `${promptValidation.warnings.length} warning${promptValidation.warnings.length === 1 ? "" : "s"}`}
+                  </span>
+                </div>
+                <ul className="space-y-1 pl-1">
+                  {[...promptValidation.errors, ...promptValidation.warnings].map((r) => (
+                    <li key={r.id} className="flex gap-2">
+                      <span className="opacity-60">•</span>
+                      <span>
+                        <span className="font-medium">{r.label}.</span>{" "}
+                        <span className="opacity-80">{r.description}</span>
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+                {promptValidation.errors.length === 0 && promptValidation.warnings.length > 0 && !overrideWarnings && (
+                  <button
+                    type="button"
+                    onClick={() => setOverrideWarnings(true)}
+                    className="text-[12px] font-semibold underline underline-offset-2 hover:opacity-80"
+                  >
+                    Save anyway
+                  </button>
+                )}
+              </div>
+            )}
           </div>
         )}
 
@@ -685,7 +760,12 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
             <Button
               type="button"
               onClick={handleSaveOptimizedPrompt}
-              disabled={saving || !optimizedPrompt.trim()}
+              disabled={
+                saving ||
+                !optimizedPrompt.trim() ||
+                (promptValidation ? !promptValidation.ok : false) ||
+                (promptValidation && promptValidation.warnings.length > 0 && !overrideWarnings)
+              }
               className="h-12 rounded-xl flex-[2] text-[16px] font-semibold"
             >
               {saving ? <Loader2 className="h-5 w-5 animate-spin" /> : "Save prompt"}
