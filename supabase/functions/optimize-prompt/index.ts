@@ -134,6 +134,42 @@ Deno.serve(async (req) => {
       );
     }
 
+    // Server-side safety net: mirror the client validation. Hard-blocks only —
+    // warnings are surfaced to the user and don't fail the request.
+    const MIN_LEN = 30;
+    const MAX_LEN = 12_000;
+    const MAX_LINES = 400;
+    const refusalPatterns = [
+      /\bas an ai (language )?model\b/i,
+      /\bi (?:cannot|can't|won'?t|am unable to)\b/i,
+      /\bi(?:'m| am) sorry,? but\b/i,
+      /\bi do not have the ability\b/i,
+    ];
+    const metaPatterns = [
+      /^\s*(here'?s|here is)\s+(your|the)\s+(optimized|rewritten|improved)/i,
+      /^\s*optimized prompt\s*:/i,
+      /^\s*rewritten prompt\s*:/i,
+      /^\s*sure[,!.]?\s+here/i,
+    ];
+    const violations: string[] = [];
+    if (optimized.length < MIN_LEN) violations.push(`too short (<${MIN_LEN} chars)`);
+    if (optimized.length > MAX_LEN) violations.push(`too long (>${MAX_LEN} chars)`);
+    if (optimized.split("\n").length > MAX_LINES) violations.push(`too many lines (>${MAX_LINES})`);
+    if (/^\s*```/.test(optimized) && /```\s*$/.test(optimized)) violations.push("wrapped in code fences");
+    if (metaPatterns.some((re) => re.test(optimized))) violations.push("contains meta preamble");
+    if (refusalPatterns.some((re) => re.test(optimized))) violations.push("contains refusal language");
+    if (/(.)\1{49,}/.test(optimized)) violations.push("runaway character repetition");
+
+    if (violations.length > 0) {
+      return new Response(
+        JSON.stringify({
+          error: `AI output failed safety checks: ${violations.join(", ")}. Try again.`,
+          violations,
+        }),
+        { status: 422, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
     return new Response(JSON.stringify({ optimized }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
