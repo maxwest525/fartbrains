@@ -363,6 +363,17 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
   /** Save the optimized prompt as an idea (tagged "prompt"). */
   const handleSaveOptimizedPrompt = async () => {
     if (!optimizedPrompt || saving) return;
+    // Re-validate at save time in case the user edited the textarea after optimize.
+    const result = validateOptimizedPrompt(optimizedPrompt, draftAtOptimize || note.trim());
+    setPromptValidation(result);
+    if (!result.ok) {
+      toast.error("Can't save — fix the issues flagged below or re-optimize.");
+      return;
+    }
+    if (result.warnings.length > 0 && !overrideWarnings) {
+      toast.warning("Tap 'Save anyway' to confirm despite warnings.");
+      return;
+    }
     setSaving(true);
     try {
       const finalTitle = (
