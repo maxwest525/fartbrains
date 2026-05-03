@@ -116,6 +116,26 @@ export const SettingsSheet = ({ open, onOpenChange }: Props) => {
             )}
           </div>
 
+          {/* Rules & references block */}
+          <div className="mt-5 rounded-2xl bg-card border border-border/60 divide-y divide-border/60 overflow-hidden">
+            <Link
+              to="/settings/prompt-rules"
+              onClick={() => onOpenChange(false)}
+              className="w-full flex items-center gap-3 px-4 py-3 press"
+            >
+              <div className="h-10 w-10 rounded-full bg-primary/10 text-primary flex items-center justify-center">
+                <ShieldCheck className="h-5 w-5" />
+              </div>
+              <div className="flex-1 min-w-0 text-left">
+                <p className="text-sm font-medium">Prompt rules</p>
+                <p className="text-xs text-muted-foreground truncate">
+                  Safety checks the optimizer must pass
+                </p>
+              </div>
+              <ChevronRight className="h-4 w-4 text-muted-foreground" />
+            </Link>
+          </div>
+
           {/* About block */}
           <div className="mt-5 rounded-2xl bg-card border border-border/60 px-4 py-3 flex items-center gap-3">
             <div className="h-10 w-10 rounded-full bg-accent/15 text-accent flex items-center justify-center">
