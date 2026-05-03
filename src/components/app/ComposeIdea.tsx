@@ -760,7 +760,12 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
             <Button
               type="button"
               onClick={handleSaveOptimizedPrompt}
-              disabled={saving || !optimizedPrompt.trim()}
+              disabled={
+                saving ||
+                !optimizedPrompt.trim() ||
+                (promptValidation ? !promptValidation.ok : false) ||
+                (promptValidation && promptValidation.warnings.length > 0 && !overrideWarnings)
+              }
               className="h-12 rounded-xl flex-[2] text-[16px] font-semibold"
             >
               {saving ? <Loader2 className="h-5 w-5 animate-spin" /> : "Save prompt"}
