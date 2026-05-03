@@ -132,3 +132,18 @@ export function normalizeExtraction(
   }
   return normalized;
 }
+
+/**
+ * Map a normalized source kind to the prompt-style the `summarize` edge
+ * function expects. Audio-bearing platforms (Instagram, TikTok, YouTube) feed
+ * transcript-shaped content; everything else is treated as article text.
+ *
+ * Centralized here so callers don't reinvent ad-hoc ternaries and so adding a
+ * new transcribed source is a one-line change.
+ */
+const TRANSCRIPT_SOURCES = new Set<NormalizedSourceKind>(["instagram", "tiktok", "youtube"]);
+
+export type SummarizeKind = "transcript" | "webpage";
+
+export const summarizeKindFor = (sourceKind: NormalizedSourceKind): SummarizeKind =>
+  TRANSCRIPT_SOURCES.has(sourceKind) ? "transcript" : "webpage";

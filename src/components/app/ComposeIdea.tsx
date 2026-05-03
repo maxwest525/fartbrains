@@ -15,7 +15,7 @@ import { ProjectComposer } from "./ProjectComposer";
 import { TranscriptCaptureScreen } from "./TranscriptCaptureScreen";
 import { PROJECT_TAG } from "@/lib/deliverables";
 import { validateOptimizedPrompt, type ValidationResult } from "@/lib/promptValidation";
-import { normalizeExtraction, type NormalizedExtraction } from "@/lib/extractedContent";
+import { normalizeExtraction, summarizeKindFor, type NormalizedExtraction } from "@/lib/extractedContent";
 
 const NO_FOLDER = "__none__";
 
@@ -323,7 +323,7 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
       let aiTitle: string | undefined;
       try {
         const { data: sum, error: sumErr } = await supabase.functions.invoke("summarize", {
-          body: { text: preview.text, kind: preview.sourceKind === "instagram" ? "transcript" : "webpage" },
+          body: { text: preview.text, kind: summarizeKindFor(preview.sourceKind) },
         });
         if (sumErr) throw new Error(sumErr.message);
         if (sum?.error) throw new Error(sum.error);
