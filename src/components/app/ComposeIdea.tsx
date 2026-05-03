@@ -343,7 +343,16 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
       if (data?.error) throw new Error(data.error);
       const optimized = (data?.optimized ?? "").trim();
       if (!optimized) throw new Error("AI returned an empty prompt. Try again.");
+      const result = validateOptimizedPrompt(optimized, draft);
+      setDraftAtOptimize(draft);
       setOptimizedPrompt(optimized);
+      setPromptValidation(result);
+      setOverrideWarnings(false);
+      if (!result.ok) {
+        toast.error("Optimized prompt failed safety checks — see details below.");
+      } else if (result.warnings.length > 0) {
+        toast.warning("Optimized prompt has warnings — review before saving.");
+      }
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Couldn't optimize prompt");
     } finally {
