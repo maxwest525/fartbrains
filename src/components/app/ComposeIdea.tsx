@@ -14,6 +14,7 @@ import { SourcePicker, isSourceEnabled, type SourceKey } from "./SourcePicker";
 import { ProjectComposer } from "./ProjectComposer";
 import { TranscriptCaptureScreen } from "./TranscriptCaptureScreen";
 import { PROJECT_TAG } from "@/lib/deliverables";
+import { validateOptimizedPrompt, type ValidationResult } from "@/lib/promptValidation";
 
 const NO_FOLDER = "__none__";
 
