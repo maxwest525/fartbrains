@@ -80,6 +80,7 @@ export const MobileHome = ({ captureSlot, onOpenFolder, onSelectIdea, onSeeAllRe
 
   return (
     <div className="px-4 pt-4 pb-2 space-y-5">
+      <PushEnableBanner />
       {/* Folders section */}
       <section>
         <div className="flex items-end justify-between mb-3 px-0.5">
