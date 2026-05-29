@@ -1,5 +1,6 @@
-import { LogOut, Mail, Sparkles, Bell, BellOff, Loader2, ShieldCheck, ChevronRight, CheckCircle2, AlertTriangle, XCircle, HelpCircle } from "lucide-react";
+import { LogOut, Mail, Sparkles, Bell, BellOff, Loader2, ShieldCheck, ChevronRight, CheckCircle2, AlertTriangle, XCircle, HelpCircle, Send } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useState } from "react";
 import {
   Sheet,
   SheetContent,
@@ -10,6 +11,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { usePushSubscription } from "@/hooks/usePushSubscription";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 type Props = {
   open: boolean;
@@ -24,6 +27,29 @@ type Props = {
 export const SettingsSheet = ({ open, onOpenChange }: Props) => {
   const { user, signOut } = useAuth();
   const push = usePushSubscription();
+  const [testing, setTesting] = useState(false);
+
+  const sendTest = async () => {
+    setTesting(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("send-test-push");
+      if (error) throw error;
+      if (data?.sent > 0) {
+        toast.success(
+          data.sent === 1
+            ? "Test sent — check your notifications."
+            : `Test sent to ${data.sent} devices.`,
+        );
+      } else {
+        toast.error(data?.reason ?? "No devices got the test push.");
+      }
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Couldn't send test push");
+    } finally {
+      setTesting(false);
+    }
+  };
+
 
   const isiOS = typeof navigator !== "undefined" && /iPad|iPhone|iPod/.test(navigator.userAgent);
   const isStandalone =
@@ -221,6 +247,30 @@ export const SettingsSheet = ({ open, onOpenChange }: Props) => {
                   ))}
                 </ul>
               </div>
+            )}
+
+            {push.state === "subscribed" && (
+              <button
+                type="button"
+                onClick={sendTest}
+                disabled={testing}
+                className="w-full border-t border-border/60 px-4 py-3 flex items-center gap-3 press text-left disabled:opacity-60"
+              >
+                <div className="h-9 w-9 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                  {testing ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Send className="h-4 w-4" />
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium">Send test notification</p>
+                  <p className="text-[11px] text-muted-foreground">
+                    Fires a push to every device you've enabled.
+                  </p>
+                </div>
+                <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
+              </button>
             )}
           </div>
 
