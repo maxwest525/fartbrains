@@ -32,6 +32,9 @@ import { cn } from "@/lib/utils";
 import { formatReminder } from "@/lib/formatTime";
 import { useUpdateIdea } from "@/hooks/useIdeas";
 import { openPhoneAlarm } from "@/lib/phoneAlarm";
+import { usePushSubscription } from "@/hooks/usePushSubscription";
+
+const AUTO_PROMPT_KEY = "push-auto-prompted-v1";
 
 type Props = {
   open: boolean;
