@@ -1,13 +1,14 @@
-import { Inbox, Folder, Clock, Settings as SettingsIcon } from "lucide-react";
+import { Inbox, Folder, Clock, CalendarDays, Settings as SettingsIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { IdeaFilter } from "@/hooks/useIdeas";
 
 type Props = {
   filter: IdeaFilter;
-  /** Which top-level view is active. Used so the Folders tab highlights when on the Folders page. */
-  view: "ideas" | "folders";
+  /** Which top-level view is active. */
+  view: "ideas" | "folders" | "calendar";
   onFilterChange: (f: IdeaFilter) => void;
   onOpenFolders: () => void;
+  onOpenCalendar: () => void;
   onOpenSettings: () => void;
 };
 
@@ -36,13 +37,12 @@ const Tab = ({
 );
 
 /**
- * iOS-style bottom tab bar. Four equal tabs: Ideas, Folders, History, Settings.
- * Folders opens the sidebar drawer (where folder list lives); Settings opens
- * a dedicated sheet handled by the parent.
+ * iOS-style bottom tab bar. Five tabs: Capture, Recents, Calendar, Folders, Settings.
  */
-export const MobileTabBar = ({ filter, view, onFilterChange, onOpenFolders, onOpenSettings }: Props) => {
+export const MobileTabBar = ({ filter, view, onFilterChange, onOpenFolders, onOpenCalendar, onOpenSettings }: Props) => {
   const isAll = view === "ideas" && filter.kind === "all";
   const isFolders = view === "folders";
+  const isCalendar = view === "calendar";
   const isHistory = view === "ideas" && filter.kind === "recent";
 
   return (
@@ -53,6 +53,7 @@ export const MobileTabBar = ({ filter, view, onFilterChange, onOpenFolders, onOp
       <div className="flex items-stretch h-[50px]">
         <Tab active={isAll} icon={Inbox} label="Capture" onClick={() => onFilterChange({ kind: "all" })} />
         <Tab active={isHistory} icon={Clock} label="Recents" onClick={() => onFilterChange({ kind: "recent" })} />
+        <Tab active={isCalendar} icon={CalendarDays} label="Calendar" onClick={onOpenCalendar} />
         <Tab active={isFolders} icon={Folder} label="Folders" onClick={onOpenFolders} />
         <Tab active={false} icon={SettingsIcon} label="Settings" onClick={onOpenSettings} />
       </div>

@@ -97,9 +97,7 @@ export function useReminderNotifier() {
           const when =
             lead === 0
               ? "TODAY"
-              : lead === 1
-                ? "tomorrow"
-                : `in ${lead} days`;
+              : `in ${lead} days`;
           const title = `${ev.emoji ?? "📅"} ${ev.name}`;
           const body = lead === 0 ? `It's today!${ageSuffix}` : `Heads up — ${when}${ageSuffix}`;
 
