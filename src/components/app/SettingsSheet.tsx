@@ -27,6 +27,29 @@ type Props = {
 export const SettingsSheet = ({ open, onOpenChange }: Props) => {
   const { user, signOut } = useAuth();
   const push = usePushSubscription();
+  const [testing, setTesting] = useState(false);
+
+  const sendTest = async () => {
+    setTesting(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("send-test-push");
+      if (error) throw error;
+      if (data?.sent > 0) {
+        toast.success(
+          data.sent === 1
+            ? "Test sent — check your notifications."
+            : `Test sent to ${data.sent} devices.`,
+        );
+      } else {
+        toast.error(data?.reason ?? "No devices got the test push.");
+      }
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Couldn't send test push");
+    } finally {
+      setTesting(false);
+    }
+  };
+
 
   const isiOS = typeof navigator !== "undefined" && /iPad|iPhone|iPod/.test(navigator.userAgent);
   const isStandalone =
