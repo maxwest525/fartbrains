@@ -245,9 +245,16 @@ const Shell = () => {
           />
         )}
 
+        {/* Calendar page — full-width when active */}
+        {showCalendar && (
+          <CalendarPage onBack={isMobile ? () => setView("ideas") : undefined} />
+        )}
+
+
+
 
         {/* Capture view — compose only, full width. Shown when filter is "all" (the default landing). */}
-        {!showFolders && !showDetailOnly && filter.kind === "all" && (
+        {!showFolders && !showCalendar && !showDetailOnly && filter.kind === "all" && (
           <div className="w-full flex-1 min-w-0 flex flex-col min-h-0 bg-background overflow-y-auto scroll-momentum touch-pan-y pb-[calc(5.75rem+env(safe-area-inset-bottom))] md:pb-6">
             <div className="w-full px-3 sm:px-6 lg:px-10 pt-3 sm:pt-4">
               <div className="relative max-w-xl mx-auto">
@@ -297,7 +304,7 @@ const Shell = () => {
         )}
 
         {/* Browse view — flat list of ideas (Recents, Favorites, Folder-filtered, Search). */}
-        {!showFolders && !showDetailOnly && filter.kind !== "all" && (
+        {!showFolders && !showCalendar && !showDetailOnly && filter.kind !== "all" && (
           <div className="w-full flex-1 min-w-0 md:w-[28rem] md:flex-none md:shrink-0 md:border-r border-border flex flex-col min-h-0 bg-background md:overflow-hidden overflow-y-auto scroll-momentum touch-pan-y pb-[calc(5.75rem+env(safe-area-inset-bottom))] md:pb-0">
             <div className="md:flex-1 md:min-h-0 md:overflow-hidden">
               <IdeaList
@@ -313,7 +320,7 @@ const Shell = () => {
         )}
 
         {/* Detail — desktop always shows, mobile only when an idea is selected */}
-        {!showFolders && (!isMobile || showDetailOnly) && (
+        {!showFolders && !showCalendar && (!isMobile || showDetailOnly) && (
           <IdeaDetail ideaId={selectedId} onClose={() => setSelectedId(null)} backLabel={backLabel} />
         )}
       </div>
@@ -322,9 +329,10 @@ const Shell = () => {
       {isMobile && !showDetailOnly && (
         <MobileTabBar
           filter={filter}
-          view={view === "folders" ? "folders" : "ideas"}
+          view={view === "folders" ? "folders" : view === "calendar" ? "calendar" : "ideas"}
           onFilterChange={handleFilterChange}
           onOpenFolders={openFoldersPage}
+          onOpenCalendar={openCalendarPage}
           onOpenSettings={() => setSettingsOpen(true)}
         />
       )}
