@@ -248,6 +248,30 @@ export const SettingsSheet = ({ open, onOpenChange }: Props) => {
                 </ul>
               </div>
             )}
+
+            {push.state === "subscribed" && (
+              <button
+                type="button"
+                onClick={sendTest}
+                disabled={testing}
+                className="w-full border-t border-border/60 px-4 py-3 flex items-center gap-3 press text-left disabled:opacity-60"
+              >
+                <div className="h-9 w-9 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                  {testing ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Send className="h-4 w-4" />
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium">Send test notification</p>
+                  <p className="text-[11px] text-muted-foreground">
+                    Fires a push to every device you've enabled.
+                  </p>
+                </div>
+                <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
+              </button>
+            )}
           </div>
 
 
