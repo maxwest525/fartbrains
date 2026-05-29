@@ -93,8 +93,14 @@ const Shell = () => {
     setSelectedId(null);
   };
 
+  const openCalendarPage = () => {
+    setView("calendar");
+    setSelectedId(null);
+  };
+
   const showDetailOnly = isMobile && selectedId !== null;
   const showFolders = view === "folders" && !showDetailOnly;
+  const showCalendar = view === "calendar" && !showDetailOnly;
   const defaultFolderId = filter.kind === "folder" ? filter.folderId : null;
 
   const activeFolderName =
@@ -120,6 +126,12 @@ const Shell = () => {
       icon: Clock,
       active: view === "ideas" && filter.kind === "recent",
       onClick: () => handleFilterChange({ kind: "recent" }),
+    },
+    {
+      label: "Calendar",
+      icon: CalendarDays,
+      active: view === "calendar",
+      onClick: openCalendarPage,
     },
     {
       label: activeFolderName ?? "Folders",
