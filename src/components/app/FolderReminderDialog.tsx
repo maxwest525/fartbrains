@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { Bell, BellOff } from "lucide-react";
+import { Bell, BellOff, AlarmClock } from "lucide-react";
+import { openPhoneAlarm } from "@/lib/phoneAlarm";
 import {
   Dialog,
   DialogContent,
@@ -79,6 +80,24 @@ export const FolderReminderDialog = ({ open, onOpenChange, folder }: Props) => {
             {formatReminder(fromLocalInputValue(value) ?? new Date().toISOString())}
           </p>
         )}
+        <Button
+          type="button"
+          variant="outline"
+          className="w-full h-11 rounded-xl"
+          disabled={!value}
+          onClick={() => {
+            const iso = fromLocalInputValue(value);
+            if (!iso) return;
+            openPhoneAlarm(new Date(iso), folder.name);
+          }}
+        >
+          <AlarmClock className="h-4 w-4 mr-1.5" />
+          Set phone alarm
+        </Button>
+        <p className="text-[11px] text-muted-foreground -mt-1 text-center">
+          Opens your Clock app pre-filled. Tap Save there for a real alarm.
+        </p>
+
         <DialogFooter className="gap-2 sm:gap-0">
           {folder.remind_at && (
             <Button variant="ghost" onClick={clear} disabled={setReminder.isPending}>
