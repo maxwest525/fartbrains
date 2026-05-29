@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { Bell, BellOff, AlarmClock } from "lucide-react";
 import { openPhoneAlarm } from "@/lib/phoneAlarm";
-import { fromLocalInputValue as _f } from "@/lib/formatTime";
 import {
   Dialog,
   DialogContent,
@@ -138,7 +137,7 @@ export const IdeaReminderDialog = ({ open, onOpenChange, idea }: Props) => {
           className="w-full h-11 rounded-xl"
           disabled={!value}
           onClick={() => {
-            const iso = _f(value);
+            const iso = fromLocalInputValue(value);
             if (!iso) return;
             openPhoneAlarm(new Date(iso), idea.title);
           }}
