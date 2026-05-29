@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { Search, X, Inbox, Folder, Star, Clock, Settings as SettingsIcon, LogOut } from "lucide-react";
+import { Search, X, Inbox, Folder, Star, Clock, CalendarDays, Settings as SettingsIcon, LogOut } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { IdeaList } from "@/components/app/IdeaList";
 import { IdeaDetail } from "@/components/app/IdeaDetail";
@@ -8,6 +8,7 @@ import { MovieTicker } from "@/components/app/MovieTicker";
 import { MobileTabBar } from "@/components/app/MobileTabBar";
 import { SettingsSheet } from "@/components/app/SettingsSheet";
 import { FoldersPage } from "@/components/app/FoldersPage";
+import { CalendarPage } from "@/components/app/CalendarPage";
 import { AlarmOverlay } from "@/components/app/AlarmOverlay";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -18,7 +19,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import type { IdeaFilter } from "@/hooks/useIdeas";
 
-type View = "ideas" | "folders";
+type View = "ideas" | "folders" | "calendar";
 
 const Shell = () => {
   const [view, setView] = useState<View>("ideas");
