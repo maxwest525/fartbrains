@@ -1,5 +1,6 @@
-import { LogOut, Mail, Sparkles, Bell, BellOff, Loader2, ShieldCheck, ChevronRight, CheckCircle2, AlertTriangle, XCircle, HelpCircle } from "lucide-react";
+import { LogOut, Mail, Sparkles, Bell, BellOff, Loader2, ShieldCheck, ChevronRight, CheckCircle2, AlertTriangle, XCircle, HelpCircle, Send } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useState } from "react";
 import {
   Sheet,
   SheetContent,
@@ -10,6 +11,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { usePushSubscription } from "@/hooks/usePushSubscription";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 type Props = {
   open: boolean;
