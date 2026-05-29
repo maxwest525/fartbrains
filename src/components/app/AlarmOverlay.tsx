@@ -28,10 +28,13 @@ export const AlarmOverlay = () => {
 
   // Subscribe to bus
   useEffect(() => {
-    return alarmBus.subscribe((p) => {
+    const unsub = alarmBus.subscribe((p) => {
       setPayload(p);
       setActive(true);
     });
+    return () => {
+      unsub();
+    };
   }, []);
 
   // Start / stop siren when active changes
