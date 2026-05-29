@@ -1,4 +1,4 @@
-import { LogOut, Mail, Sparkles, Bell, BellOff, Loader2, ShieldCheck, ChevronRight } from "lucide-react";
+import { LogOut, Mail, Sparkles, Bell, BellOff, Loader2, ShieldCheck, ChevronRight, CheckCircle2, AlertTriangle, XCircle, HelpCircle } from "lucide-react";
 import { Link } from "react-router-dom";
 import {
   Sheet,
@@ -25,20 +25,87 @@ export const SettingsSheet = ({ open, onOpenChange }: Props) => {
   const { user, signOut } = useAuth();
   const push = usePushSubscription();
 
-  const pushLabel = (() => {
+  const isiOS = typeof navigator !== "undefined" && /iPad|iPhone|iPod/.test(navigator.userAgent);
+  const isStandalone =
+    typeof window !== "undefined" &&
+    (window.matchMedia?.("(display-mode: standalone)").matches ||
+      // @ts-expect-error iOS Safari only
+      window.navigator.standalone === true);
+
+  // Map current push state → status badge + step-by-step fix instructions.
+  const statusMeta = (() => {
     switch (push.state) {
       case "loading":
-        return "Checking…";
-      case "unsupported":
-        return "Not supported in this browser";
-      case "denied":
-        return "Blocked — enable in browser settings";
+        return {
+          label: "Checking…",
+          tone: "muted" as const,
+          Icon: Loader2,
+          spin: true,
+          steps: null,
+        };
       case "subscribed":
-        return "On for this device";
+        return {
+          label: "Enabled on this device",
+          tone: "ok" as const,
+          Icon: CheckCircle2,
+          steps: [
+            "Reminders will fire here even when the tab is closed or your phone is locked.",
+            "Enable on each browser/device you want alerts on.",
+          ],
+        };
       case "unsubscribed":
-        return "Off — enable to get reminders";
+        return {
+          label: "Disabled",
+          tone: "warn" as const,
+          Icon: BellOff,
+          steps: [
+            "Tap Enable below.",
+            "Approve the browser permission prompt that appears.",
+            "Keep this site bookmarked / installed so the device stays subscribed.",
+          ],
+        };
+      case "denied":
+        return {
+          label: "Blocked by browser",
+          tone: "error" as const,
+          Icon: XCircle,
+          steps: isiOS
+            ? [
+                "Open iOS Settings → Safari → Advanced → Website Data and remove this site, or:",
+                "Tap the AA / share icon in the address bar → Website Settings → set Notifications to Allow.",
+                "Return here and tap Enable.",
+              ]
+            : [
+                "Tap the lock / tune icon in your browser's address bar.",
+                "Find Notifications and switch it from Block to Allow.",
+                "Reload the page, then tap Enable.",
+              ],
+        };
+      case "unsupported":
+        return {
+          label: "Not supported in this browser",
+          tone: "error" as const,
+          Icon: AlertTriangle,
+          steps: isiOS && !isStandalone
+            ? [
+                "iOS only delivers web push to installed apps.",
+                "Tap the Share icon in Safari → Add to Home Screen.",
+                "Open the app from your Home Screen, then come back to Settings and tap Enable.",
+              ]
+            : [
+                "Use Chrome, Edge, Firefox, or Safari (latest version) on this device.",
+                "On iPhone/iPad, install this site to your Home Screen first.",
+              ],
+        };
     }
   })();
+
+  const toneClasses: Record<string, string> = {
+    ok: "bg-[hsl(140_70%_45%/0.12)] text-[hsl(140_70%_35%)] border-[hsl(140_70%_45%/0.25)]",
+    warn: "bg-accent/15 text-accent border-accent/30",
+    error: "bg-destructive/10 text-destructive border-destructive/25",
+    muted: "bg-muted text-muted-foreground border-border",
+  };
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -76,45 +143,87 @@ export const SettingsSheet = ({ open, onOpenChange }: Props) => {
             </button>
           </div>
 
-          {/* Notifications block */}
-          <div className="mt-5 rounded-2xl bg-card border border-border/60 px-4 py-3 flex items-center gap-3">
-            <div className="h-10 w-10 rounded-full bg-accent/15 text-accent flex items-center justify-center">
+          {/* Notifications block — explicit status + fix steps */}
+          <div className="mt-5 rounded-2xl bg-card border border-border/60 overflow-hidden">
+            <div className="px-4 pt-4 pb-3 flex items-start gap-3">
+              <div className="h-10 w-10 rounded-full bg-accent/15 text-accent flex items-center justify-center shrink-0">
+                {push.state === "subscribed" ? (
+                  <Bell className="h-5 w-5" />
+                ) : (
+                  <BellOff className="h-5 w-5" />
+                )}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium">Push notifications</p>
+                <p className="text-[11px] text-muted-foreground mt-0.5">
+                  Reminders that fire on your phone with the tab closed.
+                </p>
+                <div
+                  className={`mt-2 inline-flex items-center gap-1.5 h-7 pl-2 pr-2.5 rounded-full border text-[12px] font-medium ${toneClasses[statusMeta.tone]}`}
+                >
+                  <statusMeta.Icon
+                    className={`h-3.5 w-3.5 ${statusMeta.spin ? "animate-spin" : ""}`}
+                  />
+                  {statusMeta.label}
+                </div>
+              </div>
               {push.state === "subscribed" ? (
-                <Bell className="h-5 w-5" />
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="rounded-full shrink-0"
+                  onClick={push.unsubscribe}
+                  disabled={push.busy}
+                >
+                  {push.busy ? <Loader2 className="h-4 w-4 animate-spin" /> : "Disable"}
+                </Button>
               ) : (
-                <BellOff className="h-5 w-5" />
+                <Button
+                  size="sm"
+                  className="rounded-full shrink-0"
+                  onClick={push.subscribe}
+                  disabled={
+                    push.busy ||
+                    push.state === "loading" ||
+                    push.state === "unsupported" ||
+                    push.state === "denied"
+                  }
+                >
+                  {push.busy ? <Loader2 className="h-4 w-4 animate-spin" /> : "Enable"}
+                </Button>
               )}
             </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium">Push notifications</p>
-              <p className="text-xs text-muted-foreground truncate">{pushLabel}</p>
-            </div>
-            {push.state === "subscribed" ? (
-              <Button
-                variant="outline"
-                size="sm"
-                className="rounded-full"
-                onClick={push.unsubscribe}
-                disabled={push.busy}
-              >
-                {push.busy ? <Loader2 className="h-4 w-4 animate-spin" /> : "Disable"}
-              </Button>
-            ) : (
-              <Button
-                size="sm"
-                className="rounded-full"
-                onClick={push.subscribe}
-                disabled={
-                  push.busy ||
-                  push.state === "loading" ||
-                  push.state === "unsupported" ||
-                  push.state === "denied"
-                }
-              >
-                {push.busy ? <Loader2 className="h-4 w-4 animate-spin" /> : "Enable"}
-              </Button>
+
+            {statusMeta.steps && statusMeta.tone !== "ok" && (
+              <div className="border-t border-border/60 bg-secondary/40 px-4 py-3">
+                <div className="flex items-center gap-1.5 mb-1.5">
+                  <HelpCircle className="h-3.5 w-3.5 text-muted-foreground" />
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                    How to fix
+                  </p>
+                </div>
+                <ol className="space-y-1 text-[12.5px] text-foreground/85 list-decimal pl-4 leading-snug">
+                  {statusMeta.steps.map((s, i) => (
+                    <li key={i}>{s}</li>
+                  ))}
+                </ol>
+              </div>
+            )}
+
+            {statusMeta.steps && statusMeta.tone === "ok" && (
+              <div className="border-t border-border/60 bg-secondary/30 px-4 py-3">
+                <ul className="space-y-1 text-[12.5px] text-muted-foreground leading-snug">
+                  {statusMeta.steps.map((s, i) => (
+                    <li key={i} className="flex gap-2">
+                      <CheckCircle2 className="h-3.5 w-3.5 text-[hsl(140_70%_45%)] shrink-0 mt-0.5" />
+                      <span>{s}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
             )}
           </div>
+
 
           {/* Rules & references block */}
           <div className="mt-5 rounded-2xl bg-card border border-border/60 divide-y divide-border/60 overflow-hidden">
