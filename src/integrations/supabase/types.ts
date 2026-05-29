@@ -14,6 +14,51 @@ export type Database = {
   }
   public: {
     Tables: {
+      calendar_events: {
+        Row: {
+          birth_year: number | null
+          created_at: string
+          day: number | null
+          emoji: string | null
+          event_type: string
+          floating_key: string | null
+          id: string
+          month: number | null
+          name: string
+          notes: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          birth_year?: number | null
+          created_at?: string
+          day?: number | null
+          emoji?: string | null
+          event_type: string
+          floating_key?: string | null
+          id?: string
+          month?: number | null
+          name: string
+          notes?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          birth_year?: number | null
+          created_at?: string
+          day?: number | null
+          emoji?: string | null
+          event_type?: string
+          floating_key?: string | null
+          id?: string
+          month?: number | null
+          name?: string
+          notes?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       email_send_log: {
         Row: {
           created_at: string
