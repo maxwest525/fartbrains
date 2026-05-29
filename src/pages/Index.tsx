@@ -157,7 +157,7 @@ const Shell = () => {
       )}
 
       {/* Top bar — search + (desktop) inline nav. Hidden on mobile when viewing detail or the folders page (folders has its own header). */}
-      {!showDetailOnly && !(isMobile && showFolders) && (
+      {!showDetailOnly && !(isMobile && showFolders) && !(isMobile && showCalendar) && (
         <header className={cn(
           "sticky top-0 z-20 bg-background/80 backdrop-blur-xl border-b border-border",
           filter.kind !== "all" && "safe-top"
