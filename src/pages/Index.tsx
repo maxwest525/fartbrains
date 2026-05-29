@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { Search, X, Inbox, Folder, Star, Clock, Settings as SettingsIcon, LogOut } from "lucide-react";
+import { Search, X, Inbox, Folder, Star, Clock, CalendarDays, Settings as SettingsIcon, LogOut } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { IdeaList } from "@/components/app/IdeaList";
 import { IdeaDetail } from "@/components/app/IdeaDetail";
@@ -8,6 +8,7 @@ import { MovieTicker } from "@/components/app/MovieTicker";
 import { MobileTabBar } from "@/components/app/MobileTabBar";
 import { SettingsSheet } from "@/components/app/SettingsSheet";
 import { FoldersPage } from "@/components/app/FoldersPage";
+import { CalendarPage } from "@/components/app/CalendarPage";
 import { AlarmOverlay } from "@/components/app/AlarmOverlay";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -18,7 +19,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import type { IdeaFilter } from "@/hooks/useIdeas";
 
-type View = "ideas" | "folders";
+type View = "ideas" | "folders" | "calendar";
 
 const Shell = () => {
   const [view, setView] = useState<View>("ideas");
@@ -92,8 +93,14 @@ const Shell = () => {
     setSelectedId(null);
   };
 
+  const openCalendarPage = () => {
+    setView("calendar");
+    setSelectedId(null);
+  };
+
   const showDetailOnly = isMobile && selectedId !== null;
   const showFolders = view === "folders" && !showDetailOnly;
+  const showCalendar = view === "calendar" && !showDetailOnly;
   const defaultFolderId = filter.kind === "folder" ? filter.folderId : null;
 
   const activeFolderName =
@@ -121,6 +128,12 @@ const Shell = () => {
       onClick: () => handleFilterChange({ kind: "recent" }),
     },
     {
+      label: "Calendar",
+      icon: CalendarDays,
+      active: view === "calendar",
+      onClick: openCalendarPage,
+    },
+    {
       label: activeFolderName ?? "Folders",
       icon: Folder,
       active: view === "folders" || filter.kind === "folder",
@@ -137,14 +150,14 @@ const Shell = () => {
   return (
     <div className="flex flex-col h-[100dvh] w-full bg-background overflow-hidden relative">
       {/* Movie ticker — pinned at the very top on the Capture view, above the header. */}
-      {!showDetailOnly && !showFolders && filter.kind === "all" && (
+      {!showDetailOnly && !showFolders && !showCalendar && filter.kind === "all" && (
         <div className="safe-top bg-background pt-2 sm:pt-3">
           <MovieTicker />
         </div>
       )}
 
       {/* Top bar — search + (desktop) inline nav. Hidden on mobile when viewing detail or the folders page (folders has its own header). */}
-      {!showDetailOnly && !(isMobile && showFolders) && (
+      {!showDetailOnly && !(isMobile && showFolders) && !(isMobile && showCalendar) && (
         <header className={cn(
           "sticky top-0 z-20 bg-background/80 backdrop-blur-xl border-b border-border",
           filter.kind !== "all" && "safe-top"
@@ -232,9 +245,16 @@ const Shell = () => {
           />
         )}
 
+        {/* Calendar page — full-width when active */}
+        {showCalendar && (
+          <CalendarPage onBack={isMobile ? () => setView("ideas") : undefined} />
+        )}
+
+
+
 
         {/* Capture view — compose only, full width. Shown when filter is "all" (the default landing). */}
-        {!showFolders && !showDetailOnly && filter.kind === "all" && (
+        {!showFolders && !showCalendar && !showDetailOnly && filter.kind === "all" && (
           <div className="w-full flex-1 min-w-0 flex flex-col min-h-0 bg-background overflow-y-auto scroll-momentum touch-pan-y pb-[calc(5.75rem+env(safe-area-inset-bottom))] md:pb-6">
             <div className="w-full px-3 sm:px-6 lg:px-10 pt-3 sm:pt-4">
               <div className="relative max-w-xl mx-auto">
@@ -284,7 +304,7 @@ const Shell = () => {
         )}
 
         {/* Browse view — flat list of ideas (Recents, Favorites, Folder-filtered, Search). */}
-        {!showFolders && !showDetailOnly && filter.kind !== "all" && (
+        {!showFolders && !showCalendar && !showDetailOnly && filter.kind !== "all" && (
           <div className="w-full flex-1 min-w-0 md:w-[28rem] md:flex-none md:shrink-0 md:border-r border-border flex flex-col min-h-0 bg-background md:overflow-hidden overflow-y-auto scroll-momentum touch-pan-y pb-[calc(5.75rem+env(safe-area-inset-bottom))] md:pb-0">
             <div className="md:flex-1 md:min-h-0 md:overflow-hidden">
               <IdeaList
@@ -300,7 +320,7 @@ const Shell = () => {
         )}
 
         {/* Detail — desktop always shows, mobile only when an idea is selected */}
-        {!showFolders && (!isMobile || showDetailOnly) && (
+        {!showFolders && !showCalendar && (!isMobile || showDetailOnly) && (
           <IdeaDetail ideaId={selectedId} onClose={() => setSelectedId(null)} backLabel={backLabel} />
         )}
       </div>
@@ -309,9 +329,10 @@ const Shell = () => {
       {isMobile && !showDetailOnly && (
         <MobileTabBar
           filter={filter}
-          view={view === "folders" ? "folders" : "ideas"}
+          view={view === "folders" ? "folders" : view === "calendar" ? "calendar" : "ideas"}
           onFilterChange={handleFilterChange}
           onOpenFolders={openFoldersPage}
+          onOpenCalendar={openCalendarPage}
           onOpenSettings={() => setSettingsOpen(true)}
         />
       )}
