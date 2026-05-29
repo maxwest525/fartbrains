@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { PushEnableBanner } from "./PushEnableBanner";
 
 /** Stable hue per folder id so each tile carries its own accent color. */
 const hashHue = (id: string): number => {
