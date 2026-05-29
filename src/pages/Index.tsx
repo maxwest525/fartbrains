@@ -8,6 +8,7 @@ import { MovieTicker } from "@/components/app/MovieTicker";
 import { MobileTabBar } from "@/components/app/MobileTabBar";
 import { SettingsSheet } from "@/components/app/SettingsSheet";
 import { FoldersPage } from "@/components/app/FoldersPage";
+import { AlarmOverlay } from "@/components/app/AlarmOverlay";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useAuth } from "@/hooks/useAuth";
@@ -316,7 +317,9 @@ const Shell = () => {
       )}
 
       <SettingsSheet open={settingsOpen} onOpenChange={setSettingsOpen} />
+      <AlarmOverlay />
     </div>
+
   );
 };
 
