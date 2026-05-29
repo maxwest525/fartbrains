@@ -150,7 +150,7 @@ const Shell = () => {
   return (
     <div className="flex flex-col h-[100dvh] w-full bg-background overflow-hidden relative">
       {/* Movie ticker — pinned at the very top on the Capture view, above the header. */}
-      {!showDetailOnly && !showFolders && filter.kind === "all" && (
+      {!showDetailOnly && !showFolders && !showCalendar && filter.kind === "all" && (
         <div className="safe-top bg-background pt-2 sm:pt-3">
           <MovieTicker />
         </div>
