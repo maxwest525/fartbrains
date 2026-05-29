@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { PushEnableBanner } from "./PushEnableBanner";
 
 /** Stable hue per folder id so each tile carries its own accent color. */
 const hashHue = (id: string): number => {
@@ -79,6 +80,7 @@ export const MobileHome = ({ captureSlot, onOpenFolder, onSelectIdea, onSeeAllRe
 
   return (
     <div className="px-4 pt-4 pb-2 space-y-5">
+      <PushEnableBanner />
       {/* Folders section */}
       <section>
         <div className="flex items-end justify-between mb-3 px-0.5">

@@ -32,6 +32,9 @@ import { cn } from "@/lib/utils";
 import { formatReminder } from "@/lib/formatTime";
 import { useUpdateIdea } from "@/hooks/useIdeas";
 import { openPhoneAlarm } from "@/lib/phoneAlarm";
+import { usePushSubscription } from "@/hooks/usePushSubscription";
+
+const AUTO_PROMPT_KEY = "push-auto-prompted-v1";
 
 type Props = {
   open: boolean;
@@ -97,6 +100,7 @@ export const IdeaReminderDialog = ({ open, onOpenChange, idea }: Props) => {
   const [email, setEmail] = useState(false);
   const [dateOpen, setDateOpen] = useState(false);
   const update = useUpdateIdea();
+  const push_ = usePushSubscription();
 
   useEffect(() => {
     if (!open || !idea) return;
@@ -130,7 +134,19 @@ export const IdeaReminderDialog = ({ open, onOpenChange, idea }: Props) => {
 
   const save = async () => {
     if (!combined) return;
-    if (
+    // First time the user creates a reminder with push on, prompt them to
+    // enable real phone alerts (push subscription + service worker). After
+    // the first attempt we never auto-prompt again — banner/Settings handle it.
+    const alreadyPrompted =
+      typeof window !== "undefined" && localStorage.getItem(AUTO_PROMPT_KEY) === "1";
+    if (push && !alreadyPrompted && push_.state === "unsubscribed") {
+      localStorage.setItem(AUTO_PROMPT_KEY, "1");
+      try {
+        await push_.subscribe();
+      } catch {
+        /* noop — user can still enable from Settings */
+      }
+    } else if (
       push &&
       typeof Notification !== "undefined" &&
       Notification.permission === "default"
