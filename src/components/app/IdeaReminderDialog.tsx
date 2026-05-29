@@ -100,6 +100,7 @@ export const IdeaReminderDialog = ({ open, onOpenChange, idea }: Props) => {
   const [email, setEmail] = useState(false);
   const [dateOpen, setDateOpen] = useState(false);
   const update = useUpdateIdea();
+  const push_ = usePushSubscription();
 
   useEffect(() => {
     if (!open || !idea) return;
