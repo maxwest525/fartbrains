@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { useFolders } from "./useFolders";
 import { toast } from "sonner";
+import { alarmBus } from "@/lib/alarmBus";
 
 const FIRED_KEY = "folder-reminders-fired";
 const POLL_MS = 30_000; // 30s — cheap and good enough for in-app reminders
@@ -59,6 +60,13 @@ export function useReminderNotifier() {
         toast(`Reminder: ${f.name}`, {
           description: "This folder reminder is due.",
         });
+
+        // Full-screen looping alarm (loud, tap-to-dismiss)
+        alarmBus.trigger({
+          title: f.name,
+          body: "Folder reminder is due.",
+        });
+
 
         firedRef.current.add(key);
         changed = true;
