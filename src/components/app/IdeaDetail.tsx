@@ -35,6 +35,7 @@ import { ProjectBoard } from "./ProjectBoard";
 import { PROJECT_TAG } from "@/lib/deliverables";
 import { formatReminder } from "@/lib/formatTime";
 import { SourceMetaCard } from "./SourceMetaCard";
+import { RelatedIdeas } from "./RelatedIdeas";
 
 const NO_FOLDER = "__none__";
 
@@ -42,9 +43,10 @@ type Props = {
   ideaId: string | null;
   onClose: () => void;
   backLabel?: string;
+  onSelectIdea?: (id: string) => void;
 };
 
-export const IdeaDetail = ({ ideaId, onClose, backLabel = "Back" }: Props) => {
+export const IdeaDetail = ({ ideaId, onClose, backLabel = "Back", onSelectIdea }: Props) => {
   const { data: idea, isLoading } = useIdea(ideaId);
   const { data: folders = [] } = useFolders();
   const updateIdea = useUpdateIdea();
