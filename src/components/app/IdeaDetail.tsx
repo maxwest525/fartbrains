@@ -496,6 +496,12 @@ export const IdeaDetail = ({ ideaId, onClose, backLabel = "Back", onSelectIdea }
           </section>
         )}
 
+        {!editing && idea && (
+          <RelatedIdeas ideaId={idea.id} onSelect={onSelectIdea} />
+        )}
+
+
+
         {(() => {
           const isProject = idea.tags.includes(PROJECT_TAG);
           if (isProject && !editing) {
