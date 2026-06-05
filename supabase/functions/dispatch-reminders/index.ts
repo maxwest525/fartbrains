@@ -302,6 +302,7 @@ Deno.serve(async (req) => {
       pushSent,
       emailSent,
       ideas: ideas.length,
+      multi: multi.length,
       folders: folders.length,
     }),
     { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
