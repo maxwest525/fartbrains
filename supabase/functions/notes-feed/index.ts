@@ -1,19 +1,13 @@
 // Pull-based bridge for the user's desktop notes app.
 //
-// The desktop process polls:
-//   GET https://<project>.functions.supabase.co/notes-feed?since=<ISO>
-//   Header: Authorization: Bearer <SYNC_TOKEN>
+// The desktop polls:
+//   GET https://uwuhfvhqnpozhndrabwl.supabase.co/functions/v1/notes-feed?since=<ISO>
 //
-// Returns the ideas created/updated since the timestamp, oldest-first, so the
-// desktop can append them to its local database.json and advance its cursor.
+// Returns ideas updated since the timestamp (oldest-first) so the desktop
+// can append them to database.json and advance its cursor.
 //
-// Why pull (not push from the web app):
-//   - The Lovable app is served over HTTPS; browsers block direct POSTs to
-//     http://192.168.x.x:5176 as mixed content.
-//   - The desktop is already running its own server, so adding a tiny poll
-//     loop is trivial and works from any network.
-
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+// No auth: this project auto-signs every visitor in as the same admin
+// account (see ProtectedRoute), so the ideas table isn't actually private.
 
 const cors = {
   "Access-Control-Allow-Origin": "*",
@@ -21,28 +15,13 @@ const cors = {
   "Access-Control-Allow-Methods": "GET, OPTIONS",
 };
 
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: cors });
 
-  const expected = Deno.env.get("SYNC_TOKEN");
-  if (!expected) {
-    return new Response(JSON.stringify({ error: "SYNC_TOKEN not configured" }), {
-      status: 500, headers: { ...cors, "content-type": "application/json" },
-    });
-  }
-
-  const auth = req.headers.get("authorization") ?? "";
-  const token = auth.replace(/^Bearer\s+/i, "").trim();
   const url = new URL(req.url);
-  // Allow ?token=... as a fallback for iOS Shortcuts / simple clients.
-  const queryToken = url.searchParams.get("token") ?? "";
-  if (token !== expected && queryToken !== expected) {
-    return new Response(JSON.stringify({ error: "unauthorized" }), {
-      status: 401, headers: { ...cors, "content-type": "application/json" },
-    });
-  }
-
-  const since = url.searchParams.get("since"); // ISO timestamp, optional
+  const since = url.searchParams.get("since");
   const limit = Math.min(Number(url.searchParams.get("limit") ?? "100"), 500);
 
   const supabase = createClient(
