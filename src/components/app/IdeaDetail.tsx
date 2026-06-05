@@ -602,17 +602,7 @@ export const IdeaDetail = ({ ideaId, onClose, backLabel = "Back", onSelectIdea }
       <IdeaReminderDialog
         open={reminderOpen}
         onOpenChange={setReminderOpen}
-        idea={
-          idea
-            ? {
-                id: idea.id,
-                title: idea.title,
-                remind_at: idea.remind_at,
-                notify_push: idea.notify_push,
-                notify_email: idea.notify_email,
-              }
-            : null
-        }
+        idea={idea ? { id: idea.id, title: idea.title } : null}
       />
 
       <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
