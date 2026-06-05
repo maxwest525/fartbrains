@@ -173,6 +173,53 @@ export type Database = {
         }
         Relationships: []
       }
+      idea_reminders: {
+        Row: {
+          created_at: string
+          fired_at: string | null
+          id: string
+          idea_id: string
+          label: string | null
+          notify_email: boolean
+          notify_push: boolean
+          remind_at: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          fired_at?: string | null
+          id?: string
+          idea_id: string
+          label?: string | null
+          notify_email?: boolean
+          notify_push?: boolean
+          remind_at: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          fired_at?: string | null
+          id?: string
+          idea_id?: string
+          label?: string | null
+          notify_email?: boolean
+          notify_push?: boolean
+          remind_at?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "idea_reminders_idea_id_fkey"
+            columns: ["idea_id"]
+            isOneToOne: false
+            referencedRelation: "ideas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ideas: {
         Row: {
           ai_summary: string | null

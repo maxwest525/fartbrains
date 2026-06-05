@@ -156,6 +156,16 @@ Deno.serve(async (req) => {
 
   if (ideasErr) console.error("ideas query failed", ideasErr);
 
+  // 1b. Fetch due multi-reminders for ideas.
+  const { data: multiData, error: multiErr } = await admin
+    .from("idea_reminders")
+    .select("id,idea_id,user_id,remind_at,notify_push,notify_email")
+    .lte("remind_at", nowIso)
+    .is("fired_at", null)
+    .limit(500);
+
+  if (multiErr) console.error("idea_reminders query failed", multiErr);
+
   // 2. Fetch due folders. Folders track only one timestamp; we treat
   //    `remind_at` itself as the dedupe key (clearing/changing it resets it).
   const { data: foldersData, error: foldersErr } = await admin
@@ -169,6 +179,14 @@ Deno.serve(async (req) => {
 
   const ideas = (ideasData ?? []) as DueIdea[];
   const folders = (foldersData ?? []) as DueFolder[];
+  const multi = (multiData ?? []) as Array<{
+    id: string;
+    idea_id: string;
+    user_id: string;
+    remind_at: string;
+    notify_push: boolean;
+    notify_email: boolean;
+  }>;
 
   // Cache user emails to avoid hammering the auth admin API.
   const emailCache = new Map<string, string | null>();
@@ -178,6 +196,20 @@ Deno.serve(async (req) => {
     const email = error ? null : data.user?.email ?? null;
     emailCache.set(userId, email);
     return email;
+  };
+
+  // Cache idea titles for multi-reminders.
+  const titleCache = new Map<string, string>();
+  const getIdeaTitle = async (ideaId: string): Promise<string> => {
+    if (titleCache.has(ideaId)) return titleCache.get(ideaId)!;
+    const { data } = await admin
+      .from("ideas")
+      .select("title")
+      .eq("id", ideaId)
+      .maybeSingle();
+    const title = (data as { title?: string } | null)?.title ?? "Reminder";
+    titleCache.set(ideaId, title);
+    return title;
   };
 
   let pushSent = 0;
@@ -214,6 +246,38 @@ Deno.serve(async (req) => {
     processed += 1;
   }
 
+  // Multi-reminders: each row fires independently and is marked fired_at.
+  for (const r of multi) {
+    const title = await getIdeaTitle(r.idea_id);
+    const tag = `idea-rem:${r.id}`;
+    if (r.notify_push) {
+      const pr = await sendPushToUser(r.user_id, {
+        title: "Idea reminder",
+        body: title,
+        tag,
+        url: "/",
+      });
+      pushSent += pr.sent;
+    }
+    if (r.notify_email) {
+      const email = await getEmail(r.user_id);
+      if (email) {
+        const ok = await sendEmail(
+          email,
+          `Reminder: ${title}`,
+          `This is your reminder for "${title}".`,
+          `idea-rem-${r.id}`,
+        );
+        if (ok) emailSent += 1;
+      }
+    }
+    await admin
+      .from("idea_reminders")
+      .update({ fired_at: nowIso })
+      .eq("id", r.id);
+    processed += 1;
+  }
+
   // For folders we don't currently store fired_at — clear remind_at to dedupe.
   // This matches the existing client-side notifier's "fire once" behavior.
   for (const folder of folders) {
@@ -229,6 +293,7 @@ Deno.serve(async (req) => {
     processed += 1;
   }
 
+
   return new Response(
     JSON.stringify({
       ok: true,
@@ -237,6 +302,7 @@ Deno.serve(async (req) => {
       pushSent,
       emailSent,
       ideas: ideas.length,
+      multi: multi.length,
       folders: folders.length,
     }),
     { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
