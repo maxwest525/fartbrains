@@ -278,7 +278,7 @@ const Shell = () => {
                 )}
               </div>
             </div>
-            <div ref={composeRef} className="w-full px-3 sm:px-6 lg:px-10 pt-4 sm:pt-6 space-y-3 sm:space-y-4">
+            <div ref={composeRef} className="w-full px-3 sm:px-6 lg:px-10 pt-4 sm:pt-6 space-y-3 sm:space-y-4 md:max-w-3xl md:mx-auto">
               <ComposeIdea
                 defaultFolderId={defaultFolderId}
                 onCreated={(id, needsReview) => {
@@ -302,6 +302,7 @@ const Shell = () => {
                 Saved ideas land in <button onClick={() => handleFilterChange({ kind: "recent" })} className="underline underline-offset-2 hover:text-foreground">Recents</button> and the All folder.
               </p>
             </div>
+
           </div>
         )}
 
