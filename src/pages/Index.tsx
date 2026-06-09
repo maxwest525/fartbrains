@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { IdeaList } from "@/components/app/IdeaList";
 import { IdeaDetail } from "@/components/app/IdeaDetail";
 import { ComposeIdea } from "@/components/app/ComposeIdea";
-import { MovieTicker } from "@/components/app/MovieTicker";
+
 import { MobileTabBar } from "@/components/app/MobileTabBar";
 import { SettingsSheet } from "@/components/app/SettingsSheet";
 import { FoldersPage } from "@/components/app/FoldersPage";
@@ -149,13 +149,6 @@ const Shell = () => {
 
   return (
     <div className="flex flex-col h-[100dvh] w-full bg-background overflow-hidden relative">
-      {/* Movie ticker — pinned at the very top on the Capture view, above the header.
-          Hidden on desktop: the web build is a focused enterprise workspace, not a feed. */}
-      {!showDetailOnly && !showFolders && !showCalendar && filter.kind === "all" && (
-        <div className="safe-top bg-background pt-2 sm:pt-3 md:hidden">
-          <MovieTicker />
-        </div>
-      )}
 
 
       {/* Top bar — search + (desktop) inline nav. Hidden on mobile when viewing detail or the folders page (folders has its own header). */}
