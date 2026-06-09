@@ -130,6 +130,76 @@
   html { -webkit-text-size-adjust: 100%; }
 }
 
+/* ---------- Desktop / web overrides ----------
+   Mobile keeps its iOS-blue, system-grouped look. On wider screens we shift
+   to a premium, enterprise-grade palette: white canvas, true greys, near-black
+   text, and a single TruMove-style green accent. Tighter radii, denser type.
+   Scoped via media query so no component code has to change. */
+@media (min-width: 768px) {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 0 0% 7%;
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 7%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 7%;
+    --secondary: 0 0% 96%;
+    --secondary-foreground: 0 0% 7%;
+    --muted: 0 0% 97%;
+    --muted-foreground: 0 0% 40%;
+    --border: 0 0% 91%;
+    --input: 0 0% 91%;
+    /* TruMove-style green */
+    --primary: 152 62% 36%;
+    --primary-foreground: 0 0% 100%;
+    --ring: 152 62% 36%;
+    --accent: 152 62% 36%;
+    --accent-foreground: 0 0% 100%;
+    --radius: 0.5rem;
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 0 0% 7%;
+    --sidebar-border: 0 0% 91%;
+    --sidebar-primary: 152 62% 36%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 0 0% 96%;
+    --sidebar-accent-foreground: 0 0% 7%;
+    --sidebar-ring: 152 62% 36%;
+  }
+  .dark {
+    --background: 0 0% 6%;
+    --foreground: 0 0% 96%;
+    --card: 0 0% 9%;
+    --card-foreground: 0 0% 96%;
+    --popover: 0 0% 9%;
+    --popover-foreground: 0 0% 96%;
+    --secondary: 0 0% 13%;
+    --secondary-foreground: 0 0% 96%;
+    --muted: 0 0% 11%;
+    --muted-foreground: 0 0% 62%;
+    --border: 0 0% 18%;
+    --input: 0 0% 18%;
+    --primary: 152 58% 46%;
+    --primary-foreground: 0 0% 6%;
+    --ring: 152 58% 46%;
+    --accent: 152 58% 46%;
+    --accent-foreground: 0 0% 6%;
+  }
+
+  /* Obsidian/Apple-like type: slightly tighter, more refined.
+     Lean on Inter/SF when available, fall back to system. */
+  html, body {
+    font-family: "Inter", -apple-system, BlinkMacSystemFont, "SF Pro Text",
+                 "SF Pro Display", "Helvetica Neue", system-ui, "Segoe UI",
+                 Roboto, sans-serif;
+    font-feature-settings: "cv11", "ss01", "ss03";
+    letter-spacing: -0.005em;
+  }
+
+  /* Quiet down the iOS press-scale on desktop — feels juvenile with a mouse. */
+  .press:active { transform: none; }
+}
+
+
 @layer utilities {
   .safe-top    { padding-top:    env(safe-area-inset-top); }
   .safe-bottom { padding-bottom: env(safe-area-inset-bottom); }

@@ -149,12 +149,14 @@ const Shell = () => {
 
   return (
     <div className="flex flex-col h-[100dvh] w-full bg-background overflow-hidden relative">
-      {/* Movie ticker — pinned at the very top on the Capture view, above the header. */}
+      {/* Movie ticker — pinned at the very top on the Capture view, above the header.
+          Hidden on desktop: the web build is a focused enterprise workspace, not a feed. */}
       {!showDetailOnly && !showFolders && !showCalendar && filter.kind === "all" && (
-        <div className="safe-top bg-background pt-2 sm:pt-3">
+        <div className="safe-top bg-background pt-2 sm:pt-3 md:hidden">
           <MovieTicker />
         </div>
       )}
+
 
       {/* Top bar — search + (desktop) inline nav. Hidden on mobile when viewing detail or the folders page (folders has its own header). */}
       {!showDetailOnly && !(isMobile && showFolders) && !(isMobile && showCalendar) && (
@@ -276,7 +278,7 @@ const Shell = () => {
                 )}
               </div>
             </div>
-            <div ref={composeRef} className="w-full px-3 sm:px-6 lg:px-10 pt-4 sm:pt-6 space-y-3 sm:space-y-4">
+            <div ref={composeRef} className="w-full px-3 sm:px-6 lg:px-10 pt-4 sm:pt-6 space-y-3 sm:space-y-4 md:max-w-3xl md:mx-auto">
               <ComposeIdea
                 defaultFolderId={defaultFolderId}
                 onCreated={(id, needsReview) => {
@@ -300,6 +302,7 @@ const Shell = () => {
                 Saved ideas land in <button onClick={() => handleFilterChange({ kind: "recent" })} className="underline underline-offset-2 hover:text-foreground">Recents</button> and the All folder.
               </p>
             </div>
+
           </div>
         )}
 
