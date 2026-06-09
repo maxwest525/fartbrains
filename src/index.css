@@ -2,92 +2,92 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Idea Vault — premium enterprise palette.
-   White canvas, true greys, near-black text, single TruMove-style green accent.
-   Same tokens on mobile and desktop for a consistent Obsidian/Apple feel. */
+/* Idea Vault — Gemini-inspired corporate clean palette.
+   White canvas, slate text, Google-blue accent. Same tokens on mobile + desktop. */
 
 @layer base {
   :root {
     --background: 0 0% 100%;
-    --foreground: 0 0% 7%;
+    --foreground: 222 22% 12%;
 
     --card: 0 0% 100%;
-    --card-foreground: 0 0% 7%;
+    --card-foreground: 222 22% 12%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 7%;
+    --popover-foreground: 222 22% 12%;
 
-    /* TruMove-style green */
-    --primary: 152 62% 36%;
+    /* Google / Gemini blue */
+    --primary: 217 89% 53%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 0 0% 96%;
-    --secondary-foreground: 0 0% 7%;
+    --secondary: 220 14% 96%;
+    --secondary-foreground: 222 22% 12%;
 
-    --muted: 0 0% 97%;
-    --muted-foreground: 0 0% 40%;
+    --muted: 220 14% 97%;
+    --muted-foreground: 220 9% 44%;
 
-    --accent: 152 62% 36%;
+    --accent: 217 89% 53%;
     --accent-foreground: 0 0% 100%;
 
-    --destructive: 4 84% 50%;
+    --destructive: 4 78% 52%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 0 0% 91%;
-    --input: 0 0% 91%;
-    --ring: 152 62% 36%;
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 217 89% 53%;
 
-    --radius: 0.5rem;
+    --radius: 0.75rem;
 
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 0 0% 7%;
-    --sidebar-primary: 152 62% 36%;
+    --sidebar-background: 220 14% 98%;
+    --sidebar-foreground: 222 22% 12%;
+    --sidebar-primary: 217 89% 53%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 0 0% 96%;
-    --sidebar-accent-foreground: 0 0% 7%;
-    --sidebar-border: 0 0% 91%;
-    --sidebar-ring: 152 62% 36%;
+    --sidebar-accent: 220 14% 96%;
+    --sidebar-accent-foreground: 222 22% 12%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 217 89% 53%;
   }
 
   .dark {
-    --background: 0 0% 6%;
-    --foreground: 0 0% 96%;
+    --background: 222 18% 8%;
+    --foreground: 220 14% 96%;
 
-    --card: 0 0% 9%;
-    --card-foreground: 0 0% 96%;
+    --card: 222 16% 11%;
+    --card-foreground: 220 14% 96%;
 
-    --popover: 0 0% 9%;
-    --popover-foreground: 0 0% 96%;
+    --popover: 222 16% 11%;
+    --popover-foreground: 220 14% 96%;
 
-    --primary: 152 58% 46%;
-    --primary-foreground: 0 0% 6%;
+    --primary: 217 91% 65%;
+    --primary-foreground: 222 18% 8%;
 
-    --secondary: 0 0% 13%;
-    --secondary-foreground: 0 0% 96%;
+    --secondary: 222 14% 16%;
+    --secondary-foreground: 220 14% 96%;
 
-    --muted: 0 0% 11%;
-    --muted-foreground: 0 0% 62%;
+    --muted: 222 14% 14%;
+    --muted-foreground: 220 9% 65%;
 
-    --accent: 152 58% 46%;
-    --accent-foreground: 0 0% 6%;
+    --accent: 217 91% 65%;
+    --accent-foreground: 222 18% 8%;
 
-    --destructive: 4 80% 55%;
+    --destructive: 4 78% 58%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 0 0% 18%;
-    --input: 0 0% 18%;
-    --ring: 152 58% 46%;
+    --border: 222 14% 20%;
+    --input: 222 14% 20%;
+    --ring: 217 91% 65%;
 
-    --sidebar-background: 0 0% 8%;
-    --sidebar-foreground: 0 0% 96%;
-    --sidebar-primary: 152 58% 46%;
-    --sidebar-primary-foreground: 0 0% 6%;
-    --sidebar-accent: 0 0% 13%;
-    --sidebar-accent-foreground: 0 0% 96%;
-    --sidebar-border: 0 0% 18%;
-    --sidebar-ring: 152 58% 46%;
+    --sidebar-background: 222 16% 10%;
+    --sidebar-foreground: 220 14% 96%;
+    --sidebar-primary: 217 91% 65%;
+    --sidebar-primary-foreground: 222 18% 8%;
+    --sidebar-accent: 222 14% 16%;
+    --sidebar-accent-foreground: 220 14% 96%;
+    --sidebar-border: 222 14% 20%;
+    --sidebar-ring: 217 91% 65%;
   }
 }
+
 
 @layer base {
   * {
