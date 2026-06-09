@@ -2,99 +2,90 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Idea Vault — iOS-style design system. All HSL.
-   Mobile feels like a native iPhone app (iOS 17 grouped lists, large titles,
-   blue accent, system gray backgrounds). Desktop reuses the same tokens but
-   renders a more conventional two-pane workspace. */
+/* Idea Vault — premium enterprise palette.
+   White canvas, true greys, near-black text, single TruMove-style green accent.
+   Same tokens on mobile and desktop for a consistent Obsidian/Apple feel. */
 
 @layer base {
   :root {
-    /* iOS systemGroupedBackground */
-    --background: 240 11% 96%;
-    --foreground: 0 0% 0%;
+    --background: 0 0% 100%;
+    --foreground: 0 0% 7%;
 
-    /* iOS secondarySystemGroupedBackground (used for list cells / cards) */
     --card: 0 0% 100%;
-    --card-foreground: 0 0% 0%;
+    --card-foreground: 0 0% 7%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 0%;
+    --popover-foreground: 0 0% 7%;
 
-    /* iOS systemBlue */
-    --primary: 211 100% 50%;
+    /* TruMove-style green */
+    --primary: 152 62% 36%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 240 6% 92%;
-    --secondary-foreground: 0 0% 0%;
+    --secondary: 0 0% 96%;
+    --secondary-foreground: 0 0% 7%;
 
-    --muted: 240 11% 96%;
-    --muted-foreground: 240 6% 50%;
+    --muted: 0 0% 97%;
+    --muted-foreground: 0 0% 40%;
 
-    /* iOS systemYellow */
-    --accent: 47 100% 50%;
-    --accent-foreground: 0 0% 0%;
+    --accent: 152 62% 36%;
+    --accent-foreground: 0 0% 100%;
 
-    /* iOS systemRed */
-    --destructive: 4 90% 58%;
+    --destructive: 4 84% 50%;
     --destructive-foreground: 0 0% 100%;
 
-    /* Hairline separator (iOS opaqueSeparator ~ rgba(60,60,67,0.29)) */
-    --border: 240 6% 88%;
-    --input: 240 6% 88%;
-    --ring: 211 100% 50%;
+    --border: 0 0% 91%;
+    --input: 0 0% 91%;
+    --ring: 152 62% 36%;
 
-    --radius: 0.875rem; /* iOS rows like 13–14px */
+    --radius: 0.5rem;
 
-    --sidebar-background: 240 11% 96%;
-    --sidebar-foreground: 0 0% 0%;
-    --sidebar-primary: 211 100% 50%;
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 0 0% 7%;
+    --sidebar-primary: 152 62% 36%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 6% 92%;
-    --sidebar-accent-foreground: 0 0% 0%;
-    --sidebar-border: 240 6% 88%;
-    --sidebar-ring: 211 100% 50%;
+    --sidebar-accent: 0 0% 96%;
+    --sidebar-accent-foreground: 0 0% 7%;
+    --sidebar-border: 0 0% 91%;
+    --sidebar-ring: 152 62% 36%;
   }
 
   .dark {
-    /* iOS systemGroupedBackground (dark) */
-    --background: 0 0% 0%;
-    --foreground: 0 0% 100%;
+    --background: 0 0% 6%;
+    --foreground: 0 0% 96%;
 
-    /* iOS secondarySystemGroupedBackground (dark) */
-    --card: 240 4% 11%;
-    --card-foreground: 0 0% 100%;
+    --card: 0 0% 9%;
+    --card-foreground: 0 0% 96%;
 
-    --popover: 240 4% 11%;
-    --popover-foreground: 0 0% 100%;
+    --popover: 0 0% 9%;
+    --popover-foreground: 0 0% 96%;
 
-    /* iOS systemBlue (dark) */
-    --primary: 211 100% 60%;
-    --primary-foreground: 0 0% 100%;
+    --primary: 152 58% 46%;
+    --primary-foreground: 0 0% 6%;
 
-    --secondary: 240 4% 18%;
-    --secondary-foreground: 0 0% 100%;
+    --secondary: 0 0% 13%;
+    --secondary-foreground: 0 0% 96%;
 
-    --muted: 240 4% 11%;
-    --muted-foreground: 240 5% 65%;
+    --muted: 0 0% 11%;
+    --muted-foreground: 0 0% 62%;
 
-    --accent: 47 100% 55%;
-    --accent-foreground: 0 0% 0%;
+    --accent: 152 58% 46%;
+    --accent-foreground: 0 0% 6%;
 
-    --destructive: 4 90% 60%;
+    --destructive: 4 80% 55%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 240 5% 22%;
-    --input: 240 5% 22%;
-    --ring: 211 100% 60%;
+    --border: 0 0% 18%;
+    --input: 0 0% 18%;
+    --ring: 152 58% 46%;
 
-    --sidebar-background: 240 4% 8%;
-    --sidebar-foreground: 0 0% 100%;
-    --sidebar-primary: 211 100% 60%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 4% 18%;
-    --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 240 5% 22%;
-    --sidebar-ring: 211 100% 60%;
+    --sidebar-background: 0 0% 8%;
+    --sidebar-foreground: 0 0% 96%;
+    --sidebar-primary: 152 58% 46%;
+    --sidebar-primary-foreground: 0 0% 6%;
+    --sidebar-accent: 0 0% 13%;
+    --sidebar-accent-foreground: 0 0% 96%;
+    --sidebar-border: 0 0% 18%;
+    --sidebar-ring: 152 58% 46%;
   }
 }
 
@@ -113,9 +104,11 @@
 
   html, body {
     @apply bg-background text-foreground;
-    /* iOS-feeling system stack — picks up SF Pro on Apple devices */
-    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display",
-                 "Helvetica Neue", system-ui, "Segoe UI", Roboto, sans-serif;
+    font-family: "Inter", -apple-system, BlinkMacSystemFont, "SF Pro Text",
+                 "SF Pro Display", "Helvetica Neue", system-ui, "Segoe UI",
+                 Roboto, sans-serif;
+    font-feature-settings: "cv11", "ss01", "ss03";
+    letter-spacing: -0.005em;
     -webkit-tap-highlight-color: transparent;
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
@@ -126,79 +119,12 @@
     overscroll-behavior-y: none;
   }
 
-  /* Prevent iOS text-size auto-bumping on landscape */
   html { -webkit-text-size-adjust: 100%; }
 }
 
-/* ---------- Desktop / web overrides ----------
-   Mobile keeps its iOS-blue, system-grouped look. On wider screens we shift
-   to a premium, enterprise-grade palette: white canvas, true greys, near-black
-   text, and a single TruMove-style green accent. Tighter radii, denser type.
-   Scoped via media query so no component code has to change. */
 @media (min-width: 768px) {
-  :root {
-    --background: 0 0% 100%;
-    --foreground: 0 0% 7%;
-    --card: 0 0% 100%;
-    --card-foreground: 0 0% 7%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 7%;
-    --secondary: 0 0% 96%;
-    --secondary-foreground: 0 0% 7%;
-    --muted: 0 0% 97%;
-    --muted-foreground: 0 0% 40%;
-    --border: 0 0% 91%;
-    --input: 0 0% 91%;
-    /* TruMove-style green */
-    --primary: 152 62% 36%;
-    --primary-foreground: 0 0% 100%;
-    --ring: 152 62% 36%;
-    --accent: 152 62% 36%;
-    --accent-foreground: 0 0% 100%;
-    --radius: 0.5rem;
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 0 0% 7%;
-    --sidebar-border: 0 0% 91%;
-    --sidebar-primary: 152 62% 36%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 0 0% 96%;
-    --sidebar-accent-foreground: 0 0% 7%;
-    --sidebar-ring: 152 62% 36%;
-  }
-  .dark {
-    --background: 0 0% 6%;
-    --foreground: 0 0% 96%;
-    --card: 0 0% 9%;
-    --card-foreground: 0 0% 96%;
-    --popover: 0 0% 9%;
-    --popover-foreground: 0 0% 96%;
-    --secondary: 0 0% 13%;
-    --secondary-foreground: 0 0% 96%;
-    --muted: 0 0% 11%;
-    --muted-foreground: 0 0% 62%;
-    --border: 0 0% 18%;
-    --input: 0 0% 18%;
-    --primary: 152 58% 46%;
-    --primary-foreground: 0 0% 6%;
-    --ring: 152 58% 46%;
-    --accent: 152 58% 46%;
-    --accent-foreground: 0 0% 6%;
-  }
-
-  /* Obsidian/Apple-like type: slightly tighter, more refined.
-     Lean on Inter/SF when available, fall back to system. */
-  html, body {
-    font-family: "Inter", -apple-system, BlinkMacSystemFont, "SF Pro Text",
-                 "SF Pro Display", "Helvetica Neue", system-ui, "Segoe UI",
-                 Roboto, sans-serif;
-    font-feature-settings: "cv11", "ss01", "ss03";
-    letter-spacing: -0.005em;
-  }
-
-  /* Quiet down the iOS press-scale on desktop — feels juvenile with a mouse. */
   .press:active { transform: none; }
 }
-
 
 @layer utilities {
   .safe-top    { padding-top:    env(safe-area-inset-top); }
@@ -207,14 +133,11 @@
 
   .scroll-momentum { -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
 
-  /* Subtle press feedback for touch UI */
   .press { transition: transform 120ms ease, background-color 120ms ease, opacity 120ms ease; }
   .press:active { transform: scale(0.97); }
 
-  /* iOS-style tap highlight on list rows */
   .row-press:active { background-color: hsl(var(--secondary)); }
 
-  /* Slide-in animation for detail view on mobile (iOS push) */
   .anim-slide-in {
     animation: ios-push 280ms cubic-bezier(0.32, 0.72, 0, 1);
   }
@@ -223,13 +146,10 @@
     to   { transform: translateX(0);   opacity: 1; }
   }
 
-  /* iOS hairline separator inside grouped lists.
-     Indents from the left like UITableView default cell separator. */
   .ios-separator > * + * {
     border-top: 0.5px solid hsl(var(--border));
   }
 
-  /* Larger left inset to mimic UITableView grouped style separator */
   .ios-separator-inset > * + * {
     position: relative;
   }
@@ -242,7 +162,6 @@
     border-top: 0.5px solid hsl(var(--border));
   }
 
-  /* Hide horizontal scrollbar (used by inline folder strip) but keep scrolling */
   .no-scrollbar::-webkit-scrollbar { display: none; }
   .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 }
