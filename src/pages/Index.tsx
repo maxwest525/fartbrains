@@ -334,6 +334,8 @@ const Shell = () => {
         />
       )}
 
+      {!showDetailOnly && <AshDock />}
+
       <SettingsSheet open={settingsOpen} onOpenChange={setSettingsOpen} />
       <AlarmOverlay />
     </div>
