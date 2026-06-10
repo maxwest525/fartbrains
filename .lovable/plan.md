@@ -1,39 +1,81 @@
-## The actual problem
+## What you'll get
 
-`ComposeIdea` (the main composer at the top of Capture) already exposes every input type via its `SourcePicker`: Note, Project, Instagram, **Link**, List, **Transcript**. Tapping any tile swaps the composer body to the right input (URL field, transcript textarea, note field, etc.) and runs the same extract → preview → save flow.
+A full-screen **graph overlay** you can pop open from anywhere in the app. Every idea is a node. Connections come from three layers you can toggle on/off:
 
-Underneath that composer we currently render two more surfaces doing the exact same jobs:
+1. **Folder edges** — idea → its folder (folder nodes are larger)
+2. **Tag edges** — ideas sharing a tag connect through a tag node
+3. **AI relation edges** — uses your existing `related-ideas` function to draw semantic links between ideas (this is the "crazy connections" web)
 
-1. `UrlCapturePanel` — a giant always-expanded card that duplicates the Link tile.
-2. A "Paste a transcript" row that pushes a full-screen `TranscriptCapture` page that duplicates the Transcript tile.
+The whole thing is a physics simulation — drag nodes, pinch to zoom, nodes repel each other, linked nodes pull together. Same vibe as Obsidian's graph.
 
-That's why every page loads with this big stack of redundant capture cards. Fix: delete the duplicates, lean on the composer's source picker as the single source of truth.
+### The voice orb
+A **glowing animated orb** floats in the bottom-center of the canvas, always pulsing.
+- **Tap & hold the orb** → records voice → transcribes → creates a new idea node that animates into the graph and auto-links to anything semantically related.
+- **Tap & hold any idea node** → records voice → appends transcript to that idea (long-press, so single-tap is still "focus this node").
+- A subtle ring around the orb fills while recording; release to stop.
 
-## Changes
+### Where it lives
+A "Graph" button on the home header opens it as a **full-screen overlay** (not a new tab). Close button top-right. Works in both mobile and desktop.
 
-**1. Remove the duplicate surfaces from the Capture view**
-In `src/pages/Index.tsx`:
-- Delete the `<UrlCapturePanel ... />` block (around lines 297–310).
-- Delete the "Paste a transcript" row button (around lines 312–329).
-- Delete the import of `UrlCapturePanel`.
-- Delete the `view === "transcript"` branch (lines 22, 96–99, 103, 242–252) and the `TranscriptCapture` import — it's no longer reachable from the UI.
-- Keep the small footer hint ("Saved ideas land in Recents and the All folder.") right under the composer.
+## Technical details
 
-**2. Make sure the composer is the obvious entry point**
-- Verify `ComposeIdea`'s `SourcePicker` is visible immediately on the Capture screen (it is — it sits at the top of the composer card). No layout change needed.
-- Optional polish: if the source picker scrolls horizontally on mobile, confirm Link / Transcript / Instagram tiles are visible without scrolling, or reorder so the most-used ones lead.
+**Library:** `react-force-graph-2d` — Canvas-based, handles thousands of nodes smoothly on mobile, supports custom node painting (for the pulsing voice node, idea thumbnails, folder icons).
 
-**3. Delete dead files**
-- `src/components/app/UrlCapturePanel.tsx` — no remaining references.
-- `src/components/app/TranscriptCapture.tsx` — no remaining references.
-- Run a quick `rg` to confirm nothing else imports them before deletion.
+**Data:**
+- New hook `useGraphData()` builds `{ nodes, links }` from existing `ideas`, `folders`, and shared tags — pure client-side, no migrations.
+- AI edges: new edge function `idea-graph-edges` that batches `related-ideas` for every idea and caches results in a new `idea_relations` table (`source_id`, `target_id`, `score`). Recomputed lazily / on demand.
 
-## Result
+**Voice:** reuses existing `useVoiceCapture` hook and `transcribe-deliverables` / summarize pipeline that already powers your compose flow.
 
-Capture screen becomes: movie ticker → search → **one** composer (with the source picker that handles Link, Transcript, Instagram, Note, List, Project) → small hint line → tab bar. Every input type is reachable in one tap from the same place, and the page stops repeating itself.
+**Files added:**
+- `src/components/app/GraphOverlay.tsx` — the canvas + orb + node interactions
+- `src/components/app/VoiceOrb.tsx` — the pulsing record button (SVG + Framer Motion)
+- `src/hooks/useGraphData.ts` — assembles nodes/edges from ideas/folders/tags/relations
+- `supabase/functions/idea-graph-edges/index.ts` — batch semantic-link builder
+- migration: `idea_relations` table + RLS + grants
 
-## Files touched
+**Files edited:**
+- `src/pages/Index.tsx` — Graph button + overlay mount
+- `package.json` — add `react-force-graph-2d` + `d3-force`
 
-- `src/pages/Index.tsx` (remove duplicate panel, transcript row, transcript view branch + imports)
-- `src/components/app/UrlCapturePanel.tsx` (delete)
-- `src/components/app/TranscriptCapture.tsx` (delete)
+```text
+┌─────────────────────────────────────────┐
+│  ✕                            Filters ▾ │
+│                                         │
+│     ●───●         ●─────●               │
+│    /│   │        /       \              │
+│   ● │   ●───────●    ●────●             │
+│    \│  /              \   │             │
+│     ●─●                ●──●             │
+│                                         │
+│                  ╭───╮                  │
+│                 │ 🎙  │  ← pulsing orb  │
+│                  ╰───╯                  │
+└─────────────────────────────────────────┘
+```
+
+## On agent-memory MCP (no code yet — your call)
+
+The `agent-memory` skill is a separate Node.js MCP server that runs **on your laptop** and stores its own memories in a local file. It's not designed to plug into a hosted web app like yours. Two real ways to get the same effect:
+
+### Option A — Expose Idea Vault itself as an MCP server (recommended)
+Your ideas already ARE your memory. I'd build a `vault-mcp` edge function that speaks the MCP protocol over HTTP, with tools:
+- `search_ideas(query, tags?)`
+- `read_idea(id)`
+- `write_idea(title, body, tags?)`
+- `list_folders()`
+
+Then Claude Desktop / ChatGPT / Cursor / Codex CLI can all read & write your vault as long-term memory. One auth token, hosted, nothing to run locally.
+
+### Option B — Run the upstream agent-memory locally
+Clone `webzler/agentMemory` on your Mac, point it at a folder, and your local AI tools get a separate memory bank. Doesn't talk to this app at all.
+
+### Option C — Both
+Idea Vault as the canonical store via Option A, optionally mirror into a local MCP for offline.
+
+**My recommendation:** ship the graph + orb now, then add Option A as a second pass once you've used the graph for a week and know what shape the MCP tools should take.
+
+## Out of scope (intentionally)
+- No MCP server in this pass
+- No rewrite of the rest of the UI — the graph is a layover as you said
+- No real-time collaboration on the graph
