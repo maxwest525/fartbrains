@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import {
   Mic, Plus, ArrowUp, Loader2, Square, X, Check,
   Folder as FolderIcon, Pencil, Trash2,
-  ChevronDown, Wand2, Link2, FileText, Instagram, Globe, ListChecks,
+  ChevronDown, Wand2, FileText, Instagram, Globe, ListChecks,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useFolders } from "@/hooks/useFolders";
