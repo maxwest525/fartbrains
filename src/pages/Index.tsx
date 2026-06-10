@@ -3,7 +3,7 @@ import { Search, X, Inbox, Folder, Star, Clock, CalendarDays, Settings as Settin
 import { Input } from "@/components/ui/input";
 import { IdeaList } from "@/components/app/IdeaList";
 import { IdeaDetail } from "@/components/app/IdeaDetail";
-import { ComposeIdea } from "@/components/app/ComposeIdea";
+import { VoiceOrb } from "@/components/app/VoiceOrb";
 
 import { MobileTabBar } from "@/components/app/MobileTabBar";
 import { SettingsSheet } from "@/components/app/SettingsSheet";
