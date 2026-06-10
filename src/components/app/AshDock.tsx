@@ -1,11 +1,16 @@
 import { useEffect, useRef, useState } from "react";
-import { Mic, Plus, ArrowUp, Loader2, Square, X, Check, Folder as FolderIcon, Pencil, Trash2 } from "lucide-react";
+import {
+  Mic, Plus, ArrowUp, Loader2, Square, X, Check,
+  Folder as FolderIcon, Pencil, Trash2,
+  ChevronDown, Wand2, Link2, FileText, Instagram, Globe, ListChecks,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useFolders } from "@/hooks/useFolders";
 import { useCreateIdea } from "@/hooks/useIdeas";
 import { useVoiceCapture, blobToBase64 } from "@/hooks/useVoiceCapture";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { normalizeExtraction, summarizeKindFor } from "@/lib/extractedContent";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -25,6 +30,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
 type Chip = { id: string; label: string; prefill: string };
+type Mode = "auto" | "note" | "list" | "transcript" | "link" | "instagram";
 
 const CHIPS_KEY = "ash-dock-chips-v1";
 const FOLDER_KEY = "ash-dock-folder-v1";
@@ -35,16 +41,14 @@ const loadChips = (): Chip[] => {
     if (!raw) return [];
     const parsed = JSON.parse(raw);
     return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
+  } catch { return []; }
 };
 
 const titleFromText = (s: string) => {
   const clean = s.trim().replace(/\s+/g, " ");
   if (!clean) return "Untitled";
-  const firstSentence = clean.split(/(?<=[.!?])\s/)[0] ?? clean;
-  return firstSentence.length > 80 ? firstSentence.slice(0, 77) + "…" : firstSentence;
+  const first = clean.split(/(?<=[.!?])\s/)[0] ?? clean;
+  return first.length > 80 ? first.slice(0, 77) + "…" : first;
 };
 
 const fmtSeconds = (s: number) => {
@@ -53,12 +57,47 @@ const fmtSeconds = (s: number) => {
   return `${m}:${r.toString().padStart(2, "0")}`;
 };
 
+const URL_RE = /\bhttps?:\/\/[^\s]+/i;
+
+const extractUrl = (s: string): string | null => {
+  const m = s.match(URL_RE);
+  return m ? m[0] : null;
+};
+
+const isInstagramUrl = (raw: string): boolean => {
+  try {
+    const u = new URL(raw);
+    return /(^|\.)instagram\.com$/.test(u.hostname.toLowerCase().replace(/^www\./, ""));
+  } catch { return false; }
+};
+
+const looksLikeList = (s: string): boolean => {
+  const lines = s.split("\n").map((l) => l.trim()).filter(Boolean);
+  if (lines.length < 2) return false;
+  const bulletish = lines.filter((l) => /^([-*•]|\d+[.)])\s+/.test(l)).length;
+  return bulletish / lines.length >= 0.6;
+};
+
+const linesToChecklist = (s: string): string =>
+  s.split("\n").map((l) => l.trim()).filter(Boolean)
+    .map((l) => /^- \[[ xX]\] /.test(l) ? l : `- [ ] ${l.replace(/^([-*•]|\d+[.)])\s+/, "")}`)
+    .join("\n");
+
+const MODE_META: Record<Exclude<Mode, "auto">, { label: string; icon: typeof FileText }> = {
+  note:       { label: "Note",         icon: FileText },
+  list:       { label: "Checklist",    icon: ListChecks },
+  transcript: { label: "Transcript",   icon: FileText },
+  link:       { label: "Web link",     icon: Globe },
+  instagram:  { label: "Instagram",    icon: Instagram },
+};
+
 export const AshDock = ({ className }: { className?: string }) => {
   const { data: folders = [] } = useFolders();
   const createIdea = useCreateIdea();
   const voice = useVoiceCapture({ maxSeconds: 180 });
   const [text, setText] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [mode, setMode] = useState<Mode>("auto");
   const [folderId, setFolderId] = useState<string | null>(() => {
     try { return localStorage.getItem(FOLDER_KEY); } catch { return null; }
   });
@@ -73,7 +112,6 @@ export const AshDock = ({ className }: { className?: string }) => {
       else localStorage.removeItem(FOLDER_KEY);
     } catch { /* ignore */ }
   }, [folderId]);
-
   useEffect(() => {
     try { localStorage.setItem(CHIPS_KEY, JSON.stringify(chips)); } catch { /* ignore */ }
   }, [chips]);
@@ -84,28 +122,115 @@ export const AshDock = ({ className }: { className?: string }) => {
   const isVoiceBusy = voice.state === "requesting" || voice.state === "processing";
   const busy = submitting || isVoiceBusy;
 
-  const saveIdea = async (raw: string, source: "manual" | "audio") => {
-    const t = raw.trim();
-    if (!t) return;
+  // Resolve the actual handler from current mode + text shape.
+  const detectedMode = (): Exclude<Mode, "auto"> => {
+    if (mode !== "auto") return mode;
+    const url = extractUrl(text);
+    if (url) return isInstagramUrl(url) ? "instagram" : "link";
+    if (looksLikeList(text)) return "list";
+    if (text.trim().length > 400) return "transcript";
+    return "note";
+  };
+
+  const handleSubmit = async () => {
+    const t = text.trim();
+    if (!t || busy) return;
+    const eff = detectedMode();
     setSubmitting(true);
     try {
-      await createIdea.mutateAsync({
-        title: titleFromText(t),
-        raw_note: t,
-        source_type: source,
-        folder_id: folderId,
-      });
+      if (eff === "link" || eff === "instagram") {
+        await saveUrlIdea(extractUrl(t) ?? t, eff);
+      } else if (eff === "transcript") {
+        await saveTranscriptIdea(t);
+      } else if (eff === "list") {
+        await createIdea.mutateAsync({
+          title: titleFromText(t),
+          raw_note: linesToChecklist(t),
+          source_type: "manual",
+          folder_id: folderId,
+          tags: ["list"],
+        });
+      } else {
+        await createIdea.mutateAsync({
+          title: titleFromText(t),
+          raw_note: t,
+          source_type: "manual",
+          folder_id: folderId,
+        });
+      }
       setText("");
     } catch (e) {
-      // toast handled in hook
+      toast.error(e instanceof Error ? e.message : "Couldn't save");
     } finally {
       setSubmitting(false);
     }
   };
 
-  const handleSubmitText = async () => {
-    if (!text.trim() || busy) return;
-    await saveIdea(text, "manual");
+  const saveUrlIdea = async (url: string, kind: "link" | "instagram") => {
+    const isInsta = kind === "instagram" || isInstagramUrl(url);
+    const fnName = isInsta ? "transcribe-instagram" : "extract-url";
+    const { data: ext, error: extErr } = await supabase.functions.invoke(fnName, { body: { url } });
+    if (extErr) throw new Error(extErr.message);
+    if (ext?.error) throw new Error(ext.error);
+    const normalized = normalizeExtraction(isInsta ? "instagram" : "webpage", ext, url);
+
+    let summary = "";
+    let aiTitle: string | undefined;
+    try {
+      const { data: sum, error: sumErr } = await supabase.functions.invoke("summarize", {
+        body: { text: normalized.text, kind: summarizeKindFor(normalized.sourceKind) },
+      });
+      if (sumErr) throw new Error(sumErr.message);
+      if (sum?.error) throw new Error(sum.error);
+      summary = sum?.summary ?? "";
+      aiTitle = sum?.suggestedTitle ?? undefined;
+    } catch (e) {
+      toast.warning(e instanceof Error ? `Summary failed: ${e.message}` : "Summary failed");
+    }
+
+    await createIdea.mutateAsync({
+      title: (aiTitle || normalized.suggestedTitle || normalized.url).slice(0, 200),
+      source_url: normalized.url,
+      source_type: "webpage",
+      source_label: normalized.siteName ?? (
+        normalized.sourceKind === "instagram" ? "Instagram" :
+        normalized.sourceKind === "tiktok"    ? "TikTok"    :
+        normalized.sourceKind === "youtube"   ? "YouTube"   : "Web page"
+      ),
+      source_meta: {
+        kind: normalized.sourceKind,
+        author: normalized.author,
+        siteName: normalized.siteName,
+        thumbnail: normalized.thumbnail,
+        hasTranscript: normalized.hasTranscript,
+      },
+      extracted_text: normalized.text || null,
+      ai_summary: summary.trim() || null,
+      folder_id: folderId,
+    });
+  };
+
+  const saveTranscriptIdea = async (raw: string) => {
+    let summary = "";
+    let aiTitle: string | undefined;
+    try {
+      const { data: sum, error: sumErr } = await supabase.functions.invoke("summarize", {
+        body: { text: raw, kind: "transcript" },
+      });
+      if (sumErr) throw new Error(sumErr.message);
+      if (sum?.error) throw new Error(sum.error);
+      summary = sum?.summary ?? "";
+      aiTitle = sum?.suggestedTitle ?? undefined;
+    } catch (e) {
+      toast.warning(e instanceof Error ? `Summary failed: ${e.message}` : "Summary failed");
+    }
+    await createIdea.mutateAsync({
+      title: (aiTitle || titleFromText(raw)).slice(0, 200),
+      source_type: "transcript",
+      extracted_text: raw,
+      ai_summary: summary.trim() || null,
+      folder_id: folderId,
+    });
   };
 
   const handleMic = async () => {
@@ -132,7 +257,12 @@ export const AshDock = ({ className }: { className?: string }) => {
           toast.message("Nothing heard — try again.");
           return;
         }
-        await saveIdea(transcript, "audio");
+        await createIdea.mutateAsync({
+          title: titleFromText(transcript),
+          raw_note: transcript,
+          source_type: "audio",
+          folder_id: folderId,
+        });
       }
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Voice capture failed");
@@ -141,16 +271,8 @@ export const AshDock = ({ className }: { className?: string }) => {
     }
   };
 
-  const openNewChip = () => {
-    setChipEditor({ id: "", label: "", prefill: "" });
-    setChipDraft({ label: "", prefill: "" });
-  };
-
-  const openEditChip = (c: Chip) => {
-    setChipEditor(c);
-    setChipDraft({ label: c.label, prefill: c.prefill });
-  };
-
+  const openNewChip = () => { setChipEditor({ id: "", label: "", prefill: "" }); setChipDraft({ label: "", prefill: "" }); };
+  const openEditChip = (c: Chip) => { setChipEditor(c); setChipDraft({ label: c.label, prefill: c.prefill }); };
   const saveChip = () => {
     if (!chipEditor) return;
     const label = chipDraft.label.trim();
@@ -162,18 +284,20 @@ export const AshDock = ({ className }: { className?: string }) => {
     }
     setChipEditor(null);
   };
-
   const deleteChip = () => {
     if (!chipEditor?.id) return;
     setChips((cs) => cs.filter((c) => c.id !== chipEditor.id));
     setChipEditor(null);
   };
-
   const useChip = (c: Chip) => {
-    const next = c.prefill || c.label;
-    setText(next);
+    setText(c.prefill || c.label);
     requestAnimationFrame(() => textareaRef.current?.focus());
   };
+
+  // Show the active mode as a chip on the left of the input row.
+  const effectiveMode = text.trim() ? detectedMode() : (mode === "auto" ? "note" : mode);
+  const ModeIcon = MODE_META[effectiveMode].icon;
+  const modeLabel = mode === "auto" ? `Auto · ${MODE_META[effectiveMode].label}` : MODE_META[effectiveMode].label;
 
   return (
     <>
@@ -185,25 +309,25 @@ export const AshDock = ({ className }: { className?: string }) => {
         )}
       >
         <div className="rounded-2xl border border-border/70 bg-card/85 backdrop-blur-xl shadow-2xl shadow-black/30 ring-1 ring-white/5">
-          {/* Input row */}
+          {/* Input */}
           <div className="px-3.5 pt-3 pb-2">
             <textarea
               ref={textareaRef}
               value={text}
               onChange={(e) => setText(e.target.value)}
               onKeyDown={(e) => {
-                if (e.key === "Enter" && !e.shiftKey) {
+                if (e.key === "Enter" && !e.shiftKey && !e.metaKey) {
                   e.preventDefault();
-                  void handleSubmitText();
+                  void handleSubmit();
                 }
               }}
-              placeholder={isRecording ? `Listening… ${fmtSeconds(voice.seconds)}` : "Capture an idea…"}
+              placeholder={isRecording ? `Listening… ${fmtSeconds(voice.seconds)}` : "Capture an idea, paste a link, drop a transcript…"}
               rows={1}
               className="w-full resize-none bg-transparent text-[15px] leading-6 placeholder:text-muted-foreground/70 focus:outline-none max-h-40"
             />
           </div>
 
-          {/* Controls row */}
+          {/* Controls */}
           <div className="flex items-center gap-1.5 px-2.5 pb-2">
             {/* Mic */}
             <button
@@ -212,7 +336,7 @@ export const AshDock = ({ className }: { className?: string }) => {
               disabled={busy && !isRecording}
               aria-label={isRecording ? "Stop recording" : "Record voice"}
               className={cn(
-                "inline-flex items-center justify-center h-9 w-9 rounded-full transition-colors",
+                "inline-flex items-center justify-center h-9 w-9 rounded-full transition-colors shrink-0",
                 isRecording
                   ? "bg-destructive text-destructive-foreground animate-pulse"
                   : "text-muted-foreground hover:text-foreground hover:bg-secondary/70",
@@ -221,24 +345,57 @@ export const AshDock = ({ className }: { className?: string }) => {
               {isVoiceBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : isRecording ? <Square className="h-3.5 w-3.5 fill-current" /> : <Mic className="h-4 w-4" />}
             </button>
 
+            {/* Mode picker */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  type="button"
+                  className="inline-flex items-center gap-1 h-9 px-2.5 rounded-full text-[12.5px] text-muted-foreground hover:text-foreground hover:bg-secondary/70 transition-colors shrink-0"
+                  aria-label="Capture type"
+                >
+                  <ModeIcon className="h-3.5 w-3.5" />
+                  <span className="truncate max-w-[8rem]">{modeLabel}</span>
+                  <ChevronDown className="h-3 w-3 opacity-60" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-52">
+                <DropdownMenuLabel>Capture type</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => setMode("auto")}>
+                  <Wand2 className="h-4 w-4 mr-2 opacity-60" /> Auto-detect
+                  {mode === "auto" && <Check className="h-4 w-4 ml-auto" />}
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                {(["note","list","transcript","link","instagram"] as const).map((k) => {
+                  const Icon = MODE_META[k].icon;
+                  return (
+                    <DropdownMenuItem key={k} onClick={() => setMode(k)}>
+                      <Icon className="h-4 w-4 mr-2 opacity-60" /> {MODE_META[k].label}
+                      {mode === k && <Check className="h-4 w-4 ml-auto" />}
+                    </DropdownMenuItem>
+                  );
+                })}
+              </DropdownMenuContent>
+            </DropdownMenu>
+
             {/* Folder picker */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button
                   type="button"
-                  className="inline-flex items-center gap-1.5 h-9 px-2.5 rounded-full text-[13px] text-muted-foreground hover:text-foreground hover:bg-secondary/70 transition-colors max-w-[10rem]"
+                  className="inline-flex items-center gap-1 h-9 px-2.5 rounded-full text-[12.5px] text-muted-foreground hover:text-foreground hover:bg-secondary/70 transition-colors max-w-[9rem]"
                   aria-label="Choose folder"
                 >
-                  <Plus className="h-4 w-4 shrink-0" />
+                  <FolderIcon className="h-3.5 w-3.5 shrink-0" />
                   <span className="truncate">{folderName}</span>
+                  <ChevronDown className="h-3 w-3 opacity-60" />
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" className="w-56">
                 <DropdownMenuLabel>Save to folder</DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => setFolderId(null)}>
-                  <FolderIcon className="h-4 w-4 mr-2 opacity-60" />
-                  Inbox (no folder)
+                  <FolderIcon className="h-4 w-4 mr-2 opacity-60" /> Inbox (no folder)
                   {folderId === null && <Check className="h-4 w-4 ml-auto" />}
                 </DropdownMenuItem>
                 {folders.length > 0 && <DropdownMenuSeparator />}
@@ -259,11 +416,11 @@ export const AshDock = ({ className }: { className?: string }) => {
             {/* Send */}
             <button
               type="button"
-              onClick={handleSubmitText}
+              onClick={handleSubmit}
               disabled={!text.trim() || busy}
               aria-label="Save idea"
               className={cn(
-                "inline-flex items-center justify-center h-9 w-9 rounded-full transition-colors",
+                "inline-flex items-center justify-center h-9 w-9 rounded-full transition-colors shrink-0",
                 text.trim() && !busy
                   ? "bg-primary text-primary-foreground hover:bg-primary/90"
                   : "bg-secondary/60 text-muted-foreground cursor-not-allowed",
@@ -274,7 +431,7 @@ export const AshDock = ({ className }: { className?: string }) => {
           </div>
         </div>
 
-        {/* Chip row */}
+        {/* Chips */}
         <div className="mt-2 flex flex-wrap items-center justify-center gap-1.5 px-1">
           {chips.map((c) => (
             <button
