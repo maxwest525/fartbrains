@@ -10,6 +10,7 @@ import { SettingsSheet } from "@/components/app/SettingsSheet";
 import { FoldersPage } from "@/components/app/FoldersPage";
 import { CalendarPage } from "@/components/app/CalendarPage";
 import { AlarmOverlay } from "@/components/app/AlarmOverlay";
+import { AshDock } from "@/components/app/AshDock";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useAuth } from "@/hooks/useAuth";
@@ -332,6 +333,8 @@ const Shell = () => {
           onOpenSettings={() => setSettingsOpen(true)}
         />
       )}
+
+      {!showDetailOnly && <AshDock />}
 
       <SettingsSheet open={settingsOpen} onOpenChange={setSettingsOpen} />
       <AlarmOverlay />
