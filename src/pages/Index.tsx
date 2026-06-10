@@ -272,26 +272,8 @@ const Shell = () => {
                 )}
               </div>
             </div>
-            <div ref={composeRef} className="w-full px-3 sm:px-6 lg:px-10 pt-4 sm:pt-6 space-y-3 sm:space-y-4 md:max-w-3xl md:mx-auto">
-              <ComposeIdea
-                defaultFolderId={defaultFolderId}
-                onCreated={(id, needsReview) => {
-                  if (needsReview) {
-                    // Low AI confidence — open the detail panel so the user can
-                    // review and edit before moving on. (Toast handled in ComposeIdea.)
-                    setSelectedId(id);
-                    return;
-                  }
-                  // High confidence — stay on capture; tap toast to open if wanted.
-                  toast.success("Idea saved", {
-                    description: "Find it in Recents or the All folder.",
-                    action: { label: "Open", onClick: () => setSelectedId(id) },
-                  });
-                }}
-                onOpenExisting={(id) => {
-                  setSelectedId(id);
-                }}
-              />
+            <div ref={composeRef} className="w-full px-3 sm:px-6 lg:px-10 pt-6 sm:pt-10 space-y-3 sm:space-y-4 md:max-w-2xl md:mx-auto">
+              <VoiceOrb />
               <p className="mt-3 text-center text-[12px] text-muted-foreground">
                 Saved ideas land in <button onClick={() => handleFilterChange({ kind: "recent" })} className="underline underline-offset-2 hover:text-foreground">Recents</button> and the All folder.
               </p>
