@@ -271,8 +271,58 @@ html:not(.dark) .gemini ::selection {
     border-top: 0.5px solid hsl(var(--border));
   }
 
-  .no-scrollbar::-webkit-scrollbar { display: none; }
-  .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+  /* ---------- Reusable glass surfaces ----------
+     "White clear blue" glassmorphism, ~0.15rem blur. Works in both themes
+     because it sits on tinted backdrops and falls back to readable colors. */
+  .glass-field {
+    background-color: rgba(255, 255, 255, 0.55);
+    border: 1px solid rgba(66, 133, 244, 0.22);
+    backdrop-filter: blur(0.15rem) saturate(160%);
+    -webkit-backdrop-filter: blur(0.15rem) saturate(160%);
+    color: hsl(var(--foreground));
+    transition: background-color 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+  }
+  .glass-field::placeholder { color: hsl(var(--muted-foreground)); }
+  .glass-field:focus-visible {
+    outline: none;
+    background-color: rgba(255, 255, 255, 0.72);
+    border-color: rgba(66, 133, 244, 0.55);
+    box-shadow: 0 0 0 3px rgba(66, 133, 244, 0.18);
+  }
+  .dark .glass-field {
+    background-color: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 255, 255, 0.14);
+    color: hsl(var(--foreground));
+  }
+  .dark .glass-field:focus-visible {
+    background-color: rgba(255, 255, 255, 0.10);
+    border-color: rgba(155, 114, 203, 0.55);
+    box-shadow: 0 0 0 3px rgba(155, 114, 203, 0.25);
+  }
+
+  /* Translucent pill — matches the reference "Agent" button on a blue field.
+     Idle is a faint white wash; on hover the wash fades toward zero,
+     revealing the surface beneath. */
+  .glass-pill {
+    background-color: rgba(255, 255, 255, 0.18);
+    border: 1px solid rgba(255, 255, 255, 0.28);
+    color: #FFFFFF;
+    backdrop-filter: blur(0.15rem) saturate(160%);
+    -webkit-backdrop-filter: blur(0.15rem) saturate(160%);
+    transition: background-color 220ms ease, border-color 220ms ease, transform 180ms ease;
+  }
+  .glass-pill:hover { background-color: rgba(255, 255, 255, 0.06); border-color: rgba(255, 255, 255, 0.14); }
+  .glass-pill:active { transform: scale(0.97); }
+
+  /* Soft star-field overlay used over space imagery for legibility. */
+  .space-scrim {
+    background:
+      radial-gradient(60% 50% at 50% 45%, rgba(0,0,0,0.20), rgba(0,0,0,0.55) 80%);
+  }
+  html:not(.dark) .space-scrim {
+    background:
+      radial-gradient(60% 50% at 50% 45%, rgba(255,255,255,0.20), rgba(15,23,42,0.55) 85%);
+  }
 }
 
 /* In-app alarm overlay animations */
