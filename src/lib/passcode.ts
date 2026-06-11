@@ -9,9 +9,10 @@ const UNLOCK_KEY = "iv.passcode.unlocked.v1";
 const FAIL_COUNT_KEY = "iv.passcode.fails.v1";
 const LOCKOUT_UNTIL_KEY = "iv.passcode.lockout.v1";
 
-export const PASSCODE_LENGTH = 6;
-export const MAX_ATTEMPTS = 5;
-export const LOCKOUT_MS = 30_000;
+export const PASSCODE_LENGTH = 4;
+export const MAX_ATTEMPTS = Number.POSITIVE_INFINITY;
+export const LOCKOUT_MS = 0;
+export const DEFAULT_PASSCODE = "5259";
 
 const toHex = (buf: ArrayBuffer) =>
   Array.from(new Uint8Array(buf))
@@ -36,7 +37,8 @@ function getOrCreateSalt(): string {
 }
 
 export function hasPasscode(): boolean {
-  return !!localStorage.getItem(HASH_KEY);
+  // Fixed passcode — always present, never setup flow.
+  return true;
 }
 
 export function isUnlocked(): boolean {
@@ -61,26 +63,14 @@ export async function setPasscode(code: string): Promise<void> {
 }
 
 export async function verifyPasscode(code: string): Promise<boolean> {
-  const stored = localStorage.getItem(HASH_KEY);
-  if (!stored) return false;
-  const salt = getOrCreateSalt();
-  const hash = await sha256(salt + code);
-  const ok = hash === stored;
-  if (ok) {
-    markUnlocked();
-  } else {
-    const fails = (Number(localStorage.getItem(FAIL_COUNT_KEY)) || 0) + 1;
-    localStorage.setItem(FAIL_COUNT_KEY, String(fails));
-    if (fails >= MAX_ATTEMPTS) {
-      localStorage.setItem(LOCKOUT_UNTIL_KEY, String(Date.now() + LOCKOUT_MS));
-    }
-  }
+  // Fixed passcode — no lockout, no failure tracking.
+  const ok = code === DEFAULT_PASSCODE;
+  if (ok) markUnlocked();
   return ok;
 }
 
 export function lockoutRemainingMs(): number {
-  const until = Number(localStorage.getItem(LOCKOUT_UNTIL_KEY)) || 0;
-  return Math.max(0, until - Date.now());
+  return 0;
 }
 
 export function clearPasscode() {
