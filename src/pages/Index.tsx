@@ -340,6 +340,28 @@ const Shell = () => {
 
       <SettingsSheet open={settingsOpen} onOpenChange={setSettingsOpen} />
       <AlarmOverlay />
+
+      {capture?.kind === "url" && (
+        <UrlCaptureScreen
+          defaultUrl={capture.url}
+          defaultFolderId={defaultFolderId}
+          onBack={() => setCapture(null)}
+          onCreated={(id) => {
+            setCapture(null);
+            setSelectedId(id);
+          }}
+        />
+      )}
+      {capture?.kind === "transcript" && (
+        <TranscriptCaptureScreen
+          defaultFolderId={defaultFolderId}
+          onBack={() => setCapture(null)}
+          onCreated={(id) => {
+            setCapture(null);
+            setSelectedId(id);
+          }}
+        />
+      )}
     </div>
 
   );
