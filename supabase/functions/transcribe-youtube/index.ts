@@ -83,7 +83,7 @@ Deno.serve(async (req) => {
     const apifyResp = await fetch(apifyUrl, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ videoUrl: canonicalUrl }),
+      body: JSON.stringify({ youtube_url: canonicalUrl }),
     });
 
     if (!apifyResp.ok) {
