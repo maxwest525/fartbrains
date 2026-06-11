@@ -355,6 +355,7 @@ const Shell = () => {
       {capture?.kind === "transcript" && (
         <TranscriptCaptureScreen
           defaultFolderId={defaultFolderId}
+          defaultText={capture.text}
           onBack={() => setCapture(null)}
           onCreated={(id) => {
             setCapture(null);
