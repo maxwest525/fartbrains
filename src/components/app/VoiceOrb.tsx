@@ -305,110 +305,116 @@ export const VoiceOrb = () => {
       </div>
 
       {draft !== null && (
-        <div className="relative w-full max-w-lg space-y-2.5">
-          {/* Toolbar */}
-          <div className="flex items-center justify-between gap-1 flex-wrap">
-            <div className="flex items-center gap-0.5">
+        <div className="relative w-full max-w-lg">
+          <div className="flex flex-col h-[360px] sm:h-[420px] rounded-xl border border-[hsl(222_14%_22%)] bg-[hsl(222_14%_10%)] overflow-hidden">
+            {/* Sticky toolbar */}
+            <div className="flex items-center justify-between gap-1 px-2 py-1.5 border-b border-[hsl(222_14%_20%)] bg-[hsl(222_14%_11%)] shrink-0">
+              <div className="flex items-center gap-0.5">
+                <Button
+                  type="button" variant="ghost" size="sm"
+                  onClick={undo} disabled={history.length === 0}
+                  className="h-8 px-2 text-[hsl(220_9%_75%)] hover:text-white hover:bg-white/5"
+                  aria-label="Undo"
+                >
+                  <Undo2 className="h-3.5 w-3.5" />
+                </Button>
+                <Button
+                  type="button" variant="ghost" size="sm"
+                  onClick={redo} disabled={future.length === 0}
+                  className="h-8 px-2 text-[hsl(220_9%_75%)] hover:text-white hover:bg-white/5"
+                  aria-label="Redo"
+                >
+                  <Redo2 className="h-3.5 w-3.5" />
+                </Button>
+                <Button
+                  type="button" variant="ghost" size="sm"
+                  onClick={() => setShowFind((s) => !s)}
+                  className={cn(
+                    "h-8 px-2 hover:bg-white/5",
+                    showFind ? "text-white bg-white/5" : "text-[hsl(220_9%_75%)] hover:text-white",
+                  )}
+                  aria-label="Find and replace"
+                >
+                  <Search className="h-3.5 w-3.5" />
+                </Button>
+              </div>
+              <span className="text-[11px] tabular-nums text-[hsl(220_9%_60%)] pr-1">
+                {wordCount}w · {charCount}c
+              </span>
+            </div>
+
+            {showFind && (
+              <div className="border-b border-[hsl(222_14%_20%)] bg-[hsl(222_14%_9%)] p-2 space-y-1.5 shrink-0">
+                <div className="flex items-center gap-1.5">
+                  <Input
+                    value={findTerm}
+                    onChange={(e) => setFindTerm(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); findNext(); } }}
+                    placeholder="Find"
+                    className="h-8 bg-[hsl(222_14%_12%)] border-[hsl(222_14%_22%)] text-[13px]"
+                  />
+                  <Button type="button" size="sm" variant="ghost" onClick={findNext}
+                    className="h-8 px-2 text-[hsl(220_9%_75%)] hover:text-white hover:bg-white/5">
+                    Next
+                  </Button>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <Input
+                    value={replaceTerm}
+                    onChange={(e) => setReplaceTerm(e.target.value)}
+                    placeholder="Replace with"
+                    className="h-8 bg-[hsl(222_14%_12%)] border-[hsl(222_14%_22%)] text-[13px]"
+                  />
+                  <Button type="button" size="sm" variant="ghost" onClick={replaceAll}
+                    className="h-8 px-2 text-[hsl(220_9%_75%)] hover:text-white hover:bg-white/5">
+                    <ReplaceIcon className="h-3.5 w-3.5 mr-1" /> All
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {/* Scrollable text area fills remaining space */}
+            <div className="flex-1 min-h-0 overflow-hidden">
+              <Textarea
+                ref={textareaRef}
+                value={draft}
+                onChange={(e) => updateDraft(e.target.value)}
+                autoFocus
+                className="h-full w-full bg-transparent border-0 rounded-none text-[hsl(220_14%_96%)] placeholder:text-[hsl(220_9%_55%)] text-[14px] leading-relaxed resize-none overflow-y-auto focus-visible:ring-0 focus-visible:ring-offset-0"
+                placeholder="Transcript…"
+              />
+            </div>
+
+            {/* Sticky footer */}
+            <div className="flex items-center justify-between gap-2 px-2 py-1.5 border-t border-[hsl(222_14%_20%)] bg-[hsl(222_14%_11%)] shrink-0">
               <Button
-                type="button" variant="ghost" size="sm"
-                onClick={undo} disabled={history.length === 0}
-                className="h-8 px-2 text-[hsl(220_9%_75%)] hover:text-white hover:bg-white/5"
-                aria-label="Undo"
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={discard}
+                disabled={submitting}
+                className="text-[hsl(220_9%_75%)] hover:text-white hover:bg-white/5"
               >
-                <Undo2 className="h-3.5 w-3.5" />
+                <X className="h-4 w-4 mr-1.5" /> Discard
               </Button>
               <Button
-                type="button" variant="ghost" size="sm"
-                onClick={redo} disabled={future.length === 0}
-                className="h-8 px-2 text-[hsl(220_9%_75%)] hover:text-white hover:bg-white/5"
-                aria-label="Redo"
+                type="button"
+                size="sm"
+                onClick={saveDraft}
+                disabled={submitting || !draft.trim()}
               >
-                <Redo2 className="h-3.5 w-3.5" />
-              </Button>
-              <Button
-                type="button" variant="ghost" size="sm"
-                onClick={() => setShowFind((s) => !s)}
-                className={cn(
-                  "h-8 px-2 hover:bg-white/5",
-                  showFind ? "text-white bg-white/5" : "text-[hsl(220_9%_75%)] hover:text-white",
+                {submitting ? (
+                  <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
+                ) : (
+                  <Check className="h-4 w-4 mr-1.5" />
                 )}
-                aria-label="Find and replace"
-              >
-                <Search className="h-3.5 w-3.5" />
+                Save idea
               </Button>
             </div>
-            <span className="text-[11px] tabular-nums text-[hsl(220_9%_60%)]">
-              {wordCount} {wordCount === 1 ? "word" : "words"} · {charCount} chars
-            </span>
-          </div>
-
-          {showFind && (
-            <div className="rounded-lg border border-[hsl(222_14%_22%)] bg-[hsl(222_14%_10%)] p-2 space-y-1.5">
-              <div className="flex items-center gap-1.5">
-                <Input
-                  value={findTerm}
-                  onChange={(e) => setFindTerm(e.target.value)}
-                  onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); findNext(); } }}
-                  placeholder="Find"
-                  className="h-8 bg-[hsl(222_14%_12%)] border-[hsl(222_14%_22%)] text-[13px]"
-                />
-                <Button type="button" size="sm" variant="ghost" onClick={findNext}
-                  className="h-8 px-2 text-[hsl(220_9%_75%)] hover:text-white hover:bg-white/5">
-                  Next
-                </Button>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <Input
-                  value={replaceTerm}
-                  onChange={(e) => setReplaceTerm(e.target.value)}
-                  placeholder="Replace with"
-                  className="h-8 bg-[hsl(222_14%_12%)] border-[hsl(222_14%_22%)] text-[13px]"
-                />
-                <Button type="button" size="sm" variant="ghost" onClick={replaceAll}
-                  className="h-8 px-2 text-[hsl(220_9%_75%)] hover:text-white hover:bg-white/5">
-                  <ReplaceIcon className="h-3.5 w-3.5 mr-1" /> All
-                </Button>
-              </div>
-            </div>
-          )}
-
-          <Textarea
-            ref={textareaRef}
-            value={draft}
-            onChange={(e) => updateDraft(e.target.value)}
-            autoFocus
-            rows={6}
-            className="bg-[hsl(222_14%_12%)] border-[hsl(222_14%_22%)] text-[hsl(220_14%_96%)] placeholder:text-[hsl(220_9%_55%)] text-[14px] leading-relaxed resize-none min-h-[140px] sm:min-h-[160px]"
-            placeholder="Transcript…"
-          />
-
-          <div className="flex items-center justify-between gap-2">
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={discard}
-              disabled={submitting}
-              className="text-[hsl(220_9%_75%)] hover:text-white hover:bg-white/5"
-            >
-              <X className="h-4 w-4 mr-1.5" /> Discard
-            </Button>
-            <Button
-              type="button"
-              size="sm"
-              onClick={saveDraft}
-              disabled={submitting || !draft.trim()}
-            >
-              {submitting ? (
-                <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
-              ) : (
-                <Check className="h-4 w-4 mr-1.5" />
-              )}
-              Save idea
-            </Button>
           </div>
         </div>
       )}
+
     </div>
   );
 };
