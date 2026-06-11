@@ -1,10 +1,11 @@
 import { useRef, useState } from "react";
-import { Search, X, Inbox, Folder, Star, Clock, CalendarDays, Settings as SettingsIcon, LogOut, Home as HomeIcon } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { Search, X, Inbox, Folder, Star, Clock, CalendarDays, Settings as SettingsIcon, LogOut } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { IdeaList } from "@/components/app/IdeaList";
 import { IdeaDetail } from "@/components/app/IdeaDetail";
-import { VoiceOrb } from "@/components/app/VoiceOrb";
+import { AshChatPanel } from "@/components/app/home/AshChatPanel";
+import { UrlCaptureScreen } from "@/components/app/UrlCaptureScreen";
+import { TranscriptCaptureScreen } from "@/components/app/TranscriptCaptureScreen";
 
 import { MobileTabBar } from "@/components/app/MobileTabBar";
 import { SettingsSheet } from "@/components/app/SettingsSheet";
@@ -21,6 +22,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import type { IdeaFilter } from "@/hooks/useIdeas";
 
+
 type View = "ideas" | "folders" | "calendar";
 
 const Shell = () => {
@@ -34,11 +36,16 @@ const Shell = () => {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [searchValue, setSearchValue] = useState("");
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [capture, setCapture] = useState<
+    | { kind: "url"; url: string }
+    | { kind: "transcript"; text: string }
+    | null
+  >(null);
   const isMobile = useIsMobile();
-  const navigate = useNavigate();
   const composeRef = useRef<HTMLDivElement>(null);
   const { user, signOut } = useAuth();
   const { data: folders = [] } = useFolders();
+
   // Polls folders client-side; fires browser + toast notifications when due.
   useReminderNotifier();
 
@@ -275,12 +282,22 @@ const Shell = () => {
                 )}
               </div>
             </div>
-            <div ref={composeRef} className="w-full px-3 sm:px-6 lg:px-10 pt-6 sm:pt-10 space-y-3 sm:space-y-4 md:max-w-2xl md:mx-auto">
-              <VoiceOrb />
-              <p className="mt-3 text-center text-[12px] text-muted-foreground">
-                Saved ideas land in <button onClick={() => handleFilterChange({ kind: "recent" })} className="underline underline-offset-2 hover:text-foreground">Recents</button> and the All folder.
+            <div ref={composeRef} className="w-full px-3 sm:px-6 lg:px-10 pt-4 sm:pt-6 pb-4 flex-1 min-h-0 flex flex-col gap-4 max-w-3xl mx-auto">
+              <div className="flex-1 min-h-[420px]">
+                <AshChatPanel
+                  onSaved={(id) => {
+                    if (!isMobile) setSelectedId(id);
+                    else toast.success("Saved to Vault", { action: { label: "View", onClick: () => setSelectedId(id) } });
+                  }}
+                  onOpenUrlCapture={(url) => setCapture({ kind: "url", url })}
+                  onOpenTranscriptCapture={(text) => setCapture({ kind: "transcript", text })}
+                />
+              </div>
+              <p className="text-center text-[12px] text-muted-foreground">
+                Captures land in <button onClick={() => handleFilterChange({ kind: "recent" })} className="underline underline-offset-2 hover:text-foreground">Recents</button> and the All folder.
               </p>
             </div>
+
 
           </div>
         )}
@@ -323,6 +340,29 @@ const Shell = () => {
 
       <SettingsSheet open={settingsOpen} onOpenChange={setSettingsOpen} />
       <AlarmOverlay />
+
+      {capture?.kind === "url" && (
+        <UrlCaptureScreen
+          defaultUrl={capture.url}
+          defaultFolderId={defaultFolderId}
+          onBack={() => setCapture(null)}
+          onCreated={(id) => {
+            setCapture(null);
+            setSelectedId(id);
+          }}
+        />
+      )}
+      {capture?.kind === "transcript" && (
+        <TranscriptCaptureScreen
+          defaultFolderId={defaultFolderId}
+          defaultText={capture.text}
+          onBack={() => setCapture(null)}
+          onCreated={(id) => {
+            setCapture(null);
+            setSelectedId(id);
+          }}
+        />
+      )}
     </div>
 
   );

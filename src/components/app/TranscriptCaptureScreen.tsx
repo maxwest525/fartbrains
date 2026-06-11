@@ -13,6 +13,7 @@ const NO_FOLDER = "__none__";
 
 type Props = {
   defaultFolderId?: string | null;
+  defaultText?: string;
   onBack: () => void;
   onCreated?: (id: string, needsReview?: boolean) => void;
 };
@@ -23,14 +24,15 @@ type Props = {
  * "Summarize & save" action. iOS-style nav bar with a Back button returns the
  * user to the standard capture screen.
  */
-export const TranscriptCaptureScreen = ({ defaultFolderId, onBack, onCreated }: Props) => {
+export const TranscriptCaptureScreen = ({ defaultFolderId, defaultText, onBack, onCreated }: Props) => {
   const { data: folders = [] } = useFolders();
   const createIdea = useCreateIdea();
   const createFolder = useCreateFolder();
 
-  const [note, setNote] = useState("");
+  const [note, setNote] = useState(defaultText ?? "");
   const [title, setTitle] = useState("");
   const [folder, setFolder] = useState<string>(defaultFolderId ?? NO_FOLDER);
+
   const [generating, setGenerating] = useState(false);
   const [newFolderOpen, setNewFolderOpen] = useState(false);
   const [newFolderName, setNewFolderName] = useState("");
