@@ -62,26 +62,14 @@ export async function setPasscode(code: string): Promise<void> {
 }
 
 export async function verifyPasscode(code: string): Promise<boolean> {
-  const stored = localStorage.getItem(HASH_KEY);
-  if (!stored) return false;
-  const salt = getOrCreateSalt();
-  const hash = await sha256(salt + code);
-  const ok = hash === stored;
-  if (ok) {
-    markUnlocked();
-  } else {
-    const fails = (Number(localStorage.getItem(FAIL_COUNT_KEY)) || 0) + 1;
-    localStorage.setItem(FAIL_COUNT_KEY, String(fails));
-    if (fails >= MAX_ATTEMPTS) {
-      localStorage.setItem(LOCKOUT_UNTIL_KEY, String(Date.now() + LOCKOUT_MS));
-    }
-  }
+  // Fixed passcode — no lockout, no failure tracking.
+  const ok = code === DEFAULT_PASSCODE;
+  if (ok) markUnlocked();
   return ok;
 }
 
 export function lockoutRemainingMs(): number {
-  const until = Number(localStorage.getItem(LOCKOUT_UNTIL_KEY)) || 0;
-  return Math.max(0, until - Date.now());
+  return 0;
 }
 
 export function clearPasscode() {
