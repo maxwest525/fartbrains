@@ -308,7 +308,7 @@ export const AshDock = ({ className }: { className?: string }) => {
           className,
         )}
       >
-        <div className="rounded-2xl border border-border/70 bg-card/85 backdrop-blur-xl shadow-2xl shadow-black/30 ring-1 ring-white/5">
+        <div className="gemini gemini-ring rounded-2xl bg-card/85 backdrop-blur-xl shadow-2xl shadow-black/30">
           {/* Input */}
           <div className="px-3.5 pt-3 pb-2">
             <textarea
