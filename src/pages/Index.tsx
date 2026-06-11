@@ -119,17 +119,12 @@ const Shell = () => {
     onClick: () => void;
   }> = [
     {
-      label: "Home",
-      icon: HomeIcon,
-      active: false,
-      onClick: () => navigate("/home"),
-    },
-    {
       label: "Capture",
       icon: Inbox,
       active: view === "ideas" && filter.kind === "all",
       onClick: () => handleFilterChange({ kind: "all" }),
     },
+
     {
       label: "Recents",
       icon: Clock,
