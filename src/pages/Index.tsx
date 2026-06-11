@@ -1,10 +1,11 @@
 import { useRef, useState } from "react";
-import { Search, X, Inbox, Folder, Star, Clock, CalendarDays, Settings as SettingsIcon, LogOut, Home as HomeIcon } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { Search, X, Inbox, Folder, Star, Clock, CalendarDays, Settings as SettingsIcon, LogOut } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { IdeaList } from "@/components/app/IdeaList";
 import { IdeaDetail } from "@/components/app/IdeaDetail";
-import { VoiceOrb } from "@/components/app/VoiceOrb";
+import { AshChatPanel } from "@/components/app/home/AshChatPanel";
+import { UrlCaptureScreen } from "@/components/app/UrlCaptureScreen";
+import { TranscriptCaptureScreen } from "@/components/app/TranscriptCaptureScreen";
 
 import { MobileTabBar } from "@/components/app/MobileTabBar";
 import { SettingsSheet } from "@/components/app/SettingsSheet";
@@ -21,6 +22,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import type { IdeaFilter } from "@/hooks/useIdeas";
 
+
 type View = "ideas" | "folders" | "calendar";
 
 const Shell = () => {
@@ -34,11 +36,16 @@ const Shell = () => {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [searchValue, setSearchValue] = useState("");
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [capture, setCapture] = useState<
+    | { kind: "url"; url: string }
+    | { kind: "transcript"; text: string }
+    | null
+  >(null);
   const isMobile = useIsMobile();
-  const navigate = useNavigate();
   const composeRef = useRef<HTMLDivElement>(null);
   const { user, signOut } = useAuth();
   const { data: folders = [] } = useFolders();
+
   // Polls folders client-side; fires browser + toast notifications when due.
   useReminderNotifier();
 
