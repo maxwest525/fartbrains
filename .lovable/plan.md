@@ -1,80 +1,64 @@
-
 ## Goal
 
-Make the `/home` Ash surface actually capture work into the Idea Vault — not just chat. Three connected pieces:
+Make `/` the single command center: Ash chat thread on top, vault list underneath. Kill `/home`, remove dead nav, verify captures actually persist, and make "Save to Vault" feel instant.
 
-1. A "Save to Idea Vault" button on every Ash assistant reply.
-2. Auto-detection in the prompt bar so URLs and long pasted transcripts route into proper capture flows (extract → summarize → save) instead of just chatting.
-3. Dedicated URL and Transcript capture screens reachable from `/home` (desktop), saving both raw text and the AI summary into a chosen folder.
+## 1. Delete `/home` route and any dead nav
 
-## 1. "Save to Idea Vault" on Ash replies
+- `src/App.tsx`: remove the `/home` Route entry and the `Home` import.
+- `src/pages/Home.tsx`: delete the file (the redirect shim is no longer needed once the route is gone).
+- `src/pages/Index.tsx`: remove the now-unused `Home as HomeIcon` and `useNavigate` imports. (The "Home" nav button was already removed; just clean leftover imports.)
+- Grep-confirm: no remaining `/home`, `navigate("/home")`, or `HomeIcon` references anywhere in `src/`.
 
-On each assistant message in `src/pages/Home.tsx`, add a small action row (visible on hover, like Gemini) with **Save to Vault**, **Copy**, **Regenerate**.
+## 2. Merge the Ash chat thread into `/`
 
-Save flow (new hook `useSaveAshToIdea`):
-- `title`: first ~80 chars of the user prompt, or AI-suggested via a quick `summarize` call (skip if reply is short).
-- `raw_note`: the **user prompt** (so the question is preserved).
-- `extracted_text`: the **full assistant reply** (raw).
-- `ai_summary`: the assistant reply if it's already concise (<800 chars); otherwise call the existing `summarize` edge function to shorten.
-- `source_type: "manual"`, `folder_id: null` (Inbox) by default, with a folder picker popover to override.
-- Toast with "Saved · View" linking to `/?ideaId=...`.
+The Ash chat thread currently only lived in `Home.tsx`. `AshDock` is just a floating *capture composer* — it has no chat thread. To honor "the Ash chat thread and the idea vault list together," port the chat thread into the Capture view of `/`.
 
-## 2. Smart prompt routing on `/home`
+- New component `src/components/app/home/AshChatPanel.tsx`:
+  - Wraps `useAshChat` (prompt input + streaming reply + reset + stop + regenerate).
+  - Renders the conversation thread with user/assistant bubbles.
+  - Shows `AshMessageActions` under each assistant reply (Save / Copy / Regenerate).
+  - Empty state: orb + one-line hint + suggestion chips ("Summarize this URL…", "Save this idea…").
+  - Auto-detects URLs / long pasted text in the input and opens the matching capture sheet via callbacks (`onOpenUrlCapture`, `onOpenTranscriptCapture`) — same routing logic that used to live in `Home.tsx`.
+- `src/pages/Index.tsx` (Capture view block, `filter.kind === "all"`):
+  - Replace the current `<VoiceOrb />` block with a vertical stack:
+    1. `<AshChatPanel />` (top, ~55% of viewport, scrollable thread + sticky composer).
+    2. Below it: a compact "Recently captured" vault strip (latest 6 ideas via existing `useIdeas({kind:"recent"})`) so saves appear immediately under the chat. Click → opens IdeaDetail (reuse existing `selectedId` state).
+  - Keep the existing search bar at the top of the Capture view.
+  - VoiceOrb moves into AshChatPanel's composer footer (mic affordance next to the send button).
 
-Update `src/pages/Home.tsx` submit handler. Before calling `useAshChat.send`:
+## 3. Wire "Save to Vault" so the saved idea appears immediately
 
-- **URL detection** — if the trimmed input is a single URL (via `normalizeUrl`), open the new **URL Capture** sheet pre-filled with that URL instead of chatting.
-- **Long text detection** — if input is ≥ 400 chars or has ≥ 3 line breaks, offer an inline chip: *"Looks like a transcript — capture it?"* that opens the **Transcript Capture** screen pre-filled. Pressing Enter still chats; the chip is the opt-in.
-- Otherwise: normal Ash chat (unchanged).
+`useSaveAshToIdea` already calls `createIdea` (which invalidates the ideas query). What's missing is the *visible feedback* in the merged UI.
 
-This keeps the chat fast for short queries but routes real "capture" intent to the proper saving pipeline.
+- After `save()` resolves with an `idea`, `AshChatPanel` calls a new `onSaved(idea.id)` prop.
+- `Index.tsx` handles it by:
+  - Selecting the saved idea (`setSelectedId(idea.id)`) on desktop so the right pane opens it.
+  - On mobile: keep the existing sonner toast with a "View" action that selects the idea.
+- The "Recently captured" strip directly below the chat will re-render with the new idea on top (React Query invalidation handles this automatically — no extra wiring).
 
-## 3. URL Capture screen (desktop /home)
+## 4. Verify URL and transcript capture flows
 
-New component `src/components/app/UrlCaptureScreen.tsx` — desktop sibling of `TranscriptCaptureScreen`, mounted as an overlay sheet from `/home`.
+The capture screens already exist and are wired correctly (`UrlCaptureScreen`, `TranscriptCaptureScreen`):
+- URL flow: `extract-url` edge fn → `extracted_text` → `summarize` edge fn → `ai_summary` → `createIdea` with `source_type: "webpage"`, `folder_id`.
+- Transcript flow: pasted text → `raw_note` + `extracted_text` → `summarize` → `ai_summary` → `createIdea` with `source_type: "transcript"`, `folder_id`.
 
-Fields: URL (required), Title (optional), Folder picker (reuses chip strip from `TranscriptCaptureScreen`), "Save only" / "Extract & summarize" buttons.
+What this plan adds is **end-to-end verification** after the merge:
+- Both sheets are launched from `AshChatPanel` (URL paste auto-detect, transcript via "Paste transcript" chip).
+- `onCreated(ideaId)` callback from each sheet is wired in `Index.tsx` to `setSelectedId(ideaId)` so the saved idea opens immediately in the vault detail pane.
+- Manual test checklist after the change:
+  1. Paste a URL in the Ash composer → URL sheet opens prefilled → Extract & summarize → toast + idea appears in Recently-captured strip + opens in detail pane.
+  2. Paste long text → transcript sheet opens prefilled → Summarize & save → same verification.
+  3. Send a normal chat message → click Save to Vault on the reply → idea appears in the strip and opens in detail.
+  4. Reload `/` — saved ideas persist (already covered by existing `useIdeas` query).
 
-Flow on submit:
-1. Call existing `extract-url` edge function → returns `{ title, text, siteName, thumbnail, ... }`.
-2. Call existing `summarize` edge function with the extracted text → concise summary + suggested title.
-3. `createIdea` with:
-   - `source_type: "webpage"`, `source_url`, `source_meta`
-   - `extracted_text`: raw extracted text
-   - `ai_summary`: AI summary
-   - `raw_note`: null (URL is the user input)
-   - `folder_id`: picked folder
-4. Toast + close. Same "needs review" fallback as transcript flow when summary is thin.
+## Files
 
-Duplicate-URL check via existing `useDuplicateUrl` hook surfaces a warning before save.
-
-## 4. Transcript capture from /home
-
-`TranscriptCaptureScreen` already exists and does exactly the right thing. Surface it on `/home`:
-
-- Add a "Paste transcript" quick pill alongside the existing pills.
-- The long-text detection chip from step 2 opens the same screen with `note` prefilled.
-- Reuse as-is — no logic changes.
-
-## Technical details
-
-**Files to create**
-- `src/components/app/home/AshMessageActions.tsx` — hover action row (Save / Copy / Regenerate).
-- `src/hooks/useSaveAshToIdea.ts` — orchestrates summarize + createIdea + toast.
-- `src/components/app/UrlCaptureScreen.tsx` — full-screen capture overlay; structurally mirrors `TranscriptCaptureScreen`.
-- `src/components/app/home/CaptureLauncher.tsx` (small) — state machine for which capture sheet (`null | "url" | "transcript"`) is open, mounted by `Home.tsx`.
-
-**Files to edit**
-- `src/pages/Home.tsx` — wire prompt detection, mount `CaptureLauncher`, render `AshMessageActions` per assistant bubble, add "Paste transcript" + "Save link" pills.
-- `src/hooks/useAshChat.ts` — expose `regenerate()` (re-send last user message after popping the last assistant reply).
-
-**No DB changes.** All required tables/columns (`ideas.extracted_text`, `ai_summary`, `source_*`) already exist. All edge functions (`extract-url`, `summarize`, `ash-chat`) already exist.
-
-**Folder default:** Inbox (`null`). Both capture screens use the chip picker so the user can drop into any folder including "+ New folder".
-
-**Error handling:** extraction failure → fall back to "Save only" with the URL stored and a warning toast. Summary failure → save with raw text only and mark "needs review" (matches existing transcript pattern).
+**Edited:** `src/App.tsx`, `src/pages/Index.tsx`
+**Created:** `src/components/app/home/AshChatPanel.tsx`
+**Deleted:** `src/pages/Home.tsx`
 
 ## Out of scope
-- Streaming the "Save to Vault" summarization (one-shot is fine, fast).
-- Mobile changes — this is the desktop `/home` surface only; mobile capture stays on the existing composer.
-- Auto-saving every Ash chat (only saved when user clicks Save).
+
+- No DB schema changes (all required columns and edge functions already exist).
+- No changes to `AshDock` (the floating quick-capture dock stays as-is for non-chat surfaces).
+- No changes to `useAshChat`, `useSaveAshToIdea`, `extract-url`, `summarize`, or `ash-chat` edge functions.
