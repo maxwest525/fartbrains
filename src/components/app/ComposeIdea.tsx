@@ -217,26 +217,29 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
 
     setExtracting(true);
     try {
-      // Auto-detect: Instagram URLs go to the transcribe pipeline; everything
-      // else uses the generic readable-text extractor.
-      const isInsta = isInstagramUrl(effectiveUrl);
-      const fnName = isInsta ? "transcribe-instagram" : "extract-url";
+      // Auto-detect: route to the right extractor based on platform.
+      //   instagram → transcribe-instagram
+      //   youtube   → transcribe-youtube (audio download + Scribe)
+      //   other     → extract-url (generic readable text)
+      const platform = detectUrlPlatform(effectiveUrl).kind;
+      const fnName =
+        platform === "instagram" ? "transcribe-instagram" :
+        platform === "youtube"   ? "transcribe-youtube"   :
+                                   "extract-url";
+      const normalizedKind =
+        platform === "instagram" ? "instagram" :
+        platform === "youtube"   ? "youtube"   :
+                                   "webpage";
+
       const { data: ext, error: extErr } = await supabase.functions.invoke(fnName, {
         body: { url: effectiveUrl },
       });
       if (extErr) throw new Error(extErr.message);
       if (ext?.error) throw new Error(ext.error);
 
-      // Collapse the platform-specific payload into a single shape so the
-      // preview UI and save flow don't branch on source.
-      const normalized = normalizeExtraction(
-        isInsta ? "instagram" : "webpage",
-        ext,
-        effectiveUrl,
-      );
+      const normalized = normalizeExtraction(normalizedKind, ext, effectiveUrl);
 
       setPreview(normalized);
-      // Pre-fill the title field with the extracted title (only if user hasn't typed one).
       if (!title.trim() && normalized.suggestedTitle) {
         setTitle(normalized.suggestedTitle);
       }
