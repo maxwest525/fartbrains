@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
-import { Mic, Square, Loader2 } from "lucide-react";
+import { Mic, Square, Loader2, Check, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useVoiceCapture, blobToBase64 } from "@/hooks/useVoiceCapture";
 import { useCreateIdea } from "@/hooks/useIdeas";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
 
 const FOLDER_KEY = "ash-dock-folder-v1";
 
@@ -22,17 +24,17 @@ const fmtSeconds = (s: number) => {
 };
 
 /**
- * Big voice-to-text orb — single tap starts recording, tap again to stop and save.
- * Always dark-themed regardless of app theme. Used as the primary action on the
- * Capture screen now that the bottom AshDock handles text input.
+ * Big voice-to-text orb — single tap starts recording, tap again to stop.
+ * After transcription, shows an editable preview so the user can tweak the
+ * text before committing it as a new idea. Always dark themed.
  */
 export const VoiceOrb = () => {
   const voice = useVoiceCapture({ maxSeconds: 180 });
   const createIdea = useCreateIdea();
   const [submitting, setSubmitting] = useState(false);
   const [folderId, setFolderId] = useState<string | null>(null);
+  const [draft, setDraft] = useState<string | null>(null);
 
-  // Mirror AshDock's folder pick so the orb saves to the same place.
   useEffect(() => {
     try { setFolderId(localStorage.getItem(FOLDER_KEY)); } catch { /* ignore */ }
     const onStorage = (e: StorageEvent) => {
@@ -43,10 +45,12 @@ export const VoiceOrb = () => {
   }, []);
 
   const isRecording = voice.state === "recording";
-  const isBusy = voice.state === "requesting" || voice.state === "processing" || submitting;
+  const isTranscribing = voice.state === "requesting" || voice.state === "processing";
+  const isBusy = isTranscribing || submitting;
 
   const onTap = async () => {
     try {
+      if (draft !== null) return; // editor open — ignore taps
       if (voice.state === "idle") {
         await voice.start();
         return;
@@ -58,7 +62,6 @@ export const VoiceOrb = () => {
           voice.finishProcessing();
           return;
         }
-        setSubmitting(true);
         const audioBase64 = await blobToBase64(blob);
         const { data, error } = await supabase.functions.invoke("transcribe-deliverables", {
           body: { audioBase64, mimeType, allowedTypes: ["other"] },
@@ -70,31 +73,44 @@ export const VoiceOrb = () => {
           toast.message("Nothing heard — try again.");
           return;
         }
-        await createIdea.mutateAsync({
-          title: titleFromText(transcript),
-          raw_note: transcript,
-          source_type: "audio",
-          folder_id: folderId,
-        });
-        toast.success("Idea saved from voice");
+        setDraft(transcript.trim());
       }
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Voice capture failed");
     } finally {
-      setSubmitting(false);
       voice.finishProcessing();
+    }
+  };
+
+  const saveDraft = async () => {
+    if (!draft || !draft.trim()) return;
+    setSubmitting(true);
+    try {
+      await createIdea.mutateAsync({
+        title: titleFromText(draft),
+        raw_note: draft.trim(),
+        source_type: "audio",
+        folder_id: folderId,
+      });
+      toast.success("Idea saved");
+      setDraft(null);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Save failed");
+    } finally {
+      setSubmitting(false);
     }
   };
 
   const status = isRecording
     ? `Listening · ${fmtSeconds(voice.seconds)}`
-    : isBusy
+    : isTranscribing
       ? "Transcribing…"
-      : "Tap to speak";
+      : draft !== null
+        ? "Review & edit"
+        : "Tap to speak";
 
   return (
-    <div className="dark relative flex flex-col items-center justify-center gap-8 py-10 px-6 rounded-3xl bg-[hsl(222_18%_8%)] text-[hsl(220_14%_96%)] overflow-hidden">
-      {/* Ambient glow */}
+    <div className="dark relative flex flex-col items-center justify-center gap-6 py-8 px-4 sm:px-6 rounded-3xl bg-[hsl(222_18%_8%)] text-[hsl(220_14%_96%)] overflow-hidden">
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0 opacity-70"
@@ -107,14 +123,14 @@ export const VoiceOrb = () => {
       <button
         type="button"
         onClick={onTap}
-        disabled={isBusy && !isRecording}
+        disabled={isBusy || draft !== null}
         aria-label={isRecording ? "Stop recording" : "Start voice capture"}
         className={cn(
-          "relative h-44 w-44 rounded-full flex items-center justify-center select-none transition-transform active:scale-[0.97]",
+          "relative h-36 w-36 sm:h-44 sm:w-44 rounded-full flex items-center justify-center select-none transition-transform active:scale-[0.97]",
           "focus:outline-none focus-visible:ring-4 focus-visible:ring-primary/40",
+          (isBusy || draft !== null) && "opacity-80",
         )}
       >
-        {/* Pulse rings while recording */}
         {isRecording && (
           <>
             <span className="absolute inset-0 rounded-full bg-primary/30 animate-ping" />
@@ -122,7 +138,6 @@ export const VoiceOrb = () => {
           </>
         )}
 
-        {/* Orb body */}
         <span
           className={cn(
             "absolute inset-0 rounded-full",
@@ -134,14 +149,13 @@ export const VoiceOrb = () => {
               : "radial-gradient(circle at 30% 30%, hsl(217 95% 72%), hsl(217 91% 53%) 55%, hsl(222 70% 22%) 100%)",
           }}
         />
-        {/* Glossy highlight */}
         <span
           aria-hidden
           className="absolute left-1/2 top-3 h-10 w-24 -translate-x-1/2 rounded-full bg-white/25 blur-md"
         />
 
         <span className="relative z-10 text-white">
-          {isBusy && !isRecording ? (
+          {isTranscribing ? (
             <Loader2 className="h-10 w-10 animate-spin" />
           ) : isRecording ? (
             <Square className="h-10 w-10 fill-current" />
@@ -153,10 +167,48 @@ export const VoiceOrb = () => {
 
       <div className="relative text-center space-y-1">
         <p className="text-[15px] font-medium tracking-tight">{status}</p>
-        <p className="text-[12.5px] text-[hsl(220_9%_65%)]">
-          Speak your idea — it'll save automatically.
-        </p>
+        {draft === null && (
+          <p className="text-[12.5px] text-[hsl(220_9%_65%)]">
+            Speak your idea — edit before saving.
+          </p>
+        )}
       </div>
+
+      {draft !== null && (
+        <div className="relative w-full max-w-lg space-y-3">
+          <Textarea
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            autoFocus
+            rows={6}
+            className="bg-[hsl(222_14%_12%)] border-[hsl(222_14%_22%)] text-[hsl(220_14%_96%)] placeholder:text-[hsl(220_9%_55%)] text-[14px] leading-relaxed resize-none"
+            placeholder="Transcript…"
+          />
+          <div className="flex items-center justify-between gap-2">
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => setDraft(null)}
+              disabled={submitting}
+              className="text-[hsl(220_9%_75%)] hover:text-white hover:bg-white/5"
+            >
+              <X className="h-4 w-4 mr-1.5" /> Discard
+            </Button>
+            <Button
+              type="button"
+              onClick={saveDraft}
+              disabled={submitting || !draft.trim()}
+            >
+              {submitting ? (
+                <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
+              ) : (
+                <Check className="h-4 w-4 mr-1.5" />
+              )}
+              Save idea
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
