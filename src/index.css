@@ -162,8 +162,35 @@
   caret-color: var(--g-purple);
   accent-color: var(--g-blue);
 }
+
+/* Light-mode override: keep brand stops (blue/purple/red/yellow) constant
+   so the gradient buttons and rotating ring read identically; swap only
+   surfaces, borders and text so contrast holds. */
+html:not(.dark) .gemini,
+.gemini.gemini-light {
+  --g-surface-0: #F4F6FB;
+  --g-surface-1: #FFFFFF;
+  --g-surface-2: #EEF2F8;
+  --g-surface-3: #F8FAFD;
+
+  --g-border: rgba(15, 23, 42, 0.10);
+  --g-border-strong: rgba(15, 23, 42, 0.18);
+
+  --g-text: #0F172A;          /* >12:1 on surface-1 */
+  --g-text-soft: #1F2937;
+  --g-text-muted: #475569;    /* 7.5:1 */
+  --g-text-disabled: #94A3B8;
+
+  --g-focus-ring: rgba(66, 133, 244, 0.5);
+
+  color-scheme: light;
+}
+html:not(.dark) .gemini ::selection {
+  background-color: rgba(66, 133, 244, 0.30);
+  color: #0F172A;
+}
 .gemini ::selection {
-  background-color: rgba(66, 133, 244, 0.45); /* >=4.5:1 vs #E3E3E3 */
+  background-color: rgba(66, 133, 244, 0.45);
   color: #FFFFFF;
 }
 .gemini textarea, .gemini input { caret-color: var(--g-purple); }
