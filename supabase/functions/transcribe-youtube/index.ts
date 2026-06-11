@@ -81,7 +81,7 @@ async function mcpCall(opts: {
   token: string;
   sessionId?: string;
   body: Record<string, unknown>;
-}): Promise<{ envelope: McpEnvelope | null; sessionId: string | undefined; status: number; raw: Response }> {
+}): Promise<{ envelope: McpEnvelope | null; sessionId: string | undefined; status: number; raw: string }> {
   const headers: Record<string, string> = {
     Authorization: `Bearer ${opts.token}`,
     "Content-Type": "application/json",
