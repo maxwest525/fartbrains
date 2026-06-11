@@ -7,8 +7,11 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { ThemeToggle } from "@/hooks/useTheme";
 import { toast } from "sonner";
-import { Lock, Loader2 } from "lucide-react";
+import { Lock, Loader2, Sparkles, ShieldCheck } from "lucide-react";
 import spaceBg from "@/assets/space-nebula.jpg";
 
 const credSchema = z.object({
@@ -70,8 +73,8 @@ const Auth = () => {
   };
 
   return (
-    <main className="gemini dark relative min-h-dvh w-full flex items-center justify-center p-4 overflow-hidden bg-[color:var(--g-surface-0)]">
-      {/* Deep-space backdrop */}
+    <main className="gemini relative min-h-dvh w-full flex items-center justify-center p-4 overflow-hidden bg-[color:var(--g-surface-0)]">
+      {/* Deep-space backdrop — same image both modes, scrim adapts for legibility */}
       <img
         src={spaceBg}
         alt=""
@@ -79,37 +82,55 @@ const Auth = () => {
         className="absolute inset-0 h-full w-full object-cover scale-110"
         fetchPriority="high"
       />
-      {/* Atmospheric scrim to keep the form readable */}
-      <div
-        aria-hidden
-        className="absolute inset-0"
-        style={{
-          background:
-            "radial-gradient(60% 50% at 50% 50%, rgba(0,0,0,0.35), rgba(0,0,0,0.7) 80%)",
-        }}
-      />
-      {/* Glassmorphism card */}
+      <div aria-hidden className="absolute inset-0 space-scrim" />
+
+      {/* Floating theme toggle */}
+      <div className="absolute top-4 right-4 z-10">
+        <ThemeToggle />
+      </div>
+
+      {/* Glass card */}
       <div className="relative w-full max-w-md">
         <div className="gemini-ring rounded-3xl">
-          <div
-            className="rounded-3xl bg-white/[0.06] backdrop-blur-2xl backdrop-saturate-150 border border-white/10 shadow-[0_30px_80px_-20px_rgba(0,0,0,0.7)] p-7 sm:p-8"
-          >
-            <div className="flex items-center gap-3 mb-7">
-              <div
-                className="h-11 w-11 rounded-2xl flex items-center justify-center text-white shadow-[0_8px_24px_-8px_rgba(155,114,203,0.7)]"
-                style={{ background: "var(--g-gradient)" }}
+          <div className="rounded-3xl bg-white/[0.10] dark:bg-white/[0.06] backdrop-blur-2xl backdrop-saturate-150 border border-white/25 dark:border-white/10 shadow-[0_30px_80px_-20px_rgba(0,0,0,0.7)] p-7 sm:p-8">
+            <div className="flex items-center justify-between gap-3 mb-6">
+              <div className="flex items-center gap-3 min-w-0">
+                <div
+                  className="h-11 w-11 rounded-2xl flex items-center justify-center text-white shadow-[0_8px_24px_-8px_rgba(155,114,203,0.7)] shrink-0"
+                  style={{ background: "var(--g-gradient)" }}
+                >
+                  <Lock className="h-5 w-5" />
+                </div>
+                <div className="min-w-0">
+                  <h1 className="text-[18px] font-semibold tracking-tight text-white">
+                    Idea Vault
+                  </h1>
+                  <p className="text-[12.5px] text-white/70 truncate">
+                    Capture, refine, remember
+                  </p>
+                </div>
+              </div>
+              <Badge
+                variant="outline"
+                className="shrink-0 gap-1 border-white/25 bg-white/10 text-white backdrop-blur-[0.15rem]"
               >
-                <Lock className="h-5 w-5" />
-              </div>
-              <div>
-                <h1 className="text-[18px] font-semibold tracking-tight text-white">Idea Vault</h1>
-                <p className="text-[12.5px] text-white/60">Private · single user only</p>
-              </div>
+                <ShieldCheck className="h-3 w-3" />
+                Private
+              </Badge>
             </div>
+
+            <Alert className="mb-5 border-white/20 bg-white/[0.08] text-white backdrop-blur-[0.15rem]">
+              <Sparkles className="h-4 w-4 !text-white" />
+              <AlertDescription className="text-white/85 text-[12.5px]">
+                {mode === "signin"
+                  ? "Welcome back. Sign in with your invited email."
+                  : "By invitation only — your email must be on the allowlist."}
+              </AlertDescription>
+            </Alert>
 
             <form onSubmit={onSubmit} className="space-y-4">
               <div className="space-y-1.5">
-                <Label htmlFor="email" className="text-white/80 text-[12.5px] font-medium">
+                <Label htmlFor="email" className="text-white/85 text-[12.5px] font-medium">
                   Email
                 </Label>
                 <Input
@@ -119,11 +140,11 @@ const Auth = () => {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
-                  className="h-11 rounded-xl bg-white/[0.06] border-white/15 text-white placeholder:text-white/40 focus-visible:ring-2 focus-visible:ring-[color:var(--g-focus-ring)] focus-visible:ring-offset-0"
+                  className="h-11 text-white placeholder:text-white/50 bg-white/[0.10] dark:bg-white/[0.06] border-white/25 dark:border-white/15"
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="password" className="text-white/80 text-[12.5px] font-medium">
+                <Label htmlFor="password" className="text-white/85 text-[12.5px] font-medium">
                   Password
                 </Label>
                 <Input
@@ -133,29 +154,34 @@ const Auth = () => {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  className="h-11 rounded-xl bg-white/[0.06] border-white/15 text-white placeholder:text-white/40 focus-visible:ring-2 focus-visible:ring-[color:var(--g-focus-ring)] focus-visible:ring-offset-0"
+                  className="h-11 text-white placeholder:text-white/50 bg-white/[0.10] dark:bg-white/[0.06] border-white/25 dark:border-white/15"
                 />
               </div>
 
-              <Button type="submit" size="lg" className="w-full mt-2" disabled={submitting}>
-                {submitting ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : mode === "signin" ? (
-                  "Sign in"
-                ) : (
-                  "Create account"
-                )}
-              </Button>
+              <div className="flex flex-col gap-2.5 pt-1">
+                <Button type="submit" size="lg" className="w-full" disabled={submitting}>
+                  {submitting ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : mode === "signin" ? (
+                    "Sign in"
+                  ) : (
+                    "Create account"
+                  )}
+                </Button>
+                <Button
+                  type="button"
+                  variant="glass"
+                  size="lg"
+                  className="w-full"
+                  onClick={() => setMode(mode === "signin" ? "signup" : "signin")}
+                >
+                  {mode === "signin" ? "Create account" : "I already have an account"}
+                </Button>
+              </div>
 
-              <button
-                type="button"
-                className="text-[13px] text-white/60 hover:text-white transition-colors w-full text-center pt-1"
-                onClick={() => setMode(mode === "signin" ? "signup" : "signin")}
-              >
-                {mode === "signin"
-                  ? "Need to create your account?"
-                  : "Already have an account? Sign in"}
-              </button>
+              <p className="text-center text-[11.5px] text-white/55 pt-2">
+                Protected by encrypted session keys.
+              </p>
             </form>
           </div>
         </div>
