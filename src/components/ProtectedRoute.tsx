@@ -71,7 +71,11 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   }
 
   if (!loading && !user && failed) {
-    return <Navigate to="/auth" replace />;
+    return (
+      <div className="flex min-h-screen items-center justify-center text-muted-foreground">
+        Sign-in failed. Refresh to retry.
+      </div>
+    );
   }
 
   if (loading || signingIn || !user) {
