@@ -102,7 +102,10 @@ const Auth = () => {
                   <Lock className="h-5 w-5" />
                 </div>
                 <div className="min-w-0">
-                  <h1 className="text-[18px] font-semibold tracking-tight text-white">
+                  <h1
+                    className="text-[18px] font-semibold tracking-tight bg-clip-text text-transparent"
+                    style={{ backgroundImage: "var(--g-gradient)" }}
+                  >
                     Idea Vault
                   </h1>
                   <p className="text-[12.5px] text-white/70 truncate">
@@ -112,15 +115,29 @@ const Auth = () => {
               </div>
               <Badge
                 variant="outline"
-                className="shrink-0 gap-1 border-white/25 bg-white/10 text-white backdrop-blur-[0.15rem]"
+                className="shrink-0 gap-1 border-transparent text-white/95 backdrop-blur-[0.15rem]"
+                style={{
+                  background:
+                    "linear-gradient(135deg, rgba(66,133,244,0.22), rgba(155,114,203,0.22) 55%, rgba(217,101,112,0.22))",
+                }}
               >
                 <ShieldCheck className="h-3 w-3" />
                 Private
               </Badge>
             </div>
 
-            <Alert className="mb-5 border-white/20 bg-white/[0.08] text-white backdrop-blur-[0.15rem]">
-              <Sparkles className="h-4 w-4 !text-white" />
+            <Alert
+              className="mb-5 border-white/15 bg-white/[0.06] text-white backdrop-blur-[0.15rem] relative overflow-hidden"
+            >
+              <span
+                aria-hidden
+                className="absolute left-0 top-0 h-full w-[3px]"
+                style={{ background: "var(--g-gradient)" }}
+              />
+              <Sparkles
+                className="h-4 w-4"
+                style={{ color: "var(--g-purple)" }}
+              />
               <AlertDescription className="text-white/85 text-[12.5px]">
                 {mode === "signin"
                   ? "Welcome back. Sign in with your invited email."
@@ -140,7 +157,7 @@ const Auth = () => {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
-                  className="h-11 text-white placeholder:text-white/50 bg-white/[0.10] dark:bg-white/[0.06] border-white/25 dark:border-white/15"
+                  className="h-11"
                 />
               </div>
               <div className="space-y-1.5">
@@ -154,7 +171,7 @@ const Auth = () => {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  className="h-11 text-white placeholder:text-white/50 bg-white/[0.10] dark:bg-white/[0.06] border-white/25 dark:border-white/15"
+                  className="h-11"
                 />
               </div>
 
@@ -168,21 +185,24 @@ const Auth = () => {
                     "Create account"
                   )}
                 </Button>
-                <Button
-                  type="button"
-                  variant="glass"
-                  size="lg"
-                  className="w-full"
-                  onClick={() => setMode(mode === "signin" ? "signup" : "signin")}
-                >
-                  {mode === "signin" ? "Create account" : "I already have an account"}
-                </Button>
+                <div className="text-center text-[12.5px] text-white/70">
+                  {mode === "signin" ? "New here? " : "Already invited? "}
+                  <button
+                    type="button"
+                    onClick={() => setMode(mode === "signin" ? "signup" : "signin")}
+                    className="font-medium bg-clip-text text-transparent hover:underline underline-offset-4 focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--g-focus-ring)] rounded"
+                    style={{ backgroundImage: "var(--g-gradient)" }}
+                  >
+                    {mode === "signin" ? "Create an account" : "Sign in instead"}
+                  </button>
+                </div>
               </div>
 
               <p className="text-center text-[11.5px] text-white/55 pt-2">
                 Protected by encrypted session keys.
               </p>
             </form>
+
           </div>
         </div>
       </div>
