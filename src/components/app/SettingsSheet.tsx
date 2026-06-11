@@ -28,6 +28,7 @@ type Props = {
 export const SettingsSheet = ({ open, onOpenChange }: Props) => {
   const { user, signOut } = useAuth();
   const push = usePushSubscription();
+  const { theme } = useTheme();
   const [testing, setTesting] = useState(false);
 
   const sendTest = async () => {
