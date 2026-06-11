@@ -169,7 +169,7 @@ function mergeFields(out: Record<string, unknown>, src: Record<string, unknown>)
     }
     return undefined;
   };
-  out.transcript ||= pickStr(["transcript", "text"]) ?? "";
+  out.transcript ||= pickStr(["transcript", "result", "text", "output"]) ?? "";
   out.title ||= pickStr(["title", "videoTitle"]);
   out.author ||= pickStr(["author", "channel", "channelName", "uploader"]);
   out.thumbnail ||= pickStr(["thumbnail", "thumbnailUrl"]);
