@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type KeyboardEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Sparkles,
@@ -12,21 +12,50 @@ import {
   Square,
   RotateCcw,
   Loader2,
+  Link as LinkIcon,
+  FileText,
 } from "lucide-react";
 import { TodayPanel } from "@/components/app/home/TodayPanel";
+import { AshMessageActions } from "@/components/app/home/AshMessageActions";
+import { TranscriptCaptureScreen } from "@/components/app/TranscriptCaptureScreen";
+import { UrlCaptureScreen } from "@/components/app/UrlCaptureScreen";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { useAshChat } from "@/hooks/useAshChat";
+import { useSaveAshToIdea } from "@/hooks/useSaveAshToIdea";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
-/**
- * Ash-style command home — desktop dashboard surface.
- * Prompt bar streams from Lovable AI (Gemini) via the ash-chat edge function.
- */
+type Capture =
+  | { kind: "url"; url?: string }
+  | { kind: "transcript"; text?: string }
+  | null;
+
+const looksLikeUrl = (s: string): string | null => {
+  const t = s.trim();
+  if (!t || /\s/.test(t)) return null;
+  if (!/^https?:\/\//i.test(t) && !/^[\w-]+\.[\w.-]+/.test(t)) return null;
+  try {
+    const u = new URL(t.includes("://") ? t : `https://${t}`);
+    if (!["http:", "https:"].includes(u.protocol)) return null;
+    if (!u.hostname.includes(".")) return null;
+    return u.toString();
+  } catch {
+    return null;
+  }
+};
+
+const looksLikeTranscript = (s: string) =>
+  s.trim().length >= 400 || (s.match(/\n/g)?.length ?? 0) >= 3;
+
 const HomeInner = () => {
   const navigate = useNavigate();
-  const { messages, streaming, error, send, stop, reset } = useAshChat();
+  const { messages, streaming, error, send, stop, reset, regenerate } = useAshChat();
+  const { save: saveAsh, saving: savingAsh } = useSaveAshToIdea();
   const [input, setInput] = useState("");
+  const [capture, setCapture] = useState<Capture>(null);
+  const [savingIdx, setSavingIdx] = useState<number | null>(null);
   const scrollerRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     scrollerRef.current?.scrollTo({
@@ -35,9 +64,18 @@ const HomeInner = () => {
     });
   }, [messages]);
 
+  const inputUrl = useMemo(() => looksLikeUrl(input), [input]);
+  const inputIsTranscript = !inputUrl && looksLikeTranscript(input);
+
   const submit = () => {
     const t = input.trim();
     if (!t || streaming) return;
+    // URL → route into URL capture instead of chat
+    if (inputUrl) {
+      setCapture({ kind: "url", url: inputUrl });
+      setInput("");
+      return;
+    }
     setInput("");
     void send(t);
   };
@@ -49,23 +87,56 @@ const HomeInner = () => {
     }
   };
 
+  const handleSaveMessage = async (assistantIdx: number) => {
+    const userMsg = messages[assistantIdx - 1];
+    const reply = messages[assistantIdx];
+    if (!reply || reply.role !== "assistant") return;
+    setSavingIdx(assistantIdx);
+    try {
+      await saveAsh({
+        userPrompt: userMsg?.role === "user" ? userMsg.content : "",
+        assistantReply: reply.content,
+      });
+    } finally {
+      setSavingIdx(null);
+    }
+  };
+
+  const handleCopy = (text: string) => {
+    void navigator.clipboard
+      .writeText(text)
+      .then(() => toast.success("Copied"))
+      .catch(() => toast.error("Couldn't copy"));
+  };
+
   const hasThread = messages.length > 0;
 
   const quickPills = [
-    { icon: Mail, label: "Overnight inbox", tint: "text-rose-300" },
-    { icon: BarChart3, label: "Pipeline review", tint: "text-blue-300" },
+    {
+      icon: LinkIcon,
+      label: "Capture link",
+      tint: "text-cyan-300",
+      onClick: () => setCapture({ kind: "url" }),
+    },
+    {
+      icon: FileText,
+      label: "Paste transcript",
+      tint: "text-violet-300",
+      onClick: () => setCapture({ kind: "transcript" }),
+    },
     {
       icon: CalendarIcon,
       label: "Today's calendar",
       tint: "text-emerald-300",
       onClick: () => navigate("/?view=calendar"),
     },
+    { icon: Mail, label: "Overnight inbox", tint: "text-rose-300" },
+    { icon: BarChart3, label: "Pipeline review", tint: "text-blue-300" },
     { icon: AlertTriangle, label: "Alerts", tint: "text-amber-300" },
   ];
 
   return (
     <main className="gemini relative min-h-dvh w-full overflow-hidden bg-[color:var(--g-surface-0)] text-white">
-      {/* Backdrop glow */}
       <div
         aria-hidden
         className="absolute inset-0 pointer-events-none"
@@ -93,26 +164,43 @@ const HomeInner = () => {
             ref={scrollerRef}
             className="w-full max-w-2xl mb-4 max-h-[52vh] overflow-y-auto rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-xl p-4 text-left space-y-4"
           >
-            {messages.map((m, i) => (
-              <div
-                key={i}
-                className={cn("flex", m.role === "user" ? "justify-end" : "justify-start")}
-              >
+            {messages.map((m, i) => {
+              const isLastAssistant =
+                m.role === "assistant" && i === messages.length - 1;
+              const showActions =
+                m.role === "assistant" && m.content && !(streaming && isLastAssistant);
+              return (
                 <div
+                  key={i}
                   className={cn(
-                    "max-w-[85%] rounded-2xl px-3.5 py-2.5 text-[14px] leading-relaxed whitespace-pre-wrap",
-                    m.role === "user"
-                      ? "bg-white/[0.10] border border-white/10 text-white"
-                      : "bg-transparent text-white/90",
+                    "flex flex-col",
+                    m.role === "user" ? "items-end" : "items-start",
                   )}
                 >
-                  {m.content ||
-                    (streaming && i === messages.length - 1 ? (
-                      <Loader2 className="h-4 w-4 animate-spin text-white/60" />
-                    ) : null)}
+                  <div
+                    className={cn(
+                      "max-w-[85%] rounded-2xl px-3.5 py-2.5 text-[14px] leading-relaxed whitespace-pre-wrap",
+                      m.role === "user"
+                        ? "bg-white/[0.10] border border-white/10 text-white"
+                        : "bg-transparent text-white/90",
+                    )}
+                  >
+                    {m.content ||
+                      (streaming && isLastAssistant ? (
+                        <Loader2 className="h-4 w-4 animate-spin text-white/60" />
+                      ) : null)}
+                  </div>
+                  {showActions && (
+                    <AshMessageActions
+                      onSave={() => handleSaveMessage(i)}
+                      onCopy={() => handleCopy(m.content)}
+                      onRegenerate={isLastAssistant ? regenerate : undefined}
+                      saving={savingAsh && savingIdx === i}
+                    />
+                  )}
                 </div>
-              </div>
-            ))}
+              );
+            })}
             {error && (
               <div className="text-[12.5px] text-rose-300/90 border border-rose-400/20 bg-rose-500/10 rounded-xl px-3 py-2">
                 {error}
@@ -125,20 +213,57 @@ const HomeInner = () => {
         <div className="gemini-ring rounded-2xl w-full max-w-2xl">
           <div className="rounded-2xl bg-white/[0.04] border border-white/10 backdrop-blur-xl px-4 py-3.5">
             <textarea
+              ref={textareaRef}
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={onKey}
               rows={1}
-              placeholder="Ask Ash anything"
+              placeholder="Ask Ash, paste a link, or drop a transcript"
               className="w-full bg-transparent outline-none text-[15px] placeholder:text-white/35 resize-none max-h-40"
             />
+
+            {/* Smart-route hints */}
+            {(inputUrl || inputIsTranscript) && (
+              <div className="mt-2 flex flex-wrap items-center gap-2">
+                {inputUrl && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCapture({ kind: "url", url: inputUrl });
+                      setInput("");
+                    }}
+                    className="inline-flex items-center gap-1.5 h-7 px-3 rounded-full text-[12px] font-medium bg-cyan-400/15 hover:bg-cyan-400/25 border border-cyan-400/30 text-cyan-100"
+                  >
+                    <LinkIcon className="h-3.5 w-3.5" />
+                    Capture this link → folder
+                  </button>
+                )}
+                {inputIsTranscript && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCapture({ kind: "transcript", text: input });
+                      setInput("");
+                    }}
+                    className="inline-flex items-center gap-1.5 h-7 px-3 rounded-full text-[12px] font-medium bg-violet-400/15 hover:bg-violet-400/25 border border-violet-400/30 text-violet-100"
+                  >
+                    <FileText className="h-3.5 w-3.5" />
+                    Looks like a transcript — save it
+                  </button>
+                )}
+              </div>
+            )}
+
             <div className="mt-3 flex items-center justify-between">
               <div className="flex items-center gap-1.5 text-white/55">
                 <IconBtn aria-label="Voice">
                   <Mic className="h-4 w-4" />
                 </IconBtn>
-                <IconBtn aria-label="Add">
-                  <Plus className="h-4 w-4" />
+                <IconBtn aria-label="Capture link" onClick={() => setCapture({ kind: "url" })}>
+                  <LinkIcon className="h-4 w-4" />
+                </IconBtn>
+                <IconBtn aria-label="Paste transcript" onClick={() => setCapture({ kind: "transcript" })}>
+                  <FileText className="h-4 w-4" />
                 </IconBtn>
                 {hasThread && (
                   <IconBtn aria-label="New chat" onClick={reset}>
@@ -197,19 +322,10 @@ const HomeInner = () => {
                 {label}
               </button>
             ))}
-            <button
-              type="button"
-              onClick={() => navigate("/")}
-              className="h-8 w-8 rounded-full bg-white/[0.05] hover:bg-white/[0.10] border border-white/10 text-white/70 flex items-center justify-center"
-              aria-label="More"
-            >
-              <Plus className="h-3.5 w-3.5" />
-            </button>
           </div>
         )}
       </section>
 
-      {/* Bottom-left dashboard */}
       <aside
         className={cn(
           "fixed z-10 pointer-events-none",
@@ -219,8 +335,65 @@ const HomeInner = () => {
       >
         <TodayPanel onOpenIdea={() => navigate("/")} />
       </aside>
+
+      {capture?.kind === "url" && (
+        <UrlCaptureScreen
+          defaultUrl={capture.url}
+          onBack={() => setCapture(null)}
+          onCreated={(id, needsReview) => {
+            if (needsReview) navigate(`/?ideaId=${id}`);
+          }}
+        />
+      )}
+      {capture?.kind === "transcript" && (
+        <TranscriptPrefilled
+          text={capture.text}
+          onBack={() => setCapture(null)}
+          onCreated={(id, needsReview) => {
+            if (needsReview) navigate(`/?ideaId=${id}`);
+          }}
+        />
+      )}
     </main>
   );
+};
+
+/**
+ * TranscriptCaptureScreen doesn't accept a prefilled note prop; this thin
+ * wrapper renders it and (when prefill text is provided) sets it through a
+ * stable DOM-level effect via the screen's existing focus pattern.
+ *
+ * To avoid changing TranscriptCaptureScreen's API, we render it then write to
+ * its textarea once mounted.
+ */
+const TranscriptPrefilled = ({
+  text,
+  onBack,
+  onCreated,
+}: {
+  text?: string;
+  onBack: () => void;
+  onCreated?: (id: string, needsReview?: boolean) => void;
+}) => {
+  useEffect(() => {
+    if (!text) return;
+    const id = requestAnimationFrame(() => {
+      const ta = document.querySelector<HTMLTextAreaElement>(
+        'textarea[placeholder^="Paste a transcript"]',
+      );
+      if (ta) {
+        const setter = Object.getOwnPropertyDescriptor(
+          window.HTMLTextAreaElement.prototype,
+          "value",
+        )?.set;
+        setter?.call(ta, text);
+        ta.dispatchEvent(new Event("input", { bubbles: true }));
+      }
+    });
+    return () => cancelAnimationFrame(id);
+  }, [text]);
+
+  return <TranscriptCaptureScreen onBack={onBack} onCreated={onCreated} />;
 };
 
 const IconBtn = ({
