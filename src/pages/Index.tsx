@@ -282,12 +282,22 @@ const Shell = () => {
                 )}
               </div>
             </div>
-            <div ref={composeRef} className="w-full px-3 sm:px-6 lg:px-10 pt-6 sm:pt-10 space-y-3 sm:space-y-4 md:max-w-2xl md:mx-auto">
-              <VoiceOrb />
-              <p className="mt-3 text-center text-[12px] text-muted-foreground">
-                Saved ideas land in <button onClick={() => handleFilterChange({ kind: "recent" })} className="underline underline-offset-2 hover:text-foreground">Recents</button> and the All folder.
+            <div ref={composeRef} className="w-full px-3 sm:px-6 lg:px-10 pt-4 sm:pt-6 pb-4 flex-1 min-h-0 flex flex-col gap-4 max-w-3xl mx-auto">
+              <div className="flex-1 min-h-[420px]">
+                <AshChatPanel
+                  onSaved={(id) => {
+                    if (!isMobile) setSelectedId(id);
+                    else toast.success("Saved to Vault", { action: { label: "View", onClick: () => setSelectedId(id) } });
+                  }}
+                  onOpenUrlCapture={(url) => setCapture({ kind: "url", url })}
+                  onOpenTranscriptCapture={(text) => setCapture({ kind: "transcript", text })}
+                />
+              </div>
+              <p className="text-center text-[12px] text-muted-foreground">
+                Captures land in <button onClick={() => handleFilterChange({ kind: "recent" })} className="underline underline-offset-2 hover:text-foreground">Recents</button> and the All folder.
               </p>
             </div>
+
 
           </div>
         )}
