@@ -1,23 +1,20 @@
 /**
- * Resolve a YouTube URL to its underlying media via Apify, then transcribe
- * the audio with ElevenLabs Scribe.
+ * Transcribe a YouTube video by delegating to the Hyperfx MCP server.
  *
- * Pipeline:
- *   1. Validate it's a youtube.com / youtu.be URL (no playlists).
- *   2. Run an Apify YouTube downloader actor synchronously to obtain a direct
- *      media URL + metadata (title, channel, thumbnail, duration).
- *   3. Reject videos longer than MAX_DURATION_SECONDS to bound transcription cost.
- *   4. Download the media bytes (capped at 50 MB).
- *   5. Send to ElevenLabs Scribe (scribe_v2) for transcription.
- *   6. Return { transcript, caption, author, title, thumbnail, videoUrl, finalUrl }.
+ * Hyperfx already runs a `youtube-transcriber` agent (captions → ElevenLabs
+ * fallback, with its own cache). We just open an MCP session, call the tool,
+ * and reshape the response for the existing frontend (`fromYoutube` in
+ * src/lib/extractedContent.ts).
  *
- * Required secrets:
- *   - APIFY_API_TOKEN     (Apify personal API token)
- *   - ELEVENLABS_API_KEY  (ElevenLabs API key with STT enabled)
- *
- * Optional override:
- *   - APIFY_YOUTUBE_ACTOR_ID  (defaults to streamers/youtube-video-downloader)
+ * Auth: Hyperfx MCP endpoint requires OAuth. We use a long-lived access token
+ * the user obtained once (stored as HYPERFX_ACCESS_TOKEN). When it expires,
+ * surface a 401 so the user knows to re-authorize.
  */
+
+const HYPERFX_MCP_URL = "https://backend.hyperfx.ai/mcp/";
+const MCP_PROTOCOL_VERSION = "2025-06-18";
+// Substrings we look for when picking the right tool out of tools/list.
+const TOOL_NAME_HINTS = ["youtube-transcriber", "youtube_transcriber", "youtube"];
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -31,14 +28,6 @@ const json = (body: unknown, status = 200) =>
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
 
-// Default Apify YouTube downloader actor. Returns direct mp4 + metadata.
-// Swap with APIFY_YOUTUBE_ACTOR_ID env var if you prefer another actor.
-const DEFAULT_ACTOR_ID = "streamers~youtube-video-downloader";
-
-// 30 min hard cap — keeps ElevenLabs cost predictable & fits edge fn timeout.
-const MAX_DURATION_SECONDS = 30 * 60;
-const MAX_MEDIA_BYTES = 50 * 1024 * 1024; // 50 MB
-
 const isYouTubeHost = (host: string): boolean => {
   const h = host.toLowerCase();
   return (
@@ -49,6 +38,143 @@ const isYouTubeHost = (host: string): boolean => {
     h === "youtu.be"
   );
 };
+
+type McpEnvelope = {
+  jsonrpc: "2.0";
+  id?: number | string;
+  result?: unknown;
+  error?: { code: number; message: string; data?: unknown };
+};
+
+/** Parse either a plain JSON response or an SSE stream containing a JSON-RPC envelope. */
+async function readMcpResponse(resp: Response): Promise<McpEnvelope | null> {
+  const ct = resp.headers.get("content-type") ?? "";
+  if (ct.includes("application/json")) {
+    return (await resp.json()) as McpEnvelope;
+  }
+  if (ct.includes("text/event-stream")) {
+    const text = await resp.text();
+    // SSE frames: "event: message\ndata: {...}\n\n". We only need data: lines.
+    for (const block of text.split(/\n\n+/)) {
+      const dataLines = block
+        .split("\n")
+        .filter((l) => l.startsWith("data:"))
+        .map((l) => l.slice(5).trim())
+        .filter(Boolean);
+      if (!dataLines.length) continue;
+      try {
+        const payload = JSON.parse(dataLines.join("\n")) as McpEnvelope;
+        // Skip server-initiated notifications without an id; keep looking for the response.
+        if (payload.id !== undefined || payload.result !== undefined || payload.error) {
+          return payload;
+        }
+      } catch {
+        // ignore and continue
+      }
+    }
+    return null;
+  }
+  // Some servers return empty 202 for notifications.
+  return null;
+}
+
+async function mcpCall(opts: {
+  token: string;
+  sessionId?: string;
+  body: Record<string, unknown>;
+}): Promise<{ envelope: McpEnvelope | null; sessionId: string | undefined; status: number; raw: Response }> {
+  const headers: Record<string, string> = {
+    Authorization: `Bearer ${opts.token}`,
+    "Content-Type": "application/json",
+    Accept: "application/json, text/event-stream",
+    "MCP-Protocol-Version": MCP_PROTOCOL_VERSION,
+  };
+  if (opts.sessionId) headers["Mcp-Session-Id"] = opts.sessionId;
+
+  const resp = await fetch(HYPERFX_MCP_URL, {
+    method: "POST",
+    headers,
+    body: JSON.stringify(opts.body),
+  });
+
+  const sessionId = resp.headers.get("mcp-session-id") ?? opts.sessionId;
+  const envelope = await readMcpResponse(resp);
+  return { envelope, sessionId: sessionId ?? undefined, status: resp.status, raw: resp };
+}
+
+/** Walk tools/call content[] looking for usable text/JSON. */
+function extractTranscriptFromToolResult(result: unknown): {
+  transcript: string;
+  title?: string;
+  author?: string;
+  thumbnail?: string;
+  videoUrl?: string;
+  finalUrl?: string;
+  durationSeconds?: number;
+} {
+  // Standard MCP tools/call result: { content: [{ type: "text", text: "..." }], isError?: bool, structuredContent?: any }
+  const out: ReturnType<typeof extractTranscriptFromToolResult> = { transcript: "" };
+  if (!result || typeof result !== "object") return out;
+  const r = result as Record<string, unknown>;
+
+  // Prefer structuredContent if present.
+  const structured = r.structuredContent;
+  if (structured && typeof structured === "object") {
+    mergeFields(out, structured as Record<string, unknown>);
+  }
+
+  const content = r.content;
+  if (Array.isArray(content)) {
+    const texts: string[] = [];
+    for (const part of content) {
+      if (!part || typeof part !== "object") continue;
+      const p = part as Record<string, unknown>;
+      if (p.type === "text" && typeof p.text === "string") {
+        const t = p.text.trim();
+        // Try to parse as JSON first; fall back to raw text.
+        if (t.startsWith("{") || t.startsWith("[")) {
+          try {
+            const parsed = JSON.parse(t);
+            if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+              mergeFields(out, parsed as Record<string, unknown>);
+              continue;
+            }
+          } catch {
+            // fall through
+          }
+        }
+        texts.push(t);
+      }
+    }
+    if (!out.transcript && texts.length) out.transcript = texts.join("\n\n");
+  }
+
+  return out;
+}
+
+function mergeFields(out: Record<string, unknown>, src: Record<string, unknown>) {
+  const pickStr = (keys: string[]) => {
+    for (const k of keys) {
+      const v = src[k];
+      if (typeof v === "string" && v.trim()) return v.trim();
+    }
+    return undefined;
+  };
+  const pickNum = (keys: string[]) => {
+    for (const k of keys) {
+      const v = src[k];
+      if (typeof v === "number" && Number.isFinite(v)) return v;
+    }
+    return undefined;
+  };
+  out.transcript ||= pickStr(["transcript", "text"]) ?? "";
+  out.title ||= pickStr(["title", "videoTitle"]);
+  out.author ||= pickStr(["author", "channel", "channelName", "uploader"]);
+  out.thumbnail ||= pickStr(["thumbnail", "thumbnailUrl"]);
+  out.videoUrl ||= pickStr(["videoUrl", "url"]);
+  out.finalUrl ||= pickStr(["finalUrl", "canonicalUrl", "url"]);
+  out.durationSeconds ||= pickNum(["durationSeconds", "duration"]);
+}
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
@@ -66,184 +192,111 @@ Deno.serve(async (req) => {
     if (!isYouTubeHost(target.hostname)) {
       return json({ error: "URL must be a youtube.com or youtu.be link" }, 400);
     }
-    if (target.pathname.startsWith("/playlist") || target.searchParams.get("list")) {
-      // Allow playlist param on single-video URLs only if v= is present.
-      if (target.pathname.startsWith("/playlist") || !target.searchParams.get("v")) {
-        return json({ error: "Playlists aren't supported — paste a single video URL." }, 400);
-      }
+    if (target.pathname.startsWith("/playlist")) {
+      return json({ error: "Playlists aren't supported — paste a single video URL." }, 400);
     }
 
-    const APIFY_API_TOKEN = Deno.env.get("APIFY_API_TOKEN");
-    if (!APIFY_API_TOKEN) return json({ error: "APIFY_API_TOKEN not configured" }, 500);
+    const token = Deno.env.get("HYPERFX_ACCESS_TOKEN");
+    if (!token) {
+      return json(
+        { error: "HYPERFX_ACCESS_TOKEN not configured. Authorize Hyperfx and add the token." },
+        500,
+      );
+    }
 
-    const ELEVENLABS_API_KEY = Deno.env.get("ELEVENLABS_API_KEY");
-    if (!ELEVENLABS_API_KEY) return json({ error: "ELEVENLABS_API_KEY not configured" }, 500);
-
-    const actorId = Deno.env.get("APIFY_YOUTUBE_ACTOR_ID") ?? DEFAULT_ACTOR_ID;
-
-    // 1) Resolve via Apify.
-    const apifyUrl =
-      `https://api.apify.com/v2/acts/${actorId}/run-sync-get-dataset-items` +
-      `?token=${encodeURIComponent(APIFY_API_TOKEN)}`;
-
-    const apifyResp = await fetch(apifyUrl, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        // Most YouTube actors accept one of these — send both for compatibility.
-        startUrls: [{ url: target.toString() }],
-        videoUrls: [target.toString()],
-        urls: [target.toString()],
-        maxResults: 1,
-        downloadVideo: true,
-        includeVideoUrl: true,
-      }),
+    // 1) initialize
+    const init = await mcpCall({
+      token,
+      body: {
+        jsonrpc: "2.0",
+        id: 1,
+        method: "initialize",
+        params: {
+          protocolVersion: MCP_PROTOCOL_VERSION,
+          clientInfo: { name: "lovable-app", version: "1.0.0" },
+          capabilities: {},
+        },
+      },
     });
 
-    if (!apifyResp.ok) {
-      const t = await apifyResp.text();
-      console.error("Apify error", apifyResp.status, t);
-      return json(
-        { error: `Couldn't fetch YouTube media (Apify ${apifyResp.status}). Make sure the actor is enabled.` },
-        502,
-      );
+    if (init.status === 401) {
+      return json({ error: "Hyperfx token rejected (401). Re-authorize and update HYPERFX_ACCESS_TOKEN." }, 401);
     }
-
-    const items = (await apifyResp.json()) as Array<Record<string, unknown>>;
-    if (!Array.isArray(items) || items.length === 0) {
-      return json(
-        { error: "No data returned for this YouTube URL. The video may be private, age-restricted, or removed." },
-        422,
-      );
+    if (!init.envelope?.result) {
+      console.error("Hyperfx initialize failed", init.status, init.envelope);
+      return json({ error: `Hyperfx initialize failed (${init.status})` }, 502);
     }
+    const sessionId = init.sessionId;
 
-    const item = items[0];
-    const videoUrl = pickString(item, [
-      "downloadUrl",
-      "videoUrl",
-      "mediaUrl",
-      "audioUrl",
-      "mp4Url",
-      "downloadLink",
-      "url",
-    ]);
-    const title = pickString(item, ["title", "videoTitle", "name"]) ?? "YouTube video";
-    const author =
-      pickString(item, ["channelName", "channel", "author", "uploader", "ownerChannelName"]) ?? null;
-    const thumbnail = pickString(item, ["thumbnail", "thumbnailUrl", "image"]) ?? null;
-    const finalUrl = pickString(item, ["url", "videoUrl"]) ?? target.toString();
-    const duration = pickNumber(item, ["duration", "durationSeconds", "lengthSeconds", "videoDuration"]);
-
-    if (duration && duration > MAX_DURATION_SECONDS) {
-      return json(
-        {
-          error: `Video is too long (${Math.round(duration / 60)} min). Max ${MAX_DURATION_SECONDS / 60} min.`,
-        },
-        422,
-      );
-    }
-
-    if (!videoUrl) {
-      return json(
-        {
-          error:
-            "Couldn't get a downloadable media URL from this YouTube video. It may be age-restricted, members-only, or live.",
-          title,
-          author,
-          thumbnail,
-          finalUrl,
-        },
-        422,
-      );
-    }
-
-    // 2) Download media bytes.
-    const mediaResp = await fetch(videoUrl);
-    if (!mediaResp.ok) {
-      return json({ error: `Couldn't download video (${mediaResp.status})` }, 502);
-    }
-    const contentLengthHeader = mediaResp.headers.get("content-length");
-    if (contentLengthHeader && Number(contentLengthHeader) > MAX_MEDIA_BYTES) {
-      return json(
-        { error: "Video file is too large to transcribe (over 50MB). Try a shorter clip." },
-        413,
-      );
-    }
-    const mediaBuffer = await mediaResp.arrayBuffer();
-    if (mediaBuffer.byteLength > MAX_MEDIA_BYTES) {
-      return json(
-        { error: "Video file is too large to transcribe (over 50MB). Try a shorter clip." },
-        413,
-      );
-    }
-
-    // 3) Transcribe via ElevenLabs Scribe.
-    const sttForm = new FormData();
-    sttForm.append(
-      "file",
-      new Blob([mediaBuffer], { type: mediaResp.headers.get("content-type") ?? "video/mp4" }),
-      "youtube.mp4",
-    );
-    sttForm.append("model_id", "scribe_v2");
-    sttForm.append("tag_audio_events", "false");
-    sttForm.append("diarize", "false");
-
-    const sttResp = await fetch("https://api.elevenlabs.io/v1/speech-to-text", {
-      method: "POST",
-      headers: { "xi-api-key": ELEVENLABS_API_KEY },
-      body: sttForm,
+    // 2) notifications/initialized (fire and forget — no id)
+    await mcpCall({
+      token,
+      sessionId,
+      body: { jsonrpc: "2.0", method: "notifications/initialized" },
     });
 
-    if (!sttResp.ok) {
-      const t = await sttResp.text();
-      console.error("ElevenLabs error", sttResp.status, t);
-      return json(
-        {
-          error: `Transcription failed (${sttResp.status}).`,
-          transcript: "",
-          title,
-          author,
-          thumbnail,
-          videoUrl,
-          finalUrl,
-        },
-        200,
-      );
+    // 3) tools/list — resolve the actual tool name
+    const list = await mcpCall({
+      token,
+      sessionId,
+      body: { jsonrpc: "2.0", id: 2, method: "tools/list" },
+    });
+    if (!list.envelope?.result) {
+      console.error("Hyperfx tools/list failed", list.status, list.envelope);
+      return json({ error: "Couldn't list Hyperfx tools" }, 502);
+    }
+    const tools = ((list.envelope.result as Record<string, unknown>).tools ?? []) as Array<{
+      name: string;
+      inputSchema?: Record<string, unknown>;
+    }>;
+    const tool =
+      tools.find((t) => TOOL_NAME_HINTS.some((h) => t.name.toLowerCase().includes(h))) ?? tools[0];
+    if (!tool) {
+      return json({ error: "Hyperfx exposed no tools" }, 502);
     }
 
-    const sttData = (await sttResp.json()) as { text?: string; language_code?: string };
-    const transcript = (sttData.text ?? "").trim();
+    // 4) tools/call — pass url. Hyperfx system prompt expects { url } argument.
+    const call = await mcpCall({
+      token,
+      sessionId,
+      body: {
+        jsonrpc: "2.0",
+        id: 3,
+        method: "tools/call",
+        params: { name: tool.name, arguments: { url: target.toString() } },
+      },
+    });
+
+    if (call.envelope?.error) {
+      console.error("Hyperfx tools/call error", call.envelope.error);
+      return json({ error: `Hyperfx error: ${call.envelope.error.message}` }, 502);
+    }
+    if (!call.envelope?.result) {
+      console.error("Hyperfx tools/call no result", call.status);
+      return json({ error: `Hyperfx returned no result (${call.status})` }, 502);
+    }
+
+    const extracted = extractTranscriptFromToolResult(call.envelope.result);
+    if (!extracted.transcript || extracted.transcript.trim().length < 5) {
+      console.error("Hyperfx empty transcript", JSON.stringify(call.envelope.result).slice(0, 500));
+      return json(
+        { error: "Hyperfx returned no transcript for this video." },
+        422,
+      );
+    }
 
     return json({
-      transcript,
-      language: sttData.language_code ?? null,
+      transcript: extracted.transcript,
+      title: extracted.title ?? "YouTube video",
+      author: extracted.author ?? null,
+      thumbnail: extracted.thumbnail ?? null,
+      videoUrl: extracted.videoUrl ?? null,
+      finalUrl: extracted.finalUrl ?? target.toString(),
+      durationSeconds: extracted.durationSeconds ?? null,
       caption: "",
-      title,
-      author,
-      thumbnail,
-      videoUrl,
-      finalUrl,
-      durationSeconds: duration ?? null,
     });
   } catch (e) {
     console.error("transcribe-youtube error:", e);
     return json({ error: e instanceof Error ? e.message : "Unknown error" }, 500);
   }
 });
-
-function pickString(obj: Record<string, unknown>, keys: string[]): string | null {
-  for (const k of keys) {
-    const v = obj[k];
-    if (typeof v === "string" && v.trim().length > 0) return v;
-  }
-  return null;
-}
-
-function pickNumber(obj: Record<string, unknown>, keys: string[]): number | null {
-  for (const k of keys) {
-    const v = obj[k];
-    if (typeof v === "number" && Number.isFinite(v)) return v;
-    if (typeof v === "string" && v.trim() && Number.isFinite(Number(v))) return Number(v);
-  }
-  return null;
-}
