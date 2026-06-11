@@ -50,6 +50,50 @@ export const VoiceOrb = () => {
   const [findTerm, setFindTerm] = useState("");
   const [replaceTerm, setReplaceTerm] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const editorRef = useRef<HTMLDivElement>(null);
+
+  // Keyboard-aware editor height (mobile). Falls back to fixed heights on desktop.
+  const [editorHeight, setEditorHeight] = useState<number | null>(null);
+  useEffect(() => {
+    if (typeof window === "undefined" || !window.visualViewport) return;
+    const vv = window.visualViewport;
+    const recompute = () => {
+      // Only adjust on narrow viewports — desktop keeps the fixed size.
+      if (window.innerWidth >= 640) { setEditorHeight(null); return; }
+      const card = editorRef.current;
+      if (!card) return;
+      const rect = card.getBoundingClientRect();
+      // Distance from top of card to bottom of visible (visual) viewport.
+      const available = vv.height - rect.top + vv.offsetTop - 12; // 12px breathing room
+      // Clamp so the editor never collapses below a usable height.
+      setEditorHeight(Math.max(180, Math.min(available, 420)));
+    };
+    recompute();
+    vv.addEventListener("resize", recompute);
+    vv.addEventListener("scroll", recompute);
+    window.addEventListener("resize", recompute);
+    return () => {
+      vv.removeEventListener("resize", recompute);
+      vv.removeEventListener("scroll", recompute);
+      window.removeEventListener("resize", recompute);
+    };
+  }, [draft, showFind]);
+
+  // Bring textarea into view when keyboard appears.
+  const onTextareaFocus = () => {
+    requestAnimationFrame(() => {
+      editorRef.current?.scrollIntoView({ block: "center", behavior: "smooth" });
+    });
+  };
+
+  // Prevent toolbar buttons from stealing focus from the textarea, so the
+  // mobile keyboard stays open while undo/redo/find are tapped.
+  const keepFocus = (fn: () => void) => (e: React.MouseEvent | React.PointerEvent) => {
+    e.preventDefault();
+    fn();
+    requestAnimationFrame(() => textareaRef.current?.focus());
+  };
+
 
   useEffect(() => {
     try { setFolderId(localStorage.getItem(FOLDER_KEY)); } catch { /* ignore */ }
