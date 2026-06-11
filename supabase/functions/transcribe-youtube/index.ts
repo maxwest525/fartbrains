@@ -47,14 +47,11 @@ type McpEnvelope = {
 };
 
 /** Parse either a plain JSON response or an SSE stream containing a JSON-RPC envelope. */
-async function readMcpResponse(resp: Response): Promise<McpEnvelope | null> {
+async function readMcpResponse(resp: Response): Promise<{ envelope: McpEnvelope | null; raw: string }> {
+  const text = await resp.text();
+  if (!text.trim()) return { envelope: null, raw: "" };
   const ct = resp.headers.get("content-type") ?? "";
-  if (ct.includes("application/json")) {
-    return (await resp.json()) as McpEnvelope;
-  }
-  if (ct.includes("text/event-stream")) {
-    const text = await resp.text();
-    // SSE frames: "event: message\ndata: {...}\n\n". We only need data: lines.
+  if (ct.includes("text/event-stream") || text.startsWith("event:") || text.startsWith("data:")) {
     for (const block of text.split(/\n\n+/)) {
       const dataLines = block
         .split("\n")
@@ -64,18 +61,20 @@ async function readMcpResponse(resp: Response): Promise<McpEnvelope | null> {
       if (!dataLines.length) continue;
       try {
         const payload = JSON.parse(dataLines.join("\n")) as McpEnvelope;
-        // Skip server-initiated notifications without an id; keep looking for the response.
         if (payload.id !== undefined || payload.result !== undefined || payload.error) {
-          return payload;
+          return { envelope: payload, raw: text };
         }
       } catch {
         // ignore and continue
       }
     }
-    return null;
+    return { envelope: null, raw: text };
   }
-  // Some servers return empty 202 for notifications.
-  return null;
+  try {
+    return { envelope: JSON.parse(text) as McpEnvelope, raw: text };
+  } catch {
+    return { envelope: null, raw: text };
+  }
 }
 
 async function mcpCall(opts: {
