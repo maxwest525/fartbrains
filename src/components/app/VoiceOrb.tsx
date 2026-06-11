@@ -363,7 +363,7 @@ export const VoiceOrb = () => {
         <div className="relative w-full max-w-lg">
           <div
             ref={editorRef}
-            className="flex flex-col rounded-3xl border border-[#2D2E30] bg-[#1E1F20] overflow-hidden shadow-[0_8px_30px_-12px_rgba(0,0,0,0.6)]"
+            className="flex flex-col rounded-3xl border border-[#3C4043] bg-[#1E1F20] overflow-hidden shadow-[0_8px_30px_-12px_rgba(0,0,0,0.6)]"
             style={{ height: editorHeight ?? undefined }}
           >
             {/* Sticky toolbar */}
