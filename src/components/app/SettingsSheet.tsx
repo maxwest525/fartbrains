@@ -1,4 +1,4 @@
-import { LogOut, Mail, Sparkles, Bell, BellOff, Loader2, ShieldCheck, ChevronRight, CheckCircle2, AlertTriangle, XCircle, HelpCircle, Send } from "lucide-react";
+import { LogOut, Mail, Sparkles, Bell, BellOff, Loader2, ShieldCheck, ChevronRight, CheckCircle2, AlertTriangle, XCircle, HelpCircle, Send, Palette } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useState } from "react";
 import {
@@ -13,6 +13,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { usePushSubscription } from "@/hooks/usePushSubscription";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { ThemeToggle, useTheme } from "@/hooks/useTheme";
 
 type Props = {
   open: boolean;
@@ -27,6 +28,7 @@ type Props = {
 export const SettingsSheet = ({ open, onOpenChange }: Props) => {
   const { user, signOut } = useAuth();
   const push = usePushSubscription();
+  const { theme } = useTheme();
   const [testing, setTesting] = useState(false);
 
   const sendTest = async () => {
@@ -168,6 +170,25 @@ export const SettingsSheet = ({ open, onOpenChange }: Props) => {
               <span className="text-sm font-medium">Sign out</span>
             </button>
           </div>
+
+          {/* Appearance — light/dark toggle */}
+          <div className="mt-5 rounded-2xl bg-card border border-border/60 px-4 py-3 flex items-center gap-3">
+            <div
+              className="h-10 w-10 rounded-full flex items-center justify-center text-white shrink-0"
+              style={{ background: "linear-gradient(135deg,#4285F4 0%,#9B72CB 55%,#D96570 100%)" }}
+            >
+              <Palette className="h-5 w-5" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium">Appearance</p>
+              <p className="text-[11px] text-muted-foreground mt-0.5">
+                {theme === "dark" ? "Dark mode active" : "Light mode active"}
+              </p>
+            </div>
+            <ThemeToggle />
+          </div>
+
+
 
           {/* Notifications block — explicit status + fix steps */}
           <div className="mt-5 rounded-2xl bg-card border border-border/60 overflow-hidden">

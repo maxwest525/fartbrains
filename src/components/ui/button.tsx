@@ -23,7 +23,7 @@ const buttonVariants = cva(
         link: "text-primary underline-offset-4 hover:underline rounded-none",
         // Subtle glass — used in auth/dialogs over imagery.
         glass:
-          "bg-white/10 backdrop-blur-xl border border-white/15 text-white hover:bg-white/15 shadow-[0_8px_24px_-8px_rgba(0,0,0,0.5)]",
+          "glass-pill rounded-full text-white shadow-[0_8px_24px_-8px_rgba(0,0,0,0.5)] focus-visible:ring-2 focus-visible:ring-white/40 focus-visible:ring-offset-0",
       },
       size: {
         default: "h-10 px-5 py-2",
