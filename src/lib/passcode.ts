@@ -37,7 +37,8 @@ function getOrCreateSalt(): string {
 }
 
 export function hasPasscode(): boolean {
-  return !!localStorage.getItem(HASH_KEY);
+  // Fixed passcode — always present, never setup flow.
+  return true;
 }
 
 export function isUnlocked(): boolean {
