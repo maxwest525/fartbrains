@@ -50,6 +50,50 @@ export const VoiceOrb = () => {
   const [findTerm, setFindTerm] = useState("");
   const [replaceTerm, setReplaceTerm] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const editorRef = useRef<HTMLDivElement>(null);
+
+  // Keyboard-aware editor height (mobile). Falls back to fixed heights on desktop.
+  const [editorHeight, setEditorHeight] = useState<number | null>(null);
+  useEffect(() => {
+    if (typeof window === "undefined" || !window.visualViewport) return;
+    const vv = window.visualViewport;
+    const recompute = () => {
+      // Only adjust on narrow viewports — desktop keeps the fixed size.
+      if (window.innerWidth >= 640) { setEditorHeight(null); return; }
+      const card = editorRef.current;
+      if (!card) return;
+      const rect = card.getBoundingClientRect();
+      // Distance from top of card to bottom of visible (visual) viewport.
+      const available = vv.height - rect.top + vv.offsetTop - 12; // 12px breathing room
+      // Clamp so the editor never collapses below a usable height.
+      setEditorHeight(Math.max(180, Math.min(available, 420)));
+    };
+    recompute();
+    vv.addEventListener("resize", recompute);
+    vv.addEventListener("scroll", recompute);
+    window.addEventListener("resize", recompute);
+    return () => {
+      vv.removeEventListener("resize", recompute);
+      vv.removeEventListener("scroll", recompute);
+      window.removeEventListener("resize", recompute);
+    };
+  }, [draft, showFind]);
+
+  // Bring textarea into view when keyboard appears.
+  const onTextareaFocus = () => {
+    requestAnimationFrame(() => {
+      editorRef.current?.scrollIntoView({ block: "center", behavior: "smooth" });
+    });
+  };
+
+  // Prevent toolbar buttons from stealing focus from the textarea, so the
+  // mobile keyboard stays open while undo/redo/find are tapped.
+  const keepFocus = (fn: () => void) => (e: React.MouseEvent | React.PointerEvent) => {
+    e.preventDefault();
+    fn();
+    requestAnimationFrame(() => textareaRef.current?.focus());
+  };
+
 
   useEffect(() => {
     try { setFolderId(localStorage.getItem(FOLDER_KEY)); } catch { /* ignore */ }
@@ -235,13 +279,14 @@ export const VoiceOrb = () => {
         : "Tap to speak";
 
   return (
-    <div className="dark relative flex flex-col items-center justify-center gap-5 sm:gap-6 py-6 sm:py-8 px-3 sm:px-6 rounded-2xl sm:rounded-3xl bg-[hsl(222_18%_8%)] text-[hsl(220_14%_96%)] overflow-hidden w-full">
+    <div className="dark relative flex flex-col items-center justify-center gap-5 sm:gap-6 py-6 sm:py-8 px-3 sm:px-6 rounded-2xl sm:rounded-3xl bg-[#131314] text-[#E3E3E3] overflow-hidden w-full">
+      {/* Ambient Gemini glow */}
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-0 opacity-70"
+        className="pointer-events-none absolute inset-0 opacity-60"
         style={{
           background:
-            "radial-gradient(60% 50% at 50% 45%, hsl(217 91% 65% / 0.18), transparent 70%)",
+            "radial-gradient(55% 45% at 50% 40%, rgba(155,114,203,0.22), transparent 70%), radial-gradient(40% 35% at 30% 80%, rgba(66,133,244,0.18), transparent 75%), radial-gradient(40% 35% at 75% 75%, rgba(217,101,112,0.14), transparent 75%)",
         }}
       />
 
@@ -252,31 +297,41 @@ export const VoiceOrb = () => {
         aria-label={isRecording ? "Stop recording" : "Start voice capture"}
         className={cn(
           "relative h-28 w-28 sm:h-40 sm:w-40 md:h-44 md:w-44 rounded-full flex items-center justify-center select-none transition-transform active:scale-[0.97]",
-          "focus:outline-none focus-visible:ring-4 focus-visible:ring-primary/40",
+          "focus:outline-none focus-visible:ring-4 focus-visible:ring-[#9B72CB]/40",
           isBusy && "opacity-80",
         )}
       >
         {isRecording && (
           <>
-            <span className="absolute inset-0 rounded-full bg-primary/30 animate-ping" />
-            <span className="absolute -inset-3 rounded-full bg-primary/10 animate-pulse" />
+            <span className="absolute inset-0 rounded-full bg-[#D96570]/30 animate-ping" />
+            <span className="absolute -inset-3 rounded-full bg-[#D96570]/10 animate-pulse" />
           </>
         )}
+
+        {/* Gemini gradient ring */}
+        <span
+          aria-hidden
+          className="absolute -inset-[2px] rounded-full opacity-90 blur-[1px]"
+          style={{
+            background:
+              "conic-gradient(from 180deg at 50% 50%, #4285F4, #9B72CB, #D96570, #F4B400, #4285F4)",
+          }}
+        />
 
         <span
           className={cn(
             "absolute inset-0 rounded-full",
-            "shadow-[0_20px_60px_-10px_hsl(217_91%_50%/0.55),inset_0_1px_0_hsl(0_0%_100%/0.18)]",
+            "shadow-[0_24px_60px_-12px_rgba(155,114,203,0.55),inset_0_1px_0_rgba(255,255,255,0.14)]",
           )}
           style={{
             background: isRecording
-              ? "radial-gradient(circle at 30% 30%, hsl(0 78% 65%), hsl(0 78% 45%) 60%, hsl(0 78% 28%) 100%)"
-              : "radial-gradient(circle at 30% 30%, hsl(217 95% 72%), hsl(217 91% 53%) 55%, hsl(222 70% 22%) 100%)",
+              ? "radial-gradient(circle at 30% 30%, #F2A4AC, #D96570 55%, #5A1F26 100%)"
+              : "linear-gradient(135deg, #4285F4 0%, #9B72CB 55%, #D96570 100%)",
           }}
         />
         <span
           aria-hidden
-          className="absolute left-1/2 top-3 h-8 sm:h-10 w-20 sm:w-24 -translate-x-1/2 rounded-full bg-white/25 blur-md"
+          className="absolute left-1/2 top-3 h-7 sm:h-9 w-20 sm:w-24 -translate-x-1/2 rounded-full bg-white/30 blur-md"
         />
 
         <span className="relative z-10 text-white">
@@ -293,12 +348,12 @@ export const VoiceOrb = () => {
       <div className="relative text-center space-y-1">
         <p className="text-[14px] sm:text-[15px] font-medium tracking-tight">{status}</p>
         {draft === null && (
-          <p className="text-[12px] sm:text-[12.5px] text-[hsl(220_9%_65%)]">
+          <p className="text-[12px] sm:text-[12.5px] text-[#9AA0A6]">
             Speak your idea — edit before saving.
           </p>
         )}
         {draft !== null && !isRecording && !isTranscribing && (
-          <p className="text-[11.5px] text-[hsl(220_9%_60%)]">
+          <p className="text-[11.5px] text-[#9AA0A6]">
             Tap orb to add more — your edits are kept.
           </p>
         )}
@@ -306,55 +361,62 @@ export const VoiceOrb = () => {
 
       {draft !== null && (
         <div className="relative w-full max-w-lg">
-          <div className="flex flex-col h-[360px] sm:h-[420px] rounded-xl border border-[hsl(222_14%_22%)] bg-[hsl(222_14%_10%)] overflow-hidden">
+          <div
+            ref={editorRef}
+            className="flex flex-col rounded-3xl border border-[#2D2E30] bg-[#1E1F20] overflow-hidden shadow-[0_8px_30px_-12px_rgba(0,0,0,0.6)]"
+            style={{ height: editorHeight ?? undefined }}
+          >
             {/* Sticky toolbar */}
-            <div className="flex items-center justify-between gap-1 px-2 py-1.5 border-b border-[hsl(222_14%_20%)] bg-[hsl(222_14%_11%)] shrink-0">
+            <div className="flex items-center justify-between gap-1 px-2 py-1.5 border-b border-[#2D2E30] bg-[#1E1F20]/95 backdrop-blur shrink-0 sticky top-0 z-10">
               <div className="flex items-center gap-0.5">
                 <Button
                   type="button" variant="ghost" size="sm"
-                  onClick={undo} disabled={history.length === 0}
-                  className="h-8 px-2 text-[hsl(220_9%_75%)] hover:text-white hover:bg-white/5"
+                  onMouseDown={keepFocus(undo)}
+                  disabled={history.length === 0}
+                  className="h-8 px-2 rounded-full text-[#C4C7C5] hover:text-white hover:bg-white/[0.06]"
                   aria-label="Undo"
                 >
                   <Undo2 className="h-3.5 w-3.5" />
                 </Button>
                 <Button
                   type="button" variant="ghost" size="sm"
-                  onClick={redo} disabled={future.length === 0}
-                  className="h-8 px-2 text-[hsl(220_9%_75%)] hover:text-white hover:bg-white/5"
+                  onMouseDown={keepFocus(redo)}
+                  disabled={future.length === 0}
+                  className="h-8 px-2 rounded-full text-[#C4C7C5] hover:text-white hover:bg-white/[0.06]"
                   aria-label="Redo"
                 >
                   <Redo2 className="h-3.5 w-3.5" />
                 </Button>
                 <Button
                   type="button" variant="ghost" size="sm"
-                  onClick={() => setShowFind((s) => !s)}
+                  onMouseDown={keepFocus(() => setShowFind((s) => !s))}
                   className={cn(
-                    "h-8 px-2 hover:bg-white/5",
-                    showFind ? "text-white bg-white/5" : "text-[hsl(220_9%_75%)] hover:text-white",
+                    "h-8 px-2 rounded-full hover:bg-white/[0.06]",
+                    showFind ? "text-white bg-white/[0.06]" : "text-[#C4C7C5] hover:text-white",
                   )}
                   aria-label="Find and replace"
                 >
                   <Search className="h-3.5 w-3.5" />
                 </Button>
               </div>
-              <span className="text-[11px] tabular-nums text-[hsl(220_9%_60%)] pr-1">
+              <span className="text-[11px] tabular-nums text-[#9AA0A6] pr-1">
                 {wordCount}w · {charCount}c
               </span>
             </div>
 
             {showFind && (
-              <div className="border-b border-[hsl(222_14%_20%)] bg-[hsl(222_14%_9%)] p-2 space-y-1.5 shrink-0">
+              <div className="border-b border-[#2D2E30] bg-[#1B1C1D] p-2 space-y-1.5 shrink-0">
                 <div className="flex items-center gap-1.5">
                   <Input
                     value={findTerm}
                     onChange={(e) => setFindTerm(e.target.value)}
                     onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); findNext(); } }}
                     placeholder="Find"
-                    className="h-8 bg-[hsl(222_14%_12%)] border-[hsl(222_14%_22%)] text-[13px]"
+                    className="h-8 rounded-full bg-[#2D2E30] border-[#3C4043] text-[13px] px-3"
                   />
-                  <Button type="button" size="sm" variant="ghost" onClick={findNext}
-                    className="h-8 px-2 text-[hsl(220_9%_75%)] hover:text-white hover:bg-white/5">
+                  <Button type="button" size="sm" variant="ghost"
+                    onMouseDown={keepFocus(findNext)}
+                    className="h-8 px-3 rounded-full text-[#C4C7C5] hover:text-white hover:bg-white/[0.06]">
                     Next
                   </Button>
                 </div>
@@ -363,10 +425,11 @@ export const VoiceOrb = () => {
                     value={replaceTerm}
                     onChange={(e) => setReplaceTerm(e.target.value)}
                     placeholder="Replace with"
-                    className="h-8 bg-[hsl(222_14%_12%)] border-[hsl(222_14%_22%)] text-[13px]"
+                    className="h-8 rounded-full bg-[#2D2E30] border-[#3C4043] text-[13px] px-3"
                   />
-                  <Button type="button" size="sm" variant="ghost" onClick={replaceAll}
-                    className="h-8 px-2 text-[hsl(220_9%_75%)] hover:text-white hover:bg-white/5">
+                  <Button type="button" size="sm" variant="ghost"
+                    onMouseDown={keepFocus(replaceAll)}
+                    className="h-8 px-3 rounded-full text-[#C4C7C5] hover:text-white hover:bg-white/[0.06]">
                     <ReplaceIcon className="h-3.5 w-3.5 mr-1" /> All
                   </Button>
                 </div>
@@ -374,26 +437,28 @@ export const VoiceOrb = () => {
             )}
 
             {/* Scrollable text area fills remaining space */}
-            <div className="flex-1 min-h-0 overflow-hidden">
+            <div className="flex-1 min-h-[120px] overflow-hidden">
               <Textarea
                 ref={textareaRef}
                 value={draft}
                 onChange={(e) => updateDraft(e.target.value)}
+                onFocus={onTextareaFocus}
                 autoFocus
-                className="h-full w-full bg-transparent border-0 rounded-none text-[hsl(220_14%_96%)] placeholder:text-[hsl(220_9%_55%)] text-[14px] leading-relaxed resize-none overflow-y-auto focus-visible:ring-0 focus-visible:ring-offset-0"
+                style={{ fontSize: 16 }}
+                className="h-full w-full bg-transparent border-0 rounded-none text-[#E3E3E3] placeholder:text-[#80868B] leading-relaxed resize-none overflow-y-auto focus-visible:ring-0 focus-visible:ring-offset-0 px-4 py-3"
                 placeholder="Transcript…"
               />
             </div>
 
             {/* Sticky footer */}
-            <div className="flex items-center justify-between gap-2 px-2 py-1.5 border-t border-[hsl(222_14%_20%)] bg-[hsl(222_14%_11%)] shrink-0">
+            <div className="flex items-center justify-between gap-2 px-2 py-1.5 border-t border-[#2D2E30] bg-[#1E1F20]/95 backdrop-blur shrink-0 sticky bottom-0 z-10">
               <Button
                 type="button"
                 variant="ghost"
                 size="sm"
-                onClick={discard}
+                onMouseDown={keepFocus(discard)}
                 disabled={submitting}
-                className="text-[hsl(220_9%_75%)] hover:text-white hover:bg-white/5"
+                className="rounded-full text-[#C4C7C5] hover:text-white hover:bg-white/[0.06]"
               >
                 <X className="h-4 w-4 mr-1.5" /> Discard
               </Button>
@@ -402,6 +467,11 @@ export const VoiceOrb = () => {
                 size="sm"
                 onClick={saveDraft}
                 disabled={submitting || !draft.trim()}
+                className="rounded-full text-white border-0 shadow-[0_6px_20px_-6px_rgba(155,114,203,0.6)] hover:opacity-95"
+                style={{
+                  background:
+                    "linear-gradient(135deg, #4285F4 0%, #9B72CB 55%, #D96570 100%)",
+                }}
               >
                 {submitting ? (
                   <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
@@ -418,3 +488,4 @@ export const VoiceOrb = () => {
     </div>
   );
 };
+
