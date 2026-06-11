@@ -103,39 +103,44 @@ Deno.serve(async (req) => {
       );
     }
 
-    // The actor returns either:
-    //   - one item with `data: [{ text, start, dur }, ...]` and a `title`
-    //   - or an array of segment items each with `text`
+    // Walk any item shape: { transcript: "..." } | { transcript: [{text}] } | { data: [{text}] } | { text }
     let transcript = "";
     let title: string | null = null;
     let author: string | null = null;
+    const chunks: string[] = [];
 
-    const first = items[0];
-    if (Array.isArray((first as Record<string, unknown>).data)) {
-      const segs = (first as Record<string, unknown>).data as Array<Record<string, unknown>>;
-      transcript = segs
-        .map((s) => (typeof s.text === "string" ? s.text : ""))
-        .filter(Boolean)
-        .join(" ")
-        .replace(/\s+/g, " ")
-        .trim();
-      title = (first.title as string) ?? null;
-      author = (first.author as string) ?? (first.channelName as string) ?? null;
-    } else {
-      transcript = items
-        .map((s) => (typeof s.text === "string" ? s.text : ""))
-        .filter(Boolean)
-        .join(" ")
-        .replace(/\s+/g, " ")
-        .trim();
+    const collect = (v: unknown) => {
+      if (!v) return;
+      if (typeof v === "string") chunks.push(v);
+      else if (Array.isArray(v)) v.forEach(collect);
+      else if (typeof v === "object") {
+        const o = v as Record<string, unknown>;
+        if (typeof o.text === "string") chunks.push(o.text);
+        else if (typeof o.transcript === "string") chunks.push(o.transcript);
+        else if (Array.isArray(o.transcript)) collect(o.transcript);
+        else if (Array.isArray(o.data)) collect(o.data);
+        else if (Array.isArray(o.segments)) collect(o.segments);
+      }
+    };
+
+    for (const it of items) {
+      const o = it as Record<string, unknown>;
+      title ??= (typeof o.title === "string" ? o.title : null) ?? (typeof o.videoTitle === "string" ? o.videoTitle : null);
+      author ??= (typeof o.author === "string" ? o.author : null) ?? (typeof o.channelName === "string" ? o.channelName : null) ?? (typeof o.channel === "string" ? o.channel : null);
+      collect(o.transcript ?? o.data ?? o.segments ?? o.text ?? o);
     }
 
-    if (!transcript || transcript.length < 5) {
+    transcript = chunks.join(" ").replace(/\s+/g, " ").trim();
+
+    // Some actors return a literal "ERROR:..." sentinel when they fail internally.
+    if (/^ERROR[:\s]/i.test(transcript) || !transcript || transcript.length < 5) {
+      console.error("transcribe-youtube: no usable transcript. raw:", JSON.stringify(items).slice(0, 500));
       return json(
-        { error: "This video has no captions available to transcribe." },
+        { error: "This video has no captions available to transcribe. Try a video with captions/subtitles." },
         422,
       );
     }
+
 
     return json({
       transcript,
