@@ -304,7 +304,7 @@ Deno.serve(async (req) => {
           name: "agents_run",
           arguments: {
             agent_id: agentId,
-            message: `Transcribe this YouTube video and return only the transcript text: ${target.toString()}`,
+            instructions: `Transcribe this YouTube video and return only the transcript text: ${target.toString()}`,
             async_execution: false,
           },
         },
