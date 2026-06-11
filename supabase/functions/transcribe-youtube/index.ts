@@ -47,14 +47,11 @@ type McpEnvelope = {
 };
 
 /** Parse either a plain JSON response or an SSE stream containing a JSON-RPC envelope. */
-async function readMcpResponse(resp: Response): Promise<McpEnvelope | null> {
+async function readMcpResponse(resp: Response): Promise<{ envelope: McpEnvelope | null; raw: string }> {
+  const text = await resp.text();
+  if (!text.trim()) return { envelope: null, raw: "" };
   const ct = resp.headers.get("content-type") ?? "";
-  if (ct.includes("application/json")) {
-    return (await resp.json()) as McpEnvelope;
-  }
-  if (ct.includes("text/event-stream")) {
-    const text = await resp.text();
-    // SSE frames: "event: message\ndata: {...}\n\n". We only need data: lines.
+  if (ct.includes("text/event-stream") || text.startsWith("event:") || text.startsWith("data:")) {
     for (const block of text.split(/\n\n+/)) {
       const dataLines = block
         .split("\n")
@@ -64,25 +61,27 @@ async function readMcpResponse(resp: Response): Promise<McpEnvelope | null> {
       if (!dataLines.length) continue;
       try {
         const payload = JSON.parse(dataLines.join("\n")) as McpEnvelope;
-        // Skip server-initiated notifications without an id; keep looking for the response.
         if (payload.id !== undefined || payload.result !== undefined || payload.error) {
-          return payload;
+          return { envelope: payload, raw: text };
         }
       } catch {
         // ignore and continue
       }
     }
-    return null;
+    return { envelope: null, raw: text };
   }
-  // Some servers return empty 202 for notifications.
-  return null;
+  try {
+    return { envelope: JSON.parse(text) as McpEnvelope, raw: text };
+  } catch {
+    return { envelope: null, raw: text };
+  }
 }
 
 async function mcpCall(opts: {
   token: string;
   sessionId?: string;
   body: Record<string, unknown>;
-}): Promise<{ envelope: McpEnvelope | null; sessionId: string | undefined; status: number; raw: Response }> {
+}): Promise<{ envelope: McpEnvelope | null; sessionId: string | undefined; status: number; raw: string }> {
   const headers: Record<string, string> = {
     Authorization: `Bearer ${opts.token}`,
     "Content-Type": "application/json",
@@ -98,8 +97,11 @@ async function mcpCall(opts: {
   });
 
   const sessionId = resp.headers.get("mcp-session-id") ?? opts.sessionId;
-  const envelope = await readMcpResponse(resp);
-  return { envelope, sessionId: sessionId ?? undefined, status: resp.status, raw: resp };
+  const { envelope, raw } = await readMcpResponse(resp);
+  if (!envelope && !resp.ok) {
+    console.error(`MCP ${opts.body.method} HTTP ${resp.status}:`, raw.slice(0, 500));
+  }
+  return { envelope, sessionId: sessionId ?? undefined, status: resp.status, raw };
 }
 
 /** Walk tools/call content[] looking for usable text/JSON. */
@@ -167,7 +169,7 @@ function mergeFields(out: Record<string, unknown>, src: Record<string, unknown>)
     }
     return undefined;
   };
-  out.transcript ||= pickStr(["transcript", "text"]) ?? "";
+  out.transcript ||= pickStr(["transcript", "result", "text", "output"]) ?? "";
   out.title ||= pickStr(["title", "videoTitle"]);
   out.author ||= pickStr(["author", "channel", "channelName", "uploader"]);
   out.thumbnail ||= pickStr(["thumbnail", "thumbnailUrl"]);
@@ -235,27 +237,62 @@ Deno.serve(async (req) => {
       body: { jsonrpc: "2.0", method: "notifications/initialized" },
     });
 
-    // 3) tools/list — resolve the actual tool name
-    const list = await mcpCall({
+    // 3) Find the youtube-transcriber agent via agents_list, then run it via agents_run.
+    const agentsList = await mcpCall({
       token,
       sessionId,
-      body: { jsonrpc: "2.0", id: 2, method: "tools/list" },
+      body: {
+        jsonrpc: "2.0",
+        id: 2,
+        method: "tools/call",
+        params: { name: "agents_list", arguments: { limit: 100 } },
+      },
     });
-    if (!list.envelope?.result) {
-      console.error("Hyperfx tools/list failed", list.status, list.envelope);
-      return json({ error: "Couldn't list Hyperfx tools" }, 502);
-    }
-    const tools = ((list.envelope.result as Record<string, unknown>).tools ?? []) as Array<{
-      name: string;
-      inputSchema?: Record<string, unknown>;
-    }>;
-    const tool =
-      tools.find((t) => TOOL_NAME_HINTS.some((h) => t.name.toLowerCase().includes(h))) ?? tools[0];
-    if (!tool) {
-      return json({ error: "Hyperfx exposed no tools" }, 502);
+    if (!agentsList.envelope?.result) {
+      console.error("agents_list failed", agentsList.status);
+      return json({ error: "Couldn't list Hyperfx agents" }, 502);
     }
 
-    // 4) tools/call — pass url. Hyperfx system prompt expects { url } argument.
+    // Extract agent_id by walking the tool result text for an agent matching our hints.
+    const listText = JSON.stringify(agentsList.envelope.result);
+    let agentId: string | null = null;
+    // Try parsing structured: result.content[].text often has JSON with agents array.
+    const ac = (agentsList.envelope.result as Record<string, unknown>).content;
+    if (Array.isArray(ac)) {
+      for (const part of ac) {
+        if (part && typeof part === "object" && (part as Record<string, unknown>).type === "text") {
+          const t = (part as Record<string, unknown>).text as string;
+          try {
+            const parsed = JSON.parse(t);
+            const agents = (parsed?.agents ?? parsed?.items ?? parsed) as Array<Record<string, unknown>>;
+            if (Array.isArray(agents)) {
+              const match = agents.find((a) => {
+                const name = String(a.name ?? a.slug ?? "").toLowerCase();
+                return TOOL_NAME_HINTS.some((h) => name.includes(h));
+              });
+              if (match) {
+                agentId = String(match.id ?? match.agent_id ?? "");
+                if (agentId) break;
+              }
+            }
+          } catch {
+            // fallback regex below
+          }
+        }
+      }
+    }
+    if (!agentId) {
+      // Fallback: regex hunt for an id near the agent name
+      const m = listText.match(/"id"\s*:\s*"([^"]+)"[^}]*?(youtube|transcribe)/i)
+        ?? listText.match(/(youtube|transcribe)[^}]*?"id"\s*:\s*"([^"]+)"/i);
+      if (m) agentId = m[1].startsWith("agent") || m[1].length > 8 ? m[1] : m[2];
+    }
+    if (!agentId) {
+      console.error("youtube agent not found in:", listText.slice(0, 1000));
+      return json({ error: "youtube-transcriber agent not found on Hyperfx" }, 502);
+    }
+
+    // 4) Run the agent.
     const call = await mcpCall({
       token,
       sessionId,
@@ -263,7 +300,14 @@ Deno.serve(async (req) => {
         jsonrpc: "2.0",
         id: 3,
         method: "tools/call",
-        params: { name: tool.name, arguments: { url: target.toString() } },
+        params: {
+          name: "agents_run",
+          arguments: {
+            agent_id: agentId,
+            instructions: `Transcribe this YouTube video and return only the transcript text: ${target.toString()}`,
+            async_execution: false,
+          },
+        },
       },
     });
 
