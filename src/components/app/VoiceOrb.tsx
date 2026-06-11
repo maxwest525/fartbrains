@@ -367,7 +367,7 @@ export const VoiceOrb = () => {
             style={{ height: editorHeight ?? undefined }}
           >
             {/* Sticky toolbar */}
-            <div className="flex items-center justify-between gap-1 px-2 py-1.5 border-b border-[#2D2E30] bg-[#1E1F20]/95 backdrop-blur shrink-0 sticky top-0 z-10">
+            <div className="flex items-center justify-between gap-1 px-2 py-1.5 border-b border-[#3C4043] bg-[#1E1F20]/95 backdrop-blur shrink-0 sticky top-0 z-10">
               <div className="flex items-center gap-0.5">
                 <Button
                   type="button" variant="ghost" size="sm"
@@ -405,14 +405,14 @@ export const VoiceOrb = () => {
             </div>
 
             {showFind && (
-              <div className="border-b border-[#2D2E30] bg-[#1B1C1D] p-2 space-y-1.5 shrink-0">
+              <div className="border-b border-[#3C4043] bg-[#1B1C1D] p-2 space-y-1.5 shrink-0">
                 <div className="flex items-center gap-1.5">
                   <Input
                     value={findTerm}
                     onChange={(e) => setFindTerm(e.target.value)}
                     onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); findNext(); } }}
                     placeholder="Find"
-                    className="h-8 rounded-full bg-[#2D2E30] border-[#3C4043] text-[13px] px-3"
+                    className="h-8 rounded-full bg-[#2D2E30] border-[#5F6368] text-[13px] px-3"
                   />
                   <Button type="button" size="sm" variant="ghost"
                     onMouseDown={keepFocus(findNext)}
@@ -425,7 +425,7 @@ export const VoiceOrb = () => {
                     value={replaceTerm}
                     onChange={(e) => setReplaceTerm(e.target.value)}
                     placeholder="Replace with"
-                    className="h-8 rounded-full bg-[#2D2E30] border-[#3C4043] text-[13px] px-3"
+                    className="h-8 rounded-full bg-[#2D2E30] border-[#5F6368] text-[13px] px-3"
                   />
                   <Button type="button" size="sm" variant="ghost"
                     onMouseDown={keepFocus(replaceAll)}
@@ -445,13 +445,13 @@ export const VoiceOrb = () => {
                 onFocus={onTextareaFocus}
                 autoFocus
                 style={{ fontSize: 16 }}
-                className="h-full w-full bg-transparent border-0 rounded-none text-[#E3E3E3] placeholder:text-[#80868B] leading-relaxed resize-none overflow-y-auto focus-visible:ring-0 focus-visible:ring-offset-0 px-4 py-3"
+                className="h-full w-full bg-transparent border-0 rounded-none text-[#E3E3E3] placeholder:text-[#9AA0A6] leading-relaxed resize-none overflow-y-auto focus-visible:ring-0 focus-visible:ring-offset-0 px-4 py-3"
                 placeholder="Transcript…"
               />
             </div>
 
             {/* Sticky footer */}
-            <div className="flex items-center justify-between gap-2 px-2 py-1.5 border-t border-[#2D2E30] bg-[#1E1F20]/95 backdrop-blur shrink-0 sticky bottom-0 z-10">
+            <div className="flex items-center justify-between gap-2 px-2 py-1.5 border-t border-[#3C4043] bg-[#1E1F20]/95 backdrop-blur shrink-0 sticky bottom-0 z-10">
               <Button
                 type="button"
                 variant="ghost"
