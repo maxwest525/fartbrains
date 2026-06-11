@@ -7,9 +7,9 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
-import { Lock } from "lucide-react";
+import { Lock, Loader2 } from "lucide-react";
+import spaceBg from "@/assets/space-nebula.jpg";
 
 const credSchema = z.object({
   email: z.string().trim().email("Invalid email").max(255),
@@ -70,57 +70,97 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-background p-4">
-      <Card className="w-full max-w-md shadow-lg">
-        <CardHeader className="space-y-3">
-          <div className="flex items-center gap-2">
-            <div className="h-9 w-9 rounded-md bg-primary text-primary-foreground flex items-center justify-center">
-              <Lock className="h-4 w-4" />
+    <main className="gemini dark relative min-h-dvh w-full flex items-center justify-center p-4 overflow-hidden bg-[color:var(--g-surface-0)]">
+      {/* Deep-space backdrop */}
+      <img
+        src={spaceBg}
+        alt=""
+        aria-hidden
+        className="absolute inset-0 h-full w-full object-cover scale-110"
+        fetchPriority="high"
+      />
+      {/* Atmospheric scrim to keep the form readable */}
+      <div
+        aria-hidden
+        className="absolute inset-0"
+        style={{
+          background:
+            "radial-gradient(60% 50% at 50% 50%, rgba(0,0,0,0.35), rgba(0,0,0,0.7) 80%)",
+        }}
+      />
+      {/* Glassmorphism card */}
+      <div className="relative w-full max-w-md">
+        <div className="gemini-ring rounded-3xl">
+          <div
+            className="rounded-3xl bg-white/[0.06] backdrop-blur-2xl backdrop-saturate-150 border border-white/10 shadow-[0_30px_80px_-20px_rgba(0,0,0,0.7)] p-7 sm:p-8"
+          >
+            <div className="flex items-center gap-3 mb-7">
+              <div
+                className="h-11 w-11 rounded-2xl flex items-center justify-center text-white shadow-[0_8px_24px_-8px_rgba(155,114,203,0.7)]"
+                style={{ background: "var(--g-gradient)" }}
+              >
+                <Lock className="h-5 w-5" />
+              </div>
+              <div>
+                <h1 className="text-[18px] font-semibold tracking-tight text-white">Idea Vault</h1>
+                <p className="text-[12.5px] text-white/60">Private · single user only</p>
+              </div>
             </div>
-            <div>
-              <CardTitle>Idea Vault</CardTitle>
-              <CardDescription>Private. Single user only.</CardDescription>
-            </div>
+
+            <form onSubmit={onSubmit} className="space-y-4">
+              <div className="space-y-1.5">
+                <Label htmlFor="email" className="text-white/80 text-[12.5px] font-medium">
+                  Email
+                </Label>
+                <Input
+                  id="email"
+                  type="email"
+                  autoComplete="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  className="h-11 rounded-xl bg-white/[0.06] border-white/15 text-white placeholder:text-white/40 focus-visible:ring-2 focus-visible:ring-[color:var(--g-focus-ring)] focus-visible:ring-offset-0"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="password" className="text-white/80 text-[12.5px] font-medium">
+                  Password
+                </Label>
+                <Input
+                  id="password"
+                  type="password"
+                  autoComplete={mode === "signup" ? "new-password" : "current-password"}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  className="h-11 rounded-xl bg-white/[0.06] border-white/15 text-white placeholder:text-white/40 focus-visible:ring-2 focus-visible:ring-[color:var(--g-focus-ring)] focus-visible:ring-offset-0"
+                />
+              </div>
+
+              <Button type="submit" size="lg" className="w-full mt-2" disabled={submitting}>
+                {submitting ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : mode === "signin" ? (
+                  "Sign in"
+                ) : (
+                  "Create account"
+                )}
+              </Button>
+
+              <button
+                type="button"
+                className="text-[13px] text-white/60 hover:text-white transition-colors w-full text-center pt-1"
+                onClick={() => setMode(mode === "signin" ? "signup" : "signin")}
+              >
+                {mode === "signin"
+                  ? "Need to create your account?"
+                  : "Already have an account? Sign in"}
+              </button>
+            </form>
           </div>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={onSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                autoComplete="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                autoComplete={mode === "signup" ? "new-password" : "current-password"}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-            </div>
-            <Button type="submit" className="w-full" disabled={submitting}>
-              {submitting ? "…" : mode === "signin" ? "Sign in" : "Create account"}
-            </Button>
-            <button
-              type="button"
-              className="text-sm text-muted-foreground hover:text-foreground w-full text-center"
-              onClick={() => setMode(mode === "signin" ? "signup" : "signin")}
-            >
-              {mode === "signin" ? "Need to create your account?" : "Already have an account? Sign in"}
-            </button>
-          </form>
-        </CardContent>
-      </Card>
-    </div>
+        </div>
+      </div>
+    </main>
   );
 };
 
