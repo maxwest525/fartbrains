@@ -119,5 +119,20 @@ export function useAshChat() {
     setError(null);
   }, []);
 
-  return { messages, streaming, error, send, stop, reset };
+  const regenerate = useCallback(async () => {
+    if (streaming) return;
+    let lastUserIdx = -1;
+    for (let i = messages.length - 1; i >= 0; i--) {
+      if (messages[i].role === "user") {
+        lastUserIdx = i;
+        break;
+      }
+    }
+    if (lastUserIdx < 0) return;
+    const lastUser = messages[lastUserIdx].content;
+    setMessages(messages.slice(0, lastUserIdx));
+    await send(lastUser);
+  }, [messages, streaming, send]);
+
+  return { messages, streaming, error, send, stop, reset, regenerate };
 }
