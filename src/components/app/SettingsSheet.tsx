@@ -1,4 +1,4 @@
-import { LogOut, Mail, Sparkles, Bell, BellOff, Loader2, ShieldCheck, ChevronRight, CheckCircle2, AlertTriangle, XCircle, HelpCircle, Send } from "lucide-react";
+import { LogOut, Mail, Sparkles, Bell, BellOff, Loader2, ShieldCheck, ChevronRight, CheckCircle2, AlertTriangle, XCircle, HelpCircle, Send, Palette } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useState } from "react";
 import {
@@ -13,6 +13,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { usePushSubscription } from "@/hooks/usePushSubscription";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { ThemeToggle, useTheme } from "@/hooks/useTheme";
 
 type Props = {
   open: boolean;
