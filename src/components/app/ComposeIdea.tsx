@@ -70,7 +70,7 @@ const detectUrlPlatform = (raw: string): { kind: UrlPlatform; label: string; hin
     return { kind: "tiktok", label: "TikTok", hint: "Will pull title & description (no audio yet)" };
   }
   if (/(^|\.)youtube\.com$/.test(host) || host === "youtu.be") {
-    return { kind: "youtube", label: "YouTube", hint: "Will pull title & description (no audio yet)" };
+    return { kind: "youtube", label: "YouTube", hint: "Will transcribe audio (videos up to 30 min)" };
   }
   return { kind: "webpage", label: "Web page", hint: "Will extract readable article text" };
 };
