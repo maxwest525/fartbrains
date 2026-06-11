@@ -30,6 +30,16 @@ const fmtSeconds = (s: number) => {
 const countWords = (s: string) => (s.trim() ? s.trim().split(/\s+/).length : 0);
 const escapeRe = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
+// Shared toolbar/footer button styling — keeps focus, hover, and disabled
+// states accessible in the Gemini dark theme.
+const toolbarBtn = cn(
+  "h-8 px-2 rounded-full transition-colors",
+  "text-[color:var(--g-text-soft)]",
+  "hover:text-white hover:bg-white/[0.08]",
+  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--g-focus-ring)] focus-visible:ring-offset-0",
+  "disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-[color:var(--g-text-disabled)] disabled:cursor-not-allowed",
+);
+
 export const VoiceOrb = () => {
   const voice = useVoiceCapture({ maxSeconds: 180 });
   const createIdea = useCreateIdea();
