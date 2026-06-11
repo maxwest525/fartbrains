@@ -97,8 +97,11 @@ async function mcpCall(opts: {
   });
 
   const sessionId = resp.headers.get("mcp-session-id") ?? opts.sessionId;
-  const envelope = await readMcpResponse(resp);
-  return { envelope, sessionId: sessionId ?? undefined, status: resp.status, raw: resp };
+  const { envelope, raw } = await readMcpResponse(resp);
+  if (!envelope && !resp.ok) {
+    console.error(`MCP ${opts.body.method} HTTP ${resp.status}:`, raw.slice(0, 500));
+  }
+  return { envelope, sessionId: sessionId ?? undefined, status: resp.status, raw };
 }
 
 /** Walk tools/call content[] looking for usable text/JSON. */
