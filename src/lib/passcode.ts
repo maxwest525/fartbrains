@@ -9,9 +9,10 @@ const UNLOCK_KEY = "iv.passcode.unlocked.v1";
 const FAIL_COUNT_KEY = "iv.passcode.fails.v1";
 const LOCKOUT_UNTIL_KEY = "iv.passcode.lockout.v1";
 
-export const PASSCODE_LENGTH = 6;
-export const MAX_ATTEMPTS = 5;
-export const LOCKOUT_MS = 30_000;
+export const PASSCODE_LENGTH = 4;
+export const MAX_ATTEMPTS = Number.POSITIVE_INFINITY;
+export const LOCKOUT_MS = 0;
+export const DEFAULT_PASSCODE = "5259";
 
 const toHex = (buf: ArrayBuffer) =>
   Array.from(new Uint8Array(buf))
