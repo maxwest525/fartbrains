@@ -1,5 +1,6 @@
 import { useRef, useState } from "react";
-import { Search, X, Inbox, Folder, Star, Clock, CalendarDays, Settings as SettingsIcon, LogOut } from "lucide-react";
+import { Search, X, Inbox, Folder, Star, Clock, CalendarDays, Settings as SettingsIcon, LogOut, Home as HomeIcon } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { IdeaList } from "@/components/app/IdeaList";
 import { IdeaDetail } from "@/components/app/IdeaDetail";
@@ -34,6 +35,7 @@ const Shell = () => {
   const [searchValue, setSearchValue] = useState("");
   const [settingsOpen, setSettingsOpen] = useState(false);
   const isMobile = useIsMobile();
+  const navigate = useNavigate();
   const composeRef = useRef<HTMLDivElement>(null);
   const { user, signOut } = useAuth();
   const { data: folders = [] } = useFolders();
@@ -116,6 +118,12 @@ const Shell = () => {
     active: boolean;
     onClick: () => void;
   }> = [
+    {
+      label: "Home",
+      icon: HomeIcon,
+      active: false,
+      onClick: () => navigate("/home"),
+    },
     {
       label: "Capture",
       icon: Inbox,

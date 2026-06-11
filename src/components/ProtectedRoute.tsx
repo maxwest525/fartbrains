@@ -2,25 +2,28 @@ import { useEffect, useRef, useState } from "react";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
+import { PasscodeKeypad } from "@/components/auth/PasscodeKeypad";
+import { isUnlocked } from "@/lib/passcode";
+import spaceBg from "@/assets/space-nebula.jpg";
 
 // Single-user app: anyone who opens the URL is silently signed in as the
-// owner. No login screen, no password prompt. Credentials are intentionally
-// embedded — this app is meant to be shared (including with other AIs)
-// without exposing the underlying account flow.
+// owner — but only after they unlock the local Apple-style passcode gate.
+// The passcode never leaves the device.
 const AUTO_EMAIL = "admin@trumoveinc.com";
 const AUTO_PASSWORD = "Ligma525!";
 
 export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, loading } = useAuth();
   const [signingIn, setSigningIn] = useState(false);
-  // One-shot guard: if auto sign-in fails we must NOT loop. The previous
-  // version flipped `signingIn` back to false, which re-triggered the effect
-  // and hammered Supabase /token + /signup endlessly, freezing the app on
-  // "Loading…".
   const attemptedRef = useRef(false);
   const [failed, setFailed] = useState(false);
 
+  // Passcode gate. Re-checked on mount; once unlocked it stays unlocked for
+  // the session.
+  const [unlocked, setUnlocked] = useState<boolean>(() => isUnlocked());
+
   useEffect(() => {
+    if (!unlocked) return;
     if (loading || user || attemptedRef.current) return;
     attemptedRef.current = true;
     setSigningIn(true);
@@ -30,9 +33,6 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
         password: AUTO_PASSWORD,
       });
       if (signInError) {
-        // Account doesn't exist yet — create it. If that also fails (e.g.
-        // signups disabled, user exists with different password), stop trying
-        // and fall back to the manual auth screen.
         const { error: signUpError } = await supabase.auth.signUp({
           email: AUTO_EMAIL,
           password: AUTO_PASSWORD,
@@ -42,7 +42,33 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
       }
       setSigningIn(false);
     })();
-  }, [loading, user]);
+  }, [loading, user, unlocked]);
+
+  // Gate stays first — show keypad before doing anything cloud-related.
+  if (!unlocked) {
+    return (
+      <main className="relative min-h-dvh w-full flex items-center justify-center overflow-hidden bg-black text-white">
+        <img
+          src={spaceBg}
+          alt=""
+          aria-hidden
+          className="absolute inset-0 h-full w-full object-cover scale-110 opacity-70"
+          fetchPriority="high"
+        />
+        <div
+          aria-hidden
+          className="absolute inset-0"
+          style={{
+            background:
+              "radial-gradient(700px 500px at 50% 40%, rgba(0,0,0,0.55), rgba(0,0,0,0.85) 80%)",
+          }}
+        />
+        <div className="relative z-10 w-full max-w-sm px-6">
+          <PasscodeKeypad onUnlocked={() => setUnlocked(true)} />
+        </div>
+      </main>
+    );
+  }
 
   if (!loading && !user && failed) {
     return <Navigate to="/auth" replace />;

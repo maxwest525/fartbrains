@@ -1,66 +1,108 @@
+## Goal
 
-# Swap YouTube transcription to Hyperfx MCP
+1. Make the Ash screen the homescreen with a Today panel (todos + reminders + recent ideas).
+2. Replace the current sign-in screen with an Apple-style numeric passcode lock.
+3. Surface the same data on the desktop app via the existing `/notes-feed` bridge.
 
-Right now `transcribe-youtube` does the work itself (Apify download → ElevenLabs Scribe). Hyperfx already has a `youtube-transcriber` agent that does the whole thing. We rip out the local pipeline and just call Hyperfx.
+---
 
-## The auth reality (read this)
+## 1. Backend — `todos` table
 
-Hyperfx's MCP endpoint (`https://backend.hyperfx.ai/mcp/`) is OAuth-only. OAuth means a human clicks "Authorize" in a browser — it's designed for Claude/Cursor/ChatGPT, not server-to-server.
+Migration creates `public.todos`:
 
-Two ways through it:
-1. **You authorize once, we store the token as a secret.** App reuses it forever (until it expires). Fastest. What I'll plan for.
-2. **Per-user OAuth flow inside your app.** Login button → Hyperfx consent screen → token per user. Way more work and your single-user app doesn't need it.
+- `title text not null`
+- `done boolean default false`
+- `due_at timestamptz null`
+- `completed_at timestamptz null`
+- `user_id`, `created_at`, `updated_at` (with update trigger)
+- RLS: owner-only
+- GRANTs to `authenticated` + `service_role`
 
-Going with option 1. You'll have to do a one-time OAuth dance to get an access token, then paste it as `HYPERFX_ACCESS_TOKEN`. I'll write you a ChatGPT-agent-mode prompt to do the OAuth flow and hand you back the token.
+No priority, no tags, no recurrence.
 
-## Changes
+## 2. Hooks (web)
 
-**Replace** `supabase/functions/transcribe-youtube/index.ts`:
-- Drop all Apify + ElevenLabs code.
-- Open an MCP streamable-http session against `https://backend.hyperfx.ai/mcp/` with `Authorization: Bearer ${HYPERFX_ACCESS_TOKEN}`.
-- `initialize` → `tools/list` → find the `youtube-transcriber` tool (or whatever Hyperfx names it) → `tools/call` with `{ url }`.
-- Parse the tool result. Hyperfx's agent returns either a transcript string or a JSON object containing one. Normalize to `{ transcript, title, author, thumbnail, finalUrl, videoUrl: null, durationSeconds: null }` so the existing frontend (`fromYoutube` in `src/lib/extractedContent.ts`) keeps working with zero changes.
-- Errors from Hyperfx → 502 with the message; 401 from Hyperfx → 401 with "Hyperfx token expired, re-authorize".
+`src/hooks/useTodos.ts`:
+- `useTodos()` — open todos, newest first
+- `useCreateTodo()` — `{ title }`
+- `useToggleTodo()` — flips `done`, stamps `completed_at`
+- `useDeleteTodo()`
 
-**No changes** to:
-- `src/lib/extractedContent.ts` — the YouTube branch already accepts `{ transcript, title, author, thumbnail }`.
-- `src/components/app/ComposeIdea.tsx` — still invokes `transcribe-youtube`.
-- `src/components/app/SourcePicker.tsx` — YouTube tile stays.
-- DB schema — none needed.
+`src/hooks/useTodayFeed.ts` aggregator returning `{ todos, reminders, recentIdeas }` for the Today panel.
 
-**Secret to add:** `HYPERFX_ACCESS_TOKEN` (after you do the OAuth dance).
+## 3. `/home` route — Ash dashboard
 
-**Secrets to remove later** (only if nothing else uses them): `APIFY_API_TOKEN`. `ELEVENLABS_API_KEY` is still used by `transcribe-instagram` and `transcribe-deliverables` — keep it.
-
-## Technical detail — MCP over HTTP without a library
-
-Deno edge functions don't get the AI SDK MCP client cleanly, and we only need one tool call. I'll do raw JSON-RPC over the streamable-http transport:
+New `src/pages/Home.tsx` mounted at `/home` and added as a "Home" item in the desktop top nav (Capture stays at `/`).
 
 ```text
-POST https://backend.hyperfx.ai/mcp/
-Headers:
-  Authorization: Bearer <HYPERFX_ACCESS_TOKEN>
-  Content-Type: application/json
-  Accept: application/json, text/event-stream
-  MCP-Protocol-Version: 2025-06-18
-
-Body sequence (each is a separate POST, session id reused via Mcp-Session-Id response header):
-  1. { jsonrpc:"2.0", id:1, method:"initialize", params:{ protocolVersion:"2025-06-18", clientInfo:{name:"lovable-app",version:"1"}, capabilities:{} } }
-  2. { jsonrpc:"2.0", method:"notifications/initialized" }
-  3. { jsonrpc:"2.0", id:2, method:"tools/list" }
-  4. { jsonrpc:"2.0", id:3, method:"tools/call", params:{ name:"<resolved tool name>", arguments:{ url } } }
+┌─────────────────────────────────────────────────┐
+│         What can Ash do for you today?  ◐      │
+│      ┌──────────────────────────────────┐       │
+│      │  Ask Ash anything…       ✨ lucky │       │
+│      └──────────────────────────────────┘       │
+│      [Inbox] [Pipeline] [Calendar] [Alerts]     │
+│                                                 │
+│ ┌─ Today ─────────────┐                         │
+│ │ ☐ Gotta get milk    │                         │
+│ │ ☐ Call mom  ⏰ 3pm  │                         │
+│ │ 💡 3 new ideas      │                         │
+│ │ + add               │                         │
+│ └─────────────────────┘  (bottom-left glass)    │
+└─────────────────────────────────────────────────┘
 ```
 
-Response may be SSE-framed (`text/event-stream`) or plain JSON depending on server — handle both: if `Content-Type` starts with `text/event-stream`, parse `data: ` lines; else `await resp.json()`.
+- Ash prompt bar (already wired to Gemini) untouched.
+- `TodayPanel` is bottom-left glass card with three stacked sections, inline "+ add" for todos.
+- Mobile keeps the existing capture screen — dashboard layout only renders on `md+`.
 
-Total ~120 lines of Deno. No npm deps.
+## 4. Apple-style passcode lock
 
-## What you'll do manually
+Replace `src/pages/Auth.tsx`'s email/password form with a numeric passcode keypad.
 
-After I write the code I'll give you a ChatGPT agent-mode prompt that performs the OAuth flow against `https://backend.hyperfx.ai/mcp/` and returns the access token. You paste it into the secrets tool when prompted.
+UX:
+- Header avatar/initial + "Enter Passcode".
+- Six empty dots that fill as digits are entered.
+- 3×4 keypad: `1 2 3 / 4 5 6 / 7 8 9 / · 0 ⌫`. Big round buttons, haptic-feel hover/press.
+- Last button is backspace; `·` blank to mirror iOS.
+- On 6 digits → auto-submit. Wrong code → red shake on the dots, clear, vibration if `navigator.vibrate` is present.
+- After 5 wrong tries, lock the keypad for 30s.
+
+How it logs in (keeps the existing single-user allowlist model):
+- The passcode is **not** the Lovable Cloud password. It's a local gate that, on match, performs a `signInWithPassword` for `admin@trumoveinc.com` using a server-stored credential.
+- The 6-digit code is checked against a hashed value (bcryptjs) stored in `localStorage` *and* re-derived against an `APP_PASSCODE_HASH` baked at build time via a `VITE_` var. First-run flow: if no hash exists yet, the screen says "Create Passcode" → enter twice to set.
+- The Supabase email/password used to actually authenticate is set once via `VITE_APP_LOGIN_EMAIL` / a passcode-derived secret stored in Cloud — no plaintext password ships in the bundle.
+- "Forgot passcode?" link wipes local hash and falls back to the existing email/password form (kept as a hidden fallback route at `/auth/email`).
+
+New files:
+- `src/components/auth/PasscodeKeypad.tsx` — keypad + dots + shake animation.
+- `src/hooks/usePasscodeAuth.ts` — verify, create, lockout, sign-in glue.
+- `src/lib/passcode.ts` — hash/verify helpers.
+
+## 5. Desktop bridge — extend `/notes-feed`
+
+`supabase/functions/notes-feed/index.ts` returns:
+
+```json
+{
+  "notes":     [...existing ideas...],
+  "todos":     [{ id, title, done, due_at, updated_at }],
+  "reminders": [{ id, title, fire_at, source: "idea"|"folder" }],
+  "cursor":    "..."
+}
+```
+
+Backward compatible — old desktop clients reading only `notes` keep working.
+
+---
 
 ## Out of scope
 
-- Per-user OAuth.
-- Token auto-refresh (we'll handle expiry by surfacing a clean error; you re-paste when it dies).
-- Caching (Hyperfx's agent already caches in its own `youtube_transcripts` table).
+- Birthdays/recurrence (per your call earlier).
+- Multi-user passcodes / per-profile gates.
+- Two-way desktop writes.
+
+## Files
+
+**New**: `supabase/migrations/<ts>_todos.sql`, `src/hooks/useTodos.ts`, `src/hooks/useTodayFeed.ts`, `src/pages/Home.tsx`, `src/components/app/home/TodayPanel.tsx`, `src/components/auth/PasscodeKeypad.tsx`, `src/hooks/usePasscodeAuth.ts`, `src/lib/passcode.ts`.
+
+**Edited**: `src/App.tsx` (add `/home`, `/auth/email` fallback), `src/pages/Auth.tsx` (swap to keypad), `src/pages/Index.tsx` (add "Home" nav item on desktop), `supabase/functions/notes-feed/index.ts`.
