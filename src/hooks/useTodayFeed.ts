@@ -91,7 +91,7 @@ export function useTodayFeed() {
 
       return {
         reminders,
-        recentIdeas: ((ideas.data ?? []) as TodayIdea[]) ?? [],
+        recentIdeas: (ideas.data ?? []) as TodayIdea[],
       };
     },
   });
