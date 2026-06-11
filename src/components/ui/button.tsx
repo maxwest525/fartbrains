@@ -19,11 +19,14 @@ const buttonVariants = cva(
         secondary:
           "bg-secondary text-secondary-foreground hover:bg-secondary/80",
         ghost:
-          "hover:bg-white/[0.06] hover:text-foreground",
-        link: "text-primary underline-offset-4 hover:underline rounded-none",
-        // Subtle glass — used in auth/dialogs over imagery.
+          "border-0 bg-transparent text-foreground hover:bg-transparent hover:text-[color:var(--g-purple,hsl(var(--primary)))] transition-colors",
+        link: "text-[color:var(--g-purple)] underline-offset-4 hover:underline rounded-none bg-transparent",
+        // Subtle glass — used in auth/dialogs over imagery. Fades to zero on hover.
         glass:
           "glass-pill rounded-full text-white shadow-[0_8px_24px_-8px_rgba(0,0,0,0.5)] focus-visible:ring-2 focus-visible:ring-white/40 focus-visible:ring-offset-0",
+        // Gemini icon — naked icon button, no border or background, tints on hover.
+        "gemini-icon":
+          "gemini-icon rounded-full focus-visible:ring-2 focus-visible:ring-[color:var(--g-focus-ring)] focus-visible:ring-offset-0",
       },
       size: {
         default: "h-10 px-5 py-2",
