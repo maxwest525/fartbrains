@@ -35,6 +35,7 @@ const Shell = () => {
   const [searchValue, setSearchValue] = useState("");
   const [settingsOpen, setSettingsOpen] = useState(false);
   const isMobile = useIsMobile();
+  const navigate = useNavigate();
   const composeRef = useRef<HTMLDivElement>(null);
   const { user, signOut } = useAuth();
   const { data: folders = [] } = useFolders();
