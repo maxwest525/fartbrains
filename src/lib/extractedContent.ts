@@ -105,13 +105,31 @@ const fromWebpage = (raw: Record<string, unknown>, fallbackUrl: string): Normali
   };
 };
 
+/** Convert a YouTube transcribe payload into the shared shape. */
+const fromYoutube = (raw: Record<string, unknown>, fallbackUrl: string): NormalizedExtraction => {
+  const transcript = pickStr(raw, ["transcript"]) ?? "";
+  const author = pickStr(raw, ["author"]);
+  const thumbnail = pickStr(raw, ["thumbnail"]);
+  const url = pickStr(raw, ["finalUrl", "url"]) ?? fallbackUrl;
+  const titleRaw =
+    pickStr(raw, ["title"]) ??
+    (author ? `YouTube — ${author}` : "YouTube video");
+
+  return {
+    url,
+    suggestedTitle: truncateTitle(titleRaw),
+    text: transcript,
+    sourceKind: "youtube",
+    author,
+    thumbnail,
+    siteName: "YouTube",
+    hasTranscript: transcript.length > 0,
+  };
+};
+
 /**
  * Public entrypoint: hand it the raw edge-function payload and the platform
  * we routed to, and get back a uniform `NormalizedExtraction`.
- *
- * Throws when there's nothing usable in the payload — callers convert this
- * into a toast. Empty-text cases are surfaced as errors here so the UI never
- * has to defensively re-check.
  */
 export function normalizeExtraction(
   sourceKind: NormalizedSourceKind,
@@ -125,7 +143,9 @@ export function normalizeExtraction(
   const normalized =
     sourceKind === "instagram"
       ? fromInstagram(obj, fallbackUrl)
-      : fromWebpage(obj, fallbackUrl);
+      : sourceKind === "youtube"
+        ? fromYoutube(obj, fallbackUrl)
+        : fromWebpage(obj, fallbackUrl);
 
   if (!normalized.text || normalized.text.trim().length === 0) {
     throw new Error("Couldn't extract any readable text from this URL");
