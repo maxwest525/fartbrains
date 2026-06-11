@@ -301,18 +301,42 @@ html:not(.dark) .gemini ::selection {
   }
 
   /* Translucent pill — matches the reference "Agent" button on a blue field.
-     Idle is a faint white wash; on hover the wash fades toward zero,
-     revealing the surface beneath. */
+     Idle shows a faint white wash + hairline; on hover both fade to zero,
+     leaving only the underlying surface and text. */
   .glass-pill {
     background-color: rgba(255, 255, 255, 0.18);
     border: 1px solid rgba(255, 255, 255, 0.28);
     color: #FFFFFF;
     backdrop-filter: blur(0.15rem) saturate(160%);
     -webkit-backdrop-filter: blur(0.15rem) saturate(160%);
-    transition: background-color 220ms ease, border-color 220ms ease, transform 180ms ease;
+    transition: background-color 260ms ease, border-color 260ms ease,
+                backdrop-filter 260ms ease, box-shadow 260ms ease,
+                transform 180ms ease;
   }
-  .glass-pill:hover { background-color: rgba(255, 255, 255, 0.06); border-color: rgba(255, 255, 255, 0.14); }
+  .glass-pill:hover {
+    background-color: rgba(255, 255, 255, 0);
+    border-color: rgba(255, 255, 255, 0);
+    backdrop-filter: blur(0) saturate(100%);
+    -webkit-backdrop-filter: blur(0) saturate(100%);
+    box-shadow: none;
+  }
+  .glass-pill:focus-visible {
+    background-color: rgba(255, 255, 255, 0.10);
+    border-color: rgba(255, 255, 255, 0.35);
+  }
   .glass-pill:active { transform: scale(0.97); }
+
+  /* Gemini icon button — no border, no background, just the icon. Hover
+     gently tints with the brand purple at low alpha. */
+  .gemini-icon {
+    background: transparent;
+    border: 0;
+    color: var(--g-text-soft, hsl(var(--foreground)));
+    transition: color 180ms ease, transform 160ms ease, opacity 180ms ease;
+  }
+  .gemini-icon:hover { color: var(--g-purple); background: transparent; }
+  .gemini-icon:active { transform: scale(0.94); }
+  .gemini-icon:disabled { opacity: 0.45; }
 
   /* Soft star-field overlay used over space imagery for legibility. */
   .space-scrim {
