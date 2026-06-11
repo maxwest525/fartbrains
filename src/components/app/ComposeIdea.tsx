@@ -970,7 +970,7 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
             const meta = {
               instagram: { Icon: Instagram, label: "Instagram", desc: "Audio transcription + caption", tone: "bg-pink-500/10 text-pink-500" },
               tiktok:    { Icon: Music2,    label: "TikTok",    desc: "Title & description",           tone: "bg-foreground/10 text-foreground" },
-              youtube:   { Icon: Youtube,   label: "YouTube",   desc: "Title & description",           tone: "bg-red-500/10 text-red-500" },
+              youtube:   { Icon: Youtube,   label: "YouTube",   desc: "Audio transcription",            tone: "bg-red-500/10 text-red-500" },
               webpage:   { Icon: Globe,     label: "Webpage",   desc: "Article extract",                tone: "bg-primary/10 text-primary" },
             }[preview.sourceKind];
             const SrcIcon = meta.Icon;
