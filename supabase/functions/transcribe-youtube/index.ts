@@ -26,8 +26,8 @@ const json = (body: unknown, status = 200) =>
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
 
-// pintostudio/youtube-transcript-scraper
-const APIFY_ACTOR_ID = "faVsWy9VTSNVIhWpR";
+// starvibe/youtube-video-transcript — reliable, returns transcript + metadata
+const APIFY_ACTOR_ID = "Uwpce1RSXlrzF6WBA";
 
 const isYouTubeHost = (host: string): boolean => {
   const h = host.toLowerCase();
