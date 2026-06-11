@@ -32,6 +32,7 @@ type Props = {
 const PLACEHOLDERS: Record<SourceKey, { url?: string; note: string }> = {
   instagram:  { url: "Paste a URL (Instagram, article, video…)", note: "Quick note (optional)" },
   link:       { url: "Paste a URL (Instagram, article, video…)", note: "Quick note (optional)" },
+  youtube:    { url: "Paste a YouTube link (youtube.com or youtu.be)…", note: "Quick note (optional)" },
   note:       {                            note: "Write your idea…" },
   list:       {                            note: "One item per line…\nBuy milk\nCall dentist\nShip v2" },
   transcript: {                            note: "Paste a transcript, video caption, or any long text…" },
@@ -160,7 +161,7 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
   // Auto-focus the primary capture field whenever the active source changes.
   useEffect(() => {
     const id = requestAnimationFrame(() => {
-      if (source === "instagram" || source === "link") {
+      if (source === "instagram" || source === "link" || source === "youtube") {
         urlInputRef.current?.focus();
       } else if (source === "note" || source === "list" || source === "transcript" || source === "prompt") {
         noteTextareaRef.current?.focus();
@@ -172,10 +173,10 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
   }, [source]);
 
   const { data: urlDuplicate } = useDuplicateUrl(
-    source === "instagram" || source === "link" ? url : ""
+    source === "instagram" || source === "link" || source === "youtube" ? url : ""
   );
 
-  const urlCheck = useUrlCheck(url, source === "instagram" || source === "link");
+  const urlCheck = useUrlCheck(url, source === "instagram" || source === "link" || source === "youtube");
 
   const reset = () => {
     setUrl("");
@@ -189,7 +190,7 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
   };
 
   const folderOrNull = (v: string) => (v === NO_FOLDER ? null : v);
-  const needsUrl = source === "instagram" || source === "link";
+  const needsUrl = source === "instagram" || source === "link" || source === "youtube";
   const isTranscript = source === "transcript";
   const usesAiPreview = needsUrl || isTranscript;
 
