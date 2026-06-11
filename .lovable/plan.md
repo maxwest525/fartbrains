@@ -1,58 +1,66 @@
-# YouTube transcription (audio-only pipeline)
 
-Mirror the existing Instagram flow: dedicated source tile → edge function that downloads the YouTube video via Apify → ElevenLabs Scribe transcribes the audio → preview + summarize + save like other URL captures. Captions are intentionally ignored per your choice.
+# Swap YouTube transcription to Hyperfx MCP
 
-## Scope
+Right now `transcribe-youtube` does the work itself (Apify download → ElevenLabs Scribe). Hyperfx already has a `youtube-transcriber` agent that does the whole thing. We rip out the local pipeline and just call Hyperfx.
 
-- New `youtube` source tile in the composer.
-- New `transcribe-youtube` edge function (Apify + ElevenLabs).
-- Auto-routing in `ComposeIdea` so YouTube URLs hit the new function instead of `extract-url`.
-- Preview/save reuses existing `normalizeExtraction` / preview UI — no schema changes, no list/detail changes.
+## The auth reality (read this)
 
-## Files
+Hyperfx's MCP endpoint (`https://backend.hyperfx.ai/mcp/`) is OAuth-only. OAuth means a human clicks "Authorize" in a browser — it's designed for Claude/Cursor/ChatGPT, not server-to-server.
 
-**New**
-- `supabase/functions/transcribe-youtube/index.ts` — POST `{ url }` → `{ transcript, title, author, thumbnail, finalUrl, videoUrl, durationSeconds }`. Structure copied from `transcribe-instagram` with a different Apify actor and YouTube host validation. Validates `youtube.com` / `youtu.be`, rejects playlists, caps download at 50 MB, sends the audio/video blob to `scribe_v2`.
+Two ways through it:
+1. **You authorize once, we store the token as a secret.** App reuses it forever (until it expires). Fastest. What I'll plan for.
+2. **Per-user OAuth flow inside your app.** Login button → Hyperfx consent screen → token per user. Way more work and your single-user app doesn't need it.
 
-**Edited**
-- `src/components/app/SourcePicker.tsx` — add a `youtube` tile (Youtube icon, enabled) between `link` and `list`.
-- `src/components/app/ComposeIdea.tsx`
-  - Add `youtube` to `PLACEHOLDERS` and to the URL-input branches (`needsUrl` becomes `instagram | link | youtube`).
-  - Auto-focus + paste handling for `youtube` like `link`.
-  - In `handleExtract`, route YouTube URLs to `transcribe-youtube` (same pattern as the existing Instagram branch) and feed the result into `normalizeExtraction("youtube", ext, url)`.
-  - When the user is on the `link` tile but pastes a YouTube URL, keep current behavior but call `transcribe-youtube` instead of `extract-url` (so auto-detect still works either way).
-- `src/lib/extractedContent.ts` — extend the `youtube` branch of `normalizeExtraction` to consume `{ transcript, title, author, thumbnail }` and set `hasTranscript: true` when transcript is present (no schema change, just shape mapping).
+Going with option 1. You'll have to do a one-time OAuth dance to get an access token, then paste it as `HYPERFX_ACCESS_TOKEN`. I'll write you a ChatGPT-agent-mode prompt to do the OAuth flow and hand you back the token.
 
-## Edge function details
+## Changes
+
+**Replace** `supabase/functions/transcribe-youtube/index.ts`:
+- Drop all Apify + ElevenLabs code.
+- Open an MCP streamable-http session against `https://backend.hyperfx.ai/mcp/` with `Authorization: Bearer ${HYPERFX_ACCESS_TOKEN}`.
+- `initialize` → `tools/list` → find the `youtube-transcriber` tool (or whatever Hyperfx names it) → `tools/call` with `{ url }`.
+- Parse the tool result. Hyperfx's agent returns either a transcript string or a JSON object containing one. Normalize to `{ transcript, title, author, thumbnail, finalUrl, videoUrl: null, durationSeconds: null }` so the existing frontend (`fromYoutube` in `src/lib/extractedContent.ts`) keeps working with zero changes.
+- Errors from Hyperfx → 502 with the message; 401 from Hyperfx → 401 with "Hyperfx token expired, re-authorize".
+
+**No changes** to:
+- `src/lib/extractedContent.ts` — the YouTube branch already accepts `{ transcript, title, author, thumbnail }`.
+- `src/components/app/ComposeIdea.tsx` — still invokes `transcribe-youtube`.
+- `src/components/app/SourcePicker.tsx` — YouTube tile stays.
+- DB schema — none needed.
+
+**Secret to add:** `HYPERFX_ACCESS_TOKEN` (after you do the OAuth dance).
+
+**Secrets to remove later** (only if nothing else uses them): `APIFY_API_TOKEN`. `ELEVENLABS_API_KEY` is still used by `transcribe-instagram` and `transcribe-deliverables` — keep it.
+
+## Technical detail — MCP over HTTP without a library
+
+Deno edge functions don't get the AI SDK MCP client cleanly, and we only need one tool call. I'll do raw JSON-RPC over the streamable-http transport:
 
 ```text
-POST /transcribe-youtube  { url }
-  1. Validate host ∈ {youtube.com, youtu.be, m.youtube.com}; reject /playlist URLs.
-  2. Apify run-sync-get-dataset-items against a YouTube downloader actor
-     (default: streamers/youtube-video-downloader — returns direct mp4 URL,
-     title, channel, duration, thumbnail). Actor ID lives in a constant
-     so it can be swapped without code changes elsewhere.
-  3. Reject if reported duration > 30 min (configurable) to bound ElevenLabs cost.
-  4. fetch(videoUrl) with 50 MB cap, same guard as Instagram.
-  5. POST to https://api.elevenlabs.io/v1/speech-to-text with model_id=scribe_v2.
-  6. Return JSON shaped like the Instagram function so the client can reuse it.
-  Errors: 400 invalid URL, 413 too large, 422 no downloadable video, 502 upstream.
+POST https://backend.hyperfx.ai/mcp/
+Headers:
+  Authorization: Bearer <HYPERFX_ACCESS_TOKEN>
+  Content-Type: application/json
+  Accept: application/json, text/event-stream
+  MCP-Protocol-Version: 2025-06-18
+
+Body sequence (each is a separate POST, session id reused via Mcp-Session-Id response header):
+  1. { jsonrpc:"2.0", id:1, method:"initialize", params:{ protocolVersion:"2025-06-18", clientInfo:{name:"lovable-app",version:"1"}, capabilities:{} } }
+  2. { jsonrpc:"2.0", method:"notifications/initialized" }
+  3. { jsonrpc:"2.0", id:2, method:"tools/list" }
+  4. { jsonrpc:"2.0", id:3, method:"tools/call", params:{ name:"<resolved tool name>", arguments:{ url } } }
 ```
 
-Secrets reused: `APIFY_API_TOKEN`, `ELEVENLABS_API_KEY` (already present).
+Response may be SSE-framed (`text/event-stream`) or plain JSON depending on server — handle both: if `Content-Type` starts with `text/event-stream`, parse `data: ` lines; else `await resp.json()`.
 
-## Cost / UX notes
+Total ~120 lines of Deno. No npm deps.
 
-- Audio-only via ElevenLabs Scribe costs ~$0.0025/min; 30 min cap = ~$0.075 per video. Worth surfacing in the tile hint ("Will transcribe audio — long videos take a minute").
-- Apify actor charges per video; the chosen actor's pricing is pay-per-result.
-- A loading state already exists for URL extraction; we'll show "Transcribing audio…" copy when the active source is `youtube` so users know it's slower than a normal URL scrape.
+## What you'll do manually
+
+After I write the code I'll give you a ChatGPT agent-mode prompt that performs the OAuth flow against `https://backend.hyperfx.ai/mcp/` and returns the access token. You paste it into the secrets tool when prompted.
 
 ## Out of scope
 
-- Caption fallback (per your choice).
-- Chapter/segment splitting, speaker diarization, translation.
-- Background job queue — kept synchronous like Instagram; 30 min cap keeps it under the edge function timeout.
-
-## Manual step for you
-
-After I write the code, you'll need to confirm the Apify YouTube actor we use is enabled on your Apify account (most are free to enable, pay-per-run). I'll call out the exact actor name in the implementation message so you can one-click enable it.
+- Per-user OAuth.
+- Token auto-refresh (we'll handle expiry by surfacing a clean error; you re-paste when it dies).
+- Caching (Hyperfx's agent already caches in its own `youtube_transcripts` table).
