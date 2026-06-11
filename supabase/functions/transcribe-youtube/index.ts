@@ -132,14 +132,20 @@ Deno.serve(async (req) => {
 
     transcript = chunks.join(" ").replace(/\s+/g, " ").trim();
 
-    // Some actors return a literal "ERROR:..." sentinel when they fail internally.
-    if (/^ERROR[:\s]/i.test(transcript) || !transcript || transcript.length < 5) {
+    // The actor sometimes returns explanatory text ending in "ERROR:<timestamp>" when captions don't exist.
+    const looksLikeError =
+      /^ERROR[:\s]/i.test(transcript) ||
+      /ERROR:\s*\d{4}-\d{2}-\d{2}/i.test(transcript) ||
+      /caption (api|is) (returning empty|not available)/i.test(transcript);
+
+    if (looksLikeError || !transcript || transcript.length < 5) {
       console.error("transcribe-youtube: no usable transcript. raw:", JSON.stringify(items).slice(0, 500));
       return json(
-        { error: "This video has no captions available to transcribe. Try a video with captions/subtitles." },
+        { error: "This video has no captions available. YouTube transcription currently only works on videos with captions/subtitles — try a different video." },
         422,
       );
     }
+
 
 
     return json({
