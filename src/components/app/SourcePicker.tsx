@@ -1,7 +1,7 @@
-import { Instagram, FileText, Link2, Image as ImageIcon, Wand2, ListChecks, ClipboardPaste, Briefcase, type LucideIcon } from "lucide-react";
+import { Instagram, FileText, Link2, Image as ImageIcon, Wand2, ListChecks, ClipboardPaste, Briefcase, Youtube, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export type SourceKey = "instagram" | "note" | "link" | "list" | "transcript" | "project" | "voice" | "image" | "prompt";
+export type SourceKey = "instagram" | "note" | "link" | "list" | "transcript" | "project" | "voice" | "image" | "prompt" | "youtube";
 
 type Tile = {
   key: SourceKey;
@@ -16,6 +16,7 @@ const TILES: Tile[] = [
   { key: "note",      label: "Note",      icon: FileText,   tone: "text-foreground",  enabled: true  },
   { key: "project",   label: "Project",   icon: Briefcase,  tone: "text-primary",     enabled: true  },
   { key: "link",      label: "Link / URL",icon: Link2,      tone: "text-primary",     enabled: true  },
+  { key: "youtube",   label: "YouTube",   icon: Youtube,    tone: "text-red-500",     enabled: true  },
   { key: "list",      label: "List",      icon: ListChecks, tone: "text-primary",     enabled: true  },
   { key: "transcript",label: "Transcript",icon: ClipboardPaste, tone: "text-primary", enabled: true  },
   { key: "prompt",    label: "Prompt",    icon: Wand2,      tone: "text-primary",     enabled: true  },

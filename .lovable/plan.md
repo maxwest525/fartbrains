@@ -1,81 +1,58 @@
-## What you'll get
+# YouTube transcription (audio-only pipeline)
 
-A full-screen **graph overlay** you can pop open from anywhere in the app. Every idea is a node. Connections come from three layers you can toggle on/off:
+Mirror the existing Instagram flow: dedicated source tile → edge function that downloads the YouTube video via Apify → ElevenLabs Scribe transcribes the audio → preview + summarize + save like other URL captures. Captions are intentionally ignored per your choice.
 
-1. **Folder edges** — idea → its folder (folder nodes are larger)
-2. **Tag edges** — ideas sharing a tag connect through a tag node
-3. **AI relation edges** — uses your existing `related-ideas` function to draw semantic links between ideas (this is the "crazy connections" web)
+## Scope
 
-The whole thing is a physics simulation — drag nodes, pinch to zoom, nodes repel each other, linked nodes pull together. Same vibe as Obsidian's graph.
+- New `youtube` source tile in the composer.
+- New `transcribe-youtube` edge function (Apify + ElevenLabs).
+- Auto-routing in `ComposeIdea` so YouTube URLs hit the new function instead of `extract-url`.
+- Preview/save reuses existing `normalizeExtraction` / preview UI — no schema changes, no list/detail changes.
 
-### The voice orb
-A **glowing animated orb** floats in the bottom-center of the canvas, always pulsing.
-- **Tap & hold the orb** → records voice → transcribes → creates a new idea node that animates into the graph and auto-links to anything semantically related.
-- **Tap & hold any idea node** → records voice → appends transcript to that idea (long-press, so single-tap is still "focus this node").
-- A subtle ring around the orb fills while recording; release to stop.
+## Files
 
-### Where it lives
-A "Graph" button on the home header opens it as a **full-screen overlay** (not a new tab). Close button top-right. Works in both mobile and desktop.
+**New**
+- `supabase/functions/transcribe-youtube/index.ts` — POST `{ url }` → `{ transcript, title, author, thumbnail, finalUrl, videoUrl, durationSeconds }`. Structure copied from `transcribe-instagram` with a different Apify actor and YouTube host validation. Validates `youtube.com` / `youtu.be`, rejects playlists, caps download at 50 MB, sends the audio/video blob to `scribe_v2`.
 
-## Technical details
+**Edited**
+- `src/components/app/SourcePicker.tsx` — add a `youtube` tile (Youtube icon, enabled) between `link` and `list`.
+- `src/components/app/ComposeIdea.tsx`
+  - Add `youtube` to `PLACEHOLDERS` and to the URL-input branches (`needsUrl` becomes `instagram | link | youtube`).
+  - Auto-focus + paste handling for `youtube` like `link`.
+  - In `handleExtract`, route YouTube URLs to `transcribe-youtube` (same pattern as the existing Instagram branch) and feed the result into `normalizeExtraction("youtube", ext, url)`.
+  - When the user is on the `link` tile but pastes a YouTube URL, keep current behavior but call `transcribe-youtube` instead of `extract-url` (so auto-detect still works either way).
+- `src/lib/extractedContent.ts` — extend the `youtube` branch of `normalizeExtraction` to consume `{ transcript, title, author, thumbnail }` and set `hasTranscript: true` when transcript is present (no schema change, just shape mapping).
 
-**Library:** `react-force-graph-2d` — Canvas-based, handles thousands of nodes smoothly on mobile, supports custom node painting (for the pulsing voice node, idea thumbnails, folder icons).
-
-**Data:**
-- New hook `useGraphData()` builds `{ nodes, links }` from existing `ideas`, `folders`, and shared tags — pure client-side, no migrations.
-- AI edges: new edge function `idea-graph-edges` that batches `related-ideas` for every idea and caches results in a new `idea_relations` table (`source_id`, `target_id`, `score`). Recomputed lazily / on demand.
-
-**Voice:** reuses existing `useVoiceCapture` hook and `transcribe-deliverables` / summarize pipeline that already powers your compose flow.
-
-**Files added:**
-- `src/components/app/GraphOverlay.tsx` — the canvas + orb + node interactions
-- `src/components/app/VoiceOrb.tsx` — the pulsing record button (SVG + Framer Motion)
-- `src/hooks/useGraphData.ts` — assembles nodes/edges from ideas/folders/tags/relations
-- `supabase/functions/idea-graph-edges/index.ts` — batch semantic-link builder
-- migration: `idea_relations` table + RLS + grants
-
-**Files edited:**
-- `src/pages/Index.tsx` — Graph button + overlay mount
-- `package.json` — add `react-force-graph-2d` + `d3-force`
+## Edge function details
 
 ```text
-┌─────────────────────────────────────────┐
-│  ✕                            Filters ▾ │
-│                                         │
-│     ●───●         ●─────●               │
-│    /│   │        /       \              │
-│   ● │   ●───────●    ●────●             │
-│    \│  /              \   │             │
-│     ●─●                ●──●             │
-│                                         │
-│                  ╭───╮                  │
-│                 │ 🎙  │  ← pulsing orb  │
-│                  ╰───╯                  │
-└─────────────────────────────────────────┘
+POST /transcribe-youtube  { url }
+  1. Validate host ∈ {youtube.com, youtu.be, m.youtube.com}; reject /playlist URLs.
+  2. Apify run-sync-get-dataset-items against a YouTube downloader actor
+     (default: streamers/youtube-video-downloader — returns direct mp4 URL,
+     title, channel, duration, thumbnail). Actor ID lives in a constant
+     so it can be swapped without code changes elsewhere.
+  3. Reject if reported duration > 30 min (configurable) to bound ElevenLabs cost.
+  4. fetch(videoUrl) with 50 MB cap, same guard as Instagram.
+  5. POST to https://api.elevenlabs.io/v1/speech-to-text with model_id=scribe_v2.
+  6. Return JSON shaped like the Instagram function so the client can reuse it.
+  Errors: 400 invalid URL, 413 too large, 422 no downloadable video, 502 upstream.
 ```
 
-## On agent-memory MCP (no code yet — your call)
+Secrets reused: `APIFY_API_TOKEN`, `ELEVENLABS_API_KEY` (already present).
 
-The `agent-memory` skill is a separate Node.js MCP server that runs **on your laptop** and stores its own memories in a local file. It's not designed to plug into a hosted web app like yours. Two real ways to get the same effect:
+## Cost / UX notes
 
-### Option A — Expose Idea Vault itself as an MCP server (recommended)
-Your ideas already ARE your memory. I'd build a `vault-mcp` edge function that speaks the MCP protocol over HTTP, with tools:
-- `search_ideas(query, tags?)`
-- `read_idea(id)`
-- `write_idea(title, body, tags?)`
-- `list_folders()`
+- Audio-only via ElevenLabs Scribe costs ~$0.0025/min; 30 min cap = ~$0.075 per video. Worth surfacing in the tile hint ("Will transcribe audio — long videos take a minute").
+- Apify actor charges per video; the chosen actor's pricing is pay-per-result.
+- A loading state already exists for URL extraction; we'll show "Transcribing audio…" copy when the active source is `youtube` so users know it's slower than a normal URL scrape.
 
-Then Claude Desktop / ChatGPT / Cursor / Codex CLI can all read & write your vault as long-term memory. One auth token, hosted, nothing to run locally.
+## Out of scope
 
-### Option B — Run the upstream agent-memory locally
-Clone `webzler/agentMemory` on your Mac, point it at a folder, and your local AI tools get a separate memory bank. Doesn't talk to this app at all.
+- Caption fallback (per your choice).
+- Chapter/segment splitting, speaker diarization, translation.
+- Background job queue — kept synchronous like Instagram; 30 min cap keeps it under the edge function timeout.
 
-### Option C — Both
-Idea Vault as the canonical store via Option A, optionally mirror into a local MCP for offline.
+## Manual step for you
 
-**My recommendation:** ship the graph + orb now, then add Option A as a second pass once you've used the graph for a week and know what shape the MCP tools should take.
-
-## Out of scope (intentionally)
-- No MCP server in this pass
-- No rewrite of the rest of the UI — the graph is a layover as you said
-- No real-time collaboration on the graph
+After I write the code, you'll need to confirm the Apify YouTube actor we use is enabled on your Apify account (most are free to enable, pay-per-run). I'll call out the exact actor name in the implementation message so you can one-click enable it.

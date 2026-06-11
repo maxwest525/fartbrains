@@ -32,6 +32,7 @@ type Props = {
 const PLACEHOLDERS: Record<SourceKey, { url?: string; note: string }> = {
   instagram:  { url: "Paste a URL (Instagram, article, video…)", note: "Quick note (optional)" },
   link:       { url: "Paste a URL (Instagram, article, video…)", note: "Quick note (optional)" },
+  youtube:    { url: "Paste a YouTube link (youtube.com or youtu.be)…", note: "Quick note (optional)" },
   note:       {                            note: "Write your idea…" },
   list:       {                            note: "One item per line…\nBuy milk\nCall dentist\nShip v2" },
   transcript: {                            note: "Paste a transcript, video caption, or any long text…" },
@@ -69,7 +70,7 @@ const detectUrlPlatform = (raw: string): { kind: UrlPlatform; label: string; hin
     return { kind: "tiktok", label: "TikTok", hint: "Will pull title & description (no audio yet)" };
   }
   if (/(^|\.)youtube\.com$/.test(host) || host === "youtu.be") {
-    return { kind: "youtube", label: "YouTube", hint: "Will pull title & description (no audio yet)" };
+    return { kind: "youtube", label: "YouTube", hint: "Will transcribe audio (videos up to 30 min)" };
   }
   return { kind: "webpage", label: "Web page", hint: "Will extract readable article text" };
 };
@@ -160,7 +161,7 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
   // Auto-focus the primary capture field whenever the active source changes.
   useEffect(() => {
     const id = requestAnimationFrame(() => {
-      if (source === "instagram" || source === "link") {
+      if (source === "instagram" || source === "link" || source === "youtube") {
         urlInputRef.current?.focus();
       } else if (source === "note" || source === "list" || source === "transcript" || source === "prompt") {
         noteTextareaRef.current?.focus();
@@ -172,10 +173,10 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
   }, [source]);
 
   const { data: urlDuplicate } = useDuplicateUrl(
-    source === "instagram" || source === "link" ? url : ""
+    source === "instagram" || source === "link" || source === "youtube" ? url : ""
   );
 
-  const urlCheck = useUrlCheck(url, source === "instagram" || source === "link");
+  const urlCheck = useUrlCheck(url, source === "instagram" || source === "link" || source === "youtube");
 
   const reset = () => {
     setUrl("");
@@ -189,7 +190,7 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
   };
 
   const folderOrNull = (v: string) => (v === NO_FOLDER ? null : v);
-  const needsUrl = source === "instagram" || source === "link";
+  const needsUrl = source === "instagram" || source === "link" || source === "youtube";
   const isTranscript = source === "transcript";
   const usesAiPreview = needsUrl || isTranscript;
 
@@ -216,26 +217,29 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
 
     setExtracting(true);
     try {
-      // Auto-detect: Instagram URLs go to the transcribe pipeline; everything
-      // else uses the generic readable-text extractor.
-      const isInsta = isInstagramUrl(effectiveUrl);
-      const fnName = isInsta ? "transcribe-instagram" : "extract-url";
+      // Auto-detect: route to the right extractor based on platform.
+      //   instagram → transcribe-instagram
+      //   youtube   → transcribe-youtube (audio download + Scribe)
+      //   other     → extract-url (generic readable text)
+      const platform = detectUrlPlatform(effectiveUrl).kind;
+      const fnName =
+        platform === "instagram" ? "transcribe-instagram" :
+        platform === "youtube"   ? "transcribe-youtube"   :
+                                   "extract-url";
+      const normalizedKind =
+        platform === "instagram" ? "instagram" :
+        platform === "youtube"   ? "youtube"   :
+                                   "webpage";
+
       const { data: ext, error: extErr } = await supabase.functions.invoke(fnName, {
         body: { url: effectiveUrl },
       });
       if (extErr) throw new Error(extErr.message);
       if (ext?.error) throw new Error(ext.error);
 
-      // Collapse the platform-specific payload into a single shape so the
-      // preview UI and save flow don't branch on source.
-      const normalized = normalizeExtraction(
-        isInsta ? "instagram" : "webpage",
-        ext,
-        effectiveUrl,
-      );
+      const normalized = normalizeExtraction(normalizedKind, ext, effectiveUrl);
 
       setPreview(normalized);
-      // Pre-fill the title field with the extracted title (only if user hasn't typed one).
       if (!title.trim() && normalized.suggestedTitle) {
         setTitle(normalized.suggestedTitle);
       }
@@ -966,7 +970,7 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
             const meta = {
               instagram: { Icon: Instagram, label: "Instagram", desc: "Audio transcription + caption", tone: "bg-pink-500/10 text-pink-500" },
               tiktok:    { Icon: Music2,    label: "TikTok",    desc: "Title & description",           tone: "bg-foreground/10 text-foreground" },
-              youtube:   { Icon: Youtube,   label: "YouTube",   desc: "Title & description",           tone: "bg-red-500/10 text-red-500" },
+              youtube:   { Icon: Youtube,   label: "YouTube",   desc: "Audio transcription",            tone: "bg-red-500/10 text-red-500" },
               webpage:   { Icon: Globe,     label: "Webpage",   desc: "Article extract",                tone: "bg-primary/10 text-primary" },
             }[preview.sourceKind];
             const SrcIcon = meta.Icon;
