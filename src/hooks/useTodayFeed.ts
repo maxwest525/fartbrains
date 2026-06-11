@@ -45,11 +45,10 @@ export function useTodayFeed() {
           .limit(5),
         supabase
           .from("folders")
-          .select("id, name, remind_at, reminder_fired_at")
+          .select("id, name, remind_at")
           .not("remind_at", "is", null)
           .gte("remind_at", start.toISOString())
-          .lte("remind_at", end.toISOString())
-          .is("reminder_fired_at", null),
+          .lte("remind_at", end.toISOString()),
       ]);
 
       // Resolve idea titles for idea-reminders.
