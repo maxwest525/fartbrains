@@ -30,6 +30,16 @@ const fmtSeconds = (s: number) => {
 const countWords = (s: string) => (s.trim() ? s.trim().split(/\s+/).length : 0);
 const escapeRe = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
+// Shared toolbar/footer button styling — keeps focus, hover, and disabled
+// states accessible in the Gemini dark theme.
+const toolbarBtn = cn(
+  "h-8 px-2 rounded-full transition-colors",
+  "text-[color:var(--g-text-soft)]",
+  "hover:text-white hover:bg-white/[0.08]",
+  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--g-focus-ring)] focus-visible:ring-offset-0",
+  "disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-[color:var(--g-text-disabled)] disabled:cursor-not-allowed",
+);
+
 export const VoiceOrb = () => {
   const voice = useVoiceCapture({ maxSeconds: 180 });
   const createIdea = useCreateIdea();
@@ -279,7 +289,7 @@ export const VoiceOrb = () => {
         : "Tap to speak";
 
   return (
-    <div className="dark relative flex flex-col items-center justify-center gap-5 sm:gap-6 py-6 sm:py-8 px-3 sm:px-6 rounded-2xl sm:rounded-3xl bg-[#131314] text-[#E3E3E3] overflow-hidden w-full">
+    <div className="gemini dark relative flex flex-col items-center justify-center gap-5 sm:gap-6 py-6 sm:py-8 px-3 sm:px-6 rounded-2xl sm:rounded-3xl bg-[color:var(--g-surface-0)] text-[color:var(--g-text)] overflow-hidden w-full">
       {/* Ambient Gemini glow */}
       <div
         aria-hidden
@@ -297,36 +307,38 @@ export const VoiceOrb = () => {
         aria-label={isRecording ? "Stop recording" : "Start voice capture"}
         className={cn(
           "relative h-28 w-28 sm:h-40 sm:w-40 md:h-44 md:w-44 rounded-full flex items-center justify-center select-none transition-transform active:scale-[0.97]",
-          "focus:outline-none focus-visible:ring-4 focus-visible:ring-[#9B72CB]/40",
-          isBusy && "opacity-80",
+          "focus:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--g-focus-ring)]",
+          isBusy && "opacity-80 cursor-not-allowed",
         )}
       >
         {isRecording && (
           <>
-            <span className="absolute inset-0 rounded-full bg-[#D96570]/30 animate-ping" />
-            <span className="absolute -inset-3 rounded-full bg-[#D96570]/10 animate-pulse" />
+            <span className="absolute inset-0 rounded-full bg-[color:var(--g-red)]/30 animate-ping" />
+            <span className="absolute -inset-3 rounded-full bg-[color:var(--g-red)]/10 animate-pulse" />
           </>
         )}
 
-        {/* Gemini gradient ring */}
+        {/* Rotating Gemini gradient ring around the orb */}
         <span
           aria-hidden
           className="absolute -inset-[2px] rounded-full opacity-90 blur-[1px]"
           style={{
-            background:
-              "conic-gradient(from 180deg at 50% 50%, #4285F4, #9B72CB, #D96570, #F4B400, #4285F4)",
+            background: "var(--g-conic)",
+            animation: "gemini-spin 6s linear infinite",
           }}
         />
 
+        {/* Orb body — subtly cycles through Gemini hues when idle */}
         <span
           className={cn(
             "absolute inset-0 rounded-full",
             "shadow-[0_24px_60px_-12px_rgba(155,114,203,0.55),inset_0_1px_0_rgba(255,255,255,0.14)]",
+            !isRecording && !isTranscribing && "gemini-hue-cycle",
           )}
           style={{
             background: isRecording
               ? "radial-gradient(circle at 30% 30%, #F2A4AC, #D96570 55%, #5A1F26 100%)"
-              : "linear-gradient(135deg, #4285F4 0%, #9B72CB 55%, #D96570 100%)",
+              : "var(--g-gradient)",
           }}
         />
         <span
@@ -348,12 +360,12 @@ export const VoiceOrb = () => {
       <div className="relative text-center space-y-1">
         <p className="text-[14px] sm:text-[15px] font-medium tracking-tight">{status}</p>
         {draft === null && (
-          <p className="text-[12px] sm:text-[12.5px] text-[#9AA0A6]">
+          <p className="text-[12px] sm:text-[12.5px] text-[color:var(--g-text-muted)]">
             Speak your idea — edit before saving.
           </p>
         )}
         {draft !== null && !isRecording && !isTranscribing && (
-          <p className="text-[11.5px] text-[#9AA0A6]">
+          <p className="text-[11.5px] text-[color:var(--g-text-muted)]">
             Tap orb to add more — your edits are kept.
           </p>
         )}
@@ -363,17 +375,17 @@ export const VoiceOrb = () => {
         <div className="relative w-full max-w-lg">
           <div
             ref={editorRef}
-            className="flex flex-col rounded-3xl border border-[#3C4043] bg-[#1E1F20] overflow-hidden shadow-[0_8px_30px_-12px_rgba(0,0,0,0.6)]"
+            className="gemini-ring flex flex-col rounded-3xl bg-[color:var(--g-surface-1)] overflow-hidden shadow-[0_8px_30px_-12px_rgba(0,0,0,0.6)]"
             style={{ height: editorHeight ?? undefined }}
           >
             {/* Sticky toolbar */}
-            <div className="flex items-center justify-between gap-1 px-2 py-1.5 border-b border-[#3C4043] bg-[#1E1F20]/95 backdrop-blur shrink-0 sticky top-0 z-10">
+            <div className="flex items-center justify-between gap-1 px-2 py-1.5 border-b border-[color:var(--g-border)] bg-[color:var(--g-surface-1)]/95 backdrop-blur shrink-0 sticky top-0 z-10">
               <div className="flex items-center gap-0.5">
                 <Button
                   type="button" variant="ghost" size="sm"
                   onMouseDown={keepFocus(undo)}
                   disabled={history.length === 0}
-                  className="h-8 px-2 rounded-full text-[#C4C7C5] hover:text-white hover:bg-white/[0.06]"
+                  className={toolbarBtn}
                   aria-label="Undo"
                 >
                   <Undo2 className="h-3.5 w-3.5" />
@@ -382,7 +394,7 @@ export const VoiceOrb = () => {
                   type="button" variant="ghost" size="sm"
                   onMouseDown={keepFocus(redo)}
                   disabled={future.length === 0}
-                  className="h-8 px-2 rounded-full text-[#C4C7C5] hover:text-white hover:bg-white/[0.06]"
+                  className={toolbarBtn}
                   aria-label="Redo"
                 >
                   <Redo2 className="h-3.5 w-3.5" />
@@ -390,33 +402,31 @@ export const VoiceOrb = () => {
                 <Button
                   type="button" variant="ghost" size="sm"
                   onMouseDown={keepFocus(() => setShowFind((s) => !s))}
-                  className={cn(
-                    "h-8 px-2 rounded-full hover:bg-white/[0.06]",
-                    showFind ? "text-white bg-white/[0.06]" : "text-[#C4C7C5] hover:text-white",
-                  )}
+                  aria-pressed={showFind}
+                  className={cn(toolbarBtn, showFind && "text-white bg-white/[0.08]")}
                   aria-label="Find and replace"
                 >
                   <Search className="h-3.5 w-3.5" />
                 </Button>
               </div>
-              <span className="text-[11px] tabular-nums text-[#9AA0A6] pr-1">
+              <span className="text-[11px] tabular-nums text-[color:var(--g-text-muted)] pr-1">
                 {wordCount}w · {charCount}c
               </span>
             </div>
 
             {showFind && (
-              <div className="border-b border-[#3C4043] bg-[#1B1C1D] p-2 space-y-1.5 shrink-0">
+              <div className="border-b border-[color:var(--g-border)] bg-[color:var(--g-surface-3)] p-2 space-y-1.5 shrink-0">
                 <div className="flex items-center gap-1.5">
                   <Input
                     value={findTerm}
                     onChange={(e) => setFindTerm(e.target.value)}
                     onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); findNext(); } }}
                     placeholder="Find"
-                    className="h-8 rounded-full bg-[#2D2E30] border-[#5F6368] text-[13px] px-3"
+                    className="h-8 rounded-full bg-[color:var(--g-surface-2)] border-[color:var(--g-border-strong)] text-[13px] px-3 placeholder:text-[color:var(--g-text-muted)] focus-visible:ring-2 focus-visible:ring-[color:var(--g-focus-ring)] focus-visible:ring-offset-0"
                   />
                   <Button type="button" size="sm" variant="ghost"
                     onMouseDown={keepFocus(findNext)}
-                    className="h-8 px-3 rounded-full text-[#C4C7C5] hover:text-white hover:bg-white/[0.06]">
+                    className={toolbarBtn}>
                     Next
                   </Button>
                 </div>
@@ -425,11 +435,11 @@ export const VoiceOrb = () => {
                     value={replaceTerm}
                     onChange={(e) => setReplaceTerm(e.target.value)}
                     placeholder="Replace with"
-                    className="h-8 rounded-full bg-[#2D2E30] border-[#5F6368] text-[13px] px-3"
+                    className="h-8 rounded-full bg-[color:var(--g-surface-2)] border-[color:var(--g-border-strong)] text-[13px] px-3 placeholder:text-[color:var(--g-text-muted)] focus-visible:ring-2 focus-visible:ring-[color:var(--g-focus-ring)] focus-visible:ring-offset-0"
                   />
                   <Button type="button" size="sm" variant="ghost"
                     onMouseDown={keepFocus(replaceAll)}
-                    className="h-8 px-3 rounded-full text-[#C4C7C5] hover:text-white hover:bg-white/[0.06]">
+                    className={toolbarBtn}>
                     <ReplaceIcon className="h-3.5 w-3.5 mr-1" /> All
                   </Button>
                 </div>
@@ -445,20 +455,20 @@ export const VoiceOrb = () => {
                 onFocus={onTextareaFocus}
                 autoFocus
                 style={{ fontSize: 16 }}
-                className="h-full w-full bg-transparent border-0 rounded-none text-[#E3E3E3] placeholder:text-[#9AA0A6] leading-relaxed resize-none overflow-y-auto focus-visible:ring-0 focus-visible:ring-offset-0 px-4 py-3"
+                className="h-full w-full bg-transparent border-0 rounded-none text-[color:var(--g-text)] placeholder:text-[color:var(--g-text-muted)] leading-relaxed resize-none overflow-y-auto focus-visible:ring-0 focus-visible:ring-offset-0 px-4 py-3"
                 placeholder="Transcript…"
               />
             </div>
 
             {/* Sticky footer */}
-            <div className="flex items-center justify-between gap-2 px-2 py-1.5 border-t border-[#3C4043] bg-[#1E1F20]/95 backdrop-blur shrink-0 sticky bottom-0 z-10">
+            <div className="flex items-center justify-between gap-2 px-2 py-1.5 border-t border-[color:var(--g-border)] bg-[color:var(--g-surface-1)]/95 backdrop-blur shrink-0 sticky bottom-0 z-10">
               <Button
                 type="button"
                 variant="ghost"
                 size="sm"
                 onMouseDown={keepFocus(discard)}
                 disabled={submitting}
-                className="rounded-full text-[#C4C7C5] hover:text-white hover:bg-white/[0.06]"
+                className={toolbarBtn}
               >
                 <X className="h-4 w-4 mr-1.5" /> Discard
               </Button>
@@ -467,11 +477,8 @@ export const VoiceOrb = () => {
                 size="sm"
                 onClick={saveDraft}
                 disabled={submitting || !draft.trim()}
-                className="rounded-full text-white border-0 shadow-[0_6px_20px_-6px_rgba(155,114,203,0.6)] hover:opacity-95"
-                style={{
-                  background:
-                    "linear-gradient(135deg, #4285F4 0%, #9B72CB 55%, #D96570 100%)",
-                }}
+                className="rounded-full text-white border-0 shadow-[0_6px_20px_-6px_rgba(155,114,203,0.6)] hover:opacity-95 focus-visible:ring-2 focus-visible:ring-[color:var(--g-focus-ring)] focus-visible:ring-offset-0 disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none"
+                style={{ background: "var(--g-gradient)" }}
               >
                 {submitting ? (
                   <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
@@ -488,4 +495,5 @@ export const VoiceOrb = () => {
     </div>
   );
 };
+
 
