@@ -452,10 +452,10 @@ export const AshDock = ({ className }: { className?: string }) => {
           <button
             type="button"
             onClick={openNewChip}
-            className="inline-flex items-center justify-center h-7 w-7 rounded-full bg-secondary/40 hover:bg-secondary text-muted-foreground hover:text-foreground border border-border/40"
+            className="inline-flex items-center justify-center h-9 w-9 sm:h-7 sm:w-7 rounded-full bg-secondary/60 active:bg-secondary hover:bg-secondary text-foreground sm:text-muted-foreground hover:text-foreground border border-border/50 touch-manipulation"
             aria-label="Add chip"
           >
-            <Plus className="h-3.5 w-3.5" />
+            <Plus className="h-4 w-4 sm:h-3.5 sm:w-3.5" />
           </button>
         </div>
       </div>
