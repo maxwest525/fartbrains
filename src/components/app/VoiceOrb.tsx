@@ -195,6 +195,11 @@ export const VoiceOrb = ({ liveMode = false, onToggleLive, onLiveTranscript, spe
           toast.message("Nothing heard — try again.");
           return;
         }
+        // Live mode: skip the draft editor and stream the transcript straight into Ash chat.
+        if (liveMode && onLiveTranscript) {
+          onLiveTranscript(transcript.trim());
+          return;
+        }
         // Append to any existing draft so prior edits aren't lost.
         setDraft((prev) => {
           if (prev && prev.trim()) {
