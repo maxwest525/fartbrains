@@ -423,7 +423,14 @@ export type Database = {
     }
     Enums: {
       idea_priority: "none" | "low" | "medium" | "high"
-      idea_source_type: "manual" | "webpage" | "transcript" | "audio"
+      idea_source_type:
+        | "manual"
+        | "webpage"
+        | "transcript"
+        | "audio"
+        | "youtube"
+        | "instagram"
+        | "tiktok"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -552,7 +559,15 @@ export const Constants = {
   public: {
     Enums: {
       idea_priority: ["none", "low", "medium", "high"],
-      idea_source_type: ["manual", "webpage", "transcript", "audio"],
+      idea_source_type: [
+        "manual",
+        "webpage",
+        "transcript",
+        "audio",
+        "youtube",
+        "instagram",
+        "tiktok",
+      ],
     },
   },
 } as const
