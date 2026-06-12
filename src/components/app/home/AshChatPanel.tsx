@@ -26,13 +26,17 @@ const URL_RE = /(https?:\/\/[^\s)]+|www\.[^\s)]+)/i;
  * exchange to the Idea Vault, and auto-detects URL / long-text input to route
  * into the proper capture sheet instead of chatting.
  */
-export const AshChatPanel = ({ onSaved, onOpenUrlCapture, onOpenTranscriptCapture }: Props) => {
+export const AshChatPanel = forwardRef<AshChatHandle, Props>(function AshChatPanel(
+  { onSaved, onOpenUrlCapture, onOpenTranscriptCapture, onAssistantReply },
+  ref,
+) {
   const { messages, streaming, error, send, stop, reset, regenerate } = useAshChat();
   const { save, saving } = useSaveAshToIdea();
   const [input, setInput] = useState("");
   const [savingIdx, setSavingIdx] = useState<number | null>(null);
   const threadRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const prevStreamingRef = useRef(false);
 
   // Auto-scroll to bottom as messages stream.
   useEffect(() => {
@@ -40,6 +44,26 @@ export const AshChatPanel = ({ onSaved, onOpenUrlCapture, onOpenTranscriptCaptur
     if (!el) return;
     el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
   }, [messages]);
+
+  // Fire onAssistantReply once when streaming transitions from true -> false.
+  useEffect(() => {
+    if (prevStreamingRef.current && !streaming) {
+      const last = messages[messages.length - 1];
+      if (last?.role === "assistant" && last.content.trim()) {
+        onAssistantReply?.(last.content);
+      }
+    }
+    prevStreamingRef.current = streaming;
+  }, [streaming, messages, onAssistantReply]);
+
+  // Imperative handle so the orb can push a transcript straight into chat.
+  useImperativeHandle(ref, () => ({
+    send: (text: string) => {
+      const t = text.trim();
+      if (!t) return;
+      void send(t);
+    },
+  }), [send]);
 
   // Keep composer focused unless something else legitimately owns focus.
   useEffect(() => {
