@@ -337,13 +337,20 @@ export const VoiceOrb = ({ liveMode = false, onToggleLive, onLiveTranscript, spe
           </>
         )}
 
+        {speaking && !isRecording && (
+          <>
+            <span className="absolute inset-0 rounded-full bg-[#4285F4]/30 animate-ping" />
+            <span className="absolute -inset-3 rounded-full bg-[#9B72CB]/15 animate-pulse" />
+          </>
+        )}
+
         {/* Rotating Gemini gradient ring around the orb */}
         <span
           aria-hidden
           className="absolute -inset-[2px] rounded-full opacity-90 blur-[1px]"
           style={{
             background: "var(--g-conic)",
-            animation: "gemini-spin 6s linear infinite",
+            animation: `gemini-spin ${speaking ? "2s" : "6s"} linear infinite`,
           }}
         />
 
@@ -352,14 +359,17 @@ export const VoiceOrb = ({ liveMode = false, onToggleLive, onLiveTranscript, spe
           className={cn(
             "absolute inset-0 rounded-full",
             "shadow-[0_24px_60px_-12px_rgba(155,114,203,0.55),inset_0_1px_0_rgba(255,255,255,0.14)]",
-            !isRecording && !isTranscribing && "gemini-hue-cycle",
+            !isRecording && !isTranscribing && !speaking && "gemini-hue-cycle",
           )}
           style={{
             background: isRecording
               ? "radial-gradient(circle at 30% 30%, #F2A4AC, #D96570 55%, #5A1F26 100%)"
-              : "var(--g-gradient)",
+              : speaking
+                ? "radial-gradient(circle at 30% 30%, #A4C7F2, #4285F4 55%, #1A3A7A 100%)"
+                : "var(--g-gradient)",
           }}
         />
+
         <span
           aria-hidden
           className="absolute left-1/2 top-3 h-7 sm:h-9 w-20 sm:w-24 -translate-x-1/2 rounded-full bg-white/30 blur-md"
