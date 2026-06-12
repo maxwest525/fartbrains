@@ -549,7 +549,10 @@ export const AshDock = ({ className }: { className?: string }) => {
               {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowUp className="h-4 w-4" />}
             </button>
           </div>
+          </div>
+          )}
         </div>
+
 
         {/* Chips */}
         <div className="mt-2 flex flex-wrap items-center justify-center gap-1.5 px-1">
