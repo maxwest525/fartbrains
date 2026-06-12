@@ -308,7 +308,7 @@ const Shell = () => {
                   chatRef.current?.send(text);
                 }}
               />
-              <div className="flex-1 min-h-[420px] sm:min-h-[480px] flex flex-col">
+              <div className="flex-1 min-h-[260px] sm:min-h-[480px] flex flex-col">
                 <AshChatPanel
                   ref={chatRef}
                   onSaved={(id) => {
