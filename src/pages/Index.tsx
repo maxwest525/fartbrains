@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { IdeaList } from "@/components/app/IdeaList";
 import { IdeaDetail } from "@/components/app/IdeaDetail";
 import { AshChatPanel } from "@/components/app/home/AshChatPanel";
+import { VoiceOrb } from "@/components/app/VoiceOrb";
 import { UrlCaptureScreen } from "@/components/app/UrlCaptureScreen";
 import { TranscriptCaptureScreen } from "@/components/app/TranscriptCaptureScreen";
 
