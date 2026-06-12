@@ -255,7 +255,7 @@ export const AshChatPanel = forwardRef<AshChatHandle, Props>(function AshChatPan
       </div>
     </div>
   );
-};
+});
 
 const SuggestionChip = ({ children, onClick }: { children: React.ReactNode; onClick: () => void }) => (
   <button
