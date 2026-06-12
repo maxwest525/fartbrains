@@ -386,17 +386,38 @@ export const VoiceOrb = ({ liveMode = false, onToggleLive, onLiveTranscript, spe
         </span>
       </button>
 
-      <div className="relative text-center space-y-1">
+      <div className="relative text-center space-y-1.5">
         <p className="text-[14px] sm:text-[15px] font-medium tracking-tight">{status}</p>
-        {draft === null && (
+        {draft === null && !liveMode && (
           <p className="text-[12px] sm:text-[12.5px] text-[color:var(--g-text-muted)]">
             Speak your idea — edit before saving.
+          </p>
+        )}
+        {draft === null && liveMode && (
+          <p className="text-[12px] sm:text-[12.5px] text-[color:var(--g-text-muted)]">
+            Live mode: Ash listens, replies, and speaks back.
           </p>
         )}
         {draft !== null && !isRecording && !isTranscribing && (
           <p className="text-[11.5px] text-[color:var(--g-text-muted)]">
             Tap orb to add more — your edits are kept.
           </p>
+        )}
+        {onToggleLive && (
+          <button
+            type="button"
+            onClick={() => onToggleLive(!liveMode)}
+            className={cn(
+              "mt-1 inline-flex items-center gap-1.5 h-7 px-3 rounded-full text-[11.5px] font-medium border transition",
+              liveMode
+                ? "bg-[#4285F4]/20 border-[#4285F4]/50 text-white shadow-[0_0_18px_-2px_rgba(66,133,244,0.5)]"
+                : "bg-white/[0.04] border-white/10 text-[color:var(--g-text-muted)] hover:text-white hover:bg-white/[0.08]",
+            )}
+            aria-pressed={liveMode}
+          >
+            {liveMode ? <Volume2 className="h-3 w-3" /> : <Radio className="h-3 w-3" />}
+            {liveMode ? "Live mode ON" : "Go Live"}
+          </button>
         )}
       </div>
 
