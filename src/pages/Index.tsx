@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { IdeaList } from "@/components/app/IdeaList";
 import { IdeaDetail } from "@/components/app/IdeaDetail";
 import { AshChatPanel } from "@/components/app/home/AshChatPanel";
+import { VoiceOrb } from "@/components/app/VoiceOrb";
 import { UrlCaptureScreen } from "@/components/app/UrlCaptureScreen";
 import { TranscriptCaptureScreen } from "@/components/app/TranscriptCaptureScreen";
 
@@ -282,7 +283,8 @@ const Shell = () => {
                 )}
               </div>
             </div>
-            <div ref={composeRef} className="w-full px-3 sm:px-6 lg:px-10 pt-4 sm:pt-6 pb-4 flex-1 min-h-0 flex flex-col gap-4 max-w-3xl mx-auto">
+            <div ref={composeRef} className="w-full px-3 sm:px-6 lg:px-10 pt-4 sm:pt-6 pb-4 flex-1 min-h-0 flex flex-col gap-6 max-w-3xl mx-auto">
+              <VoiceOrb />
               <div className="flex-1 min-h-[420px]">
                 <AshChatPanel
                   onSaved={(id) => {
