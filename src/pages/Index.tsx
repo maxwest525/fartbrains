@@ -19,9 +19,11 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { useAuth } from "@/hooks/useAuth";
 import { useFolders } from "@/hooks/useFolders";
 import { useReminderNotifier } from "@/hooks/useReminderNotifier";
+import { useAshChat } from "@/hooks/useAshChat";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import type { IdeaFilter } from "@/hooks/useIdeas";
+
 
 
 type View = "ideas" | "folders" | "calendar";
