@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
 import { ArrowUp, Loader2, Square, RotateCcw, Link as LinkIcon, FileText, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Textarea } from "@/components/ui/textarea";
@@ -7,10 +7,16 @@ import { useSaveAshToIdea } from "@/hooks/useSaveAshToIdea";
 import { AshMessageActions } from "@/components/app/home/AshMessageActions";
 import { toast } from "sonner";
 
+export type AshChatHandle = {
+  send: (text: string) => void;
+};
+
 type Props = {
   onSaved?: (ideaId: string) => void;
   onOpenUrlCapture: (url: string) => void;
   onOpenTranscriptCapture: (text: string) => void;
+  /** Fires once each time the assistant finishes streaming a reply. */
+  onAssistantReply?: (text: string) => void;
 };
 
 const URL_RE = /(https?:\/\/[^\s)]+|www\.[^\s)]+)/i;
