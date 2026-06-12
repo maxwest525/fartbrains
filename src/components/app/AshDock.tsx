@@ -364,8 +364,72 @@ export const AshDock = ({ className }: { className?: string }) => {
         )}
       >
 
-        <div className="gemini gemini-ring rounded-2xl bg-card/85 backdrop-blur-xl shadow-2xl shadow-black/30">
+        <div className="gemini gemini-ring rounded-2xl bg-card/85 backdrop-blur-xl shadow-2xl shadow-black/30 transition-all">
+          {/* Header strip — side toggle + collapse */}
+          <div className="flex items-center gap-1 px-2 pt-1.5">
+            <button
+              type="button"
+              onClick={cycleSide}
+              aria-label={`Dock position: ${side}`}
+              className="inline-flex items-center justify-center h-7 w-7 rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary/70 transition-colors"
+            >
+              <SideIcon className="h-3.5 w-3.5" />
+            </button>
+            <div className="flex-1" />
+            <button
+              type="button"
+              onClick={() => setCollapsed((c) => !c)}
+              aria-expanded={!collapsed}
+              aria-controls="ash-dock-body"
+              aria-label={collapsed ? "Expand dock" : "Collapse dock"}
+              className="inline-flex items-center justify-center h-7 w-7 rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary/70 transition-colors"
+            >
+              {collapsed ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+            </button>
+          </div>
+
+          {collapsed ? (
+            <div id="ash-dock-body" className="flex items-center gap-1.5 px-2.5 pb-2 pt-0.5">
+              <button
+                type="button"
+                onClick={handleMic}
+                disabled={busy && !isRecording}
+                aria-label={isRecording ? "Stop recording" : "Record voice"}
+                className={cn(
+                  "inline-flex items-center justify-center h-9 w-9 rounded-full transition-colors shrink-0",
+                  isRecording
+                    ? "bg-destructive text-destructive-foreground animate-pulse"
+                    : "text-muted-foreground hover:text-foreground hover:bg-secondary/70",
+                )}
+              >
+                {isVoiceBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : isRecording ? <Square className="h-3.5 w-3.5 fill-current" /> : <Mic className="h-4 w-4" />}
+              </button>
+              <button
+                type="button"
+                onClick={() => setCollapsed(false)}
+                className="flex-1 h-9 text-left px-2 text-[12.5px] text-muted-foreground hover:text-foreground truncate"
+              >
+                Tap to capture…
+              </button>
+              <button
+                type="button"
+                onClick={handleSubmit}
+                disabled={!text.trim() || busy}
+                aria-label="Save idea"
+                className={cn(
+                  "inline-flex items-center justify-center h-9 w-9 rounded-full transition-colors shrink-0",
+                  text.trim() && !busy
+                    ? "bg-primary text-primary-foreground hover:bg-primary/90"
+                    : "bg-secondary/60 text-muted-foreground cursor-not-allowed",
+                )}
+              >
+                {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowUp className="h-4 w-4" />}
+              </button>
+            </div>
+          ) : (
+          <div id="ash-dock-body">
           {/* Input */}
+
           <div className="px-3.5 pt-3 pb-2">
             <textarea
               ref={textareaRef}
