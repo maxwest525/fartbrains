@@ -272,7 +272,11 @@ const Shell = () => {
 
         {/* Capture view — compose only, full width. Shown when filter is "all" (the default landing). */}
         {!showFolders && !showCalendar && !showDetailOnly && filter.kind === "all" && (
-          <div className="w-full flex-1 min-w-0 flex flex-col min-h-0 bg-background overflow-y-auto scroll-momentum touch-pan-y pb-[calc(5.75rem+env(safe-area-inset-bottom))] md:pb-6">
+          <div
+            className="w-full flex-1 min-w-0 flex flex-col min-h-0 bg-background overflow-y-auto scroll-momentum touch-pan-y"
+            style={{ paddingBottom: "calc(var(--ash-dock-h, 0px) + env(safe-area-inset-bottom) + 1.25rem)" }}
+          >
+
             <div className="w-full px-3 sm:px-6 lg:px-10 pt-3 sm:pt-4">
               <div className="relative max-w-xl mx-auto">
                 <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
