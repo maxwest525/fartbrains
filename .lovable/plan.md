@@ -1,64 +1,49 @@
-## Goal
+## Floating AshDock — persistence, collision, fixed position, collapse
 
-Make `/` the single command center: Ash chat thread on top, vault list underneath. Kill `/home`, remove dead nav, verify captures actually persist, and make "Save to Vault" feel instant.
+All work is scoped to `src/components/app/AshDock.tsx` plus a small spacer hook in `src/pages/Index.tsx`. No business logic changes.
 
-## 1. Delete `/home` route and any dead nav
+### 1. Persist position
+Add `localStorage` keys:
+- `ash-dock-side-v1` → `"left" | "center" | "right"` (default `"center"`)
+- `ash-dock-collapsed-v1` → `"0" | "1"` (default `"0"`)
 
-- `src/App.tsx`: remove the `/home` Route entry and the `Home` import.
-- `src/pages/Home.tsx`: delete the file (the redirect shim is no longer needed once the route is gone).
-- `src/pages/Index.tsx`: remove the now-unused `Home as HomeIcon` and `useNavigate` imports. (The "Home" nav button was already removed; just clean leftover imports.)
-- Grep-confirm: no remaining `/home`, `navigate("/home")`, or `HomeIcon` references anywhere in `src/`.
+Load on mount, save on change. The dock width stays the current responsive `w-[min(48rem,calc(100vw-1rem))]`; only the horizontal anchor changes.
 
-## 2. Merge the Ash chat thread into `/`
+### 2. Fixed position that never reflows main content
+Dock is already `fixed`. Confirm and harden:
+- Always `position: fixed`, `z-30`, bottom = `calc(5.75rem + env(safe-area-inset-bottom))` on mobile / `1rem` on desktop.
+- Horizontal anchor driven by stored side:
+  - `left`  → `left-2 right-auto translate-x-0`
+  - `right` → `right-2 left-auto translate-x-0`
+  - `center` → current `left-1/2 -translate-x-1/2`
+- Main content already lives in normal flow; we just guarantee the dock is fixed and add bottom padding via a CSS var (see #3) so nothing visually overlaps.
 
-The Ash chat thread currently only lived in `Home.tsx`. `AshDock` is just a floating *capture composer* — it has no chat thread. To honor "the Ash chat thread and the idea vault list together," port the chat thread into the Capture view of `/`.
+### 3. Collision / spacing with Capture controls
+- Measure dock height with a `ResizeObserver` and write it to a CSS var on `<body>`: `--ash-dock-h`.
+- In `Index.tsx` Capture view container, add `paddingBottom: 'calc(var(--ash-dock-h, 0px) + 1.25rem)'` so the orb + search never sit under the dock.
+- On mobile, this stacks above the `MobileTabBar` (already accounted for via the `5.75rem` bottom offset).
 
-- New component `src/components/app/home/AshChatPanel.tsx`:
-  - Wraps `useAshChat` (prompt input + streaming reply + reset + stop + regenerate).
-  - Renders the conversation thread with user/assistant bubbles.
-  - Shows `AshMessageActions` under each assistant reply (Save / Copy / Regenerate).
-  - Empty state: orb + one-line hint + suggestion chips ("Summarize this URL…", "Save this idea…").
-  - Auto-detects URLs / long pasted text in the input and opens the matching capture sheet via callbacks (`onOpenUrlCapture`, `onOpenTranscriptCapture`) — same routing logic that used to live in `Home.tsx`.
-- `src/pages/Index.tsx` (Capture view block, `filter.kind === "all"`):
-  - Replace the current `<VoiceOrb />` block with a vertical stack:
-    1. `<AshChatPanel />` (top, ~55% of viewport, scrollable thread + sticky composer).
-    2. Below it: a compact "Recently captured" vault strip (latest 6 ideas via existing `useIdeas({kind:"recent"})`) so saves appear immediately under the chat. Click → opens IdeaDetail (reuse existing `selectedId` state).
-  - Keep the existing search bar at the top of the Capture view.
-  - VoiceOrb moves into AshChatPanel's composer footer (mic affordance next to the send button).
+### 4. Minimize / collapse with animated border preserved
+Add a small header strip inside the dock with:
+- A side-toggle button (cycles `left → center → right`) using `AlignLeft / AlignCenter / AlignRight` icons.
+- A collapse/expand button (`ChevronDown` when open, `ChevronUp` when collapsed).
 
-## 3. Wire "Save to Vault" so the saved idea appears immediately
+Collapsed state:
+- Hide the textarea, mode/folder pickers, chips row.
+- Keep the `gemini gemini-ring` wrapper (animated gradient border) visible.
+- Keep only **mic** + **send** icons in a thin bar (per user choice).
+- Tap the bar (or chevron) to expand.
+- Smooth height transition via `transition-[height,opacity]` + `data-collapsed` attribute.
 
-`useSaveAshToIdea` already calls `createIdea` (which invalidates the ideas query). What's missing is the *visible feedback* in the merged UI.
+### 5. Plus sign answered inline
+Already explained in chat: it's the "new chip" button. No code change.
 
-- After `save()` resolves with an `idea`, `AshChatPanel` calls a new `onSaved(idea.id)` prop.
-- `Index.tsx` handles it by:
-  - Selecting the saved idea (`setSelectedId(idea.id)`) on desktop so the right pane opens it.
-  - On mobile: keep the existing sonner toast with a "View" action that selects the idea.
-- The "Recently captured" strip directly below the chat will re-render with the new idea on top (React Query invalidation handles this automatically — no extra wiring).
+### Technical notes
+- No new deps.
+- Keep all existing handlers (`handleSubmit`, `handleMic`, chips dialog) intact.
+- A11y: collapse button gets `aria-expanded` + `aria-controls`; side toggle gets `aria-label="Dock position: <side>"`.
+- The animated `gemini-ring` class stays on the outer wrapper so the glow border shows in both states.
 
-## 4. Verify URL and transcript capture flows
-
-The capture screens already exist and are wired correctly (`UrlCaptureScreen`, `TranscriptCaptureScreen`):
-- URL flow: `extract-url` edge fn → `extracted_text` → `summarize` edge fn → `ai_summary` → `createIdea` with `source_type: "webpage"`, `folder_id`.
-- Transcript flow: pasted text → `raw_note` + `extracted_text` → `summarize` → `ai_summary` → `createIdea` with `source_type: "transcript"`, `folder_id`.
-
-What this plan adds is **end-to-end verification** after the merge:
-- Both sheets are launched from `AshChatPanel` (URL paste auto-detect, transcript via "Paste transcript" chip).
-- `onCreated(ideaId)` callback from each sheet is wired in `Index.tsx` to `setSelectedId(ideaId)` so the saved idea opens immediately in the vault detail pane.
-- Manual test checklist after the change:
-  1. Paste a URL in the Ash composer → URL sheet opens prefilled → Extract & summarize → toast + idea appears in Recently-captured strip + opens in detail pane.
-  2. Paste long text → transcript sheet opens prefilled → Summarize & save → same verification.
-  3. Send a normal chat message → click Save to Vault on the reply → idea appears in the strip and opens in detail.
-  4. Reload `/` — saved ideas persist (already covered by existing `useIdeas` query).
-
-## Files
-
-**Edited:** `src/App.tsx`, `src/pages/Index.tsx`
-**Created:** `src/components/app/home/AshChatPanel.tsx`
-**Deleted:** `src/pages/Home.tsx`
-
-## Out of scope
-
-- No DB schema changes (all required columns and edge functions already exist).
-- No changes to `AshDock` (the floating quick-capture dock stays as-is for non-chat surfaces).
-- No changes to `useAshChat`, `useSaveAshToIdea`, `extract-url`, `summarize`, or `ash-chat` edge functions.
+### Files touched
+- `src/components/app/AshDock.tsx` — add state, persistence, ResizeObserver, side anchor classes, collapse UI.
+- `src/pages/Index.tsx` — add `paddingBottom: 'calc(var(--ash-dock-h,0px) + 1.25rem)'` on the Capture view container.

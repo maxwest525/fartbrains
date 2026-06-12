@@ -2,8 +2,10 @@ import { useEffect, useRef, useState } from "react";
 import {
   Mic, Plus, ArrowUp, Loader2, Square, X, Check,
   Folder as FolderIcon, Pencil, Trash2,
-  ChevronDown, Wand2, FileText, Instagram, Globe, ListChecks,
+  ChevronDown, ChevronUp, Wand2, FileText, Instagram, Globe, ListChecks,
+  AlignLeft, AlignCenter, AlignRight,
 } from "lucide-react";
+
 import { cn } from "@/lib/utils";
 import { useFolders } from "@/hooks/useFolders";
 import { useCreateIdea } from "@/hooks/useIdeas";
@@ -34,6 +36,11 @@ type Mode = "auto" | "note" | "list" | "transcript" | "link" | "instagram";
 
 const CHIPS_KEY = "ash-dock-chips-v1";
 const FOLDER_KEY = "ash-dock-folder-v1";
+const SIDE_KEY = "ash-dock-side-v1";
+const COLLAPSED_KEY = "ash-dock-collapsed-v1";
+
+type Side = "left" | "center" | "right";
+
 
 const loadChips = (): Chip[] => {
   try {
@@ -105,6 +112,43 @@ export const AshDock = ({ className }: { className?: string }) => {
   const [chipEditor, setChipEditor] = useState<Chip | null>(null);
   const [chipDraft, setChipDraft] = useState<{ label: string; prefill: string }>({ label: "", prefill: "" });
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const dockRef = useRef<HTMLDivElement>(null);
+
+  const [side, setSide] = useState<Side>(() => {
+    try {
+      const v = localStorage.getItem(SIDE_KEY);
+      return v === "left" || v === "right" || v === "center" ? v : "center";
+    } catch { return "center"; }
+  });
+  const [collapsed, setCollapsed] = useState<boolean>(() => {
+    try { return localStorage.getItem(COLLAPSED_KEY) === "1"; } catch { return false; }
+  });
+
+  useEffect(() => {
+    try { localStorage.setItem(SIDE_KEY, side); } catch { /* ignore */ }
+  }, [side]);
+  useEffect(() => {
+    try { localStorage.setItem(COLLAPSED_KEY, collapsed ? "1" : "0"); } catch { /* ignore */ }
+  }, [collapsed]);
+
+  // Publish dock height as a CSS var so pages can pad around it.
+  useEffect(() => {
+    const el = dockRef.current;
+    if (!el) return;
+    const update = () => {
+      const h = el.getBoundingClientRect().height;
+      document.body.style.setProperty("--ash-dock-h", `${Math.ceil(h)}px`);
+    };
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    window.addEventListener("resize", update);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener("resize", update);
+      document.body.style.removeProperty("--ash-dock-h");
+    };
+  }, [collapsed]);
 
   useEffect(() => {
     try {
@@ -115,6 +159,10 @@ export const AshDock = ({ className }: { className?: string }) => {
   useEffect(() => {
     try { localStorage.setItem(CHIPS_KEY, JSON.stringify(chips)); } catch { /* ignore */ }
   }, [chips]);
+
+  const cycleSide = () => setSide((s) => (s === "left" ? "center" : s === "center" ? "right" : "left"));
+  const SideIcon = side === "left" ? AlignLeft : side === "right" ? AlignRight : AlignCenter;
+
 
   const folderName = folderId ? folders.find((f) => f.id === folderId)?.name ?? "Inbox" : "Inbox";
 
@@ -299,17 +347,89 @@ export const AshDock = ({ className }: { className?: string }) => {
   const ModeIcon = MODE_META[effectiveMode].icon;
   const modeLabel = mode === "auto" ? `Auto · ${MODE_META[effectiveMode].label}` : MODE_META[effectiveMode].label;
 
+  const sideClass =
+    side === "left"  ? "left-2 right-auto translate-x-0" :
+    side === "right" ? "right-2 left-auto translate-x-0" :
+                       "left-1/2 -translate-x-1/2";
+
   return (
     <>
       <div
+        ref={dockRef}
         className={cn(
-          "fixed left-1/2 -translate-x-1/2 z-30 w-[min(48rem,calc(100vw-1rem))]",
+          "fixed z-30 w-[min(48rem,calc(100vw-1rem))]",
+          sideClass,
           "bottom-[calc(5.75rem+env(safe-area-inset-bottom))] md:bottom-4",
           className,
         )}
       >
-        <div className="gemini gemini-ring rounded-2xl bg-card/85 backdrop-blur-xl shadow-2xl shadow-black/30">
+
+        <div className="gemini gemini-ring rounded-2xl bg-card/85 backdrop-blur-xl shadow-2xl shadow-black/30 transition-all">
+          {/* Header strip — side toggle + collapse */}
+          <div className="flex items-center gap-1 px-2 pt-1.5">
+            <button
+              type="button"
+              onClick={cycleSide}
+              aria-label={`Dock position: ${side}`}
+              className="inline-flex items-center justify-center h-7 w-7 rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary/70 transition-colors"
+            >
+              <SideIcon className="h-3.5 w-3.5" />
+            </button>
+            <div className="flex-1" />
+            <button
+              type="button"
+              onClick={() => setCollapsed((c) => !c)}
+              aria-expanded={!collapsed}
+              aria-controls="ash-dock-body"
+              aria-label={collapsed ? "Expand dock" : "Collapse dock"}
+              className="inline-flex items-center justify-center h-7 w-7 rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary/70 transition-colors"
+            >
+              {collapsed ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+            </button>
+          </div>
+
+          {collapsed ? (
+            <div id="ash-dock-body" className="flex items-center gap-1.5 px-2.5 pb-2 pt-0.5">
+              <button
+                type="button"
+                onClick={handleMic}
+                disabled={busy && !isRecording}
+                aria-label={isRecording ? "Stop recording" : "Record voice"}
+                className={cn(
+                  "inline-flex items-center justify-center h-9 w-9 rounded-full transition-colors shrink-0",
+                  isRecording
+                    ? "bg-destructive text-destructive-foreground animate-pulse"
+                    : "text-muted-foreground hover:text-foreground hover:bg-secondary/70",
+                )}
+              >
+                {isVoiceBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : isRecording ? <Square className="h-3.5 w-3.5 fill-current" /> : <Mic className="h-4 w-4" />}
+              </button>
+              <button
+                type="button"
+                onClick={() => setCollapsed(false)}
+                className="flex-1 h-9 text-left px-2 text-[12.5px] text-muted-foreground hover:text-foreground truncate"
+              >
+                Tap to capture…
+              </button>
+              <button
+                type="button"
+                onClick={handleSubmit}
+                disabled={!text.trim() || busy}
+                aria-label="Save idea"
+                className={cn(
+                  "inline-flex items-center justify-center h-9 w-9 rounded-full transition-colors shrink-0",
+                  text.trim() && !busy
+                    ? "bg-primary text-primary-foreground hover:bg-primary/90"
+                    : "bg-secondary/60 text-muted-foreground cursor-not-allowed",
+                )}
+              >
+                {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowUp className="h-4 w-4" />}
+              </button>
+            </div>
+          ) : (
+          <div id="ash-dock-body">
           {/* Input */}
+
           <div className="px-3.5 pt-3 pb-2">
             <textarea
               ref={textareaRef}
@@ -429,7 +549,10 @@ export const AshDock = ({ className }: { className?: string }) => {
               {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowUp className="h-4 w-4" />}
             </button>
           </div>
+          </div>
+          )}
         </div>
+
 
         {/* Chips */}
         <div className="mt-2 flex flex-wrap items-center justify-center gap-1.5 px-1">
