@@ -112,6 +112,43 @@ export const AshDock = ({ className }: { className?: string }) => {
   const [chipEditor, setChipEditor] = useState<Chip | null>(null);
   const [chipDraft, setChipDraft] = useState<{ label: string; prefill: string }>({ label: "", prefill: "" });
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const dockRef = useRef<HTMLDivElement>(null);
+
+  const [side, setSide] = useState<Side>(() => {
+    try {
+      const v = localStorage.getItem(SIDE_KEY);
+      return v === "left" || v === "right" || v === "center" ? v : "center";
+    } catch { return "center"; }
+  });
+  const [collapsed, setCollapsed] = useState<boolean>(() => {
+    try { return localStorage.getItem(COLLAPSED_KEY) === "1"; } catch { return false; }
+  });
+
+  useEffect(() => {
+    try { localStorage.setItem(SIDE_KEY, side); } catch { /* ignore */ }
+  }, [side]);
+  useEffect(() => {
+    try { localStorage.setItem(COLLAPSED_KEY, collapsed ? "1" : "0"); } catch { /* ignore */ }
+  }, [collapsed]);
+
+  // Publish dock height as a CSS var so pages can pad around it.
+  useEffect(() => {
+    const el = dockRef.current;
+    if (!el) return;
+    const update = () => {
+      const h = el.getBoundingClientRect().height;
+      document.body.style.setProperty("--ash-dock-h", `${Math.ceil(h)}px`);
+    };
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    window.addEventListener("resize", update);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener("resize", update);
+      document.body.style.removeProperty("--ash-dock-h");
+    };
+  }, [collapsed]);
 
   useEffect(() => {
     try {
@@ -122,6 +159,10 @@ export const AshDock = ({ className }: { className?: string }) => {
   useEffect(() => {
     try { localStorage.setItem(CHIPS_KEY, JSON.stringify(chips)); } catch { /* ignore */ }
   }, [chips]);
+
+  const cycleSide = () => setSide((s) => (s === "left" ? "center" : s === "center" ? "right" : "left"));
+  const SideIcon = side === "left" ? AlignLeft : side === "right" ? AlignRight : AlignCenter;
+
 
   const folderName = folderId ? folders.find((f) => f.id === folderId)?.name ?? "Inbox" : "Inbox";
 
