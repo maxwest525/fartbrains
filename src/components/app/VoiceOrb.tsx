@@ -41,7 +41,16 @@ const toolbarBtn = cn(
   "disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-[color:var(--g-text-disabled)] disabled:cursor-not-allowed",
 );
 
-export const VoiceOrb = () => {
+type VoiceOrbProps = {
+  /** When true, transcripts are sent to the live handler (chat) instead of opening the save-idea draft editor. */
+  liveMode?: boolean;
+  onToggleLive?: (next: boolean) => void;
+  onLiveTranscript?: (text: string) => void;
+  /** True while Ash is speaking back — animates the orb in a different color. */
+  speaking?: boolean;
+};
+
+export const VoiceOrb = ({ liveMode = false, onToggleLive, onLiveTranscript, speaking = false }: VoiceOrbProps) => {
   const voice = useVoiceCapture({ maxSeconds: 180 });
   const createIdea = useCreateIdea();
   const [submitting, setSubmitting] = useState(false);
