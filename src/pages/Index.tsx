@@ -347,8 +347,9 @@ const Shell = () => {
                 }}
                 speaking={speaking}
                 onLiveTranscript={(text) => {
-                  chatRef.current?.send(text);
+                  void liveChat.send(text);
                 }}
+
               />
               <p className="text-center text-[12px] text-muted-foreground">
                 Captures land in <button onClick={() => handleFilterChange({ kind: "recent" })} className="underline underline-offset-2 hover:text-foreground">Recents</button> and the All folder.
