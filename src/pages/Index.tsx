@@ -293,7 +293,7 @@ const Shell = () => {
                 )}
               </div>
             </div>
-            <div ref={composeRef} className="w-full px-3 sm:px-6 lg:px-10 pt-3 sm:pt-6 pb-4 flex-1 min-h-0 flex flex-col gap-3 sm:gap-5 max-w-3xl mx-auto">
+            <div ref={composeRef} className="w-full px-3 sm:px-6 lg:px-10 pt-3 sm:pt-6 pb-4 flex-1 min-h-0 flex flex-col items-center justify-center gap-4 sm:gap-6 max-w-3xl mx-auto">
               <VoiceOrb
                 liveMode={liveMode}
                 onToggleLive={(next) => {
@@ -308,38 +308,11 @@ const Shell = () => {
                   chatRef.current?.send(text);
                 }}
               />
-              <div className="flex-1 min-h-[260px] sm:min-h-[480px] flex flex-col">
-                <AshChatPanel
-                  ref={chatRef}
-                  onSaved={(id) => {
-                    if (!isMobile) setSelectedId(id);
-                    else toast.success("Saved to Vault", { action: { label: "View", onClick: () => setSelectedId(id) } });
-                  }}
-                  onOpenUrlCapture={(url) => setCapture({ kind: "url", url })}
-                  onOpenTranscriptCapture={(text) => setCapture({ kind: "transcript", text })}
-                  onAssistantReply={(text) => {
-                    if (!liveMode) return;
-                    try {
-                      const synth = window.speechSynthesis;
-                      if (!synth) return;
-                      synth.cancel();
-                      // Strip markdown punctuation that TTS reads awkwardly.
-                      const clean = text.replace(/[*_`#>]/g, "").replace(/\[(.+?)\]\(.+?\)/g, "$1");
-                      const u = new SpeechSynthesisUtterance(clean);
-                      u.rate = 1.02;
-                      u.pitch = 1;
-                      u.onstart = () => setSpeaking(true);
-                      u.onend = () => setSpeaking(false);
-                      u.onerror = () => setSpeaking(false);
-                      synth.speak(u);
-                    } catch { /* ignore */ }
-                  }}
-                />
-              </div>
               <p className="text-center text-[12px] text-muted-foreground">
                 Captures land in <button onClick={() => handleFilterChange({ kind: "recent" })} className="underline underline-offset-2 hover:text-foreground">Recents</button> and the All folder.
               </p>
             </div>
+
 
 
           </div>
