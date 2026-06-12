@@ -43,8 +43,17 @@ const Shell = () => {
     | null
   >(null);
   const isMobile = useIsMobile();
-  const [orbCollapsed, setOrbCollapsed] = useState(false);
+  const [liveMode, setLiveMode] = useState(false);
+  const [speaking, setSpeaking] = useState(false);
+  const chatRef = useRef<AshChatHandle>(null);
   const composeRef = useRef<HTMLDivElement>(null);
+
+  // Stop any speech when leaving the capture view or unmounting.
+  useEffect(() => {
+    return () => {
+      try { window.speechSynthesis?.cancel(); } catch { /* ignore */ }
+    };
+  }, []);
   const { user, signOut } = useAuth();
   const { data: folders = [] } = useFolders();
 
