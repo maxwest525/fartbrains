@@ -363,7 +363,11 @@ const Shell = () => {
 
         {/* Browse view — flat list of ideas (Recents, Favorites, Folder-filtered, Search). */}
         {!showFolders && !showCalendar && !showDetailOnly && filter.kind !== "all" && (
-          <div className="w-full flex-1 min-w-0 md:w-[28rem] md:flex-none md:shrink-0 md:border-r border-border flex flex-col min-h-0 bg-background md:overflow-hidden overflow-y-auto scroll-momentum touch-pan-y pb-[calc(5.75rem+env(safe-area-inset-bottom))] md:pb-0">
+          <div
+            className="w-full flex-1 min-w-0 md:w-[28rem] md:flex-none md:shrink-0 md:border-r border-border flex flex-col min-h-0 bg-background md:overflow-hidden overflow-y-auto scroll-momentum touch-pan-y"
+            style={{ paddingBottom: "calc(var(--ash-dock-h, 0px) + 5.75rem + env(safe-area-inset-bottom))" }}
+          >
+
             <div className="md:flex-1 md:min-h-0 md:overflow-hidden">
               <IdeaList
                 filter={filter}
