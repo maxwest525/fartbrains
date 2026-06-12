@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Mic, Square, Loader2, Check, X, Undo2, Redo2, Search, Replace as ReplaceIcon,
+  Radio, Volume2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useVoiceCapture, blobToBase64 } from "@/hooks/useVoiceCapture";
@@ -40,7 +41,16 @@ const toolbarBtn = cn(
   "disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-[color:var(--g-text-disabled)] disabled:cursor-not-allowed",
 );
 
-export const VoiceOrb = () => {
+type VoiceOrbProps = {
+  /** When true, transcripts are sent to the live handler (chat) instead of opening the save-idea draft editor. */
+  liveMode?: boolean;
+  onToggleLive?: (next: boolean) => void;
+  onLiveTranscript?: (text: string) => void;
+  /** True while Ash is speaking back — animates the orb in a different color. */
+  speaking?: boolean;
+};
+
+export const VoiceOrb = ({ liveMode = false, onToggleLive, onLiveTranscript, speaking = false }: VoiceOrbProps) => {
   const voice = useVoiceCapture({ maxSeconds: 180 });
   const createIdea = useCreateIdea();
   const [submitting, setSubmitting] = useState(false);
@@ -185,6 +195,11 @@ export const VoiceOrb = () => {
           toast.message("Nothing heard — try again.");
           return;
         }
+        // Live mode: skip the draft editor and stream the transcript straight into Ash chat.
+        if (liveMode && onLiveTranscript) {
+          onLiveTranscript(transcript.trim());
+          return;
+        }
         // Append to any existing draft so prior edits aren't lost.
         setDraft((prev) => {
           if (prev && prev.trim()) {
@@ -284,9 +299,13 @@ export const VoiceOrb = () => {
     ? `Listening · ${fmtSeconds(voice.seconds)}`
     : isTranscribing
       ? "Transcribing…"
-      : draft !== null
-        ? "Review & edit"
-        : "Tap to speak";
+      : speaking
+        ? "Ash is speaking…"
+        : draft !== null
+          ? "Review & edit"
+          : liveMode
+            ? "Tap to talk to Ash"
+            : "Tap to speak";
 
   return (
     <div className="gemini dark relative flex flex-col items-center justify-center gap-5 sm:gap-6 py-6 sm:py-8 px-3 sm:px-6 rounded-2xl sm:rounded-3xl bg-[color:var(--g-surface-0)] text-[color:var(--g-text)] overflow-hidden w-full">
@@ -318,13 +337,20 @@ export const VoiceOrb = () => {
           </>
         )}
 
+        {speaking && !isRecording && (
+          <>
+            <span className="absolute inset-0 rounded-full bg-[#4285F4]/30 animate-ping" />
+            <span className="absolute -inset-3 rounded-full bg-[#9B72CB]/15 animate-pulse" />
+          </>
+        )}
+
         {/* Rotating Gemini gradient ring around the orb */}
         <span
           aria-hidden
           className="absolute -inset-[2px] rounded-full opacity-90 blur-[1px]"
           style={{
             background: "var(--g-conic)",
-            animation: "gemini-spin 6s linear infinite",
+            animation: `gemini-spin ${speaking ? "2s" : "6s"} linear infinite`,
           }}
         />
 
@@ -333,14 +359,17 @@ export const VoiceOrb = () => {
           className={cn(
             "absolute inset-0 rounded-full",
             "shadow-[0_24px_60px_-12px_rgba(155,114,203,0.55),inset_0_1px_0_rgba(255,255,255,0.14)]",
-            !isRecording && !isTranscribing && "gemini-hue-cycle",
+            !isRecording && !isTranscribing && !speaking && "gemini-hue-cycle",
           )}
           style={{
             background: isRecording
               ? "radial-gradient(circle at 30% 30%, #F2A4AC, #D96570 55%, #5A1F26 100%)"
-              : "var(--g-gradient)",
+              : speaking
+                ? "radial-gradient(circle at 30% 30%, #A4C7F2, #4285F4 55%, #1A3A7A 100%)"
+                : "var(--g-gradient)",
           }}
         />
+
         <span
           aria-hidden
           className="absolute left-1/2 top-3 h-7 sm:h-9 w-20 sm:w-24 -translate-x-1/2 rounded-full bg-white/30 blur-md"
@@ -357,17 +386,38 @@ export const VoiceOrb = () => {
         </span>
       </button>
 
-      <div className="relative text-center space-y-1">
+      <div className="relative text-center space-y-1.5">
         <p className="text-[14px] sm:text-[15px] font-medium tracking-tight">{status}</p>
-        {draft === null && (
+        {draft === null && !liveMode && (
           <p className="text-[12px] sm:text-[12.5px] text-[color:var(--g-text-muted)]">
             Speak your idea — edit before saving.
+          </p>
+        )}
+        {draft === null && liveMode && (
+          <p className="text-[12px] sm:text-[12.5px] text-[color:var(--g-text-muted)]">
+            Live mode: Ash listens, replies, and speaks back.
           </p>
         )}
         {draft !== null && !isRecording && !isTranscribing && (
           <p className="text-[11.5px] text-[color:var(--g-text-muted)]">
             Tap orb to add more — your edits are kept.
           </p>
+        )}
+        {onToggleLive && (
+          <button
+            type="button"
+            onClick={() => onToggleLive(!liveMode)}
+            className={cn(
+              "mt-1 inline-flex items-center gap-1.5 h-7 px-3 rounded-full text-[11.5px] font-medium border transition",
+              liveMode
+                ? "bg-[#4285F4]/20 border-[#4285F4]/50 text-white shadow-[0_0_18px_-2px_rgba(66,133,244,0.5)]"
+                : "bg-white/[0.04] border-white/10 text-[color:var(--g-text-muted)] hover:text-white hover:bg-white/[0.08]",
+            )}
+            aria-pressed={liveMode}
+          >
+            {liveMode ? <Volume2 className="h-3 w-3" /> : <Radio className="h-3 w-3" />}
+            {liveMode ? "Live mode ON" : "Go Live"}
+          </button>
         )}
       </div>
 
