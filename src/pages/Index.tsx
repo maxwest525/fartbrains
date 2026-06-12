@@ -50,12 +50,48 @@ const Shell = () => {
   const chatRef = useRef<AshChatHandle>(null);
   const composeRef = useRef<HTMLDivElement>(null);
 
+  // Live chat: stream replies via useAshChat and speak the assistant's reply.
+  const liveChat = useAshChat();
+  const liveSpokenIdxRef = useRef<number>(-1);
+  const wasStreamingRef = useRef(false);
+
+  // When a streamed reply finishes, speak it.
+  useEffect(() => {
+    if (!liveMode) return;
+    const justFinished = wasStreamingRef.current && !liveChat.streaming;
+    wasStreamingRef.current = liveChat.streaming;
+    if (!justFinished) return;
+    const lastIdx = liveChat.messages.length - 1;
+    const last = liveChat.messages[lastIdx];
+    if (!last || last.role !== "assistant" || !last.content.trim()) return;
+    if (liveSpokenIdxRef.current === lastIdx) return;
+    liveSpokenIdxRef.current = lastIdx;
+    try {
+      const synth = window.speechSynthesis;
+      if (!synth) return;
+      synth.cancel();
+      const utter = new SpeechSynthesisUtterance(last.content);
+      utter.rate = 1.0;
+      utter.pitch = 1.0;
+      utter.onstart = () => setSpeaking(true);
+      utter.onend = () => setSpeaking(false);
+      utter.onerror = () => setSpeaking(false);
+      synth.speak(utter);
+    } catch { /* ignore */ }
+  }, [liveChat.messages, liveChat.streaming, liveMode]);
+
+  // Surface chat errors.
+  useEffect(() => {
+    if (liveChat.error) toast.error(liveChat.error);
+  }, [liveChat.error]);
+
   // Stop any speech when leaving the capture view or unmounting.
   useEffect(() => {
     return () => {
       try { window.speechSynthesis?.cancel(); } catch { /* ignore */ }
     };
   }, []);
+
   const { user, signOut } = useAuth();
   const { data: folders = [] } = useFolders();
 
