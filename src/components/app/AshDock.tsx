@@ -347,15 +347,23 @@ export const AshDock = ({ className }: { className?: string }) => {
   const ModeIcon = MODE_META[effectiveMode].icon;
   const modeLabel = mode === "auto" ? `Auto · ${MODE_META[effectiveMode].label}` : MODE_META[effectiveMode].label;
 
+  const sideClass =
+    side === "left"  ? "left-2 right-auto translate-x-0" :
+    side === "right" ? "right-2 left-auto translate-x-0" :
+                       "left-1/2 -translate-x-1/2";
+
   return (
     <>
       <div
+        ref={dockRef}
         className={cn(
-          "fixed left-1/2 -translate-x-1/2 z-30 w-[min(48rem,calc(100vw-1rem))]",
+          "fixed z-30 w-[min(48rem,calc(100vw-1rem))]",
+          sideClass,
           "bottom-[calc(5.75rem+env(safe-area-inset-bottom))] md:bottom-4",
           className,
         )}
       >
+
         <div className="gemini gemini-ring rounded-2xl bg-card/85 backdrop-blur-xl shadow-2xl shadow-black/30">
           {/* Input */}
           <div className="px-3.5 pt-3 pb-2">
