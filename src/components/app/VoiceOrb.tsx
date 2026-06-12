@@ -299,9 +299,13 @@ export const VoiceOrb = ({ liveMode = false, onToggleLive, onLiveTranscript, spe
     ? `Listening · ${fmtSeconds(voice.seconds)}`
     : isTranscribing
       ? "Transcribing…"
-      : draft !== null
-        ? "Review & edit"
-        : "Tap to speak";
+      : speaking
+        ? "Ash is speaking…"
+        : draft !== null
+          ? "Review & edit"
+          : liveMode
+            ? "Tap to talk to Ash"
+            : "Tap to speak";
 
   return (
     <div className="gemini dark relative flex flex-col items-center justify-center gap-5 sm:gap-6 py-6 sm:py-8 px-3 sm:px-6 rounded-2xl sm:rounded-3xl bg-[color:var(--g-surface-0)] text-[color:var(--g-text)] overflow-hidden w-full">
