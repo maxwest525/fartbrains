@@ -43,6 +43,7 @@ const Shell = () => {
     | null
   >(null);
   const isMobile = useIsMobile();
+  const [orbCollapsed, setOrbCollapsed] = useState(false);
   const composeRef = useRef<HTMLDivElement>(null);
   const { user, signOut } = useAuth();
   const { data: folders = [] } = useFolders();
