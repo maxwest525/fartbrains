@@ -294,27 +294,46 @@ const Shell = () => {
               </div>
             </div>
             <div ref={composeRef} className="w-full px-3 sm:px-6 lg:px-10 pt-3 sm:pt-6 pb-4 flex-1 min-h-0 flex flex-col gap-3 sm:gap-5 max-w-3xl mx-auto">
-              <div className={cn("relative transition-all duration-300 overflow-hidden", orbCollapsed ? "h-0 opacity-0" : "opacity-100")}>
-                <VoiceOrb />
-              </div>
-              <div className="flex items-center justify-center -my-1">
-                <button
-                  type="button"
-                  onClick={() => setOrbCollapsed((v) => !v)}
-                  className="inline-flex items-center gap-1.5 h-7 px-3 rounded-full text-[11.5px] font-medium text-muted-foreground hover:text-foreground bg-secondary/60 hover:bg-secondary border border-border transition"
-                >
-                  {orbCollapsed ? <ChevronDown className="h-3 w-3" /> : <ChevronUp className="h-3 w-3" />}
-                  {orbCollapsed ? "Show orb" : "Hide orb"}
-                </button>
-              </div>
-              <div className={cn("flex-1 flex flex-col", orbCollapsed ? "min-h-[70vh]" : "min-h-[480px] sm:min-h-[520px]")}>
+              <VoiceOrb
+                liveMode={liveMode}
+                onToggleLive={(next) => {
+                  setLiveMode(next);
+                  if (!next) {
+                    try { window.speechSynthesis?.cancel(); } catch { /* ignore */ }
+                    setSpeaking(false);
+                  }
+                }}
+                speaking={speaking}
+                onLiveTranscript={(text) => {
+                  chatRef.current?.send(text);
+                }}
+              />
+              <div className="flex-1 min-h-[420px] sm:min-h-[480px] flex flex-col">
                 <AshChatPanel
+                  ref={chatRef}
                   onSaved={(id) => {
                     if (!isMobile) setSelectedId(id);
                     else toast.success("Saved to Vault", { action: { label: "View", onClick: () => setSelectedId(id) } });
                   }}
                   onOpenUrlCapture={(url) => setCapture({ kind: "url", url })}
                   onOpenTranscriptCapture={(text) => setCapture({ kind: "transcript", text })}
+                  onAssistantReply={(text) => {
+                    if (!liveMode) return;
+                    try {
+                      const synth = window.speechSynthesis;
+                      if (!synth) return;
+                      synth.cancel();
+                      // Strip markdown punctuation that TTS reads awkwardly.
+                      const clean = text.replace(/[*_`#>]/g, "").replace(/\[(.+?)\]\(.+?\)/g, "$1");
+                      const u = new SpeechSynthesisUtterance(clean);
+                      u.rate = 1.02;
+                      u.pitch = 1;
+                      u.onstart = () => setSpeaking(true);
+                      u.onend = () => setSpeaking(false);
+                      u.onerror = () => setSpeaking(false);
+                      synth.speak(u);
+                    } catch { /* ignore */ }
+                  }}
                 />
               </div>
               <p className="text-center text-[12px] text-muted-foreground">
