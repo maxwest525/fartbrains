@@ -36,6 +36,11 @@ type Mode = "auto" | "note" | "list" | "transcript" | "link" | "instagram";
 
 const CHIPS_KEY = "ash-dock-chips-v1";
 const FOLDER_KEY = "ash-dock-folder-v1";
+const SIDE_KEY = "ash-dock-side-v1";
+const COLLAPSED_KEY = "ash-dock-collapsed-v1";
+
+type Side = "left" | "center" | "right";
+
 
 const loadChips = (): Chip[] => {
   try {
