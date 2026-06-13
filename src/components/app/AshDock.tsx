@@ -117,8 +117,8 @@ export const AshDock = ({ className }: { className?: string }) => {
   const [side, setSide] = useState<Side>(() => {
     try {
       const v = localStorage.getItem(SIDE_KEY);
-      return v === "left" || v === "right" || v === "center" ? v : "center";
-    } catch { return "center"; }
+      return v === "left" || v === "right" || v === "center" ? v : "left";
+    } catch { return "left"; }
   });
   const [collapsed, setCollapsed] = useState<boolean>(() => {
     try { return localStorage.getItem(COLLAPSED_KEY) === "1"; } catch { return false; }
