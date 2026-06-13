@@ -316,10 +316,11 @@ const Shell = () => {
         {!showFolders && !showCalendar && !showDetailOnly && filter.kind === "all" && (
           <div
             className="w-full flex-1 min-w-0 flex flex-col min-h-0 bg-background overflow-y-auto scroll-momentum touch-pan-y"
-            style={{ paddingBottom: "calc(var(--ash-dock-h, 0px) + env(safe-area-inset-bottom) + 1.25rem)" }}
+            style={{ paddingBottom: "calc(var(--ash-dock-h, 0px) + env(safe-area-inset-bottom) + (var(--mobile-tabbar-h, 0px)) + 1.25rem)" }}
           >
 
-            <div className="w-full px-3 sm:px-6 lg:px-10 pt-3 sm:pt-4">
+            <div className="w-full px-3 sm:px-6 lg:px-10 pt-4 sm:pt-5 lg:pt-6">
+
               <div className="relative max-w-xl mx-auto">
                 <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
                 <Input
