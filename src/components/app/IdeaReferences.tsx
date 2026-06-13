@@ -73,8 +73,8 @@ export const IdeaReferences = ({ ideaId }: Props) => {
         </div>
       ) : (
         <ul className="space-y-1.5">
-          {data.map((ref) => (
-            <ReferenceRow key={ref.id} ref={ref} />
+          {data.map((item) => (
+            <ReferenceRow key={item.id} item={item} />
           ))}
         </ul>
       )}
@@ -82,7 +82,8 @@ export const IdeaReferences = ({ ideaId }: Props) => {
   );
 };
 
-const ReferenceRow = ({ ref }: { ref: IdeaReference }) => {
+const ReferenceRow = ({ item: ref }: { item: IdeaReference }) => {
+
   const Icon = iconFor(ref.kind);
   return (
     <li>
