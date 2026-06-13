@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Search, X, Inbox, Folder, Star, Clock, CalendarDays, Settings as SettingsIcon, LogOut } from "lucide-react";
+import { MaterialIcon } from "@/components/ui/MaterialIcon";
 import { Input } from "@/components/ui/input";
 import { IdeaList } from "@/components/app/IdeaList";
 import { IdeaDetail } from "@/components/app/IdeaDetail";
@@ -167,45 +168,46 @@ const Shell = () => {
       ? (folders.find((f) => f.id === filter.folderId)?.name ?? "Folder")
       : null;
 
-  // Desktop top-bar nav items.
+  // Desktop top-bar nav items. Icons are Material Symbols Rounded names
+  // (https://fonts.google.com/icons) — Gemini 2026 visual language.
   const navItems: Array<{
     label: string;
-    icon: typeof Inbox;
+    icon: string;
     active: boolean;
     onClick: () => void;
   }> = [
     {
       label: "Capture",
-      icon: Inbox,
+      icon: "auto_awesome",
       active: view === "ideas" && filter.kind === "all",
       onClick: () => handleFilterChange({ kind: "all" }),
     },
-
     {
       label: "Recents",
-      icon: Clock,
+      icon: "history",
       active: view === "ideas" && filter.kind === "recent",
       onClick: () => handleFilterChange({ kind: "recent" }),
     },
     {
       label: "Calendar",
-      icon: CalendarDays,
+      icon: "calendar_month",
       active: view === "calendar",
       onClick: openCalendarPage,
     },
     {
       label: activeFolderName ?? "Folders",
-      icon: Folder,
+      icon: "folder",
       active: view === "folders" || filter.kind === "folder",
       onClick: openFoldersPage,
     },
     {
       label: "Favorites",
-      icon: Star,
+      icon: "star",
       active: view === "ideas" && filter.kind === "favorites",
       onClick: () => handleFilterChange({ kind: "favorites" }),
     },
   ];
+
 
   return (
     <div className="flex flex-col h-[100dvh] w-full bg-background overflow-hidden relative">
@@ -253,37 +255,34 @@ const Shell = () => {
             )}
             {filter.kind === "all" && <div className="flex-1" />}
 
-            {/* Desktop nav — replaces the old sidebar */}
-            <nav className="hidden md:flex items-center gap-1 ml-auto">
-              {navItems.map(({ label, icon: Icon, active, onClick }) => (
+            {/* Desktop nav — Gemini 2026 fluid pills */}
+            <nav className="hidden md:flex items-center gap-0.5 ml-auto">
+              {navItems.map(({ label, icon, active, onClick }) => (
                 <button
                   key={label}
                   onClick={onClick}
-                  className={cn(
-                    "relative inline-flex items-center gap-1.5 h-9 px-3 rounded-full text-sm font-medium transition-all",
-                    active
-                      ? "text-white brand-gradient shadow-[0_6px_20px_-6px_hsl(var(--primary)/0.65)]"
-                      : "text-muted-foreground hover:text-foreground hover:bg-secondary/70"
-                  )}
+                  data-active={active}
+                  className="fluid-pill"
                 >
-                  <Icon className="h-4 w-4" />
+                  <MaterialIcon name={icon} filled={active} size={20} />
                   {label}
                 </button>
               ))}
+              <div className="w-px h-5 mx-1 bg-border/60" aria-hidden />
               <button
                 onClick={() => setSettingsOpen(true)}
-                className="inline-flex items-center justify-center h-9 w-9 rounded-[10px] text-muted-foreground hover:text-foreground hover:bg-secondary/60"
+                className="fluid-icon-btn"
                 aria-label="Settings"
                 title={user?.email ?? "Settings"}
               >
-                <SettingsIcon className="h-4 w-4" />
+                <MaterialIcon name="tune" size={20} />
               </button>
               <button
                 onClick={signOut}
-                className="inline-flex items-center justify-center h-9 w-9 rounded-[10px] text-muted-foreground hover:text-foreground hover:bg-secondary/60"
+                className="fluid-icon-btn"
                 aria-label="Sign out"
               >
-                <LogOut className="h-4 w-4" />
+                <MaterialIcon name="logout" size={20} />
               </button>
             </nav>
           </div>
