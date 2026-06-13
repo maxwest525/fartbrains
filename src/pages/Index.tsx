@@ -220,9 +220,9 @@ const Shell = () => {
           filter.kind !== "all" && "safe-top"
         )}>
           <div aria-hidden className="absolute inset-x-0 -top-px h-px bg-gradient-to-r from-transparent via-primary/60 to-transparent" />
-          <div className="px-3 sm:px-5 py-2 flex items-center gap-2 sm:gap-3">
+          <div className="px-3 sm:px-5 lg:px-8 py-2 lg:py-2.5 flex items-center gap-2 sm:gap-3 lg:gap-4">
             {/* Brand — desktop only */}
-            <div className="hidden md:flex items-center gap-2.5 shrink-0 pr-2">
+            <div className="hidden md:flex items-center gap-2.5 shrink-0 pr-2 lg:pr-4">
               <div className="relative h-9 w-9 rounded-xl brand-gradient ring-glow flex items-center justify-center">
                 <span className="font-display text-[15px] font-bold text-white drop-shadow">IV</span>
                 <span aria-hidden className="absolute inset-0 rounded-xl bg-gradient-to-b from-white/25 to-transparent pointer-events-none" />
@@ -231,6 +231,7 @@ const Shell = () => {
                 Idea<span className="brand-gradient-text">Vault</span>
               </span>
             </div>
+
 
             {/* Search — hidden on the Capture view (it appears below the ticker there) */}
             {filter.kind !== "all" && (
