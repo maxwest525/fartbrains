@@ -399,7 +399,7 @@ const Shell = () => {
         />
       )}
 
-      {!showDetailOnly && <AshDock />}
+      {!showDetailOnly && view === "ideas" && filter.kind === "all" && <AshDock />}
 
       <SettingsSheet open={settingsOpen} onOpenChange={setSettingsOpen} />
       <AlarmOverlay />
