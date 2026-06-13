@@ -116,6 +116,3 @@ const ReferenceRow = ({ ref }: { ref: IdeaReference }) => {
     </li>
   );
 };
-
-// Re-export for IdeaDetail
-export { FileText };
