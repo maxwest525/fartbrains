@@ -409,20 +409,6 @@ export const AshDock = ({ className }: { className?: string }) => {
               >
                 Tap to capture…
               </button>
-              <button
-                type="button"
-                onClick={handleSubmit}
-                disabled={!text.trim() || busy}
-                aria-label="Save idea"
-                className={cn(
-                  "inline-flex items-center justify-center h-9 w-9 rounded-full transition-colors shrink-0",
-                  text.trim() && !busy
-                    ? "bg-primary text-primary-foreground hover:bg-primary/90"
-                    : "bg-secondary/60 text-muted-foreground cursor-not-allowed",
-                )}
-              >
-                {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowUp className="h-4 w-4" />}
-              </button>
             </div>
           ) : (
           <div id="ash-dock-body">
