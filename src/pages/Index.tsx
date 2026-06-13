@@ -220,9 +220,9 @@ const Shell = () => {
           filter.kind !== "all" && "safe-top"
         )}>
           <div aria-hidden className="absolute inset-x-0 -top-px h-px bg-gradient-to-r from-transparent via-primary/60 to-transparent" />
-          <div className="px-3 sm:px-5 py-2 flex items-center gap-2 sm:gap-3">
+          <div className="px-3 sm:px-5 lg:px-8 py-2 lg:py-2.5 flex items-center gap-2 sm:gap-3 lg:gap-4">
             {/* Brand — desktop only */}
-            <div className="hidden md:flex items-center gap-2.5 shrink-0 pr-2">
+            <div className="hidden md:flex items-center gap-2.5 shrink-0 pr-2 lg:pr-4">
               <div className="relative h-9 w-9 rounded-xl brand-gradient ring-glow flex items-center justify-center">
                 <span className="font-display text-[15px] font-bold text-white drop-shadow">IV</span>
                 <span aria-hidden className="absolute inset-0 rounded-xl bg-gradient-to-b from-white/25 to-transparent pointer-events-none" />
@@ -231,6 +231,7 @@ const Shell = () => {
                 Idea<span className="brand-gradient-text">Vault</span>
               </span>
             </div>
+
 
             {/* Search — hidden on the Capture view (it appears below the ticker there) */}
             {filter.kind !== "all" && (
@@ -256,7 +257,7 @@ const Shell = () => {
             {filter.kind === "all" && <div className="flex-1" />}
 
             {/* Desktop nav — Gemini 2026 fluid pills */}
-            <nav className="hidden md:flex items-center gap-0.5 ml-auto">
+            <nav className="hidden md:flex items-center gap-1.5 ml-auto">
               {navItems.map(({ label, icon, active, onClick }) => (
                 <button
                   key={label}
@@ -268,7 +269,7 @@ const Shell = () => {
                   {label}
                 </button>
               ))}
-              <div className="w-px h-5 mx-1 bg-border/60" aria-hidden />
+              <div className="w-px h-5 mx-2 bg-border/60" aria-hidden />
               <button
                 onClick={() => setSettingsOpen(true)}
                 className="fluid-icon-btn"
@@ -315,10 +316,11 @@ const Shell = () => {
         {!showFolders && !showCalendar && !showDetailOnly && filter.kind === "all" && (
           <div
             className="w-full flex-1 min-w-0 flex flex-col min-h-0 bg-background overflow-y-auto scroll-momentum touch-pan-y"
-            style={{ paddingBottom: "calc(var(--ash-dock-h, 0px) + env(safe-area-inset-bottom) + 1.25rem)" }}
+            style={{ paddingBottom: "calc(var(--ash-dock-h, 0px) + env(safe-area-inset-bottom) + (var(--mobile-tabbar-h, 0px)) + 1.25rem)" }}
           >
 
-            <div className="w-full px-3 sm:px-6 lg:px-10 pt-3 sm:pt-4">
+            <div className="w-full px-3 sm:px-6 lg:px-10 pt-4 sm:pt-5 lg:pt-6">
+
               <div className="relative max-w-xl mx-auto">
                 <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
                 <Input
@@ -368,7 +370,7 @@ const Shell = () => {
         {!showFolders && !showCalendar && !showDetailOnly && filter.kind !== "all" && (
           <div
             className="w-full flex-1 min-w-0 md:w-[28rem] md:flex-none md:shrink-0 md:border-r border-border flex flex-col min-h-0 bg-background md:overflow-hidden overflow-y-auto scroll-momentum touch-pan-y"
-            style={{ paddingBottom: "calc(var(--ash-dock-h, 0px) + 5.75rem + env(safe-area-inset-bottom))" }}
+            style={{ paddingBottom: isMobile ? "calc(var(--ash-dock-h, 0px) + var(--mobile-tabbar-h, 0px) + env(safe-area-inset-bottom) + 1rem)" : "1.5rem" }}
           >
 
             <div className="md:flex-1 md:min-h-0 md:overflow-hidden">

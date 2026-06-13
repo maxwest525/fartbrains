@@ -1,4 +1,6 @@
+import { useEffect, useRef } from "react";
 import { Inbox, Folder, Clock, CalendarDays, Settings as SettingsIcon } from "lucide-react";
+
 import { cn } from "@/lib/utils";
 import type { IdeaFilter } from "@/hooks/useIdeas";
 
@@ -44,13 +46,34 @@ export const MobileTabBar = ({ filter, view, onFilterChange, onOpenFolders, onOp
   const isFolders = view === "folders";
   const isCalendar = view === "calendar";
   const isHistory = view === "ideas" && filter.kind === "recent";
+  const navRef = useRef<HTMLElement>(null);
+
+  // Publish total bar height (incl. safe-area) so pages can pad around it.
+  useEffect(() => {
+    const el = navRef.current;
+    if (!el) return;
+    const update = () => {
+      const h = el.getBoundingClientRect().height;
+      document.body.style.setProperty("--mobile-tabbar-h", `${Math.ceil(h)}px`);
+    };
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    window.addEventListener("resize", update);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener("resize", update);
+      document.body.style.removeProperty("--mobile-tabbar-h");
+    };
+  }, []);
 
   return (
     <nav
+      ref={navRef}
       className="md:hidden fixed bottom-0 inset-x-0 z-30 bg-background/80 backdrop-blur-xl border-t border-border safe-bottom"
       aria-label="Primary"
     >
-      <div className="flex items-stretch h-[50px]">
+      <div className="flex items-stretch h-[56px]">
         <Tab active={isAll} icon={Inbox} label="Capture" onClick={() => onFilterChange({ kind: "all" })} />
         <Tab active={isHistory} icon={Clock} label="Recents" onClick={() => onFilterChange({ kind: "recent" })} />
         <Tab active={isCalendar} icon={CalendarDays} label="Calendar" onClick={onOpenCalendar} />
@@ -60,3 +83,4 @@ export const MobileTabBar = ({ filter, view, onFilterChange, onOpenFolders, onOp
     </nav>
   );
 };
+
