@@ -70,6 +70,17 @@ export const AshChatPanel = forwardRef<AshChatHandle, Props>(function AshChatPan
     inputRef.current?.focus();
   }, []);
 
+  // Auto-grow up to 2 lines (~48px), then scroll inside.
+  useEffect(() => {
+    const el = inputRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = Math.min(el.scrollHeight, 48) + "px";
+  }, [input]);
+
+  const _unused = () => {
+  }, []);
+
   const detected = useMemo(() => {
     const trimmed = input.trim();
     if (!trimmed) return null;
