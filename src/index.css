@@ -133,7 +133,7 @@
 
 @layer utilities {
   .font-display { font-family: "Space Grotesk", "Inter", system-ui, sans-serif; }
-  .font-mono-ui { font-family: "JetBrains Mono", ui-monospace, monospace; }
+  .font-mono-ui { font-family: "JetBrains Mono", "Google Sans Code", ui-monospace, monospace; }
 
   /* Brand gradient used by the wordmark mark and active nav pill. */
   .brand-gradient {
@@ -147,6 +147,94 @@
   }
   .ring-glow {
     box-shadow: 0 0 0 1px hsl(var(--primary) / 0.35), 0 10px 30px -10px hsl(var(--primary) / 0.55);
+  }
+
+  /* ----------------------------------------------------------
+     Gemini 2026 "fluid" nav pill.
+     Idle: translucent glass, no border, soft text.
+     Hover: subtle backdrop wash, gentle lift, icon tint shift.
+     Active: tonal fill with brand-gradient glow, white-on-color.
+     ---------------------------------------------------------- */
+  .fluid-pill {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    height: 2.25rem;
+    padding: 0 0.875rem;
+    border-radius: 9999px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    letter-spacing: -0.005em;
+    color: hsl(var(--muted-foreground));
+    background: transparent;
+    transition:
+      color 240ms cubic-bezier(.2,.7,.2,1),
+      background-color 240ms cubic-bezier(.2,.7,.2,1),
+      transform 240ms cubic-bezier(.2,.7,.2,1),
+      box-shadow 320ms cubic-bezier(.2,.7,.2,1);
+    isolation: isolate;
+  }
+  .fluid-pill::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: hsl(var(--foreground) / 0);
+    backdrop-filter: blur(0) saturate(120%);
+    -webkit-backdrop-filter: blur(0) saturate(120%);
+    transition: background-color 260ms ease, backdrop-filter 260ms ease;
+    z-index: -1;
+  }
+  .fluid-pill:hover {
+    color: hsl(var(--foreground));
+    transform: translateY(-0.5px);
+  }
+  .fluid-pill:hover::before {
+    background: hsl(var(--foreground) / 0.06);
+    backdrop-filter: blur(8px) saturate(140%);
+    -webkit-backdrop-filter: blur(8px) saturate(140%);
+  }
+  .fluid-pill:active { transform: translateY(0) scale(0.98); }
+
+  .fluid-pill[data-active="true"] {
+    color: white;
+    background-image: linear-gradient(135deg, hsl(265 90% 62%) 0%, hsl(220 95% 58%) 55%, hsl(190 95% 55%) 100%);
+    box-shadow:
+      0 1px 0 hsl(0 0% 100% / 0.18) inset,
+      0 8px 24px -10px hsl(220 95% 58% / 0.6),
+      0 2px 8px -2px hsl(265 90% 62% / 0.4);
+  }
+  .fluid-pill[data-active="true"]::before { background: transparent; backdrop-filter: none; }
+
+  /* Icon-only fluid button (settings / sign-out) */
+  .fluid-icon-btn {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 2.25rem;
+    width: 2.25rem;
+    border-radius: 9999px;
+    color: hsl(var(--muted-foreground));
+    transition: color 220ms ease, background-color 220ms ease, transform 220ms ease;
+  }
+  .fluid-icon-btn:hover {
+    color: hsl(var(--foreground));
+    background: hsl(var(--foreground) / 0.06);
+  }
+  .fluid-icon-btn:active { transform: scale(0.94); }
+
+  /* Material Symbols sane defaults so missing-font flashes look like text, not boxes. */
+  .material-symbols-rounded {
+    font-family: 'Material Symbols Rounded';
+    font-style: normal;
+    font-weight: 400;
+    display: inline-block;
+    direction: ltr;
+    -webkit-font-feature-settings: 'liga';
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
   }
 }
 
