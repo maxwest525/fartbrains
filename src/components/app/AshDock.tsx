@@ -102,6 +102,13 @@ export const AshDock = ({ className }: { className?: string }) => {
   const createIdea = useCreateIdea();
   const voice = useVoiceCapture({ maxSeconds: 180 });
   const [text, setText] = useState("");
+  // Auto-grow up to 2 lines (~48px), then scroll inside.
+  useEffect(() => {
+    const el = textareaRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = Math.min(el.scrollHeight, 48) + "px";
+  }, [text]);
   const [submitting, setSubmitting] = useState(false);
   const [mode, setMode] = useState<Mode>("auto");
   const [folderId, setFolderId] = useState<string | null>(() => {
@@ -434,7 +441,7 @@ export const AshDock = ({ className }: { className?: string }) => {
               }}
               placeholder={isRecording ? `Listening… ${fmtSeconds(voice.seconds)}` : "Capture an idea, paste a link, drop a transcript…"}
               rows={1}
-              className="w-full resize-none bg-transparent text-[15px] leading-6 placeholder:text-muted-foreground/70 focus:outline-none max-h-40"
+              className="w-full resize-none bg-transparent text-[15px] leading-6 placeholder:text-muted-foreground/70 focus:outline-none max-h-12 overflow-y-auto"
             />
           </div>
 
