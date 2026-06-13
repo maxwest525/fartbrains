@@ -1,4 +1,6 @@
+import { useEffect, useRef } from "react";
 import { Inbox, Folder, Clock, CalendarDays, Settings as SettingsIcon } from "lucide-react";
+
 import { cn } from "@/lib/utils";
 import type { IdeaFilter } from "@/hooks/useIdeas";
 
