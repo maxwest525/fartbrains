@@ -367,14 +367,6 @@ export const AshDock = ({ className }: { className?: string }) => {
         <div className="gemini gemini-ring rounded-2xl bg-card/85 backdrop-blur-xl shadow-2xl shadow-black/30 transition-all">
           {/* Header strip — side toggle + collapse */}
           <div className="flex items-center gap-1 px-2 pt-1.5">
-            <button
-              type="button"
-              onClick={cycleSide}
-              aria-label={`Dock position: ${side}`}
-              className="inline-flex items-center justify-center h-7 w-7 rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary/70 transition-colors"
-            >
-              <SideIcon className="h-3.5 w-3.5" />
-            </button>
             <div className="flex-1" />
             <button
               type="button"
