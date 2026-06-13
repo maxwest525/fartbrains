@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import {
   Mic, ArrowUp, Loader2, Square, X, Check,
   Folder as FolderIcon, Pencil, Trash2,
-  ChevronDown, ChevronUp, Wand2, FileText, Instagram, Globe, ListChecks,
+  ChevronDown, Wand2, FileText, Instagram, Globe, ListChecks,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -371,21 +371,6 @@ export const AshDock = ({ className }: { className?: string }) => {
       >
 
         <div className="gemini gemini-ring rounded-2xl bg-card/85 backdrop-blur-xl shadow-2xl shadow-black/30 transition-all">
-          {/* Header strip — side toggle + collapse */}
-          <div className="flex items-center gap-1 px-2 pt-1.5">
-            <div className="flex-1" />
-            <button
-              type="button"
-              onClick={() => setCollapsed((c) => !c)}
-              aria-expanded={!collapsed}
-              aria-controls="ash-dock-body"
-              aria-label={collapsed ? "Expand dock" : "Collapse dock"}
-              className="inline-flex items-center justify-center h-7 w-7 rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary/70 transition-colors"
-            >
-              {collapsed ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
-            </button>
-          </div>
-
           {collapsed ? (
             <div id="ash-dock-body" className="flex items-center gap-1.5 px-2.5 pb-2 pt-0.5">
               <button
