@@ -244,7 +244,7 @@ export const AshChatPanel = forwardRef<AshChatHandle, Props>(function AshChatPan
             }}
             placeholder="Message Ash, paste a URL, or drop a transcript…"
             rows={1}
-            className="resize-none min-h-[44px] max-h-40 rounded-xl pr-12 text-[14px] bg-background"
+            className="resize-none min-h-[44px] max-h-12 overflow-y-auto rounded-xl pr-12 text-[14px] bg-background"
           />
           <button
             type="button"
