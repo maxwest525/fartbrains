@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
-import { Inbox, Folder, Clock, CalendarDays, Settings as SettingsIcon } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { MaterialIcon } from "@/components/ui/MaterialIcon";
 import type { IdeaFilter } from "@/hooks/useIdeas";
 
 type Props = {
@@ -16,30 +16,55 @@ type Props = {
 
 const Tab = ({
   active,
-  icon: Icon,
+  icon,
   label,
   onClick,
 }: {
   active: boolean;
-  icon: typeof Inbox;
+  icon: string;
   label: string;
   onClick: () => void;
 }) => (
   <button
     onClick={onClick}
-    className={cn(
-      "flex-1 flex flex-col items-center justify-center gap-0.5 h-full press",
-      active ? "text-primary" : "text-muted-foreground"
-    )}
+    className="flex-1 flex flex-col items-center justify-center gap-0.5 h-full press relative"
     aria-label={label}
   >
-    <Icon className={cn("h-[22px] w-[22px]", active && "fill-primary/15")} strokeWidth={active ? 2.4 : 2} />
-    <span className="text-[10px] font-medium tracking-tight">{label}</span>
+    <span
+      className={cn(
+        "relative inline-flex items-center justify-center h-7 w-12 rounded-full transition-all duration-300",
+        active && "bg-white/[0.08] shadow-[inset_0_0_0_1px_hsl(0_0%_100%/0.18),0_8px_24px_-12px_hsl(265_90%_70%/0.55)]"
+      )}
+    >
+      <MaterialIcon
+        name={icon}
+        filled={active}
+        size={22}
+        className={cn(
+          "transition-colors duration-300",
+          active ? "text-white" : "text-white/55"
+        )}
+        style={
+          active
+            ? { fontVariationSettings: "'FILL' 1, 'wght' 500, 'GRAD' 0, 'opsz' 22" }
+            : undefined
+        }
+      />
+    </span>
+    <span
+      className={cn(
+        "text-[10px] font-medium tracking-tight transition-colors duration-300",
+        active ? "text-white" : "text-white/55"
+      )}
+    >
+      {label}
+    </span>
   </button>
 );
 
 /**
- * iOS-style bottom tab bar. Five tabs: Capture, Recents, Calendar, Folders, Settings.
+ * Gemini Glimmer bottom tab bar — frosted glass, Material Symbols Rounded,
+ * tonal indicator pill behind the active icon.
  */
 export const MobileTabBar = ({ filter, view, onFilterChange, onOpenFolders, onOpenCalendar, onOpenSettings }: Props) => {
   const isAll = view === "ideas" && filter.kind === "all";
@@ -48,7 +73,6 @@ export const MobileTabBar = ({ filter, view, onFilterChange, onOpenFolders, onOp
   const isHistory = view === "ideas" && filter.kind === "recent";
   const navRef = useRef<HTMLElement>(null);
 
-  // Publish total bar height (incl. safe-area) so pages can pad around it.
   useEffect(() => {
     const el = navRef.current;
     if (!el) return;
@@ -70,17 +94,28 @@ export const MobileTabBar = ({ filter, view, onFilterChange, onOpenFolders, onOp
   return (
     <nav
       ref={navRef}
-      className="md:hidden fixed bottom-0 inset-x-0 z-30 bg-background/80 backdrop-blur-xl border-t border-border safe-bottom"
+      className="md:hidden fixed bottom-0 inset-x-0 z-30 safe-bottom"
       aria-label="Primary"
     >
-      <div className="flex items-stretch h-[56px]">
-        <Tab active={isAll} icon={Inbox} label="Capture" onClick={() => onFilterChange({ kind: "all" })} />
-        <Tab active={isHistory} icon={Clock} label="Recents" onClick={() => onFilterChange({ kind: "recent" })} />
-        <Tab active={isCalendar} icon={CalendarDays} label="Calendar" onClick={onOpenCalendar} />
-        <Tab active={isFolders} icon={Folder} label="Folders" onClick={onOpenFolders} />
-        <Tab active={false} icon={SettingsIcon} label="Settings" onClick={onOpenSettings} />
+      {/* Top hairline gradient */}
+      <div aria-hidden className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/15 to-transparent" />
+      <div
+        className="relative bg-black/45"
+        style={{
+          backdropFilter: "blur(22px) saturate(180%)",
+          WebkitBackdropFilter: "blur(22px) saturate(180%)",
+          boxShadow:
+            "inset 0 1px 0 hsl(0 0% 100% / 0.06), 0 -8px 30px -10px hsl(0 0% 0% / 0.55)",
+        }}
+      >
+        <div className="flex items-stretch h-[58px]">
+          <Tab active={isAll} icon="auto_awesome" label="Capture" onClick={() => onFilterChange({ kind: "all" })} />
+          <Tab active={isHistory} icon="history" label="Recents" onClick={() => onFilterChange({ kind: "recent" })} />
+          <Tab active={isCalendar} icon="calendar_month" label="Calendar" onClick={onOpenCalendar} />
+          <Tab active={isFolders} icon="folder" label="Folders" onClick={onOpenFolders} />
+          <Tab active={false} icon="tune" label="Settings" onClick={onOpenSettings} />
+        </div>
       </div>
     </nav>
   );
 };
-
