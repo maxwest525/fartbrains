@@ -1,4 +1,4 @@
-import { ExternalLink, Github, Link as LinkIcon, BookOpen, Youtube, FileText, Sparkles, RefreshCw, Loader2 } from "lucide-react";
+import { ExternalLink, Github, Link as LinkIcon, BookOpen, Youtube, Sparkles, RefreshCw, Loader2 } from "lucide-react";
 import {
   useIdeaReferences,
   useRefreshIdeaReferences,
