@@ -4,7 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { PasscodeKeypad } from "@/components/auth/PasscodeKeypad";
 import { isUnlocked } from "@/lib/passcode";
-import spaceBg from "@/assets/space-nebula.jpg";
+import spaceBg from "@/assets/aurora-ridge.jpg";
 
 // Single-user app: anyone who opens the URL is silently signed in as the
 // owner — but only after they unlock the local Apple-style passcode gate.
