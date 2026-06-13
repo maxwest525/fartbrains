@@ -102,6 +102,13 @@ export const AshDock = ({ className }: { className?: string }) => {
   const createIdea = useCreateIdea();
   const voice = useVoiceCapture({ maxSeconds: 180 });
   const [text, setText] = useState("");
+  // Auto-grow up to 2 lines (~48px), then scroll inside.
+  useEffect(() => {
+    const el = textareaRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = Math.min(el.scrollHeight, 48) + "px";
+  }, [text]);
   const [submitting, setSubmitting] = useState(false);
   const [mode, setMode] = useState<Mode>("auto");
   const [folderId, setFolderId] = useState<string | null>(() => {
