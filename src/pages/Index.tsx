@@ -260,10 +260,10 @@ const Shell = () => {
                   key={label}
                   onClick={onClick}
                   className={cn(
-                    "inline-flex items-center gap-1.5 h-9 px-3 rounded-[10px] text-sm font-medium transition-colors",
+                    "relative inline-flex items-center gap-1.5 h-9 px-3 rounded-full text-sm font-medium transition-all",
                     active
-                      ? "bg-secondary text-foreground"
-                      : "text-muted-foreground hover:text-foreground hover:bg-secondary/60"
+                      ? "text-white brand-gradient shadow-[0_6px_20px_-6px_hsl(var(--primary)/0.65)]"
+                      : "text-muted-foreground hover:text-foreground hover:bg-secondary/70"
                   )}
                 >
                   <Icon className="h-4 w-4" />
