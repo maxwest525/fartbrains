@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { triggerExtractReferences } from "@/hooks/useIdeaReferences";
 
 export type SourceType = "manual" | "webpage" | "transcript" | "audio";
 export type Priority = "none" | "low" | "medium" | "high";
@@ -135,11 +136,15 @@ export function useCreateIdea() {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       qc.invalidateQueries({ queryKey: ["ideas"] });
       qc.invalidateQueries({ queryKey: ["folder-counts"] });
       qc.invalidateQueries({ queryKey: ["folder-previews"] });
       toast.success("Idea saved");
+      // Kick off background reference extraction (fire-and-forget).
+      if (data && typeof (data as { id?: string }).id === "string") {
+        triggerExtractReferences((data as { id: string }).id);
+      }
     },
     onError: (e: Error) => toast.error(e.message),
   });

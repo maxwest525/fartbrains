@@ -173,6 +173,56 @@ export type Database = {
         }
         Relationships: []
       }
+      idea_references: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          idea_id: string
+          kind: string
+          name: string
+          position: number
+          source: string
+          title: string | null
+          url: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          idea_id: string
+          kind?: string
+          name: string
+          position?: number
+          source?: string
+          title?: string | null
+          url: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          idea_id?: string
+          kind?: string
+          name?: string
+          position?: number
+          source?: string
+          title?: string | null
+          url?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "idea_references_idea_id_fkey"
+            columns: ["idea_id"]
+            isOneToOne: false
+            referencedRelation: "ideas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       idea_reminders: {
         Row: {
           created_at: string
