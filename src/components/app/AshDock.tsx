@@ -1,9 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import {
-  Mic, Plus, ArrowUp, Loader2, Square, X, Check,
+  Mic, ArrowUp, Loader2, Square, X, Check,
   Folder as FolderIcon, Pencil, Trash2,
   ChevronDown, ChevronUp, Wand2, FileText, Instagram, Globe, ListChecks,
-  AlignLeft, AlignCenter, AlignRight,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
