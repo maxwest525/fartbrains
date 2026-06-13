@@ -36,6 +36,7 @@ import { PROJECT_TAG } from "@/lib/deliverables";
 import { formatReminder } from "@/lib/formatTime";
 import { SourceMetaCard } from "./SourceMetaCard";
 import { RelatedIdeas } from "./RelatedIdeas";
+import { IdeaReferences } from "./IdeaReferences";
 
 const NO_FOLDER = "__none__";
 
@@ -494,6 +495,10 @@ export const IdeaDetail = ({ ideaId, onClose, backLabel = "Back", onSelectIdea }
               </div>
             )}
           </section>
+        )}
+
+        {!editing && idea && (
+          <IdeaReferences ideaId={idea.id} />
         )}
 
         {!editing && idea && (
