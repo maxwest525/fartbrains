@@ -150,10 +150,9 @@
   }
 
   /* ----------------------------------------------------------
-     Gemini 2026 "fluid" nav pill.
-     Idle: translucent glass, no border, soft text.
-     Hover: subtle backdrop wash, gentle lift, icon tint shift.
-     Active: tonal fill with brand-gradient glow, white-on-color.
+     Gemini "Glimmer" glassmorphic pill — dark-mode reference.
+     Double white hairline (outer + inset), frosted backdrop blur,
+     soft outer halo. Lifts on hover, brand-tonal on active.
      ---------------------------------------------------------- */
   .fluid-pill {
     position: relative;
@@ -161,53 +160,54 @@
     align-items: center;
     gap: 0.5rem;
     height: 2.25rem;
-    padding: 0 0.875rem;
+    padding: 0 0.95rem;
     border-radius: 9999px;
     font-size: 0.875rem;
     font-weight: 500;
     letter-spacing: -0.005em;
-    color: hsl(var(--muted-foreground));
-    background: transparent;
+    color: hsl(var(--foreground) / 0.78);
+    background: hsl(0 0% 100% / 0.04);
+    border: 1px solid hsl(0 0% 100% / 0.14);
+    backdrop-filter: blur(14px) saturate(160%);
+    -webkit-backdrop-filter: blur(14px) saturate(160%);
+    box-shadow:
+      inset 0 0 0 1px hsl(0 0% 100% / 0.08),
+      inset 0 1px 0 hsl(0 0% 100% / 0.14),
+      0 1px 0 hsl(0 0% 0% / 0.35),
+      0 8px 24px -12px hsl(0 0% 0% / 0.55);
     transition:
       color 240ms cubic-bezier(.2,.7,.2,1),
       background-color 240ms cubic-bezier(.2,.7,.2,1),
+      border-color 240ms cubic-bezier(.2,.7,.2,1),
       transform 240ms cubic-bezier(.2,.7,.2,1),
       box-shadow 320ms cubic-bezier(.2,.7,.2,1);
-    isolation: isolate;
-  }
-  .fluid-pill::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    border-radius: inherit;
-    background: hsl(var(--foreground) / 0);
-    backdrop-filter: blur(0) saturate(120%);
-    -webkit-backdrop-filter: blur(0) saturate(120%);
-    transition: background-color 260ms ease, backdrop-filter 260ms ease;
-    z-index: -1;
   }
   .fluid-pill:hover {
     color: hsl(var(--foreground));
+    background: hsl(0 0% 100% / 0.08);
+    border-color: hsl(0 0% 100% / 0.22);
     transform: translateY(-0.5px);
-  }
-  .fluid-pill:hover::before {
-    background: hsl(var(--foreground) / 0.06);
-    backdrop-filter: blur(8px) saturate(140%);
-    -webkit-backdrop-filter: blur(8px) saturate(140%);
+    box-shadow:
+      inset 0 0 0 1px hsl(0 0% 100% / 0.12),
+      inset 0 1px 0 hsl(0 0% 100% / 0.20),
+      0 1px 0 hsl(0 0% 0% / 0.35),
+      0 14px 36px -14px hsl(0 0% 0% / 0.65),
+      0 0 0 6px hsl(0 0% 100% / 0.04);
   }
   .fluid-pill:active { transform: translateY(0) scale(0.98); }
 
   .fluid-pill[data-active="true"] {
     color: white;
     background-image: linear-gradient(135deg, hsl(265 90% 62%) 0%, hsl(220 95% 58%) 55%, hsl(190 95% 55%) 100%);
+    border-color: hsl(0 0% 100% / 0.35);
     box-shadow:
-      0 1px 0 hsl(0 0% 100% / 0.18) inset,
-      0 8px 24px -10px hsl(220 95% 58% / 0.6),
-      0 2px 8px -2px hsl(265 90% 62% / 0.4);
+      inset 0 0 0 1px hsl(0 0% 100% / 0.25),
+      inset 0 1px 0 hsl(0 0% 100% / 0.35),
+      0 10px 28px -10px hsl(220 95% 58% / 0.6),
+      0 0 0 6px hsl(220 95% 58% / 0.10);
   }
-  .fluid-pill[data-active="true"]::before { background: transparent; backdrop-filter: none; }
 
-  /* Icon-only fluid button (settings / sign-out) */
+  /* Icon-only glimmer button */
   .fluid-icon-btn {
     position: relative;
     display: inline-flex;
@@ -216,12 +216,27 @@
     height: 2.25rem;
     width: 2.25rem;
     border-radius: 9999px;
-    color: hsl(var(--muted-foreground));
-    transition: color 220ms ease, background-color 220ms ease, transform 220ms ease;
+    color: hsl(var(--foreground) / 0.75);
+    background: hsl(0 0% 100% / 0.04);
+    border: 1px solid hsl(0 0% 100% / 0.14);
+    backdrop-filter: blur(14px) saturate(160%);
+    -webkit-backdrop-filter: blur(14px) saturate(160%);
+    box-shadow:
+      inset 0 0 0 1px hsl(0 0% 100% / 0.08),
+      inset 0 1px 0 hsl(0 0% 100% / 0.14),
+      0 8px 24px -14px hsl(0 0% 0% / 0.55);
+    transition: color 220ms ease, background-color 220ms ease,
+                border-color 220ms ease, transform 220ms ease,
+                box-shadow 320ms ease;
   }
   .fluid-icon-btn:hover {
     color: hsl(var(--foreground));
-    background: hsl(var(--foreground) / 0.06);
+    background: hsl(0 0% 100% / 0.09);
+    border-color: hsl(0 0% 100% / 0.24);
+    box-shadow:
+      inset 0 0 0 1px hsl(0 0% 100% / 0.14),
+      inset 0 1px 0 hsl(0 0% 100% / 0.22),
+      0 0 0 6px hsl(0 0% 100% / 0.04);
   }
   .fluid-icon-btn:active { transform: scale(0.94); }
 
