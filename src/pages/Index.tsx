@@ -214,16 +214,20 @@ const Shell = () => {
       {/* Top bar — search + (desktop) inline nav. Hidden on mobile when viewing detail or the folders page (folders has its own header). */}
       {!showDetailOnly && !(isMobile && showFolders) && !(isMobile && showCalendar) && (
         <header className={cn(
-          "sticky top-0 z-20 bg-background/80 backdrop-blur-xl border-b border-border",
+          "sticky top-0 z-20 bg-background/70 backdrop-blur-xl border-b border-border/60",
           filter.kind !== "all" && "safe-top"
         )}>
+          <div aria-hidden className="absolute inset-x-0 -top-px h-px bg-gradient-to-r from-transparent via-primary/60 to-transparent" />
           <div className="px-3 sm:px-5 py-2 flex items-center gap-2 sm:gap-3">
             {/* Brand — desktop only */}
-            <div className="hidden md:flex items-center gap-2 shrink-0 pr-2">
-              <div className="h-8 w-8 rounded-md bg-primary text-primary-foreground flex items-center justify-center text-sm font-bold">
-                IV
+            <div className="hidden md:flex items-center gap-2.5 shrink-0 pr-2">
+              <div className="relative h-9 w-9 rounded-xl brand-gradient ring-glow flex items-center justify-center">
+                <span className="font-display text-[15px] font-bold text-white drop-shadow">IV</span>
+                <span aria-hidden className="absolute inset-0 rounded-xl bg-gradient-to-b from-white/25 to-transparent pointer-events-none" />
               </div>
-              <span className="font-semibold">Idea Vault</span>
+              <span className="font-display text-[17px] font-semibold tracking-tight">
+                Idea<span className="brand-gradient-text">Vault</span>
+              </span>
             </div>
 
             {/* Search — hidden on the Capture view (it appears below the ticker there) */}
