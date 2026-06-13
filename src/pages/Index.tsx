@@ -255,37 +255,34 @@ const Shell = () => {
             )}
             {filter.kind === "all" && <div className="flex-1" />}
 
-            {/* Desktop nav — replaces the old sidebar */}
-            <nav className="hidden md:flex items-center gap-1 ml-auto">
-              {navItems.map(({ label, icon: Icon, active, onClick }) => (
+            {/* Desktop nav — Gemini 2026 fluid pills */}
+            <nav className="hidden md:flex items-center gap-0.5 ml-auto">
+              {navItems.map(({ label, icon, active, onClick }) => (
                 <button
                   key={label}
                   onClick={onClick}
-                  className={cn(
-                    "relative inline-flex items-center gap-1.5 h-9 px-3 rounded-full text-sm font-medium transition-all",
-                    active
-                      ? "text-white brand-gradient shadow-[0_6px_20px_-6px_hsl(var(--primary)/0.65)]"
-                      : "text-muted-foreground hover:text-foreground hover:bg-secondary/70"
-                  )}
+                  data-active={active}
+                  className="fluid-pill"
                 >
-                  <Icon className="h-4 w-4" />
+                  <MaterialIcon name={icon} filled={active} size={20} />
                   {label}
                 </button>
               ))}
+              <div className="w-px h-5 mx-1 bg-border/60" aria-hidden />
               <button
                 onClick={() => setSettingsOpen(true)}
-                className="inline-flex items-center justify-center h-9 w-9 rounded-[10px] text-muted-foreground hover:text-foreground hover:bg-secondary/60"
+                className="fluid-icon-btn"
                 aria-label="Settings"
                 title={user?.email ?? "Settings"}
               >
-                <SettingsIcon className="h-4 w-4" />
+                <MaterialIcon name="tune" size={20} />
               </button>
               <button
                 onClick={signOut}
-                className="inline-flex items-center justify-center h-9 w-9 rounded-[10px] text-muted-foreground hover:text-foreground hover:bg-secondary/60"
+                className="fluid-icon-btn"
                 aria-label="Sign out"
               >
-                <LogOut className="h-4 w-4" />
+                <MaterialIcon name="logout" size={20} />
               </button>
             </nav>
           </div>
