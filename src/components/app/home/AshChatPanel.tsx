@@ -78,8 +78,6 @@ export const AshChatPanel = forwardRef<AshChatHandle, Props>(function AshChatPan
     el.style.height = Math.min(el.scrollHeight, 48) + "px";
   }, [input]);
 
-  const _unused = () => {
-  }, []);
 
   const detected = useMemo(() => {
     const trimmed = input.trim();
