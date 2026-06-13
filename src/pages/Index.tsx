@@ -269,7 +269,7 @@ const Shell = () => {
                   {label}
                 </button>
               ))}
-              <div className="w-px h-5 mx-1 bg-border/60" aria-hidden />
+              <div className="w-px h-5 mx-2 bg-border/60" aria-hidden />
               <button
                 onClick={() => setSettingsOpen(true)}
                 className="fluid-icon-btn"
