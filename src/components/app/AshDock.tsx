@@ -111,12 +111,6 @@ export const AshDock = ({ className }: { className?: string }) => {
   const [chipEditor, setChipEditor] = useState<Chip | null>(null);
   const [chipDraft, setChipDraft] = useState<{ label: string; prefill: string }>({ label: "", prefill: "" });
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  useEffect(() => {
-    const el = textareaRef.current;
-    if (!el) return;
-    el.style.height = "auto";
-    el.style.height = Math.min(el.scrollHeight, 48) + "px";
-  }, [/* set below via text dep */]);
   const dockRef = useRef<HTMLDivElement>(null);
 
   const [side, setSide] = useState<Side>(() => {
