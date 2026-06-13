@@ -106,23 +106,26 @@ export const MobileHome = ({ captureSlot, onOpenFolder, onSelectIdea, onSeeAllRe
           </div>
         ) : (
           <div className="grid grid-cols-2 gap-3">
-            {/* All ideas tile — first so the unfiled inbox is always one tap away. */}
+            {/* All ideas tile — gradient brand hero */}
             <button
               onClick={onSeeAllIdeas}
-              className="press relative rounded-2xl overflow-hidden p-3 text-left min-h-[96px] flex flex-col justify-between bg-primary text-primary-foreground"
+              className="press relative rounded-2xl overflow-hidden p-3 text-left min-h-[96px] flex flex-col justify-between text-white"
               style={{
+                backgroundImage:
+                  "linear-gradient(140deg, hsl(265 90% 62%) 0%, hsl(220 95% 58%) 55%, hsl(190 95% 55%) 100%)",
                 boxShadow:
-                  "0 1px 0 hsl(0 0% 100% / 0.12) inset, 0 8px 20px -12px hsl(var(--primary) / 0.55), 0 1px 2px hsl(0 0% 0% / 0.06)",
+                  "inset 0 1px 0 hsl(0 0% 100% / 0.35), inset 0 0 0 1px hsl(0 0% 100% / 0.18), 0 12px 30px -14px hsl(220 95% 58% / 0.55), 0 0 0 1px hsl(0 0% 100% / 0.04)",
               }}
             >
-              <div className="relative h-9 w-9 rounded-[10px] flex items-center justify-center bg-white/15">
+              <div aria-hidden className="absolute inset-0 bg-gradient-to-b from-white/15 to-transparent pointer-events-none" />
+              <div className="relative h-9 w-9 rounded-[10px] flex items-center justify-center bg-white/15 backdrop-blur-sm">
                 <Inbox className="h-[18px] w-[18px]" strokeWidth={2.2} />
               </div>
               <div className="relative">
                 <p className="font-semibold text-[15px] truncate leading-tight tracking-tight">
                   All ideas
                 </p>
-                <p className="text-[12px] text-primary-foreground/80 tabular-nums mt-0.5">
+                <p className="text-[12px] text-white/80 tabular-nums mt-0.5">
                   {totalIdeas} {totalIdeas === 1 ? "idea" : "ideas"}
                 </p>
               </div>
@@ -137,28 +140,33 @@ export const MobileHome = ({ captureSlot, onOpenFolder, onSelectIdea, onSeeAllRe
                   onClick={() => onOpenFolder(folder.id)}
                   className="press relative rounded-2xl overflow-hidden p-3 text-left min-h-[96px] flex flex-col justify-between"
                   style={{
-                    background: `linear-gradient(155deg, hsl(${hue} 70% 96% / 0.9) 0%, hsl(var(--card)) 60%)`,
-                    boxShadow:
-                      "0 1px 0 hsl(0 0% 100% / 0.06) inset, 0 6px 18px -12px hsl(0 0% 0% / 0.25), 0 1px 2px hsl(0 0% 0% / 0.04)",
+                    background: `linear-gradient(160deg, hsl(${hue} 60% 14% / 0.55) 0%, hsl(240 22% 8% / 0.85) 70%)`,
+                    boxShadow: `inset 0 1px 0 hsl(0 0% 100% / 0.08), inset 0 0 0 1px hsl(0 0% 100% / 0.06), 0 10px 24px -16px hsl(${hue} 80% 50% / 0.45), 0 1px 0 hsl(0 0% 0% / 0.35)`,
+                    backdropFilter: "blur(14px) saturate(160%)",
+                    WebkitBackdropFilter: "blur(14px) saturate(160%)",
                   }}
                 >
-                  <div className="absolute inset-0 rounded-2xl border border-border/50 pointer-events-none" />
+                  <div
+                    aria-hidden
+                    className="absolute -top-10 -right-10 h-24 w-24 rounded-full opacity-40 blur-2xl pointer-events-none"
+                    style={{ background: `hsl(${hue} 90% 60%)` }}
+                  />
                   <div
                     className="relative h-9 w-9 rounded-[10px] flex items-center justify-center"
                     style={{
                       background: `linear-gradient(140deg, hsl(${hue} 85% 62%) 0%, hsl(${hue} 75% 48%) 100%)`,
-                      boxShadow: `0 6px 14px -4px hsl(${hue} 70% 45% / 0.45), 0 1px 0 hsl(0 0% 100% / 0.35) inset`,
+                      boxShadow: `0 8px 18px -6px hsl(${hue} 70% 45% / 0.55), inset 0 1px 0 hsl(0 0% 100% / 0.4)`,
                     }}
                   >
                     <FolderIcon
                       className="h-[18px] w-[18px] text-white"
                       strokeWidth={2}
                       fill="currentColor"
-                      fillOpacity={0.18}
+                      fillOpacity={0.2}
                     />
                   </div>
                   <div className="relative">
-                    <p className="font-semibold text-[15px] truncate leading-tight tracking-tight">
+                    <p className="font-semibold text-[15px] truncate leading-tight tracking-tight text-foreground">
                       {folder.name}
                     </p>
                     <p className="text-[12px] text-muted-foreground tabular-nums mt-0.5">
@@ -172,12 +180,13 @@ export const MobileHome = ({ captureSlot, onOpenFolder, onSelectIdea, onSeeAllRe
             {/* New folder tile */}
             <button
               onClick={() => setCreateOpen(true)}
-              className="press rounded-2xl border border-dashed border-border/70 bg-background hover:border-primary/40 hover:bg-secondary/40 min-h-[96px] flex flex-col items-center justify-center gap-1 text-muted-foreground hover:text-foreground transition-colors"
+              className="press rounded-2xl border border-dashed border-white/15 bg-white/[0.02] hover:border-primary/40 hover:bg-white/[0.05] min-h-[96px] flex flex-col items-center justify-center gap-1 text-muted-foreground hover:text-foreground transition-colors backdrop-blur-sm"
             >
               <Plus className="h-5 w-5" />
               <span className="text-[13px] font-medium">New folder</span>
             </button>
           </div>
+
         )}
       </section>
 
