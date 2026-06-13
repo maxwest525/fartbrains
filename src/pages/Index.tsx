@@ -257,7 +257,7 @@ const Shell = () => {
             {filter.kind === "all" && <div className="flex-1" />}
 
             {/* Desktop nav — Gemini 2026 fluid pills */}
-            <nav className="hidden md:flex items-center gap-0.5 ml-auto">
+            <nav className="hidden md:flex items-center gap-1.5 ml-auto">
               {navItems.map(({ label, icon, active, onClick }) => (
                 <button
                   key={label}
