@@ -441,7 +441,7 @@ export const AshDock = ({ className }: { className?: string }) => {
               }}
               placeholder={isRecording ? `Listening… ${fmtSeconds(voice.seconds)}` : "Capture an idea, paste a link, drop a transcript…"}
               rows={1}
-              className="w-full resize-none bg-transparent text-[15px] leading-6 placeholder:text-muted-foreground/70 focus:outline-none max-h-40"
+              className="w-full resize-none bg-transparent text-[15px] leading-6 placeholder:text-muted-foreground/70 focus:outline-none max-h-12 overflow-y-auto"
             />
           </div>
 
