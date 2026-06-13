@@ -7,84 +7,84 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222 22% 12%;
+    --background: 250 40% 98%;
+    --foreground: 240 25% 10%;
 
     --card: 0 0% 100%;
-    --card-foreground: 222 22% 12%;
+    --card-foreground: 240 25% 10%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222 22% 12%;
+    --popover-foreground: 240 25% 10%;
 
-    /* Google / Gemini blue */
-    --primary: 217 89% 53%;
+    /* Electric violet */
+    --primary: 262 83% 58%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 220 14% 96%;
-    --secondary-foreground: 222 22% 12%;
+    --secondary: 250 30% 95%;
+    --secondary-foreground: 240 25% 10%;
 
-    --muted: 220 14% 97%;
-    --muted-foreground: 220 9% 44%;
+    --muted: 250 25% 96%;
+    --muted-foreground: 240 10% 42%;
 
-    --accent: 217 89% 53%;
-    --accent-foreground: 0 0% 100%;
+    --accent: 190 95% 50%;
+    --accent-foreground: 240 25% 10%;
 
     --destructive: 4 78% 52%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 220 13% 91%;
-    --input: 220 13% 91%;
-    --ring: 217 89% 53%;
+    --border: 250 20% 90%;
+    --input: 250 20% 90%;
+    --ring: 262 83% 58%;
 
-    --radius: 0.75rem;
+    --radius: 0.875rem;
 
-    --sidebar-background: 220 14% 98%;
-    --sidebar-foreground: 222 22% 12%;
-    --sidebar-primary: 217 89% 53%;
+    --sidebar-background: 250 30% 97%;
+    --sidebar-foreground: 240 25% 10%;
+    --sidebar-primary: 262 83% 58%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 220 14% 96%;
-    --sidebar-accent-foreground: 222 22% 12%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217 89% 53%;
+    --sidebar-accent: 250 30% 95%;
+    --sidebar-accent-foreground: 240 25% 10%;
+    --sidebar-border: 250 20% 90%;
+    --sidebar-ring: 262 83% 58%;
   }
 
   .dark {
-    --background: 222 18% 8%;
-    --foreground: 220 14% 96%;
+    --background: 240 25% 5%;
+    --foreground: 250 25% 96%;
 
-    --card: 222 16% 11%;
-    --card-foreground: 220 14% 96%;
+    --card: 240 22% 8%;
+    --card-foreground: 250 25% 96%;
 
-    --popover: 222 16% 11%;
-    --popover-foreground: 220 14% 96%;
+    --popover: 240 22% 8%;
+    --popover-foreground: 250 25% 96%;
 
-    --primary: 217 91% 65%;
-    --primary-foreground: 222 18% 8%;
+    --primary: 265 90% 70%;
+    --primary-foreground: 240 25% 5%;
 
-    --secondary: 222 14% 16%;
-    --secondary-foreground: 220 14% 96%;
+    --secondary: 240 18% 13%;
+    --secondary-foreground: 250 25% 96%;
 
-    --muted: 222 14% 14%;
-    --muted-foreground: 220 9% 65%;
+    --muted: 240 18% 11%;
+    --muted-foreground: 240 10% 65%;
 
-    --accent: 217 91% 65%;
-    --accent-foreground: 222 18% 8%;
+    --accent: 190 95% 60%;
+    --accent-foreground: 240 25% 5%;
 
     --destructive: 4 78% 58%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 222 14% 20%;
-    --input: 222 14% 20%;
-    --ring: 217 91% 65%;
+    --border: 240 18% 16%;
+    --input: 240 18% 16%;
+    --ring: 265 90% 70%;
 
-    --sidebar-background: 222 16% 10%;
-    --sidebar-foreground: 220 14% 96%;
-    --sidebar-primary: 217 91% 65%;
-    --sidebar-primary-foreground: 222 18% 8%;
-    --sidebar-accent: 222 14% 16%;
-    --sidebar-accent-foreground: 220 14% 96%;
-    --sidebar-border: 222 14% 20%;
-    --sidebar-ring: 217 91% 65%;
+    --sidebar-background: 240 22% 7%;
+    --sidebar-foreground: 250 25% 96%;
+    --sidebar-primary: 265 90% 70%;
+    --sidebar-primary-foreground: 240 25% 5%;
+    --sidebar-accent: 240 18% 13%;
+    --sidebar-accent-foreground: 250 25% 96%;
+    --sidebar-border: 240 18% 16%;
+    --sidebar-ring: 265 90% 70%;
   }
 }
 
@@ -117,9 +117,37 @@
   body {
     overflow: hidden;
     overscroll-behavior-y: none;
+    background-image:
+      radial-gradient(60rem 40rem at 110% -10%, hsl(var(--primary) / 0.18), transparent 60%),
+      radial-gradient(50rem 36rem at -10% 110%, hsl(var(--accent) / 0.14), transparent 60%);
+    background-attachment: fixed;
+  }
+
+  h1, h2, h3, .font-display {
+    font-family: "Space Grotesk", "Inter", system-ui, sans-serif;
+    letter-spacing: -0.02em;
   }
 
   html { -webkit-text-size-adjust: 100%; }
+}
+
+@layer utilities {
+  .font-display { font-family: "Space Grotesk", "Inter", system-ui, sans-serif; }
+  .font-mono-ui { font-family: "JetBrains Mono", ui-monospace, monospace; }
+
+  /* Brand gradient used by the wordmark mark and active nav pill. */
+  .brand-gradient {
+    background-image: linear-gradient(135deg, hsl(265 90% 65%) 0%, hsl(220 95% 60%) 50%, hsl(190 95% 55%) 100%);
+  }
+  .brand-gradient-text {
+    background-image: linear-gradient(135deg, hsl(265 90% 65%) 0%, hsl(220 95% 60%) 50%, hsl(190 95% 55%) 100%);
+    -webkit-background-clip: text;
+            background-clip: text;
+    color: transparent;
+  }
+  .ring-glow {
+    box-shadow: 0 0 0 1px hsl(var(--primary) / 0.35), 0 10px 30px -10px hsl(var(--primary) / 0.55);
+  }
 }
 
 @media (min-width: 768px) {
