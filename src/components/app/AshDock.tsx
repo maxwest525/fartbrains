@@ -159,8 +159,8 @@ export const AshDock = ({ className }: { className?: string }) => {
     try { localStorage.setItem(CHIPS_KEY, JSON.stringify(chips)); } catch { /* ignore */ }
   }, [chips]);
 
-  const cycleSide = () => setSide((s) => (s === "left" ? "center" : s === "center" ? "right" : "left"));
-  const SideIcon = side === "left" ? AlignLeft : side === "right" ? AlignRight : AlignCenter;
+
+
 
 
   const folderName = folderId ? folders.find((f) => f.id === folderId)?.name ?? "Inbox" : "Inbox";
