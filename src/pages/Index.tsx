@@ -168,45 +168,46 @@ const Shell = () => {
       ? (folders.find((f) => f.id === filter.folderId)?.name ?? "Folder")
       : null;
 
-  // Desktop top-bar nav items.
+  // Desktop top-bar nav items. Icons are Material Symbols Rounded names
+  // (https://fonts.google.com/icons) — Gemini 2026 visual language.
   const navItems: Array<{
     label: string;
-    icon: typeof Inbox;
+    icon: string;
     active: boolean;
     onClick: () => void;
   }> = [
     {
       label: "Capture",
-      icon: Inbox,
+      icon: "auto_awesome",
       active: view === "ideas" && filter.kind === "all",
       onClick: () => handleFilterChange({ kind: "all" }),
     },
-
     {
       label: "Recents",
-      icon: Clock,
+      icon: "history",
       active: view === "ideas" && filter.kind === "recent",
       onClick: () => handleFilterChange({ kind: "recent" }),
     },
     {
       label: "Calendar",
-      icon: CalendarDays,
+      icon: "calendar_month",
       active: view === "calendar",
       onClick: openCalendarPage,
     },
     {
       label: activeFolderName ?? "Folders",
-      icon: Folder,
+      icon: "folder",
       active: view === "folders" || filter.kind === "folder",
       onClick: openFoldersPage,
     },
     {
       label: "Favorites",
-      icon: Star,
+      icon: "star",
       active: view === "ideas" && filter.kind === "favorites",
       onClick: () => handleFilterChange({ kind: "favorites" }),
     },
   ];
+
 
   return (
     <div className="flex flex-col h-[100dvh] w-full bg-background overflow-hidden relative">
