@@ -183,13 +183,8 @@ const Shell = () => {
       onClick: () => handleFilterChange({ kind: "all" }),
     },
     {
-      label: "Recents",
-      icon: "history",
-      active: view === "ideas" && filter.kind === "recent",
-      onClick: () => handleFilterChange({ kind: "recent" }),
-    },
-    {
       label: "Calendar",
+
       icon: "calendar_month",
       active: view === "calendar",
       onClick: openCalendarPage,
@@ -298,11 +293,16 @@ const Shell = () => {
               setView("ideas");
               setFilter({ kind: "folder", folderId });
             }}
+            onOpenRecent={() => {
+              setView("ideas");
+              handleFilterChange({ kind: "recent" });
+            }}
             onBack={isMobile ? () => {
               setView("ideas");
             } : undefined}
           />
         )}
+
 
         {/* Calendar page — full-width when active */}
         {showCalendar && (
@@ -319,28 +319,8 @@ const Shell = () => {
             style={{ paddingBottom: "calc(var(--ash-dock-h, 0px) + env(safe-area-inset-bottom) + (var(--mobile-tabbar-h, 0px)) + 1.25rem)" }}
           >
 
-            <div className="w-full px-3 sm:px-6 lg:px-10 pt-4 sm:pt-5 lg:pt-6">
+            <div ref={composeRef} className="w-full px-3 sm:px-6 lg:px-10 pt-6 sm:pt-10 pb-4 flex-1 min-h-0 flex flex-col items-center justify-center gap-4 sm:gap-6 max-w-3xl mx-auto">
 
-              <div className="relative max-w-xl mx-auto">
-                <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  value={searchValue}
-                  onChange={(e) => onSearch(e.target.value)}
-                  placeholder="Search"
-                  className="pl-9 pr-9 h-9 rounded-[10px] bg-secondary border-transparent focus-visible:bg-card text-[15px]"
-                />
-                {searchValue && (
-                  <button
-                    onClick={clearSearch}
-                    className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 flex items-center justify-center text-muted-foreground hover:text-foreground"
-                    aria-label="Clear search"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                )}
-              </div>
-            </div>
-            <div ref={composeRef} className="w-full px-3 sm:px-6 lg:px-10 pt-3 sm:pt-6 pb-4 flex-1 min-h-0 flex flex-col items-center justify-center gap-4 sm:gap-6 max-w-3xl mx-auto">
               <VoiceOrb
                 liveMode={liveMode}
                 onToggleLive={(next) => {

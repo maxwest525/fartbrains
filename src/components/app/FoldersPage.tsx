@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Folder, Plus, MoreHorizontal, Pencil, Trash2, ChevronLeft, Search, X, FileText, Globe, Mic, AudioLines, Loader2 } from "lucide-react";
+import { Folder, Plus, MoreHorizontal, Pencil, Trash2, ChevronLeft, Search, X, FileText, Globe, Mic, AudioLines, Loader2, Clock } from "lucide-react";
+
 import {
   useFolders,
   useFolderCounts,
@@ -63,15 +64,18 @@ const SourceIcon = ({
 type Props = {
   /** Open a folder by id (parent navigates to the folder filter view). */
   onOpenFolder: (folderId: string) => void;
+  /** Open the virtual "Recent" view. */
+  onOpenRecent?: () => void;
   /** Mobile back action — desktop ignores this. */
   onBack?: () => void;
 };
+
 
 /**
  * iOS Files-style Folders page. Card grid with name, icon, and idea count.
  * Long-press / kebab menu exposes Rename + Delete. Top-right plus creates one.
  */
-export const FoldersPage = ({ onOpenFolder, onBack }: Props) => {
+export const FoldersPage = ({ onOpenFolder, onOpenRecent, onBack }: Props) => {
   const { data: folders = [], isLoading } = useFolders();
   const { data: counts = {} } = useFolderCounts();
   const { data: previews = {} } = useFolderPreviews();
