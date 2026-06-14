@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Folder, Plus, MoreHorizontal, Pencil, Trash2, ChevronLeft, Search, X, FileText, Globe, Mic, AudioLines, Loader2 } from "lucide-react";
+import { Folder, Plus, MoreHorizontal, Pencil, Trash2, ChevronLeft, Search, X, FileText, Globe, Mic, AudioLines, Loader2, Clock } from "lucide-react";
+
 import {
   useFolders,
   useFolderCounts,
@@ -63,15 +64,18 @@ const SourceIcon = ({
 type Props = {
   /** Open a folder by id (parent navigates to the folder filter view). */
   onOpenFolder: (folderId: string) => void;
+  /** Open the virtual "Recent" view. */
+  onOpenRecent?: () => void;
   /** Mobile back action — desktop ignores this. */
   onBack?: () => void;
 };
+
 
 /**
  * iOS Files-style Folders page. Card grid with name, icon, and idea count.
  * Long-press / kebab menu exposes Rename + Delete. Top-right plus creates one.
  */
-export const FoldersPage = ({ onOpenFolder, onBack }: Props) => {
+export const FoldersPage = ({ onOpenFolder, onOpenRecent, onBack }: Props) => {
   const { data: folders = [], isLoading } = useFolders();
   const { data: counts = {} } = useFolderCounts();
   const { data: previews = {} } = useFolderPreviews();
@@ -215,6 +219,50 @@ export const FoldersPage = ({ onOpenFolder, onBack }: Props) => {
           </div>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4">
+            {onOpenRecent && (query.trim() === "" || "recent".includes(query.trim().toLowerCase())) && (
+              <div
+                className="group relative rounded-2xl overflow-hidden transition-all duration-200 hover:-translate-y-0.5"
+                style={{
+                  background: `linear-gradient(155deg, hsl(265 60% 14% / 0.55) 0%, hsl(var(--card)) 60%)`,
+                  boxShadow:
+                    "0 1px 0 hsl(0 0% 100% / 0.06) inset, 0 8px 24px -14px hsl(0 0% 0% / 0.45), 0 1px 2px hsl(0 0% 0% / 0.06)",
+                }}
+              >
+                <div className="absolute inset-0 rounded-2xl border border-border/50 pointer-events-none" />
+                <button
+                  onClick={onOpenRecent}
+                  className="press relative w-full text-left p-4 flex flex-col items-start gap-3 min-h-[180px]"
+                >
+                  <div className="flex items-center gap-3 w-full min-w-0">
+                    <div
+                      className="relative h-11 w-11 rounded-[12px] flex items-center justify-center shrink-0"
+                      style={{
+                        background: `linear-gradient(140deg, hsl(265 90% 70%) 0%, hsl(265 80% 55%) 100%)`,
+                        boxShadow:
+                          `0 6px 14px -4px hsl(265 80% 50% / 0.55), 0 1px 0 hsl(0 0% 100% / 0.35) inset`,
+                      }}
+                    >
+                      <Clock className="h-5 w-5 text-white drop-shadow-[0_1px_1px_rgba(0,0,0,0.18)]" strokeWidth={2.2} />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="font-semibold text-[15px] truncate leading-tight tracking-tight">
+                        Recent
+                      </p>
+                      <div className="mt-1 flex items-center gap-1.5">
+                        <span className="h-1.5 w-1.5 rounded-full" style={{ background: `hsl(265 80% 60%)` }} />
+                        <p className="text-[12px] text-muted-foreground">Recently captured</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="w-full mt-1 flex-1 flex items-end">
+                    <p className="text-[11.5px] text-muted-foreground/70 italic">
+                      Your latest ideas across all folders
+                    </p>
+                  </div>
+                </button>
+              </div>
+            )}
+
             {filtered.map((folder) => {
               const count = counts[folder.id] ?? 0;
               const folderPreviews = previews[folder.id] ?? [];

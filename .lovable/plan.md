@@ -1,15 +1,26 @@
-## Goal
-
-Stop the chat input from getting tall. It should grow to at most 2 lines (~48px), then scroll inside the box so the cursor stays reachable without making the composer bigger.
-
 ## Changes
 
-**`src/components/app/AshDock.tsx`** (the `textarea` at line 425):
-- Replace the existing auto-grow `useEffect` so it caps height at `48px` (2 lines × 24px `leading-6`) instead of `160px`.
-- Update className: drop `max-h-40`, add `max-h-12 overflow-y-auto`.
+### 1. Remove search bar from Capture page (`src/pages/Index.tsx`)
+Delete the search `<Input>` block inside the Capture view (lines ~322–342). Keep the wrapper minimal or remove the empty top padding container. Search is still accessible from any other view (Recents, Folders, Favorites) via the top header search.
 
-**`src/components/app/home/AshChatPanel.tsx`** (the `Textarea` at the composer):
-- Same treatment on `inputRef`: auto-grow `useEffect` capped at `48px`.
-- Update className: change `min-h-[44px] max-h-40` → `min-h-[44px] max-h-12`, add `overflow-y-auto`.
+Also remove the now-unused "Recents" pill from the desktop `navItems` array since Recent becomes a folder.
 
-That's it — no other behavior changes, no layout changes around the composer.
+### 2. Add "Recent" virtual folder tile on Folders page (`src/components/app/FoldersPage.tsx`)
+- Extend `Props` with an optional `onOpenRecent: () => void` callback.
+- Prepend a non-deletable "Recent" tile to the grid, before user folders:
+  - Clock icon glyph (instead of Folder) with a fixed neutral/primary hue
+  - Label: "Recent"
+  - Subtitle: "Recently captured" (no count, or count of all ideas — skip for v1 to avoid extra query)
+  - No kebab menu (can't rename/delete)
+  - Click → calls `onOpenRecent()`
+- Make sure it's not filtered out by the search query (or include it when query matches "recent").
+
+### 3. Wire it up in `Index.tsx`
+Pass `onOpenRecent={() => { setView("ideas"); handleFilterChange({ kind: "recent" }); }}` to `<FoldersPage>`.
+
+### 4. Mobile tab bar
+No change — `MobileTabBar` already routes Recent through Folders implicitly via filter changes. If it currently exposes a "Recent" tab, leave it (user only asked to remove from capture top + add to folders page).
+
+## Out of scope
+- No data model changes (Recent stays a filter, not a real folder row).
+- No changes to search behavior on other views.
