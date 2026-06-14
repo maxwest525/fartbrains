@@ -97,6 +97,48 @@ const extractText = (html: string): string => {
   return body.trim();
 };
 
+/**
+ * Fallback: scrape via Firecrawl when the lightweight fetch+regex approach
+ * can't get readable text (JS-heavy SPAs, paywalls, anti-bot pages).
+ */
+async function firecrawlFallback(url: string): Promise<
+  { title: string | null; text: string; siteName: string | null } | null
+> {
+  const key = Deno.env.get("FIRECRAWL_API_KEY");
+  if (!key) return null;
+  try {
+    const r = await fetch("https://api.firecrawl.dev/v2/scrape", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${key}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        url,
+        formats: ["markdown"],
+        onlyMainContent: true,
+      }),
+    });
+    const data = await r.json().catch(() => null);
+    if (!r.ok || !data) {
+      console.error("firecrawl fallback failed", r.status, data);
+      return null;
+    }
+    const doc = data.data ?? data;
+    const text: string = doc?.markdown ?? "";
+    if (!text || text.trim().length < 50) return null;
+    const meta = doc?.metadata ?? {};
+    return {
+      title: meta.title ?? meta.ogTitle ?? null,
+      text: text.trim(),
+      siteName: meta.siteName ?? meta.ogSiteName ?? null,
+    };
+  } catch (e) {
+    console.error("firecrawl fallback error", e);
+    return null;
+  }
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
@@ -116,30 +158,47 @@ Deno.serve(async (req) => {
       return jsonErr("Only http(s) URLs supported", 400);
     }
 
-    const resp = await fetch(target.toString(), {
-      headers: {
-        // Use a real desktop UA — many sites serve different markup to bots.
-        "User-Agent":
-          "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
-        Accept: "text/html,application/xhtml+xml",
-        "Accept-Language": "en-US,en;q=0.9",
-      },
-      redirect: "follow",
-    });
+    let title: string | null = null;
+    let siteName: string | null = null;
+    let text = "";
 
-    if (!resp.ok) {
-      return jsonErr(`Failed to fetch URL (${resp.status})`, 422);
+    try {
+      const resp = await fetch(target.toString(), {
+        headers: {
+          "User-Agent":
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+          Accept: "text/html,application/xhtml+xml",
+          "Accept-Language": "en-US,en;q=0.9",
+        },
+        redirect: "follow",
+      });
+
+      if (resp.ok) {
+        const ct = resp.headers.get("content-type") ?? "";
+        if (ct.includes("text/html") || ct.includes("application/xhtml")) {
+          const html = await resp.text();
+          title = pickTitle(html);
+          siteName = pickSiteName(html);
+          text = extractText(html);
+        } else {
+          await resp.body?.cancel();
+        }
+      } else {
+        await resp.body?.cancel();
+      }
+    } catch (e) {
+      console.error("direct fetch failed, will try firecrawl:", e);
     }
 
-    const ct = resp.headers.get("content-type") ?? "";
-    if (!ct.includes("text/html") && !ct.includes("application/xhtml")) {
-      return jsonErr("URL did not return HTML content", 422);
+    // Fallback to Firecrawl for JS-heavy / blocked pages.
+    if (!text || text.length < 50) {
+      const fc = await firecrawlFallback(target.toString());
+      if (fc) {
+        title = fc.title ?? title;
+        siteName = fc.siteName ?? siteName;
+        text = fc.text;
+      }
     }
-
-    const html = await resp.text();
-    const title = pickTitle(html);
-    const siteName = pickSiteName(html);
-    const text = extractText(html);
 
     if (!text || text.length < 50) {
       return jsonErr(
@@ -148,7 +207,6 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Cap absurdly long pages so the summarizer prompt stays sane.
     const MAX = 40_000;
     const trimmed = text.length > MAX ? text.slice(0, MAX) : text;
 
@@ -161,6 +219,7 @@ Deno.serve(async (req) => {
     return jsonErr(e instanceof Error ? e.message : "Unknown error", 500);
   }
 });
+
 
 function jsonErr(msg: string, status: number) {
   return new Response(JSON.stringify({ error: msg }), {
