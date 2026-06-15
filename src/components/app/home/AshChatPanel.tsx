@@ -70,12 +70,12 @@ export const AshChatPanel = forwardRef<AshChatHandle, Props>(function AshChatPan
     inputRef.current?.focus();
   }, []);
 
-  // Auto-grow up to 2 lines (~48px), then scroll inside.
+  // Auto-grow up to 2 lines (~72px), then scroll inside.
   useEffect(() => {
     const el = inputRef.current;
     if (!el) return;
     el.style.height = "auto";
-    el.style.height = Math.min(el.scrollHeight, 48) + "px";
+    el.style.height = Math.min(el.scrollHeight, 72) + "px";
   }, [input]);
 
 
@@ -243,8 +243,8 @@ export const AshChatPanel = forwardRef<AshChatHandle, Props>(function AshChatPan
               }
             }}
             placeholder="Message Ash, paste a URL, or drop a transcript…"
-            rows={1}
-            className="resize-none min-h-[44px] max-h-12 overflow-y-auto rounded-xl pr-12 text-[14px] bg-background"
+            rows={2}
+            className="resize-none min-h-[68px] max-h-[72px] overflow-y-auto rounded-xl pr-12 text-[14px] bg-background"
           />
           <button
             type="button"
