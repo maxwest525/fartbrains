@@ -391,10 +391,11 @@ const Shell = () => {
       {isMobile && (
         <MobileTabBar
           filter={filter}
-          view={view === "folders" ? "folders" : view === "calendar" ? "calendar" : "ideas"}
+          view={view === "folders" ? "folders" : view === "calendar" ? "calendar" : view === "graph" ? "graph" : "ideas"}
           onFilterChange={handleFilterChange}
           onOpenFolders={openFoldersPage}
           onOpenCalendar={openCalendarPage}
+          onOpenGraph={openGraphPage}
           onOpenSettings={() => setSettingsOpen(true)}
         />
       )}
