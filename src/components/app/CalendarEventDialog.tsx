@@ -32,6 +32,7 @@ import {
   useDeleteCalendarEvent,
 } from "@/hooks/useCalendarEvents";
 import type { CalendarEvent, CalendarEventType, FloatingKey } from "@/lib/calendarEvents";
+import { EventGiftsSection } from "./EventGiftsSection";
 
 type Props = {
   open: boolean;
@@ -220,6 +221,8 @@ export const CalendarEventDialog = ({ open, onOpenChange, event, defaultDate }: 
               />
             </div>
           )}
+
+          {event && <EventGiftsSection eventId={event.id} />}
         </div>
 
         <DialogFooter className="gap-2 sm:gap-0">
