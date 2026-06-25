@@ -11,12 +11,18 @@ const Toaster = ({ ...props }: ToasterProps) => {
       theme={theme as ToasterProps["theme"]}
       className="toaster group"
       toastOptions={{
+        unstyled: false,
         classNames: {
           toast:
-            "group toast group-[.toaster]:bg-background group-[.toaster]:text-foreground group-[.toaster]:border-border group-[.toaster]:shadow-lg",
-          description: "group-[.toast]:text-muted-foreground",
-          actionButton: "group-[.toast]:bg-primary group-[.toast]:text-primary-foreground",
-          cancelButton: "group-[.toast]:bg-muted group-[.toast]:text-muted-foreground",
+            "group toast glass-card-strong rounded-2xl text-foreground px-4 py-3 group-[.toaster]:bg-transparent group-[.toaster]:border-transparent",
+          title: "text-[14px] font-semibold tracking-tight",
+          description: "text-[13px] text-foreground/70",
+          actionButton:
+            "group-[.toast]:bg-white/15 group-[.toast]:text-foreground group-[.toast]:backdrop-blur-md group-[.toast]:rounded-full",
+          cancelButton:
+            "group-[.toast]:bg-white/10 group-[.toast]:text-foreground/80 group-[.toast]:rounded-full",
+          success: "border-l-2 border-l-[hsl(190_95%_55%)]",
+          error: "border-l-2 border-l-destructive",
         },
       }}
       {...props}
