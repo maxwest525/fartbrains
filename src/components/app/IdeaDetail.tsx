@@ -30,6 +30,7 @@ import { useSwipeGesture } from "@/hooks/useSwipeGesture";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { ThinkingPanel } from "./ThinkingPanel";
+import { IdeaResearchActions } from "./IdeaResearchActions";
 import { IdeaReminderDialog } from "./IdeaReminderDialog";
 import { ProjectBoard } from "./ProjectBoard";
 import { PROJECT_TAG } from "@/lib/deliverables";
@@ -573,8 +574,24 @@ export const IdeaDetail = ({ ideaId, onClose, backLabel = "Back", onSelectIdea }
         )}
 
         {!editing && idea && (
+          <IdeaResearchActions
+            ideaTitle={idea.title}
+            onAppendExtracted={async (block) => {
+              const next = `${idea.extracted_text ?? ""}${block}`.trim();
+              await updateIdea.mutateAsync({ id: idea.id, patch: { extracted_text: next } });
+            }}
+            onSetSummaryIfEmpty={async (md) => {
+              if (!idea.ai_summary?.trim()) {
+                await updateIdea.mutateAsync({ id: idea.id, patch: { ai_summary: md } });
+              }
+            }}
+          />
+        )}
+
+        {!editing && idea && (
           <IdeaReferences ideaId={idea.id} />
         )}
+
 
         {!editing && idea && (
           <RelatedIdeas ideaId={idea.id} onSelect={onSelectIdea} />
