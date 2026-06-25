@@ -73,6 +73,7 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
   const { data: folders = [] } = useFolders();
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const minimapRef = useRef<HTMLCanvasElement>(null);
   const nodesRef = useRef<GraphNode[]>([]);
   const edgesRef = useRef<GraphEdge[]>([]);
   const tagAnchorsRef = useRef<Map<string, { x: number; y: number }>>(new Map());
