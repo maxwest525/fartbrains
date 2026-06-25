@@ -7,10 +7,11 @@ import type { IdeaFilter } from "@/hooks/useIdeas";
 type Props = {
   filter: IdeaFilter;
   /** Which top-level view is active. */
-  view: "ideas" | "folders" | "calendar";
+  view: "ideas" | "folders" | "calendar" | "graph";
   onFilterChange: (f: IdeaFilter) => void;
   onOpenFolders: () => void;
   onOpenCalendar: () => void;
+  onOpenGraph: () => void;
   onOpenSettings: () => void;
 };
 
