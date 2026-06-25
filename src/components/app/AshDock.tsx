@@ -31,7 +31,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
 type Chip = { id: string; label: string; prefill: string };
-type Mode = "auto" | "note" | "list" | "transcript" | "link" | "instagram";
+type Mode = "auto" | "note" | "list" | "link" | "instagram";
 
 const CHIPS_KEY = "ash-dock-chips-v1";
 const FOLDER_KEY = "ash-dock-folder-v1";
@@ -92,7 +92,6 @@ const linesToChecklist = (s: string): string =>
 const MODE_META: Record<Exclude<Mode, "auto">, { label: string; icon: typeof FileText }> = {
   note:       { label: "Note",         icon: FileText },
   list:       { label: "Checklist",    icon: ListChecks },
-  transcript: { label: "Transcript",   icon: FileText },
   link:       { label: "Web link",     icon: Globe },
   instagram:  { label: "Instagram",    icon: Instagram },
 };
@@ -195,7 +194,6 @@ export const AshDock = ({ className }: { className?: string }) => {
     const url = extractUrl(text);
     if (url) return isInstagramUrl(url) ? "instagram" : "link";
     if (looksLikeList(text)) return "list";
-    if (text.trim().length > 400) return "transcript";
     return "note";
   };
 
@@ -207,8 +205,6 @@ export const AshDock = ({ className }: { className?: string }) => {
     try {
       if (eff === "link" || eff === "instagram") {
         await saveUrlIdea(extractUrl(t) ?? t, eff);
-      } else if (eff === "transcript") {
-        await saveTranscriptIdea(t);
       } else if (eff === "list") {
         await createIdea.mutateAsync({
           title: titleFromText(t),
@@ -468,7 +464,7 @@ export const AshDock = ({ className }: { className?: string }) => {
                   {mode === "auto" && <Check className="h-4 w-4 ml-auto" />}
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                {(["note","list","transcript","link","instagram"] as const).map((k) => {
+                {(["note","list","link","instagram"] as const).map((k) => {
                   const Icon = MODE_META[k].icon;
                   return (
                     <DropdownMenuItem key={k} onClick={() => setMode(k)}>

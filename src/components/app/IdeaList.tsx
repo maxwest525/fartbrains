@@ -137,7 +137,6 @@ export const IdeaList = ({ filter, selectedId, onSelect, onBackToFolders, onFilt
           <div className="mt-2.5 -mx-1 flex items-center gap-1.5 overflow-x-auto scroll-momentum">
             {([
               { key: undefined, label: "All", Icon: LayoutGrid },
-              { key: "transcript" as const, label: "Transcript", Icon: MessageSquare },
               { key: "webpage" as const, label: "Web", Icon: Link2 },
               { key: "audio" as const, label: "Audio", Icon: Mic },
               { key: "manual" as const, label: "Note", Icon: FileText },

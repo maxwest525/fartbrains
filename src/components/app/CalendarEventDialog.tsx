@@ -132,26 +132,15 @@ export const CalendarEventDialog = ({ open, onOpenChange, event, defaultDate }: 
         </DialogHeader>
 
         <div className="space-y-4">
-          <div className="grid grid-cols-[64px_1fr] gap-3">
-            <div className="space-y-1.5">
-              <Label className="text-xs text-muted-foreground">Emoji</Label>
-              <Input
-                value={emoji}
-                onChange={(e) => setEmoji(e.target.value.slice(0, 2))}
-                className="h-12 text-2xl text-center rounded-xl bg-secondary/60 border-transparent"
-                maxLength={2}
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs text-muted-foreground">Name</Label>
-              <Input
-                autoFocus
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="e.g. Mom's birthday"
-                className="h-12 rounded-xl bg-secondary/60 border-transparent text-[15px]"
-              />
-            </div>
+          <div className="space-y-1.5">
+            <Label className="text-xs text-muted-foreground">Name</Label>
+            <Input
+              autoFocus
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="e.g. Mom's birthday"
+              className="h-12 rounded-xl bg-secondary/60 border-transparent text-[15px]"
+            />
           </div>
 
           <div className="space-y-1.5">
@@ -161,10 +150,10 @@ export const CalendarEventDialog = ({ open, onOpenChange, event, defaultDate }: 
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="birthday">🎂 Birthday</SelectItem>
-                <SelectItem value="holiday">🎉 Holiday (fixed date)</SelectItem>
-                <SelectItem value="floating_holiday">📅 Floating holiday</SelectItem>
-                <SelectItem value="custom">📌 Custom</SelectItem>
+                <SelectItem value="birthday">Birthday</SelectItem>
+                <SelectItem value="holiday">Holiday (fixed date)</SelectItem>
+                <SelectItem value="floating_holiday">Floating holiday</SelectItem>
+                <SelectItem value="custom">Custom</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -177,9 +166,9 @@ export const CalendarEventDialog = ({ open, onOpenChange, event, defaultDate }: 
                   <SelectValue placeholder="Choose…" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="mothers_day">🌷 Mother's Day (2nd Sun May)</SelectItem>
-                  <SelectItem value="fathers_day">👔 Father's Day (3rd Sun Jun)</SelectItem>
-                  <SelectItem value="thanksgiving">🦃 Thanksgiving (4th Thu Nov)</SelectItem>
+                  <SelectItem value="mothers_day">Mother's Day (2nd Sun May)</SelectItem>
+                  <SelectItem value="fathers_day">Father's Day (3rd Sun Jun)</SelectItem>
+                  <SelectItem value="thanksgiving">Thanksgiving (4th Thu Nov)</SelectItem>
                 </SelectContent>
               </Select>
             </div>

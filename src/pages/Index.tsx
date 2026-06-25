@@ -7,7 +7,7 @@ import { IdeaDetail } from "@/components/app/IdeaDetail";
 import { AshChatPanel, type AshChatHandle } from "@/components/app/home/AshChatPanel";
 import { VoiceOrb } from "@/components/app/VoiceOrb";
 import { UrlCaptureScreen } from "@/components/app/UrlCaptureScreen";
-import { TranscriptCaptureScreen } from "@/components/app/TranscriptCaptureScreen";
+
 
 import { MobileTabBar } from "@/components/app/MobileTabBar";
 import { SettingsSheet } from "@/components/app/SettingsSheet";
@@ -42,7 +42,6 @@ const Shell = () => {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [capture, setCapture] = useState<
     | { kind: "url"; url: string }
-    | { kind: "transcript"; text: string }
     | null
   >(null);
   const isMobile = useIsMobile();
@@ -390,17 +389,6 @@ const Shell = () => {
         <UrlCaptureScreen
           defaultUrl={capture.url}
           defaultFolderId={defaultFolderId}
-          onBack={() => setCapture(null)}
-          onCreated={(id) => {
-            setCapture(null);
-            setSelectedId(id);
-          }}
-        />
-      )}
-      {capture?.kind === "transcript" && (
-        <TranscriptCaptureScreen
-          defaultFolderId={defaultFolderId}
-          defaultText={capture.text}
           onBack={() => setCapture(null)}
           onCreated={(id) => {
             setCapture(null);
