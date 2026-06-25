@@ -385,14 +385,12 @@ export const VoiceOrb = ({ onDictate, onLiveTranscript, speaking = false }: Voic
         }}
       />
 
-      {/* Mic permission status chip */}
-      <div className={cn(
-        "relative inline-flex items-center gap-1.5 h-7 px-3 rounded-full border text-[11.5px] font-medium",
-        permMeta.tone,
-      )}>
+      {/* Mic permission status — plain text + icon, no pill */}
+      <div className={cn("relative inline-flex items-center gap-1.5 text-[11.5px] font-medium", permMeta.tone.split(" ")[0])}>
         <permMeta.Icon className="h-3.5 w-3.5" />
         {permMeta.label}
       </div>
+
 
       <button
         type="button"
