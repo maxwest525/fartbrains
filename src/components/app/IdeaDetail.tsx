@@ -38,6 +38,7 @@ import { formatReminder } from "@/lib/formatTime";
 import { SourceMetaCard } from "./SourceMetaCard";
 import { RelatedIdeas } from "./RelatedIdeas";
 import { IdeaReferences } from "./IdeaReferences";
+import { CrossPollination } from "./CrossPollination";
 
 const NO_FOLDER = "__none__";
 
@@ -727,6 +728,10 @@ export const IdeaDetail = ({ ideaId, onClose, backLabel = "Back", onSelectIdea }
 
         {!editing && idea && (
           <RelatedIdeas ideaId={idea.id} onSelect={onSelectIdea} />
+        )}
+
+        {!editing && idea && (
+          <CrossPollination ideaId={idea.id} onSelect={onSelectIdea} />
         )}
 
 
