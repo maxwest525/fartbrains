@@ -41,6 +41,46 @@ import { IdeaReferences } from "./IdeaReferences";
 
 const NO_FOLDER = "__none__";
 
+function InlineAddTag({ onAdd }: { onAdd: (tag: string) => void | Promise<void> }) {
+  const [open, setOpen] = useState(false);
+  const [val, setVal] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    if (open) inputRef.current?.focus();
+  }, [open]);
+  const commit = async () => {
+    const cleaned = val.trim().toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "").slice(0, 32);
+    if (cleaned.length >= 2) await onAdd(cleaned);
+    setVal("");
+    setOpen(false);
+  };
+  if (!open) {
+    return (
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className="inline-flex items-center gap-1 px-2 h-6 rounded-full border border-dashed border-white/15 text-[11px] text-muted-foreground hover:text-foreground"
+      >
+        + tag
+      </button>
+    );
+  }
+  return (
+    <input
+      ref={inputRef}
+      value={val}
+      onChange={(e) => setVal(e.target.value)}
+      onBlur={commit}
+      onKeyDown={(e) => {
+        if (e.key === "Enter") { e.preventDefault(); commit(); }
+        if (e.key === "Escape") { setVal(""); setOpen(false); }
+      }}
+      placeholder="new-tag"
+      className="h-6 px-2 rounded-full bg-white/[0.06] border border-white/15 text-[11px] text-foreground outline-none w-24 focus:border-white/30"
+    />
+  );
+}
+
 type Props = {
   ideaId: string | null;
   onClose: () => void;
