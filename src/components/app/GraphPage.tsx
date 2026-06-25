@@ -65,13 +65,15 @@ type Tuning = {
   linkStrength: number;  // 0..1
   tagGravity: number;    // 0..1 — how hard tags pull their cluster together
   strictness: number;    // 1..5 — min shared signal before drawing edges
+  clusterCount: number;  // 2..10 — forced max number of distinct tag clusters
 };
-const DEFAULT_TUNING: Tuning = { repulsion: 0.55, linkStrength: 0.5, tagGravity: 0.65, strictness: 2 };
+const DEFAULT_TUNING: Tuning = { repulsion: 0.55, linkStrength: 0.5, tagGravity: 0.75, strictness: 2, clusterCount: 5 };
 
 export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
   const { data: folders = [] } = useFolders();
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const minimapRef = useRef<HTMLCanvasElement>(null);
   const nodesRef = useRef<GraphNode[]>([]);
   const edgesRef = useRef<GraphEdge[]>([]);
   const tagAnchorsRef = useRef<Map<string, { x: number; y: number }>>(new Map());
@@ -285,20 +287,30 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
     const topTags = [...tagCount.entries()]
       .filter(([, c]) => c >= 2)
       .sort((a, b) => b[1] - a[1])
-      .slice(0, 12)
+      .slice(0, Math.max(2, Math.min(10, tuning.clusterCount)))
       .map(([t]) => t);
+    const topTagSet = new Set(topTags);
     const anchors = new Map<string, { x: number; y: number }>();
     const cx = W / 2, cy = H / 2;
-    const R = Math.min(W, H) * 0.32;
+    const R = Math.min(W, H) * 0.34;
     topTags.forEach((t, i) => {
-      const ang = (i / topTags.length) * Math.PI * 2;
+      const ang = (i / Math.max(1, topTags.length)) * Math.PI * 2 - Math.PI / 2;
       anchors.set(t, { x: cx + Math.cos(ang) * R, y: cy + Math.sin(ang) * R });
     });
     tagAnchorsRef.current = anchors;
 
     const nodes: GraphNode[] = ideas.map((i: any) => {
       const deg = degree.get(i.id) ?? 0;
-      const pTag = ideaPrimaryTag.get(i.id) ?? null;
+      // Prefer a primary tag that is one of the displayed clusters
+      const ts = ideaTagsRaw.get(i.id) ?? [];
+      let pTag: string | null = null;
+      let bestC = 0;
+      for (const t of ts) {
+        if (!topTagSet.has(t)) continue;
+        const c = tagCount.get(t) ?? 0;
+        if (c > bestC) { bestC = c; pTag = t; }
+      }
+      if (!pTag) pTag = ideaPrimaryTag.get(i.id) ?? null;
       const anchor = pTag ? anchors.get(pTag) : null;
       const angle = Math.random() * Math.PI * 2;
       const jitter = 30 + Math.random() * 60;
@@ -325,7 +337,7 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
     nodesRef.current = nodes;
     edgesRef.current = edges;
     setReady(true);
-  }, [ideasQuery.data, refsQuery.data, folderColor, size.w, size.h, tuning.strictness]);
+  }, [ideasQuery.data, refsQuery.data, folderColor, size.w, size.h, tuning.strictness, tuning.clusterCount]);
 
   // Top tags / keywords for filter chips
   const topTags = useMemo(() => {
@@ -364,6 +376,20 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
     }
     visibleNodeIdsRef.current = vis;
   }, [folderFilter, keywordFilter, tagFilter, ready]);
+
+  // Snap-to-cluster when tag filter changes — pan to first selected tag's anchor
+  useEffect(() => {
+    if (!ready || tagFilter.size === 0) return;
+    const firstTag = [...tagFilter][0];
+    const anchor = tagAnchorsRef.current.get(firstTag);
+    if (!anchor) return;
+    const cam = cameraRef.current;
+    const targetZoom = 1.4;
+    cam.tz = targetZoom;
+    cam.tx = size.w / 2 - anchor.x * targetZoom;
+    cam.ty = size.h / 2 - anchor.y * targetZoom;
+    cam.animating = true;
+  }, [tagFilter, ready, size.w, size.h]);
 
   // Resize observer
   useEffect(() => {
@@ -558,6 +584,61 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
         ctx.globalAlpha = 1;
       }
       ctx.restore();
+
+      // Minimap
+      const mini = minimapRef.current;
+      if (mini) {
+        const mctx = mini.getContext("2d");
+        if (mctx) {
+          const MW = mini.width / dpr, MH = mini.height / dpr;
+          // Compute world bounds from nodes
+          let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+          for (const n of nodes) {
+            if (n.x < minX) minX = n.x;
+            if (n.y < minY) minY = n.y;
+            if (n.x > maxX) maxX = n.x;
+            if (n.y > maxY) maxY = n.y;
+          }
+          if (!isFinite(minX)) { minX = 0; minY = 0; maxX = W; maxY = H; }
+          const pad = 40;
+          minX -= pad; minY -= pad; maxX += pad; maxY += pad;
+          const sx = MW / (maxX - minX);
+          const sy = MH / (maxY - minY);
+          const s = Math.min(sx, sy);
+          const ox = (MW - (maxX - minX) * s) / 2 - minX * s;
+          const oy = (MH - (maxY - minY) * s) / 2 - minY * s;
+          mctx.clearRect(0, 0, MW, MH);
+          mctx.fillStyle = "rgba(0,0,0,0.35)";
+          mctx.fillRect(0, 0, MW, MH);
+          // tag halos
+          anchors.forEach((pos, tag) => {
+            mctx.beginPath();
+            mctx.fillStyle = hashColor(`tag:${tag}`);
+            mctx.globalAlpha = 0.18;
+            mctx.arc(pos.x * s + ox, pos.y * s + oy, 14, 0, Math.PI * 2);
+            mctx.fill();
+          });
+          mctx.globalAlpha = 1;
+          // nodes
+          for (const n of nodes) {
+            mctx.beginPath();
+            mctx.fillStyle = n.color;
+            mctx.arc(n.x * s + ox, n.y * s + oy, 1.4, 0, Math.PI * 2);
+            mctx.fill();
+          }
+          // viewport rectangle (inverse of camera transform)
+          const cam2 = cameraRef.current;
+          const vx = (-cam2.x) / cam2.zoom;
+          const vy = (-cam2.y) / cam2.zoom;
+          const vw = W / cam2.zoom;
+          const vh = H / cam2.zoom;
+          mctx.strokeStyle = "rgba(255,255,255,0.85)";
+          mctx.lineWidth = 1;
+          mctx.strokeRect(vx * s + ox, vy * s + oy, vw * s, vh * s);
+          // store transform for click-pan
+          (mini as any).__tx = { s, ox, oy };
+        }
+      }
 
       raf = requestAnimationFrame(step);
     };
@@ -905,6 +986,13 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
             </button>
           </div>
           <Slider
+            label="Cluster count"
+            hint="Force this many distinct tag groupings"
+            value={tuning.clusterCount}
+            min={2} max={10} step={1}
+            onChange={(v) => setTuning((t) => ({ ...t, clusterCount: v }))}
+          />
+          <Slider
             label="Strictness"
             hint="How much shared signal before two ideas connect"
             value={tuning.strictness}
@@ -936,7 +1024,10 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
       )}
 
       {/* Legend + edge toggles */}
-      <div className="absolute bottom-3 left-3 z-10 flex flex-col gap-1 text-[11px] text-white/70 bg-black/50 backdrop-blur-xl border border-white/10 rounded-2xl px-2.5 py-2 shadow-2xl">
+      <div
+        className="absolute left-3 z-10 flex flex-col gap-1 text-[11px] text-white/70 bg-black/60 backdrop-blur-xl border border-white/10 rounded-2xl px-2.5 py-2 shadow-2xl"
+        style={{ bottom: "calc(0.75rem + var(--mobile-tabbar-h, 0px))" }}
+      >
         <div className="px-1 pb-0.5 text-[10px] uppercase tracking-wider text-white/40">Connections</div>
         {(["tag", "ref", "kw", "folder"] as EdgeKind[]).map((k) => {
           const on = enabledKinds[k];
@@ -957,11 +1048,43 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
         })}
       </div>
 
+      {/* Minimap */}
+      <div
+        className="absolute right-3 z-10 rounded-xl overflow-hidden border border-white/15 shadow-2xl"
+        style={{ bottom: "calc(0.75rem + var(--mobile-tabbar-h, 0px) + 9.25rem)" }}
+        aria-label="Minimap"
+      >
+        <canvas
+          ref={minimapRef}
+          width={150 * Math.min(2, typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1)}
+          height={100 * Math.min(2, typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1)}
+          style={{ width: 150, height: 100, display: "block", cursor: "crosshair" }}
+          onPointerDown={(e) => {
+            const mini = minimapRef.current as any;
+            const tx = mini?.__tx;
+            if (!tx) return;
+            const rect = mini.getBoundingClientRect();
+            const px = e.clientX - rect.left;
+            const py = e.clientY - rect.top;
+            const wx = (px - tx.ox) / tx.s;
+            const wy = (py - tx.oy) / tx.s;
+            const cam = cameraRef.current;
+            cam.tx = size.w / 2 - wx * cam.zoom;
+            cam.ty = size.h / 2 - wy * cam.zoom;
+            cam.tz = cam.zoom;
+            cam.animating = true;
+          }}
+        />
+      </div>
+
       {/* Zoom + recenter cluster, bottom-right */}
-      <div className="absolute bottom-3 right-3 z-10 flex flex-col gap-1.5">
+      <div
+        className="absolute right-3 z-10 flex flex-col gap-1.5"
+        style={{ bottom: "calc(0.75rem + var(--mobile-tabbar-h, 0px))" }}
+      >
         <button
           onClick={() => stepZoom(1)}
-          className="h-9 w-9 rounded-full bg-black/50 backdrop-blur-xl border border-white/10 text-white/85 hover:text-white flex items-center justify-center shadow-lg"
+          className="h-9 w-9 rounded-full bg-black/60 backdrop-blur-xl border border-white/10 text-white/85 hover:text-white flex items-center justify-center shadow-lg"
           aria-label="Zoom in"
           title="Zoom in"
         >
@@ -969,7 +1092,7 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
         </button>
         <button
           onClick={() => stepZoom(-1)}
-          className="h-9 w-9 rounded-full bg-black/50 backdrop-blur-xl border border-white/10 text-white/85 hover:text-white flex items-center justify-center shadow-lg"
+          className="h-9 w-9 rounded-full bg-black/60 backdrop-blur-xl border border-white/10 text-white/85 hover:text-white flex items-center justify-center shadow-lg"
           aria-label="Zoom out"
           title="Zoom out"
         >
@@ -977,7 +1100,7 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
         </button>
         <button
           onClick={recenter}
-          className="h-9 w-9 rounded-full bg-black/50 backdrop-blur-xl border border-white/10 text-white/85 hover:text-white flex items-center justify-center shadow-lg"
+          className="h-9 w-9 rounded-full bg-black/60 backdrop-blur-xl border border-white/10 text-white/85 hover:text-white flex items-center justify-center shadow-lg"
           aria-label="Recenter"
           title="Recenter"
         >
