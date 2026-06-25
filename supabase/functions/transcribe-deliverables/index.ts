@@ -82,41 +82,71 @@ Rules:
         ? `${contextLines.join("\n\n")}\n\nNow process the audio:`
         : "Process the audio:";
 
+    // 1) Transcribe via Lovable AI's dedicated STT endpoint (more reliable
+    //    than passing inline audio to a chat model).
+    const audioBytes = Uint8Array.from(atob(audioBase64), (c) => c.charCodeAt(0));
+    const ext = mimeTypeToExt(mimeType);
+    const sttForm = new FormData();
+    sttForm.append(
+      "file",
+      new File([audioBytes], `recording.${ext}`, { type: mimeType }),
+    );
+    sttForm.append("model", "openai/gpt-4o-mini-transcribe");
+
+    const sttResp = await fetch(
+      "https://ai.gateway.lovable.dev/v1/audio/transcriptions",
+      {
+        method: "POST",
+        headers: { Authorization: `Bearer ${LOVABLE_API_KEY}` },
+        body: sttForm,
+      },
+    );
+
+    if (!sttResp.ok) {
+      if (sttResp.status === 429) {
+        return json({ error: "Rate limit hit. Wait a moment and try again." }, 429);
+      }
+      if (sttResp.status === 402) {
+        return json({ error: "AI credits exhausted. Add credits in Lovable workspace." }, 402);
+      }
+      const t = await sttResp.text().catch(() => "");
+      console.error("STT error:", sttResp.status, t);
+      return json({ error: `Transcription failed (${sttResp.status})` }, 500);
+    }
+
+    const sttData = await sttResp.json().catch(() => ({} as Record<string, unknown>));
+    const transcript = typeof (sttData as { text?: unknown }).text === "string"
+      ? ((sttData as { text: string }).text).trim()
+      : "";
+
+    if (!transcript) {
+      return json({ transcript: "", items: [] });
+    }
+
+    // 2) Ask Gemini to split the transcript into typed deliverables.
     const tool = {
       type: "function",
       function: {
         name: "save_deliverables",
-        description:
-          "Return the verbatim transcript and the list of typed deliverables extracted from it.",
+        description: "Return the list of typed deliverables extracted from a transcript.",
         parameters: {
           type: "object",
           properties: {
-            transcript: {
-              type: "string",
-              description: "Verbatim transcript of the audio.",
-            },
             items: {
               type: "array",
               description: "Deliverables extracted from the transcript, in spoken order.",
               items: {
                 type: "object",
                 properties: {
-                  type: {
-                    type: "string",
-                    enum: allowedTypes,
-                    description: "Best-fit deliverable type.",
-                  },
-                  text: {
-                    type: "string",
-                    description: "Short imperative text for the deliverable.",
-                  },
+                  type: { type: "string", enum: allowedTypes },
+                  text: { type: "string" },
                 },
                 required: ["type", "text"],
                 additionalProperties: false,
               },
             },
           },
-          required: ["transcript", "items"],
+          required: ["items"],
           additionalProperties: false,
         },
       },
@@ -132,19 +162,7 @@ Rules:
         model: "google/gemini-2.5-flash",
         messages: [
           { role: "system", content: systemPrompt },
-          {
-            role: "user",
-            content: [
-              { type: "text", text: contextText },
-              {
-                type: "input_audio",
-                input_audio: {
-                  data: audioBase64,
-                  format: mimeTypeToFormat(mimeType),
-                },
-              },
-            ],
-          },
+          { role: "user", content: `${contextText}\n\nTranscript:\n${transcript}` },
         ],
         tools: [tool],
         tool_choice: { type: "function", function: { name: "save_deliverables" } },
@@ -152,45 +170,26 @@ Rules:
     });
 
     if (!resp.ok) {
-      if (resp.status === 429) {
-        return json({ error: "Rate limit hit. Wait a moment and try again." }, 429);
-      }
-      if (resp.status === 402) {
-        return json(
-          { error: "AI credits exhausted. Add credits in Lovable workspace." },
-          402
-        );
-      }
-      const t = await resp.text();
-      console.error("AI gateway error:", resp.status, t);
-      return json({ error: "AI transcription failed" }, 500);
+      // Transcript is the important thing — return it even if extraction fails.
+      console.error("Deliverable extraction failed:", resp.status, await resp.text().catch(() => ""));
+      return json({ transcript, items: [] });
     }
 
     const data = await resp.json();
-    const choice = data?.choices?.[0]?.message;
-    const toolCall = choice?.tool_calls?.[0];
-    const argsRaw = toolCall?.function?.arguments;
-    if (!argsRaw) {
-      console.error("No tool call returned. choice:", JSON.stringify(choice));
-      return json({ error: "Model did not return structured deliverables" }, 502);
-    }
-
-    let parsed: { transcript?: string; items?: Array<{ type?: string; text?: string }> } = {};
+    const argsRaw = data?.choices?.[0]?.message?.tool_calls?.[0]?.function?.arguments;
+    let parsed: { items?: Array<{ type?: string; text?: string }> } = {};
     try {
-      parsed = typeof argsRaw === "string" ? JSON.parse(argsRaw) : argsRaw;
-    } catch (e) {
-      console.error("Failed to parse tool args:", e, argsRaw);
-      return json({ error: "Couldn't parse model output" }, 502);
+      parsed = typeof argsRaw === "string" ? JSON.parse(argsRaw) : (argsRaw ?? {});
+    } catch {
+      parsed = {};
     }
 
-    const transcript = (parsed.transcript ?? "").toString().trim();
-    const items =
-      (parsed.items ?? [])
-        .map((i) => ({
-          type: typeof i?.type === "string" ? i.type : "task",
-          text: typeof i?.text === "string" ? i.text.trim() : "",
-        }))
-        .filter((i) => i.text.length > 0 && allowedTypes.includes(i.type));
+    const items = (parsed.items ?? [])
+      .map((i) => ({
+        type: typeof i?.type === "string" ? i.type : "task",
+        text: typeof i?.text === "string" ? i.text.trim() : "",
+      }))
+      .filter((i) => i.text.length > 0 && allowedTypes.includes(i.type));
 
     return json({ transcript, items });
   } catch (e) {
@@ -202,14 +201,14 @@ Rules:
   }
 });
 
-/** Map a browser MediaRecorder mime type to the format string the gateway expects. */
-function mimeTypeToFormat(mime: string): string {
+/** Map a browser MediaRecorder mime type to a file extension OpenAI's STT recognizes. */
+function mimeTypeToExt(mime: string): string {
   const lower = mime.toLowerCase();
   if (lower.includes("webm")) return "webm";
   if (lower.includes("ogg")) return "ogg";
   if (lower.includes("mp4") || lower.includes("aac") || lower.includes("m4a")) return "mp4";
   if (lower.includes("wav")) return "wav";
   if (lower.includes("mpeg") || lower.includes("mp3")) return "mp3";
-  // Safe default — Gemini accepts webm-opus.
   return "webm";
 }
+
