@@ -178,13 +178,13 @@ export const PasscodeKeypad = ({ onUnlocked }: Props) => {
       </div>
 
       {/* Keypad */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-3 gap-5 sm:gap-4">
         {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => (
           <KeyButton key={n} onClick={() => press(String(n))} disabled={lockoutLeft > 0}>
             {n}
           </KeyButton>
         ))}
-        <div className="h-16 w-16" />
+        <div className="h-[76px] w-[76px] sm:h-16 sm:w-16" />
         <KeyButton onClick={() => press("0")} disabled={lockoutLeft > 0}>
           0
         </KeyButton>
@@ -193,11 +193,12 @@ export const PasscodeKeypad = ({ onUnlocked }: Props) => {
           onClick={backspace}
           disabled={lockoutLeft > 0 || code.length === 0}
           aria-label="Backspace"
-          className="h-16 w-16 rounded-full flex items-center justify-center text-white/90 hover:bg-white/10 active:bg-white/15 active:scale-95 transition disabled:opacity-30"
+          className="h-[76px] w-[76px] sm:h-16 sm:w-16 rounded-full flex items-center justify-center text-white/90 hover:bg-white/10 active:bg-white/15 active:scale-95 transition disabled:opacity-30"
         >
-          <Delete className="h-5 w-5" />
+          <Delete className="h-6 w-6 sm:h-5 sm:w-5" />
         </button>
       </div>
+
 
       {setupMode ? (
         <p className="text-[11.5px] text-white/45">
@@ -245,10 +246,10 @@ const KeyButton = ({
     onClick={onClick}
     disabled={disabled}
     className={cn(
-      "h-16 w-16 rounded-full",
+      "h-[76px] w-[76px] sm:h-16 sm:w-16 rounded-full",
       "bg-white/[0.08] hover:bg-white/[0.14] active:bg-white/[0.20]",
       "border border-white/15 backdrop-blur-xl",
-      "text-[26px] font-light text-white",
+      "text-[30px] sm:text-[26px] font-light text-white",
       "transition-all duration-100 active:scale-95",
       "focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40",
       "disabled:opacity-40 disabled:cursor-not-allowed",

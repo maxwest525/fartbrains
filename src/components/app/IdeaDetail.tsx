@@ -38,7 +38,7 @@ import { formatReminder } from "@/lib/formatTime";
 import { SourceMetaCard } from "./SourceMetaCard";
 import { RelatedIdeas } from "./RelatedIdeas";
 import { IdeaReferences } from "./IdeaReferences";
-import { CrossPollination } from "./CrossPollination";
+import { CollapsibleSection } from "./CollapsibleSection";
 
 const NO_FOLDER = "__none__";
 
@@ -393,11 +393,11 @@ export const IdeaDetail = ({ ideaId, onClose, backLabel = "Back", onSelectIdea }
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-muted-foreground">
           <div className="whitespace-nowrap overflow-hidden text-ellipsis">
             <span className="font-medium text-foreground">Created:</span>{" "}
-            {new Date(idea.created_at).toLocaleString()}
+            {new Date(idea.created_at).toLocaleDateString()}
           </div>
           <div className="whitespace-nowrap overflow-hidden text-ellipsis">
             <span className="font-medium text-foreground">Updated:</span>{" "}
-            {new Date(idea.updated_at).toLocaleString()}
+            {new Date(idea.updated_at).toLocaleDateString()}
           </div>
         </div>
 
@@ -563,10 +563,10 @@ export const IdeaDetail = ({ ideaId, onClose, backLabel = "Back", onSelectIdea }
           };
           let checkboxIndex = -1;
           return (
-            <section>
-              <h3 className="text-sm font-semibold mb-2">
-                {isProject ? "Deliverables (raw)" : isChecklist ? "Checklist" : "Note"}
-              </h3>
+            <CollapsibleSection
+              id={`${idea.id}:note`}
+              title={isProject ? "Deliverables (raw)" : isChecklist ? "Checklist" : "Note"}
+            >
               {editing ? (
                 <Textarea
                   value={rawNote}
@@ -604,51 +604,43 @@ export const IdeaDetail = ({ ideaId, onClose, backLabel = "Back", onSelectIdea }
               ) : (
                 <p className="whitespace-pre-wrap text-sm">{idea.raw_note}</p>
               )}
-            </section>
+            </CollapsibleSection>
           );
         })()}
 
         {!editing && (idea.generated_prompt || idea.raw_note || idea.ai_summary) && (
-          <section>
-            <div className="flex items-center justify-between mb-2 gap-2">
-              <h3 className="text-sm font-semibold flex items-center gap-1.5">
-                <Wand2 className="h-3.5 w-3.5 text-primary" /> Ready-to-paste prompt
-              </h3>
-              <div className="flex items-center gap-1.5">
+          <CollapsibleSection
+            id={`${idea.id}:prompt`}
+            title={<span className="flex items-center gap-1.5"><Wand2 className="h-3.5 w-3.5 text-primary" /> Ready-to-paste prompt</span>}
+            actions={
+              <>
                 {idea.generated_prompt && (
-                  <Button
+                  <button
                     type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="h-8 rounded-full text-xs"
-                    onClick={onCopyPrompt}
+                    onClick={(e) => { e.stopPropagation(); onCopyPrompt(); }}
+                    className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
                   >
-                    {copied ? (
-                      <><Check className="h-3.5 w-3.5 mr-1" /> Copied</>
-                    ) : (
-                      <><Copy className="h-3.5 w-3.5 mr-1" /> Copy</>
-                    )}
-                  </Button>
+                    {copied ? <><Check className="h-3.5 w-3.5" /> Copied</> : <><Copy className="h-3.5 w-3.5" /> Copy</>}
+                  </button>
                 )}
-                <Button
+                <button
                   type="button"
-                  variant="outline"
-                  size="sm"
-                  className="h-8 rounded-full text-xs"
-                  onClick={onGeneratePrompt}
+                  onClick={(e) => { e.stopPropagation(); onGeneratePrompt(); }}
                   disabled={generating}
+                  className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground disabled:opacity-50"
                 >
                   {generating ? (
-                    <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" />
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
                   ) : idea.generated_prompt ? (
-                    <RefreshCw className="h-3.5 w-3.5 mr-1" />
+                    <RefreshCw className="h-3.5 w-3.5" />
                   ) : (
-                    <Wand2 className="h-3.5 w-3.5 mr-1" />
+                    <Wand2 className="h-3.5 w-3.5" />
                   )}
                   {idea.generated_prompt ? "Regenerate" : "Generate prompt"}
-                </Button>
-              </div>
-            </div>
+                </button>
+              </>
+            }
+          >
             {generating && <ThinkingPanel active className="mb-2" />}
             {idea.generated_prompt ? (
               <div className="rounded-xl glass-card-quiet p-4 text-sm whitespace-pre-wrap font-mono leading-relaxed select-text">
@@ -659,31 +651,26 @@ export const IdeaDetail = ({ ideaId, onClose, backLabel = "Back", onSelectIdea }
                 Combine your note with the AI summary into a single prompt you can paste into ChatGPT, Claude, or Gemini.
               </div>
             )}
-          </section>
+          </CollapsibleSection>
         )}
 
         {(editing || idea.ai_summary || idea.raw_note || idea.extracted_text) && (
-          <section>
-            <div className="mb-2 flex items-center justify-between gap-2">
-              <h3 className="text-sm font-semibold flex items-center gap-1.5">
-                <Sparkles className="h-3.5 w-3.5 text-accent" /> Summary
-              </h3>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={onRegenerateSummary}
+          <CollapsibleSection
+            id={`${idea.id}:summary`}
+            title={<span className="flex items-center gap-1.5"><Sparkles className="h-3.5 w-3.5 text-accent" /> Summary</span>}
+            actions={
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); onRegenerateSummary(); }}
                 disabled={regenerating || updateIdea.isPending}
-                className="h-7 px-2 text-xs gap-1 text-muted-foreground hover:text-foreground"
+                className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground disabled:opacity-50"
                 title="Re-run AI summary from the current note or extracted text"
               >
-                {regenerating ? (
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                ) : (
-                  <RefreshCw className="h-3.5 w-3.5" />
-                )}
+                {regenerating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
                 {idea.ai_summary ? "Regenerate" : "Generate"}
-              </Button>
-            </div>
+              </button>
+            }
+          >
             <ThinkingPanel active={regenerating} className="mb-2" />
             {editing ? (
               <Textarea
@@ -702,7 +689,7 @@ export const IdeaDetail = ({ ideaId, onClose, backLabel = "Back", onSelectIdea }
                 No summary yet — click <span className="font-medium text-foreground">Generate</span> above to create one from your note or extracted text.
               </div>
             )}
-          </section>
+          </CollapsibleSection>
         )}
 
         {!editing && idea && (
@@ -725,27 +712,21 @@ export const IdeaDetail = ({ ideaId, onClose, backLabel = "Back", onSelectIdea }
           <IdeaReferences ideaId={idea.id} />
         )}
 
-
         {!editing && idea && (
           <RelatedIdeas ideaId={idea.id} onSelect={onSelectIdea} />
         )}
 
-        {!editing && idea && (
-          <CrossPollination ideaId={idea.id} onSelect={onSelectIdea} />
-        )}
-
-
         {(editing ? extractedText : idea.extracted_text) && (
-          <section>
-            <div className="mb-2 flex items-center justify-between gap-2">
-              <h3 className="text-sm font-semibold">Original extracted text</h3>
-              {!editing && idea.extracted_text && (
-                <Button
+          <CollapsibleSection
+            id={`${idea.id}:extracted`}
+            title="Original extracted text"
+            defaultOpen={false}
+            actions={
+              !editing && idea.extracted_text ? (
+                <button
                   type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="h-7 rounded-full text-xs gap-1 text-muted-foreground hover:text-foreground"
-                  onClick={async () => {
+                  onClick={async (e) => {
+                    e.stopPropagation();
                     try {
                       await navigator.clipboard.writeText(idea.extracted_text ?? "");
                       toast.success("Raw text copied");
@@ -753,12 +734,14 @@ export const IdeaDetail = ({ ideaId, onClose, backLabel = "Back", onSelectIdea }
                       toast.error("Couldn't copy — select and copy manually.");
                     }
                   }}
+                  className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
                   title="Copy raw extracted text (separate from the AI summary)"
                 >
                   <Copy className="h-3.5 w-3.5" /> Copy raw text
-                </Button>
-              )}
-            </div>
+                </button>
+              ) : null
+            }
+          >
             {editing ? (
               <Textarea
                 value={extractedText}
@@ -771,7 +754,7 @@ export const IdeaDetail = ({ ideaId, onClose, backLabel = "Back", onSelectIdea }
                 {idea.extracted_text}
               </div>
             )}
-          </section>
+          </CollapsibleSection>
         )}
       </div>
 
