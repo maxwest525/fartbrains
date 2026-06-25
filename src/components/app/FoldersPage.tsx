@@ -221,38 +221,20 @@ export const FoldersPage = ({ onOpenFolder, onOpenRecent, onBack }: Props) => {
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4">
             {onOpenRecent && (query.trim() === "" || "recent".includes(query.trim().toLowerCase())) && (
-              <div
-                className="group relative rounded-2xl overflow-hidden transition-all duration-200 hover:-translate-y-0.5"
-                style={{
-                  background: `linear-gradient(155deg, hsl(265 60% 14% / 0.55) 0%, hsl(var(--card)) 60%)`,
-                  boxShadow:
-                    "0 1px 0 hsl(0 0% 100% / 0.06) inset, 0 8px 24px -14px hsl(0 0% 0% / 0.45), 0 1px 2px hsl(0 0% 0% / 0.06)",
-                }}
-              >
-                <div className="absolute inset-0 rounded-2xl border border-border/50 pointer-events-none" />
+              <div className="group relative rounded-2xl overflow-hidden transition-all duration-200 hover:-translate-y-0.5 bg-white/[0.04] backdrop-blur-xl border border-white/10 shadow-[0_8px_24px_-14px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.06)]">
                 <button
                   onClick={onOpenRecent}
                   className="press relative w-full text-left p-4 flex flex-col items-start gap-3 min-h-[180px]"
                 >
                   <div className="flex items-center gap-3 w-full min-w-0">
-                    <div
-                      className="relative h-11 w-11 rounded-[12px] flex items-center justify-center shrink-0"
-                      style={{
-                        background: `linear-gradient(140deg, hsl(265 90% 70%) 0%, hsl(265 80% 55%) 100%)`,
-                        boxShadow:
-                          `0 6px 14px -4px hsl(265 80% 50% / 0.55), 0 1px 0 hsl(0 0% 100% / 0.35) inset`,
-                      }}
-                    >
-                      <Clock className="h-5 w-5 text-white drop-shadow-[0_1px_1px_rgba(0,0,0,0.18)]" strokeWidth={2.2} />
+                    <div className="relative h-11 w-11 rounded-[12px] flex items-center justify-center shrink-0 bg-white/[0.06] backdrop-blur-md border border-white/10">
+                      <Clock className="h-5 w-5 text-foreground/80" strokeWidth={2.2} />
                     </div>
                     <div className="min-w-0 flex-1">
                       <p className="font-semibold text-[15px] truncate leading-tight tracking-tight">
                         Recent
                       </p>
-                      <div className="mt-1 flex items-center gap-1.5">
-                        <span className="h-1.5 w-1.5 rounded-full" style={{ background: `hsl(265 80% 60%)` }} />
-                        <p className="text-[12px] text-muted-foreground">Recently captured</p>
-                      </div>
+                      <p className="text-[12px] text-muted-foreground mt-1">Recently captured</p>
                     </div>
                   </div>
                   <div className="w-full mt-1 flex-1 flex items-end">
@@ -267,59 +249,29 @@ export const FoldersPage = ({ onOpenFolder, onOpenRecent, onBack }: Props) => {
             {filtered.map((folder) => {
               const count = counts[folder.id] ?? 0;
               const folderPreviews = previews[folder.id] ?? [];
-              // Deterministic hue per folder so tiles read as distinct.
-              const hue = hashHue(folder.id);
               return (
                 <div
                   key={folder.id}
-                  className="group relative rounded-2xl overflow-hidden transition-all duration-200 hover:-translate-y-0.5"
-                  style={{
-                    background: `linear-gradient(155deg, hsl(${hue} 70% 96% / 0.9) 0%, hsl(var(--card)) 55%)`,
-                    boxShadow:
-                      "0 1px 0 hsl(0 0% 100% / 0.06) inset, 0 8px 24px -14px hsl(0 0% 0% / 0.25), 0 1px 2px hsl(0 0% 0% / 0.04)",
-                  }}
+                  className="group relative rounded-2xl overflow-hidden transition-all duration-200 hover:-translate-y-0.5 bg-white/[0.04] backdrop-blur-xl border border-white/10 shadow-[0_8px_24px_-14px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.06)]"
                 >
-                  {/* Hairline border that adapts to light/dark via border-token */}
-                  <div className="absolute inset-0 rounded-2xl border border-border/50 pointer-events-none" />
-
                   <button
                     onClick={() => onOpenFolder(folder.id)}
                     className="press relative w-full text-left p-4 flex flex-col items-start gap-3 min-h-[180px]"
                   >
-                    {/* Header row: glyph + name/count */}
                     <div className="flex items-center gap-3 w-full min-w-0">
-                      <div
-                        className="relative h-11 w-11 rounded-[12px] flex items-center justify-center shrink-0"
-                        style={{
-                          background: `linear-gradient(140deg, hsl(${hue} 85% 62%) 0%, hsl(${hue} 75% 48%) 100%)`,
-                          boxShadow:
-                            `0 6px 14px -4px hsl(${hue} 70% 45% / 0.45), 0 1px 0 hsl(0 0% 100% / 0.35) inset`,
-                        }}
-                      >
-                        <Folder
-                          className="h-5 w-5 text-white drop-shadow-[0_1px_1px_rgba(0,0,0,0.18)]"
-                          strokeWidth={2}
-                          fill="currentColor"
-                          fillOpacity={0.18}
-                        />
+                      <div className="relative h-11 w-11 rounded-[12px] flex items-center justify-center shrink-0 bg-white/[0.06] backdrop-blur-md border border-white/10">
+                        <Folder className="h-5 w-5 text-foreground/80" strokeWidth={2} />
                       </div>
                       <div className="min-w-0 flex-1">
                         <p className="font-semibold text-[15px] truncate leading-tight tracking-tight">
                           {folder.name}
                         </p>
-                        <div className="mt-1 flex items-center gap-1.5">
-                          <span
-                            className="h-1.5 w-1.5 rounded-full"
-                            style={{ background: `hsl(${hue} 75% 55%)` }}
-                          />
-                          <p className="text-[12px] text-muted-foreground tabular-nums">
-                            {count} {count === 1 ? "idea" : "ideas"}
-                          </p>
-                        </div>
+                        <p className="text-[12px] text-muted-foreground tabular-nums mt-1">
+                          {count} {count === 1 ? "idea" : "ideas"}
+                        </p>
                       </div>
                     </div>
 
-                    {/* Preview list — up to 3 most recent ideas */}
                     <div className="w-full mt-1 flex-1 flex flex-col gap-1">
                       {folderPreviews.length === 0 ? (
                         <div className="flex-1 flex items-center">
@@ -331,7 +283,7 @@ export const FoldersPage = ({ onOpenFolder, onOpenRecent, onBack }: Props) => {
                         folderPreviews.map((item) => (
                           <div
                             key={item.id}
-                            className="flex items-center gap-1.5 rounded-md px-1.5 py-1 bg-background/40 backdrop-blur-sm border border-border/40"
+                            className="flex items-center gap-1.5 rounded-md px-1.5 py-1 bg-white/[0.03] border border-white/5"
                           >
                             <SourceIcon
                               type={item.source_type}
@@ -353,7 +305,7 @@ export const FoldersPage = ({ onOpenFolder, onOpenRecent, onBack }: Props) => {
 
                   <DropdownMenu>
                     <DropdownMenuTrigger
-                      className="absolute top-2 right-2 h-8 w-8 rounded-full bg-background/70 backdrop-blur flex items-center justify-center text-muted-foreground hover:text-foreground md:opacity-0 md:group-hover:opacity-100 md:focus:opacity-100 md:data-[state=open]:opacity-100 transition-opacity"
+                      className="absolute top-2 right-2 h-8 w-8 rounded-full bg-white/[0.06] backdrop-blur-md border border-white/10 flex items-center justify-center text-muted-foreground hover:text-foreground md:opacity-0 md:group-hover:opacity-100 md:focus:opacity-100 md:data-[state=open]:opacity-100 transition-opacity"
                       aria-label="Folder actions"
                       onClick={(e) => e.stopPropagation()}
                     >
