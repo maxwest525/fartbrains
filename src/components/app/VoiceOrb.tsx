@@ -41,20 +41,41 @@ const toolbarBtn = cn(
   "disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-[color:var(--g-text-disabled)] disabled:cursor-not-allowed",
 );
 
+type CaptureMode = "dictate" | "record" | "live";
+
 type VoiceOrbProps = {
-  /** When true, transcripts are sent to the live handler (chat) instead of opening the save-idea draft editor. */
-  liveMode?: boolean;
-  onToggleLive?: (next: boolean) => void;
+  /** Send a transcript into the bottom composer (dictate mode). */
+  onDictate?: (text: string) => void;
+  /** Fired with a transcript when in Live mode (sent to Ash chat). */
   onLiveTranscript?: (text: string) => void;
   /** True while Ash is speaking back — animates the orb in a different color. */
   speaking?: boolean;
 };
 
-export const VoiceOrb = ({ liveMode = false, onToggleLive, onLiveTranscript, speaking = false }: VoiceOrbProps) => {
+export const VoiceOrb = ({ onDictate, onLiveTranscript, speaking = false }: VoiceOrbProps) => {
   const voice = useVoiceCapture({ maxSeconds: 180 });
   const createIdea = useCreateIdea();
   const [submitting, setSubmitting] = useState(false);
   const [folderId, setFolderId] = useState<string | null>(null);
+  const [mode, setMode] = useState<CaptureMode>("dictate");
+
+  // Mic permission status — surfaced as a small chip so users know why a tap
+  // does nothing when the browser has blocked the mic.
+  type MicPerm = "unknown" | "prompt" | "granted" | "denied";
+  const [micPerm, setMicPerm] = useState<MicPerm>("unknown");
+  useEffect(() => {
+    let cancelled = false;
+    const navAny = navigator as Navigator & { permissions?: { query: (q: { name: PermissionName }) => Promise<PermissionStatus> } };
+    if (!navAny.permissions?.query) return;
+    navAny.permissions.query({ name: "microphone" as PermissionName })
+      .then((status) => {
+        if (cancelled) return;
+        setMicPerm(status.state as MicPerm);
+        status.onchange = () => setMicPerm(status.state as MicPerm);
+      })
+      .catch(() => { /* unsupported — leave unknown */ });
+    return () => { cancelled = true; };
+  }, []);
 
   // Draft state — persisted so user doesn't lose edits when recording again
   // or switching folders. `null` = no editor open.
