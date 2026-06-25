@@ -323,12 +323,29 @@ const Shell = () => {
           <CalendarPage onBack={isMobile ? () => setView("ideas") : undefined} />
         )}
 
-        {/* Graph page — Obsidian-style brain map */}
+        {/* Graph page — Obsidian-style brain map. Tapping a node opens the
+            idea detail as an overlay so the graph stays mounted underneath
+            and "Back" returns to the exact same view. */}
         {showGraph && (
-          <GraphPage
-            onOpenIdea={(id) => { setView("ideas"); setSelectedId(id); }}
-            onBack={isMobile ? () => setView("ideas") : undefined}
-          />
+          <div className="relative flex-1 min-h-0 flex">
+            <GraphPage
+              onOpenIdea={(id) => setSelectedId(id)}
+              onBack={isMobile ? () => setView("ideas") : undefined}
+            />
+            {selectedId && (
+              <div
+                className="absolute inset-0 z-30 bg-background/95 backdrop-blur-xl"
+                style={{ paddingBottom: "var(--mobile-tabbar-h, 0px)" }}
+              >
+                <IdeaDetail
+                  ideaId={selectedId}
+                  onClose={() => setSelectedId(null)}
+                  backLabel="Back to Graph"
+                  onSelectIdea={setSelectedId}
+                />
+              </div>
+            )}
+          </div>
         )}
 
 
