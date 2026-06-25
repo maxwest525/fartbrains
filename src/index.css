@@ -484,6 +484,61 @@ html:not(.dark) .gemini ::selection {
 
   .no-scrollbar::-webkit-scrollbar { display: none; }
   .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+  /* ----------------------------------------------------------
+     Centralized white frosted glass — single source of truth for
+     cards, modals, panels. Tweak values here and every surface
+     follows. Mirror "Continue with Google" pill from the reference.
+     ---------------------------------------------------------- */
+  .glass-card {
+    background-color: rgba(255, 255, 255, 0.10);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    backdrop-filter: blur(28px) saturate(180%);
+    -webkit-backdrop-filter: blur(28px) saturate(180%);
+    box-shadow:
+      0 12px 32px -18px rgba(0, 0, 0, 0.65),
+      inset 0 1px 0 rgba(255, 255, 255, 0.18);
+  }
+  /* Slightly brighter — for elevated/primary surfaces (modals, hero cards). */
+  .glass-card-strong {
+    background-color: rgba(255, 255, 255, 0.14);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    backdrop-filter: blur(32px) saturate(180%);
+    -webkit-backdrop-filter: blur(32px) saturate(180%);
+    box-shadow:
+      0 24px 60px -24px rgba(0, 0, 0, 0.75),
+      inset 0 1px 0 rgba(255, 255, 255, 0.22);
+  }
+  /* Quiet inset — nested panels inside another glass-card (summary, note). */
+  .glass-card-quiet {
+    background-color: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.10);
+    backdrop-filter: blur(20px) saturate(160%);
+    -webkit-backdrop-filter: blur(20px) saturate(160%);
+  }
+  /* Interactive variant — adds hover lift + visible keyboard focus ring. */
+  .glass-card-interactive {
+    transition: background-color 200ms ease, border-color 200ms ease,
+                box-shadow 240ms ease, transform 200ms ease;
+  }
+  .glass-card-interactive:hover {
+    background-color: rgba(255, 255, 255, 0.16);
+    border-color: rgba(255, 255, 255, 0.24);
+    transform: translateY(-1px);
+    box-shadow:
+      0 18px 44px -20px rgba(0, 0, 0, 0.75),
+      inset 0 1px 0 rgba(255, 255, 255, 0.24);
+  }
+  .glass-card-interactive:focus-visible,
+  .glass-card-interactive:focus-within {
+    outline: none;
+    border-color: rgba(255, 255, 255, 0.42);
+    box-shadow:
+      0 0 0 3px hsl(var(--ring) / 0.45),
+      0 18px 44px -20px rgba(0, 0, 0, 0.75),
+      inset 0 1px 0 rgba(255, 255, 255, 0.24);
+  }
+
 }
 
 /* In-app alarm overlay animations */
