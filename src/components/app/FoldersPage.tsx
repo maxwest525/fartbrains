@@ -95,6 +95,25 @@ export const FoldersPage = ({ onOpenFolder, onOpenRecent, onBack }: Props) => {
     f.name.toLowerCase().includes(query.trim().toLowerCase())
   );
 
+  // Seed the default folder set once when the user has none. The names map to
+  // common capture types so the grid is never empty for a new account.
+  const seededRef = useRef(false);
+  useEffect(() => {
+    if (isLoading || seededRef.current) return;
+    const DEFAULTS = ["Ideas", "Notes", "Todo", "Checklists"];
+    const existing = new Set(folders.map((f) => f.name.toLowerCase()));
+    const missing = DEFAULTS.filter((n) => !existing.has(n.toLowerCase()));
+    if (folders.length === 0 && missing.length === DEFAULTS.length) {
+      seededRef.current = true;
+      (async () => {
+        for (const name of DEFAULTS) {
+          try { await createFolder.mutateAsync(name); } catch { /* ignore */ }
+        }
+      })();
+    }
+  }, [isLoading, folders, createFolder]);
+
+
   const submitCreate = async () => {
     if (!newName.trim()) return;
     await createFolder.mutateAsync(newName);
