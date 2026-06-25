@@ -347,7 +347,7 @@ export const IdeaList = ({ filter, selectedId, onSelect, onBackToFolders, onFilt
                   const isProject = idea.tags.includes(PROJECT_TAG);
                   const stats = isProject ? deliverableStats(idea.raw_note) : null;
                   const { Icon, tone } = isProject
-                    ? { Icon: Briefcase, tone: "bg-primary text-primary-foreground" }
+                    ? { Icon: Briefcase, tone: "text-primary" }
                     : sourceMeta(idea.source_type);
                   const preview = isProject
                     ? `${stats!.done} of ${stats!.total} deliverables done`
@@ -364,9 +364,10 @@ export const IdeaList = ({ filter, selectedId, onSelect, onBackToFolders, onFilt
                       onClick={() => onSelect(idea.id)}
                       className="row-press w-full text-left flex items-start gap-3 px-3.5 py-2.5 min-h-[60px] active:bg-secondary"
                     >
-                      <div className={cn("h-9 w-9 rounded-[8px] flex items-center justify-center shrink-0 mt-0.5", tone)}>
-                        <Icon className="h-[18px] w-[18px]" />
+                      <div className="h-9 w-9 flex items-center justify-center shrink-0 mt-0.5">
+                        <Icon className={cn("h-[20px] w-[20px]", tone)} />
                       </div>
+
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-1.5">
                           {idea.pinned_at && (
