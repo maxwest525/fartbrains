@@ -47,7 +47,7 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   // Gate stays first — show keypad before doing anything cloud-related.
   if (!unlocked) {
     return (
-      <main className="relative min-h-dvh w-full flex items-center justify-center overflow-hidden text-white bg-[radial-gradient(ellipse_at_top,_hsl(265_60%_14%)_0%,_hsl(240_30%_6%)_55%,_#000_100%)]">
+      <main className="relative min-h-dvh w-full flex items-center justify-center overflow-hidden text-white">
         {/* Ambient blurred orbs for glass depth */}
         <div
           aria-hidden
