@@ -317,7 +317,7 @@ const Shell = () => {
         {/* Capture view — compose only, full width. Shown when filter is "all" (the default landing). */}
         {!showFolders && !showCalendar && !showDetailOnly && filter.kind === "all" && (
           <div
-            className="w-full flex-1 min-w-0 flex flex-col min-h-0 bg-background overflow-y-auto scroll-momentum touch-pan-y"
+            className="w-full flex-1 min-w-0 flex flex-col min-h-0 bg-transparent overflow-y-auto scroll-momentum touch-pan-y"
             style={{ paddingBottom: "calc(var(--ash-dock-h, 0px) + env(safe-area-inset-bottom) + (var(--mobile-tabbar-h, 0px)) + 1.25rem)" }}
           >
 
@@ -346,7 +346,7 @@ const Shell = () => {
         {/* Browse view — flat list of ideas (Recents, Favorites, Folder-filtered, Search). */}
         {!showFolders && !showCalendar && !showDetailOnly && filter.kind !== "all" && (
           <div
-            className="w-full flex-1 min-w-0 md:w-[28rem] md:flex-none md:shrink-0 md:border-r border-border flex flex-col min-h-0 bg-background md:overflow-hidden overflow-y-auto scroll-momentum touch-pan-y"
+            className="w-full flex-1 min-w-0 md:w-[28rem] md:flex-none md:shrink-0 md:border-r border-border flex flex-col min-h-0 bg-transparent md:overflow-hidden overflow-y-auto scroll-momentum touch-pan-y"
             style={{ paddingBottom: isMobile ? "calc(var(--ash-dock-h, 0px) + var(--mobile-tabbar-h, 0px) + env(safe-area-inset-bottom) + 1rem)" : "1.5rem" }}
           >
 
