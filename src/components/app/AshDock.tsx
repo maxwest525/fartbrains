@@ -109,6 +109,19 @@ export const AshDock = ({ className }: { className?: string }) => {
     el.style.height = "auto";
     el.style.height = Math.min(el.scrollHeight, 48) + "px";
   }, [text]);
+
+  // Receive dictated transcripts from VoiceOrb — append, expand, and focus.
+  useEffect(() => {
+    const onDictate = (e: Event) => {
+      const detail = (e as CustomEvent<string>).detail;
+      if (typeof detail !== "string" || !detail.trim()) return;
+      setCollapsed(false);
+      setText((prev) => (prev.trim() ? `${prev.trim()} ${detail.trim()}` : detail.trim()));
+      requestAnimationFrame(() => textareaRef.current?.focus());
+    };
+    window.addEventListener("idea-vault:dictate", onDictate as EventListener);
+    return () => window.removeEventListener("idea-vault:dictate", onDictate as EventListener);
+  }, []);
   const [submitting, setSubmitting] = useState(false);
   const [mode, setMode] = useState<Mode>("auto");
   const [folderId, setFolderId] = useState<string | null>(() => {
