@@ -108,7 +108,7 @@ export const MobileTabBar = ({ filter, view, onFilterChange, onOpenFolders, onOp
             "inset 0 1px 0 hsl(0 0% 100% / 0.06), 0 -8px 30px -10px hsl(0 0% 0% / 0.55)",
         }}
       >
-        <div className="flex items-stretch h-[58px]">
+        <div className="flex items-stretch h-[72px]">
           <Tab active={isAll} icon="auto_awesome" label="Capture" onClick={() => onFilterChange({ kind: "all" })} />
           <Tab active={isHistory} icon="history" label="Recents" onClick={() => onFilterChange({ kind: "recent" })} />
           <Tab active={isCalendar} icon="calendar_month" label="Calendar" onClick={onOpenCalendar} />
