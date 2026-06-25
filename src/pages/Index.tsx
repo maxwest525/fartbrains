@@ -7,6 +7,7 @@ import { IdeaDetail } from "@/components/app/IdeaDetail";
 import { AshChatPanel, type AshChatHandle } from "@/components/app/home/AshChatPanel";
 import { VoiceOrb } from "@/components/app/VoiceOrb";
 import { UrlCaptureScreen } from "@/components/app/UrlCaptureScreen";
+import { ComposeIdea } from "@/components/app/ComposeIdea";
 
 
 import { MobileTabBar } from "@/components/app/MobileTabBar";
