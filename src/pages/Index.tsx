@@ -158,9 +158,15 @@ const Shell = () => {
     setSelectedId(null);
   };
 
+  const openGraphPage = () => {
+    setView("graph");
+    setSelectedId(null);
+  };
+
   const showDetailOnly = isMobile && selectedId !== null;
   const showFolders = view === "folders" && !showDetailOnly;
   const showCalendar = view === "calendar" && !showDetailOnly;
+  const showGraph = view === "graph" && !showDetailOnly;
   const defaultFolderId = filter.kind === "folder" ? filter.folderId : null;
 
   const activeFolderName =
