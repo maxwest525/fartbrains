@@ -222,7 +222,7 @@ export const FoldersPage = ({ onOpenFolder, onOpenRecent, onBack }: Props) => {
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4">
             {onOpenRecent && (query.trim() === "" || "recent".includes(query.trim().toLowerCase())) && (
-              <div className="group relative transition-all duration-200 hover:-translate-y-0.5">
+              <div className="group relative transition-all duration-200 hover:-translate-y-0.5 rounded-2xl bg-white/10 backdrop-blur-2xl border border-white/20 shadow-[0_12px_32px_-18px_rgba(0,0,0,0.6),inset_0_1px_0_rgba(255,255,255,0.18)]">
                 <button
                   onClick={onOpenRecent}
                   className="press relative w-full text-left p-4 flex flex-col items-start gap-3 min-h-[180px]"
@@ -253,7 +253,7 @@ export const FoldersPage = ({ onOpenFolder, onOpenRecent, onBack }: Props) => {
               return (
                 <div
                   key={folder.id}
-                  className="group relative transition-all duration-200 hover:-translate-y-0.5"
+                  className="group relative transition-all duration-200 hover:-translate-y-0.5 rounded-2xl bg-white/10 backdrop-blur-2xl border border-white/20 shadow-[0_12px_32px_-18px_rgba(0,0,0,0.6),inset_0_1px_0_rgba(255,255,255,0.18)]"
                 >
                   <button
                     onClick={() => onOpenFolder(folder.id)}
