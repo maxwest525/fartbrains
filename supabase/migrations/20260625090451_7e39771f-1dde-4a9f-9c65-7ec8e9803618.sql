@@ -1,0 +1,1 @@
+ALTER TABLE public.ideas ADD COLUMN IF NOT EXISTS tag_meta jsonb;
