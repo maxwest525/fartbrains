@@ -601,3 +601,13 @@ html:not(.dark) .gemini ::selection {
   .idea-burst { animation: idea-burst-in 0.6s ease-out forwards; }
 }
 
+/* Thinking panel — vertical marquee for AI loading feedback */
+@keyframes thinking-scroll {
+  0%   { transform: translateY(0); }
+  100% { transform: translateY(-50%); }
+}
+.thinking-scroll {
+  animation: thinking-scroll 4.5s linear infinite;
+}
+
+
