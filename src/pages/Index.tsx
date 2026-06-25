@@ -322,19 +322,14 @@ const Shell = () => {
             <div ref={composeRef} className="w-full px-3 sm:px-6 lg:px-10 pt-6 sm:pt-10 pb-4 flex-1 min-h-0 flex flex-col items-center justify-center gap-4 sm:gap-6 max-w-3xl mx-auto">
 
               <VoiceOrb
-                liveMode={liveMode}
-                onToggleLive={(next) => {
-                  setLiveMode(next);
-                  if (!next) {
-                    try { window.speechSynthesis?.cancel(); } catch { /* ignore */ }
-                    setSpeaking(false);
-                  }
-                }}
                 speaking={speaking}
                 onLiveTranscript={(text) => {
+                  setLiveMode(true);
                   void liveChat.send(text);
                 }}
-
+                onDictate={(text) => {
+                  window.dispatchEvent(new CustomEvent("idea-vault:dictate", { detail: text }));
+                }}
               />
               <p className="text-center text-[12px] text-muted-foreground">
                 Captures land in <button onClick={() => handleFilterChange({ kind: "recent" })} className="underline underline-offset-2 hover:text-foreground">Recents</button> and the All folder.
