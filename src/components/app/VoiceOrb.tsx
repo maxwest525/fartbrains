@@ -368,9 +368,9 @@ export const VoiceOrb = ({ onDictate, onLiveTranscript, speaking = false }: Voic
         : { Icon: ShieldQuestion, label: "Tap to allow mic", tone: "text-white/60 bg-white/[0.04] border-white/10" };
 
   const modeBtns: Array<{ id: CaptureMode; label: string; Icon: typeof Mic; tone: string }> = [
-    { id: "dictate", label: "Dictate", Icon: Keyboard, tone: "from-[#9B72CB] to-[#4285F4]" },
-    { id: "record",  label: "Record",  Icon: Send,     tone: "from-[#D96570] to-[#F2A4AC]" },
-    { id: "live",    label: "Live",    Icon: Radio,    tone: "from-[#4285F4] to-[#9B72CB]" },
+    { id: "dictate", label: "Voice to Text", Icon: Keyboard, tone: "from-[#9B72CB] to-[#4285F4]" },
+    { id: "record",  label: "Voice Prompt",  Icon: Send,     tone: "from-[#D96570] to-[#F2A4AC]" },
+    { id: "live",    label: "Live",          Icon: Radio,    tone: "from-[#4285F4] to-[#9B72CB]" },
   ];
 
   return (
