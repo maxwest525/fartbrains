@@ -117,12 +117,12 @@ export const FoldersPage = ({ onOpenFolder, onOpenRecent, onBack }: Props) => {
   return (
     <div className="flex-1 flex flex-col h-full bg-background overflow-hidden">
       {/* iOS-style nav bar */}
-      <div className="safe-top shrink-0 z-10 bg-background/80 backdrop-blur-xl px-1 sm:px-5 pt-1 sm:pt-3 pb-2 md:border-b border-border">
-        <div className="flex items-center min-h-[44px] gap-1">
+      <div className="safe-top shrink-0 z-10 bg-background px-1 sm:px-5 pt-0 pb-3 md:border-b border-border">
+        <div className="flex items-center min-h-[36px] gap-1 px-2 sm:px-0">
           {isMobile && onBack && (
             <button
               onClick={onBack}
-              className="press flex items-center text-primary -ml-1 pl-1 pr-2 h-10 text-[17px]"
+              className="press flex items-center text-primary -ml-1 pl-1 pr-2 h-9 text-[17px]"
               aria-label="Back"
             >
               <ChevronLeft className="h-6 w-6 -mr-0.5" strokeWidth={2.4} />
@@ -132,7 +132,7 @@ export const FoldersPage = ({ onOpenFolder, onOpenRecent, onBack }: Props) => {
           <div className="flex-1" />
           <button
             onClick={() => setCreateOpen(true)}
-            className="press h-10 w-10 flex items-center justify-center text-primary"
+            className="press h-9 w-9 flex items-center justify-center text-primary"
             aria-label="New folder"
           >
             <Plus className="h-[22px] w-[22px]" strokeWidth={2.2} />
@@ -175,6 +175,7 @@ export const FoldersPage = ({ onOpenFolder, onOpenRecent, onBack }: Props) => {
           </div>
         </div>
       </div>
+
 
       {/* Grid */}
       <div className="flex-1 min-h-0 overflow-y-auto scroll-momentum touch-pan-y px-4 sm:px-6 py-4 pb-[calc(5.75rem+env(safe-area-inset-bottom))] md:pb-8">
