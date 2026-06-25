@@ -212,25 +212,8 @@ export const VoiceOrb = ({ onDictate, onLiveTranscript, speaking = false }: Voic
           return;
         }
 
-        // RECORD mode: save the voice note as an idea without transcribing.
-        if (mode === "record") {
-          setSubmitting(true);
-          try {
-            const seconds = Math.max(1, Math.round(blob.size / 16000));
-            await createIdea.mutateAsync({
-              title: `Voice note · ${fmtSeconds(seconds)}`,
-              raw_note: `Voice note (${fmtSeconds(seconds)}) — saved without transcription.`,
-              source_type: "audio",
-              folder_id: folderId,
-            });
-            toast.success("Voice note saved");
-          } finally {
-            setSubmitting(false);
-          }
-          return;
-        }
-
-        // DICTATE / LIVE: transcribe.
+        // Both modes: transcribe, then open a preview editor before anything
+        // gets saved or sent to the composer.
         const audioBase64 = await blobToBase64(blob);
         const { data, error } = await supabase.functions.invoke("transcribe-deliverables", {
           body: { audioBase64, mimeType, allowedTypes: ["other"] },
@@ -243,16 +226,10 @@ export const VoiceOrb = ({ onDictate, onLiveTranscript, speaking = false }: Voic
           return;
         }
 
-        // DICTATE: push into the bottom composer instead of opening the draft editor.
-        if (mode === "dictate") {
-          if (onDictate) onDictate(transcript.trim());
-          else {
-            window.dispatchEvent(new CustomEvent("idea-vault:dictate", { detail: transcript.trim() }));
-          }
-          toast.success("Added to composer");
-          return;
-        }
-
+        // Append to any existing draft so re-recording adds rather than replaces.
+        const next = draft && draft.trim() ? `${draft.trim()}\n\n${transcript.trim()}` : transcript.trim();
+        updateDraft(next);
+        return;
       }
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Voice capture failed");
