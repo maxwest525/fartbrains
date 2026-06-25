@@ -8,8 +8,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { ThinkingPanel } from "./ThinkingPanel";
 import { cn } from "@/lib/utils";
-import { ThinkingPanel } from "./ThinkingPanel";
-import { cn } from "@/lib/utils";
 
 type Props = {
   ideaTitle: string;
