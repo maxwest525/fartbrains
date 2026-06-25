@@ -63,11 +63,11 @@ const Tab = ({
  * Gemini Glimmer bottom tab bar — frosted glass, Material Symbols Rounded,
  * tonal indicator pill behind the active icon.
  */
-export const MobileTabBar = ({ filter, view, onFilterChange, onOpenFolders, onOpenCalendar, onOpenSettings }: Props) => {
+export const MobileTabBar = ({ filter, view, onFilterChange, onOpenFolders, onOpenCalendar, onOpenGraph, onOpenSettings }: Props) => {
   const isAll = view === "ideas" && filter.kind === "all";
   const isFolders = view === "folders";
   const isCalendar = view === "calendar";
-  const isHistory = view === "ideas" && filter.kind === "recent";
+  const isGraph = view === "graph";
   const navRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
@@ -105,7 +105,7 @@ export const MobileTabBar = ({ filter, view, onFilterChange, onOpenFolders, onOp
 
         <div className="flex items-stretch h-[72px]">
           <Tab active={isAll} icon="auto_awesome" label="Capture" onClick={() => onFilterChange({ kind: "all" })} />
-          <Tab active={isHistory} icon="history" label="Recents" onClick={() => onFilterChange({ kind: "recent" })} />
+          <Tab active={isGraph} icon="hub" label="Graph" onClick={onOpenGraph} />
           <Tab active={isCalendar} icon="calendar_month" label="Calendar" onClick={onOpenCalendar} />
           <Tab active={isFolders} icon="folder" label="Folders" onClick={onOpenFolders} />
           <Tab active={false} icon="tune" label="Settings" onClick={onOpenSettings} />
