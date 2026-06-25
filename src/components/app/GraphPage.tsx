@@ -286,13 +286,14 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
     const topTags = [...tagCount.entries()]
       .filter(([, c]) => c >= 2)
       .sort((a, b) => b[1] - a[1])
-      .slice(0, 12)
+      .slice(0, Math.max(2, Math.min(10, tuning.clusterCount)))
       .map(([t]) => t);
+    const topTagSet = new Set(topTags);
     const anchors = new Map<string, { x: number; y: number }>();
     const cx = W / 2, cy = H / 2;
-    const R = Math.min(W, H) * 0.32;
+    const R = Math.min(W, H) * 0.34;
     topTags.forEach((t, i) => {
-      const ang = (i / topTags.length) * Math.PI * 2;
+      const ang = (i / Math.max(1, topTags.length)) * Math.PI * 2 - Math.PI / 2;
       anchors.set(t, { x: cx + Math.cos(ang) * R, y: cy + Math.sin(ang) * R });
     });
     tagAnchorsRef.current = anchors;
