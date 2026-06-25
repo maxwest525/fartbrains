@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Mic, Square, Loader2, Check, X, Undo2, Redo2, Search, Replace as ReplaceIcon,
-  Radio, Send, Keyboard, ShieldAlert, ShieldCheck, ShieldQuestion,
+  Send, Keyboard, ShieldAlert, ShieldCheck, ShieldQuestion,
 } from "lucide-react";
+
 import { cn } from "@/lib/utils";
 import { useVoiceCapture, blobToBase64 } from "@/hooks/useVoiceCapture";
 import { useCreateIdea } from "@/hooks/useIdeas";
