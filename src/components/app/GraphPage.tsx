@@ -585,6 +585,61 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
       }
       ctx.restore();
 
+      // Minimap
+      const mini = minimapRef.current;
+      if (mini) {
+        const mctx = mini.getContext("2d");
+        if (mctx) {
+          const MW = mini.width / dpr, MH = mini.height / dpr;
+          // Compute world bounds from nodes
+          let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+          for (const n of nodes) {
+            if (n.x < minX) minX = n.x;
+            if (n.y < minY) minY = n.y;
+            if (n.x > maxX) maxX = n.x;
+            if (n.y > maxY) maxY = n.y;
+          }
+          if (!isFinite(minX)) { minX = 0; minY = 0; maxX = W; maxY = H; }
+          const pad = 40;
+          minX -= pad; minY -= pad; maxX += pad; maxY += pad;
+          const sx = MW / (maxX - minX);
+          const sy = MH / (maxY - minY);
+          const s = Math.min(sx, sy);
+          const ox = (MW - (maxX - minX) * s) / 2 - minX * s;
+          const oy = (MH - (maxY - minY) * s) / 2 - minY * s;
+          mctx.clearRect(0, 0, MW, MH);
+          mctx.fillStyle = "rgba(0,0,0,0.35)";
+          mctx.fillRect(0, 0, MW, MH);
+          // tag halos
+          anchors.forEach((pos, tag) => {
+            mctx.beginPath();
+            mctx.fillStyle = hashColor(`tag:${tag}`);
+            mctx.globalAlpha = 0.18;
+            mctx.arc(pos.x * s + ox, pos.y * s + oy, 14, 0, Math.PI * 2);
+            mctx.fill();
+          });
+          mctx.globalAlpha = 1;
+          // nodes
+          for (const n of nodes) {
+            mctx.beginPath();
+            mctx.fillStyle = n.color;
+            mctx.arc(n.x * s + ox, n.y * s + oy, 1.4, 0, Math.PI * 2);
+            mctx.fill();
+          }
+          // viewport rectangle (inverse of camera transform)
+          const cam2 = cameraRef.current;
+          const vx = (-cam2.x) / cam2.zoom;
+          const vy = (-cam2.y) / cam2.zoom;
+          const vw = W / cam2.zoom;
+          const vh = H / cam2.zoom;
+          mctx.strokeStyle = "rgba(255,255,255,0.85)";
+          mctx.lineWidth = 1;
+          mctx.strokeRect(vx * s + ox, vy * s + oy, vw * s, vh * s);
+          // store transform for click-pan
+          (mini as any).__tx = { s, ox, oy };
+        }
+      }
+
       raf = requestAnimationFrame(step);
     };
     raf = requestAnimationFrame(step);
