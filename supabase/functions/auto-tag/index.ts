@@ -11,7 +11,7 @@ Deno.serve(async (req) => {
     const { title, text } = await req.json();
     const body = `${title ?? ""}\n\n${(text ?? "").slice(0, 8000)}`.trim();
     if (body.length < 8) {
-      return new Response(JSON.stringify({ tags: [] }), {
+      return new Response(JSON.stringify({ tags: [], reasoning: "", confidence: 0 }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -20,13 +20,17 @@ Deno.serve(async (req) => {
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY missing");
 
     const system = `You auto-tag captured ideas/notes to make them findable and clusterable.
-Return ONLY a compact JSON object like: {"tags":["foo","bar","baz"]}.
+Return ONLY a compact JSON object:
+{"tags":["foo","bar"],"confidence":0.0-1.0,"reasoning":"one short sentence explaining the picks"}
+
 Rules:
 - 2 to 5 tags total.
 - Each tag is 1-2 words, lowercase, kebab-case if multi-word (e.g. "cold-email").
 - Prefer SPECIFIC concrete topics, tools, people, frameworks, or domains over generic words like "idea", "note", "thing", "video", "interesting".
 - Avoid duplicates and avoid restating the title verbatim.
-- If the content is too thin to tag meaningfully, return {"tags":[]}.`;
+- "confidence" reflects how clearly the content maps to those tags (0.0 = guess, 1.0 = obvious).
+- "reasoning" is ≤ 140 chars, plain English, no markdown.
+- If the content is too thin to tag meaningfully, return {"tags":[],"confidence":0,"reasoning":"too thin"}.`;
 
     const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -47,7 +51,7 @@ Rules:
     if (!resp.ok) {
       const t = await resp.text();
       console.error("auto-tag gateway error:", resp.status, t);
-      return new Response(JSON.stringify({ tags: [] }), {
+      return new Response(JSON.stringify({ tags: [], reasoning: "", confidence: 0 }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -55,6 +59,8 @@ Rules:
     const data = await resp.json();
     const raw = data?.choices?.[0]?.message?.content ?? "{}";
     let tags: string[] = [];
+    let reasoning = "";
+    let confidence = 0;
     try {
       const parsed = JSON.parse(raw);
       if (Array.isArray(parsed?.tags)) {
@@ -66,14 +72,18 @@ Rules:
           .filter((t: string) => t.length >= 2 && t.length <= 32);
         tags = [...new Set(tags)].slice(0, 5);
       }
+      if (typeof parsed?.reasoning === "string") reasoning = parsed.reasoning.slice(0, 240);
+      if (typeof parsed?.confidence === "number") {
+        confidence = Math.max(0, Math.min(1, parsed.confidence));
+      }
     } catch (_e) { /* ignore */ }
 
-    return new Response(JSON.stringify({ tags }), {
+    return new Response(JSON.stringify({ tags, reasoning, confidence }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
     console.error("auto-tag error:", e);
-    return new Response(JSON.stringify({ tags: [] }), {
+    return new Response(JSON.stringify({ tags: [], reasoning: "", confidence: 0 }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
