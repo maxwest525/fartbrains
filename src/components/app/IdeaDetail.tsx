@@ -576,6 +576,7 @@ export const IdeaDetail = ({ ideaId, onClose, backLabel = "Back", onSelectIdea }
         {!editing && idea && (
           <IdeaResearchActions
             ideaTitle={idea.title}
+            extractedText={idea.extracted_text}
             onAppendExtracted={async (block) => {
               const next = `${idea.extracted_text ?? ""}${block}`.trim();
               await updateIdea.mutateAsync({ id: idea.id, patch: { extracted_text: next } });
