@@ -300,7 +300,16 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
 
     const nodes: GraphNode[] = ideas.map((i: any) => {
       const deg = degree.get(i.id) ?? 0;
-      const pTag = ideaPrimaryTag.get(i.id) ?? null;
+      // Prefer a primary tag that is one of the displayed clusters
+      const ts = ideaTagsRaw.get(i.id) ?? [];
+      let pTag: string | null = null;
+      let bestC = 0;
+      for (const t of ts) {
+        if (!topTagSet.has(t)) continue;
+        const c = tagCount.get(t) ?? 0;
+        if (c > bestC) { bestC = c; pTag = t; }
+      }
+      if (!pTag) pTag = ideaPrimaryTag.get(i.id) ?? null;
       const anchor = pTag ? anchors.get(pTag) : null;
       const angle = Math.random() * Math.PI * 2;
       const jitter = 30 + Math.random() * 60;
@@ -327,7 +336,7 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
     nodesRef.current = nodes;
     edgesRef.current = edges;
     setReady(true);
-  }, [ideasQuery.data, refsQuery.data, folderColor, size.w, size.h, tuning.strictness]);
+  }, [ideasQuery.data, refsQuery.data, folderColor, size.w, size.h, tuning.strictness, tuning.clusterCount]);
 
   // Top tags / keywords for filter chips
   const topTags = useMemo(() => {
