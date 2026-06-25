@@ -163,10 +163,13 @@ const Shell = () => {
     setSelectedId(null);
   };
 
-  const showDetailOnly = isMobile && selectedId !== null;
+  // On the graph view we render the idea detail as an overlay *inside* the graph
+  // (so the graph stays mounted underneath). Everywhere else, mobile flips into
+  // a full-screen detail view when an idea is selected.
+  const showDetailOnly = isMobile && selectedId !== null && view !== "graph";
   const showFolders = view === "folders" && !showDetailOnly;
   const showCalendar = view === "calendar" && !showDetailOnly;
-  const showGraph = view === "graph" && !showDetailOnly;
+  const showGraph = view === "graph";
   const defaultFolderId = filter.kind === "folder" ? filter.folderId : null;
 
   const activeFolderName =
@@ -323,12 +326,29 @@ const Shell = () => {
           <CalendarPage onBack={isMobile ? () => setView("ideas") : undefined} />
         )}
 
-        {/* Graph page — Obsidian-style brain map */}
+        {/* Graph page — Obsidian-style brain map. Tapping a node opens the
+            idea detail as an overlay so the graph stays mounted underneath
+            and "Back" returns to the exact same view. */}
         {showGraph && (
-          <GraphPage
-            onOpenIdea={(id) => { setView("ideas"); setSelectedId(id); }}
-            onBack={isMobile ? () => setView("ideas") : undefined}
-          />
+          <div className="relative flex-1 min-h-0 flex">
+            <GraphPage
+              onOpenIdea={(id) => setSelectedId(id)}
+              onBack={isMobile ? () => setView("ideas") : undefined}
+            />
+            {selectedId && (
+              <div
+                className="absolute inset-0 z-30 bg-background/95 backdrop-blur-xl"
+                style={{ paddingBottom: "var(--mobile-tabbar-h, 0px)" }}
+              >
+                <IdeaDetail
+                  ideaId={selectedId}
+                  onClose={() => setSelectedId(null)}
+                  backLabel="Back to Graph"
+                  onSelectIdea={setSelectedId}
+                />
+              </div>
+            )}
+          </div>
         )}
 
 
