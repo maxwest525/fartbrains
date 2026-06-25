@@ -32,29 +32,29 @@ const Tab = ({
   >
     <span
       className={cn(
-        "relative inline-flex items-center justify-center h-7 w-12 rounded-full transition-all duration-300",
-        active && "bg-white/[0.08] shadow-[inset_0_0_0_1px_hsl(0_0%_100%/0.18),0_8px_24px_-12px_hsl(265_90%_70%/0.55)]"
+        "relative inline-flex items-center justify-center h-10 w-16 rounded-full transition-all duration-300",
+        active && "bg-white/[0.10] shadow-[inset_0_0_0_1px_hsl(0_0%_100%/0.2),0_10px_28px_-12px_hsl(265_90%_70%/0.6)]"
       )}
     >
       <MaterialIcon
         name={icon}
         filled={active}
-        size={22}
+        size={28}
         className={cn(
           "transition-colors duration-300",
-          active ? "text-white" : "text-white/55"
+          active ? "text-white" : "text-white/60"
         )}
         style={
           active
-            ? { fontVariationSettings: "'FILL' 1, 'wght' 500, 'GRAD' 0, 'opsz' 22" }
+            ? { fontVariationSettings: "'FILL' 1, 'wght' 500, 'GRAD' 0, 'opsz' 28" }
             : undefined
         }
       />
     </span>
     <span
       className={cn(
-        "text-[10px] font-medium tracking-tight transition-colors duration-300",
-        active ? "text-white" : "text-white/55"
+        "text-[11px] font-medium tracking-tight transition-colors duration-300",
+        active ? "text-white" : "text-white/60"
       )}
     >
       {label}
@@ -108,7 +108,7 @@ export const MobileTabBar = ({ filter, view, onFilterChange, onOpenFolders, onOp
             "inset 0 1px 0 hsl(0 0% 100% / 0.06), 0 -8px 30px -10px hsl(0 0% 0% / 0.55)",
         }}
       >
-        <div className="flex items-stretch h-[58px]">
+        <div className="flex items-stretch h-[72px]">
           <Tab active={isAll} icon="auto_awesome" label="Capture" onClick={() => onFilterChange({ kind: "all" })} />
           <Tab active={isHistory} icon="history" label="Recents" onClick={() => onFilterChange({ kind: "recent" })} />
           <Tab active={isCalendar} icon="calendar_month" label="Calendar" onClick={onOpenCalendar} />

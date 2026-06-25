@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Mic, Square, Loader2, Check, X, Undo2, Redo2, Search, Replace as ReplaceIcon,
-  Radio, Volume2,
+  Radio, Send, Keyboard, ShieldAlert, ShieldCheck, ShieldQuestion,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useVoiceCapture, blobToBase64 } from "@/hooks/useVoiceCapture";
@@ -41,20 +41,41 @@ const toolbarBtn = cn(
   "disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-[color:var(--g-text-disabled)] disabled:cursor-not-allowed",
 );
 
+type CaptureMode = "dictate" | "record" | "live";
+
 type VoiceOrbProps = {
-  /** When true, transcripts are sent to the live handler (chat) instead of opening the save-idea draft editor. */
-  liveMode?: boolean;
-  onToggleLive?: (next: boolean) => void;
+  /** Send a transcript into the bottom composer (dictate mode). */
+  onDictate?: (text: string) => void;
+  /** Fired with a transcript when in Live mode (sent to Ash chat). */
   onLiveTranscript?: (text: string) => void;
   /** True while Ash is speaking back — animates the orb in a different color. */
   speaking?: boolean;
 };
 
-export const VoiceOrb = ({ liveMode = false, onToggleLive, onLiveTranscript, speaking = false }: VoiceOrbProps) => {
+export const VoiceOrb = ({ onDictate, onLiveTranscript, speaking = false }: VoiceOrbProps) => {
   const voice = useVoiceCapture({ maxSeconds: 180 });
   const createIdea = useCreateIdea();
   const [submitting, setSubmitting] = useState(false);
   const [folderId, setFolderId] = useState<string | null>(null);
+  const [mode, setMode] = useState<CaptureMode>("dictate");
+
+  // Mic permission status — surfaced as a small chip so users know why a tap
+  // does nothing when the browser has blocked the mic.
+  type MicPerm = "unknown" | "prompt" | "granted" | "denied";
+  const [micPerm, setMicPerm] = useState<MicPerm>("unknown");
+  useEffect(() => {
+    let cancelled = false;
+    const navAny = navigator as Navigator & { permissions?: { query: (q: { name: PermissionName }) => Promise<PermissionStatus> } };
+    if (!navAny.permissions?.query) return;
+    navAny.permissions.query({ name: "microphone" as PermissionName })
+      .then((status) => {
+        if (cancelled) return;
+        setMicPerm(status.state as MicPerm);
+        status.onchange = () => setMicPerm(status.state as MicPerm);
+      })
+      .catch(() => { /* unsupported — leave unknown */ });
+    return () => { cancelled = true; };
+  }, []);
 
   // Draft state — persisted so user doesn't lose edits when recording again
   // or switching folders. `null` = no editor open.
@@ -174,6 +195,10 @@ export const VoiceOrb = ({ liveMode = false, onToggleLive, onLiveTranscript, spe
   const onTap = async () => {
     try {
       if (voice.state === "idle") {
+        if (micPerm === "denied") {
+          toast.error("Microphone is blocked. Enable mic access in your browser settings.");
+          return;
+        }
         await voice.start();
         return;
       }
@@ -184,6 +209,26 @@ export const VoiceOrb = ({ liveMode = false, onToggleLive, onLiveTranscript, spe
           voice.finishProcessing();
           return;
         }
+
+        // RECORD mode: save the voice note as an idea without transcribing.
+        if (mode === "record") {
+          setSubmitting(true);
+          try {
+            const seconds = Math.max(1, Math.round(blob.size / 16000));
+            await createIdea.mutateAsync({
+              title: `Voice note · ${fmtSeconds(seconds)}`,
+              raw_note: `🎙 Voice note (${fmtSeconds(seconds)}) — saved without transcription.`,
+              source_type: "audio",
+              folder_id: folderId,
+            });
+            toast.success("Voice note saved");
+          } finally {
+            setSubmitting(false);
+          }
+          return;
+        }
+
+        // DICTATE / LIVE: transcribe.
         const audioBase64 = await blobToBase64(blob);
         const { data, error } = await supabase.functions.invoke("transcribe-deliverables", {
           body: { audioBase64, mimeType, allowedTypes: ["other"] },
@@ -195,19 +240,21 @@ export const VoiceOrb = ({ liveMode = false, onToggleLive, onLiveTranscript, spe
           toast.message("Nothing heard — try again.");
           return;
         }
-        // Live mode: skip the draft editor and stream the transcript straight into Ash chat.
-        if (liveMode && onLiveTranscript) {
+
+        if (mode === "live" && onLiveTranscript) {
           onLiveTranscript(transcript.trim());
           return;
         }
-        // Append to any existing draft so prior edits aren't lost.
-        setDraft((prev) => {
-          if (prev && prev.trim()) {
-            pushHistory(prev);
-            return `${prev.trim()}\n\n${transcript.trim()}`;
+
+        // DICTATE: push into the bottom composer instead of opening the draft editor.
+        if (mode === "dictate") {
+          if (onDictate) onDictate(transcript.trim());
+          else {
+            window.dispatchEvent(new CustomEvent("idea-vault:dictate", { detail: transcript.trim() }));
           }
-          return transcript.trim();
-        });
+          toast.success("Added to composer");
+          return;
+        }
       }
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Voice capture failed");
@@ -215,6 +262,7 @@ export const VoiceOrb = ({ liveMode = false, onToggleLive, onLiveTranscript, spe
       voice.finishProcessing();
     }
   };
+
 
   const saveDraft = async () => {
     const raw = (draft ?? "").trim();
@@ -295,29 +343,56 @@ export const VoiceOrb = ({ liveMode = false, onToggleLive, onLiveTranscript, spe
   const wordCount = useMemo(() => countWords(draft ?? ""), [draft]);
   const charCount = (draft ?? "").length;
 
+  const modeCopy: Record<CaptureMode, { idle: string; hint: string }> = {
+    dictate: { idle: "Tap to dictate", hint: "Transcribes into the composer below." },
+    record:  { idle: "Tap to record",  hint: "Saves a voice note — no transcription." },
+    live:    { idle: "Tap to talk to Ash", hint: "Ash listens, replies, and speaks back." },
+  };
+
   const status = isRecording
     ? `Listening · ${fmtSeconds(voice.seconds)}`
     : isTranscribing
-      ? "Transcribing…"
+      ? mode === "record" ? "Saving…" : "Transcribing…"
       : speaking
         ? "Ash is speaking…"
         : draft !== null
           ? "Review & edit"
-          : liveMode
-            ? "Tap to talk to Ash"
-            : "Tap to speak";
+          : modeCopy[mode].idle;
+
+  const permMeta = micPerm === "granted"
+    ? { Icon: ShieldCheck, label: "Mic ready", tone: "text-emerald-300 bg-emerald-400/10 border-emerald-400/30" }
+    : micPerm === "denied"
+      ? { Icon: ShieldAlert, label: "Mic blocked", tone: "text-red-300 bg-red-400/10 border-red-400/40" }
+      : micPerm === "prompt"
+        ? { Icon: ShieldQuestion, label: "Mic permission needed", tone: "text-amber-200 bg-amber-400/10 border-amber-400/30" }
+        : { Icon: ShieldQuestion, label: "Tap to allow mic", tone: "text-white/60 bg-white/[0.04] border-white/10" };
+
+  const modeBtns: Array<{ id: CaptureMode; label: string; Icon: typeof Mic; tone: string }> = [
+    { id: "dictate", label: "Dictate", Icon: Keyboard, tone: "from-[#9B72CB] to-[#4285F4]" },
+    { id: "record",  label: "Record",  Icon: Send,     tone: "from-[#D96570] to-[#F2A4AC]" },
+    { id: "live",    label: "Live",    Icon: Radio,    tone: "from-[#4285F4] to-[#9B72CB]" },
+  ];
 
   return (
-    <div className="gemini dark relative flex flex-col items-center justify-center gap-5 sm:gap-6 py-6 sm:py-8 px-3 sm:px-6 rounded-2xl sm:rounded-3xl bg-[color:var(--g-surface-0)] text-[color:var(--g-text)] overflow-hidden w-full">
-      {/* Ambient Gemini glow */}
+    <div className="gemini dark relative flex flex-col items-center justify-center gap-5 sm:gap-6 py-6 sm:py-8 px-3 sm:px-6 text-[color:var(--g-text)] w-full">
+      {/* Full-screen ambient Gemini glow — sits behind the entire capture page */}
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-0 opacity-60"
+        className="pointer-events-none fixed inset-0 -z-10"
         style={{
           background:
-            "radial-gradient(55% 45% at 50% 40%, rgba(155,114,203,0.22), transparent 70%), radial-gradient(40% 35% at 30% 80%, rgba(66,133,244,0.18), transparent 75%), radial-gradient(40% 35% at 75% 75%, rgba(217,101,112,0.14), transparent 75%)",
+            "radial-gradient(60% 50% at 50% 30%, rgba(155,114,203,0.28), transparent 70%), radial-gradient(45% 40% at 20% 75%, rgba(66,133,244,0.22), transparent 75%), radial-gradient(45% 40% at 80% 80%, rgba(217,101,112,0.18), transparent 75%), linear-gradient(180deg, #0a0a14 0%, #05050b 100%)",
         }}
       />
+
+      {/* Mic permission status chip */}
+      <div className={cn(
+        "relative inline-flex items-center gap-1.5 h-7 px-3 rounded-full border text-[11.5px] font-medium",
+        permMeta.tone,
+      )}>
+        <permMeta.Icon className="h-3.5 w-3.5" />
+        {permMeta.label}
+      </div>
 
       <button
         type="button"
@@ -344,7 +419,6 @@ export const VoiceOrb = ({ liveMode = false, onToggleLive, onLiveTranscript, spe
           </>
         )}
 
-        {/* Rotating Gemini gradient ring around the orb */}
         <span
           aria-hidden
           className="absolute -inset-[2px] rounded-full opacity-90 blur-[1px]"
@@ -354,7 +428,6 @@ export const VoiceOrb = ({ liveMode = false, onToggleLive, onLiveTranscript, spe
           }}
         />
 
-        {/* Orb body — subtly cycles through Gemini hues when idle */}
         <span
           className={cn(
             "absolute inset-0 rounded-full",
@@ -388,14 +461,9 @@ export const VoiceOrb = ({ liveMode = false, onToggleLive, onLiveTranscript, spe
 
       <div className="relative text-center space-y-1.5">
         <p className="text-[14px] sm:text-[15px] font-medium tracking-tight">{status}</p>
-        {draft === null && !liveMode && (
+        {draft === null && (
           <p className="text-[12px] sm:text-[12.5px] text-[color:var(--g-text-muted)]">
-            Speak your idea — edit before saving.
-          </p>
-        )}
-        {draft === null && liveMode && (
-          <p className="text-[12px] sm:text-[12.5px] text-[color:var(--g-text-muted)]">
-            Live mode: Ash listens, replies, and speaks back.
+            {modeCopy[mode].hint}
           </p>
         )}
         {draft !== null && !isRecording && !isTranscribing && (
@@ -403,23 +471,39 @@ export const VoiceOrb = ({ liveMode = false, onToggleLive, onLiveTranscript, spe
             Tap orb to add more — your edits are kept.
           </p>
         )}
-        {onToggleLive && (
-          <button
-            type="button"
-            onClick={() => onToggleLive(!liveMode)}
-            className={cn(
-              "mt-1 inline-flex items-center gap-1.5 h-7 px-3 rounded-full text-[11.5px] font-medium border transition",
-              liveMode
-                ? "bg-[#4285F4]/20 border-[#4285F4]/50 text-white shadow-[0_0_18px_-2px_rgba(66,133,244,0.5)]"
-                : "bg-white/[0.04] border-white/10 text-[color:var(--g-text-muted)] hover:text-white hover:bg-white/[0.08]",
-            )}
-            aria-pressed={liveMode}
-          >
-            {liveMode ? <Volume2 className="h-3 w-3" /> : <Radio className="h-3 w-3" />}
-            {liveMode ? "Live mode ON" : "Go Live"}
-          </button>
-        )}
       </div>
+
+      {/* 3-mode segmented selector */}
+      <div
+        role="tablist"
+        aria-label="Capture mode"
+        className="relative flex items-center gap-1.5 p-1.5 rounded-full bg-white/[0.04] border border-white/10 backdrop-blur-md shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_8px_30px_-12px_rgba(0,0,0,0.6)]"
+      >
+        {modeBtns.map(({ id, label, Icon, tone }) => {
+          const active = mode === id;
+          return (
+            <button
+              key={id}
+              role="tab"
+              aria-selected={active}
+              type="button"
+              onClick={() => setMode(id)}
+              disabled={isRecording || isTranscribing}
+              className={cn(
+                "relative inline-flex items-center gap-1.5 h-9 px-3.5 rounded-full text-[12.5px] font-medium transition-all",
+                active
+                  ? `text-white bg-gradient-to-r ${tone} shadow-[0_6px_20px_-6px_rgba(155,114,203,0.7)]`
+                  : "text-white/65 hover:text-white hover:bg-white/[0.06]",
+                (isRecording || isTranscribing) && !active && "opacity-40",
+              )}
+            >
+              <Icon className="h-3.5 w-3.5" />
+              {label}
+            </button>
+          );
+        })}
+      </div>
+
 
       {draft !== null && (
         <div className="relative w-full max-w-lg">
