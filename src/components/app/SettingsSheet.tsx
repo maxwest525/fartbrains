@@ -137,8 +137,9 @@ export const SettingsSheet = ({ open, onOpenChange }: Props) => {
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="bottom" className="rounded-t-2xl p-0 max-h-[85dvh]">
-        <div className="safe-bottom px-5 pt-5 pb-8">
+      <SheetContent side="bottom" className="rounded-t-2xl p-0 max-h-[90dvh] flex flex-col">
+        <div className="safe-bottom px-5 pt-5 pb-8 overflow-y-auto flex-1 min-h-0">
+
           <SheetHeader className="text-left mb-4">
             <SheetTitle className="text-2xl tracking-tight">Settings</SheetTitle>
             <SheetDescription className="sr-only">
