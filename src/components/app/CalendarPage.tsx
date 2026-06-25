@@ -207,9 +207,9 @@ export const CalendarPage = ({ onBack }: Props) => {
 };
 
 const EventRow = ({ ev, onClick }: { ev: CalendarEvent; onClick: () => void }) => (
-  <button onClick={onClick} className="w-full flex items-center gap-3 px-4 py-3 text-left press hover:bg-secondary/40">
-    <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-      <EventIcon type={ev.event_type} className="h-5 w-5 text-primary" />
+  <button onClick={onClick} className="w-full flex items-center gap-3 px-4 py-3 text-left press hover:bg-white/[0.04]">
+    <div className="h-10 w-10 flex items-center justify-center shrink-0">
+      <EventIcon type={ev.event_type} className="h-6 w-6 text-primary" />
     </div>
     <div className="flex-1 min-w-0">
       <p className="text-[15px] font-medium truncate flex items-center gap-1.5">
