@@ -184,7 +184,16 @@ async function triggerAutoTag(id: string, payload: { title: string; text: string
     if (error) return [];
     const tags = Array.isArray(data?.tags) ? (data.tags as string[]) : [];
     if (tags.length === 0) return [];
-    const { error: upErr } = await supabase.from("ideas").update({ tags } as never).eq("id", id);
+    const tag_meta = {
+      source: "auto" as const,
+      reasoning: typeof data?.reasoning === "string" ? data.reasoning : "",
+      confidence: typeof data?.confidence === "number" ? data.confidence : null,
+      generated_at: new Date().toISOString(),
+    };
+    const { error: upErr } = await supabase
+      .from("ideas")
+      .update({ tags, tag_meta } as never)
+      .eq("id", id);
     if (upErr) return [];
     return tags;
   } catch (_e) {
