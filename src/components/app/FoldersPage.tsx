@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Folder, Plus, MoreHorizontal, Pencil, Trash2, ChevronLeft, Search, X, FileText, Globe, Mic, AudioLines, Loader2, Clock } from "lucide-react";
 
 import {
