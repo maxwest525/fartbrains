@@ -13,6 +13,8 @@ export type SourceMeta = {
   siteName?: string | null;
   thumbnail?: string | null;
   hasTranscript?: boolean;
+  /** Attached audio clip for voice-prompt ideas (no transcription). */
+  audio?: { url: string; mimeType?: string; durationSeconds?: number };
 };
 
 export type Idea = {

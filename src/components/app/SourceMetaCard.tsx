@@ -95,7 +95,7 @@ export const SourceMetaCard = ({ idea }: Props) => {
             {(siteName || host) && <span className="truncate">{siteName || host}</span>}
           </div>
 
-          {idea.source_url && (
+          {idea.source_url && !meta.audio && (
             <a
               href={idea.source_url}
               target="_blank"
@@ -109,6 +109,17 @@ export const SourceMetaCard = ({ idea }: Props) => {
           )}
         </div>
       </div>
+
+      {meta.audio?.url && (
+        <div className="px-3 sm:px-4 pb-3 sm:pb-4">
+          <audio
+            controls
+            preload="metadata"
+            src={meta.audio.url}
+            className="w-full h-10"
+          />
+        </div>
+      )}
     </div>
   );
 };
