@@ -115,7 +115,7 @@ export const CalendarPage = ({ onBack }: Props) => {
 
       {/* Month grid */}
       <div className="px-3 sm:px-6 pt-3">
-        <div className="rounded-3xl bg-white/15 backdrop-blur-2xl border border-white/25 p-3 sm:p-4 mx-auto w-fit max-w-full shadow-[0_20px_60px_-20px_rgba(0,0,0,0.6),inset_0_1px_0_rgba(255,255,255,0.12)]">
+        <div className="rounded-3xl glass-card-strong p-3 sm:p-4 mx-auto w-fit max-w-full shadow-[0_20px_60px_-20px_rgba(0,0,0,0.6),inset_0_1px_0_rgba(255,255,255,0.12)]">
           <Calendar
             mode="single"
             selected={selected}
@@ -140,7 +140,7 @@ export const CalendarPage = ({ onBack }: Props) => {
           <p className="text-xs uppercase tracking-wider text-muted-foreground mb-2">
             {selected.toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })}
           </p>
-          <div className="rounded-2xl bg-white/10 backdrop-blur-2xl border border-white/20 divide-y divide-white/5 overflow-hidden shadow-[0_12px_32px_-18px_rgba(0,0,0,0.6)]">
+          <div className="rounded-2xl glass-card divide-y divide-white/5 overflow-hidden shadow-[0_12px_32px_-18px_rgba(0,0,0,0.6)]">
             {selectedEvents.map((ev) => (
               <EventRow key={ev.id} ev={ev} onClick={() => openEdit(ev)} />
             ))}
@@ -152,14 +152,14 @@ export const CalendarPage = ({ onBack }: Props) => {
       <div className="px-3 sm:px-6 pt-5 pb-4">
         <p className="text-xs uppercase tracking-wider text-muted-foreground mb-2">Upcoming</p>
         {upcoming.length === 0 ? (
-          <div className="rounded-2xl bg-white/10 backdrop-blur-2xl border border-white/20 p-6 text-center shadow-[0_12px_32px_-18px_rgba(0,0,0,0.6)]">
+          <div className="rounded-2xl glass-card p-6 text-center shadow-[0_12px_32px_-18px_rgba(0,0,0,0.6)]">
             <p className="text-sm text-muted-foreground mb-3">No events yet.</p>
             <Button size="sm" onClick={() => openCreate()} className="rounded-full">
               <Plus className="h-4 w-4 mr-1" /> Add your first
             </Button>
           </div>
         ) : (
-          <div className="rounded-2xl bg-white/10 backdrop-blur-2xl border border-white/20 divide-y divide-white/5 overflow-hidden shadow-[0_12px_32px_-18px_rgba(0,0,0,0.6)]">
+          <div className="rounded-2xl glass-card divide-y divide-white/5 overflow-hidden shadow-[0_12px_32px_-18px_rgba(0,0,0,0.6)]">
             {upcoming.map(({ ev, next, days }) => (
               <button
                 key={ev.id}

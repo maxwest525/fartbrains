@@ -242,9 +242,9 @@ export const IdeaDetail = ({ ideaId, onClose, backLabel = "Back", onSelectIdea }
   };
 
   return (
-    <div ref={containerRef} className="flex-1 flex flex-col h-full overflow-hidden bg-background md:animate-none anim-slide-in">
+    <div ref={containerRef} className="flex-1 flex flex-col h-full overflow-hidden bg-transparent md:animate-none anim-slide-in">
       {/* iOS-style nav bar: text "Back" on left, action cluster on right */}
-      <div className="safe-top sticky top-0 z-10 bg-background/80 backdrop-blur-xl px-1 sm:px-4 py-1 sm:py-2 md:border-b border-border flex items-center gap-1 min-h-[44px]">
+      <div className="safe-top sticky top-0 z-10 bg-transparent backdrop-blur-xl px-1 sm:px-4 py-1 sm:py-2 flex items-center gap-1 min-h-[44px]">
         <button
           onClick={onClose}
           className="press md:hidden flex items-center text-primary -ml-1 pl-1 pr-2 h-10 text-[17px] max-w-[55%]"
