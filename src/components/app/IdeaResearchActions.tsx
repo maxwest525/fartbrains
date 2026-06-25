@@ -145,20 +145,32 @@ const ResearchSection = ({
       </div>
 
       <div className="space-y-2">
-        <Input
-          value={inputValue}
-          onChange={(e) => onInputChange(e.target.value)}
-          placeholder={placeholder}
-          inputMode={inputMode === "url" ? "url" : undefined}
-          disabled={busy}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              e.preventDefault();
-              onRun();
-            }
-          }}
-          className="h-9 text-sm"
-        />
+        <div className="relative">
+          <Input
+            value={inputValue}
+            onChange={(e) => onInputChange(e.target.value)}
+            placeholder={placeholder}
+            inputMode={inputMode === "url" ? "url" : undefined}
+            disabled={busy}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                onRun();
+              }
+            }}
+            className={cn("h-9 text-sm", inputValue && "pr-8")}
+          />
+          {inputValue && !busy && (
+            <button
+              type="button"
+              onClick={() => onInputChange("")}
+              aria-label="Clear"
+              className="absolute right-1.5 top-1/2 -translate-y-1/2 h-6 w-6 inline-flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-white/[0.06]"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          )}
+        </div>
         <ThinkingPanel active={busy} />
         {result ? (
           <ResultBox result={result} />
