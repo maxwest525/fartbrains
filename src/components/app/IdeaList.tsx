@@ -460,16 +460,15 @@ export const IdeaList = ({ filter, selectedId, onSelect, onBackToFolders, onFilt
                               toggleTag(t);
                             }}
                             className={cn(
-                              "press inline-flex items-center h-5 px-1.5 rounded-full text-[10.5px] font-medium border transition-colors",
-                              isActive
-                                ? "bg-primary text-primary-foreground border-primary"
-                                : "bg-card border-border hover:bg-muted",
+                              "press inline-flex items-center h-5 px-1 text-[10.5px] font-medium transition-colors bg-transparent border-0",
+                              isActive ? "text-foreground" : "text-muted-foreground",
                             )}
                             aria-pressed={isActive}
                             title={`Filter by #${t}`}
                           >
                             #{t}
                           </button>
+
                         );
                       })}
                     </div>
