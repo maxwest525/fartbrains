@@ -732,7 +732,28 @@ export const IdeaDetail = ({ ideaId, onClose, backLabel = "Back", onSelectIdea }
 
         {(editing ? extractedText : idea.extracted_text) && (
           <section>
-            <h3 className="text-sm font-semibold mb-2">Original extracted text</h3>
+            <div className="mb-2 flex items-center justify-between gap-2">
+              <h3 className="text-sm font-semibold">Original extracted text</h3>
+              {!editing && idea.extracted_text && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 rounded-full text-xs gap-1 text-muted-foreground hover:text-foreground"
+                  onClick={async () => {
+                    try {
+                      await navigator.clipboard.writeText(idea.extracted_text ?? "");
+                      toast.success("Raw text copied");
+                    } catch {
+                      toast.error("Couldn't copy — select and copy manually.");
+                    }
+                  }}
+                  title="Copy raw extracted text (separate from the AI summary)"
+                >
+                  <Copy className="h-3.5 w-3.5" /> Copy raw text
+                </Button>
+              )}
+            </div>
             {editing ? (
               <Textarea
                 value={extractedText}
