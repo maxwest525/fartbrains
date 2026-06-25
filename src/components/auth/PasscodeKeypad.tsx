@@ -246,10 +246,10 @@ const KeyButton = ({
     onClick={onClick}
     disabled={disabled}
     className={cn(
-      "h-16 w-16 rounded-full",
+      "h-[76px] w-[76px] sm:h-16 sm:w-16 rounded-full",
       "bg-white/[0.08] hover:bg-white/[0.14] active:bg-white/[0.20]",
       "border border-white/15 backdrop-blur-xl",
-      "text-[26px] font-light text-white",
+      "text-[30px] sm:text-[26px] font-light text-white",
       "transition-all duration-100 active:scale-95",
       "focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40",
       "disabled:opacity-40 disabled:cursor-not-allowed",
