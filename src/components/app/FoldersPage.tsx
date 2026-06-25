@@ -162,7 +162,7 @@ export const FoldersPage = ({ onOpenFolder, onOpenRecent, onBack }: Props) => {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search folders"
-              className="pl-9 pr-9 h-9 rounded-[10px] bg-secondary border-transparent text-[15px]"
+              className="pl-9 pr-9 h-9 rounded-[10px] bg-white/[0.04] border-transparent text-[15px]"
             />
             {query && (
               <button
