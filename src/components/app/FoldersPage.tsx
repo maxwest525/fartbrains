@@ -115,9 +115,10 @@ export const FoldersPage = ({ onOpenFolder, onOpenRecent, onBack }: Props) => {
   };
 
   return (
-    <div className="flex-1 flex flex-col h-full bg-background overflow-hidden">
+    <div className="flex-1 flex flex-col h-full bg-transparent overflow-hidden">
       {/* iOS-style nav bar */}
-      <div className="safe-top shrink-0 z-10 bg-background px-1 sm:px-5 pt-0 pb-3 md:border-b border-border">
+      <div className="safe-top shrink-0 z-10 bg-transparent px-1 sm:px-5 pt-0 pb-3">
+
         <div className="flex items-center min-h-[36px] gap-1 px-2 sm:px-0">
           {isMobile && onBack && (
             <button
@@ -161,7 +162,7 @@ export const FoldersPage = ({ onOpenFolder, onOpenRecent, onBack }: Props) => {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search folders"
-              className="pl-9 pr-9 h-9 rounded-[10px] bg-secondary border-transparent text-[15px]"
+              className="pl-9 pr-9 h-9 rounded-[10px] bg-white/[0.04] border-transparent text-[15px]"
             />
             {query && (
               <button
@@ -221,14 +222,14 @@ export const FoldersPage = ({ onOpenFolder, onOpenRecent, onBack }: Props) => {
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4">
             {onOpenRecent && (query.trim() === "" || "recent".includes(query.trim().toLowerCase())) && (
-              <div className="group relative rounded-2xl overflow-hidden transition-all duration-200 hover:-translate-y-0.5 bg-white/[0.04] backdrop-blur-xl border border-white/10 shadow-[0_8px_24px_-14px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.06)]">
+              <div className="group relative transition-all duration-200 hover:-translate-y-0.5">
                 <button
                   onClick={onOpenRecent}
                   className="press relative w-full text-left p-4 flex flex-col items-start gap-3 min-h-[180px]"
                 >
                   <div className="flex items-center gap-3 w-full min-w-0">
-                    <div className="relative h-11 w-11 rounded-[12px] flex items-center justify-center shrink-0 bg-white/[0.06] backdrop-blur-md border border-white/10">
-                      <Clock className="h-5 w-5 text-foreground/80" strokeWidth={2.2} />
+                    <div className="relative h-11 w-11 flex items-center justify-center shrink-0">
+                      <Clock className="h-7 w-7 text-foreground/85" strokeWidth={2.2} />
                     </div>
                     <div className="min-w-0 flex-1">
                       <p className="font-semibold text-[15px] truncate leading-tight tracking-tight">
@@ -252,15 +253,15 @@ export const FoldersPage = ({ onOpenFolder, onOpenRecent, onBack }: Props) => {
               return (
                 <div
                   key={folder.id}
-                  className="group relative rounded-2xl overflow-hidden transition-all duration-200 hover:-translate-y-0.5 bg-white/[0.04] backdrop-blur-xl border border-white/10 shadow-[0_8px_24px_-14px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.06)]"
+                  className="group relative transition-all duration-200 hover:-translate-y-0.5"
                 >
                   <button
                     onClick={() => onOpenFolder(folder.id)}
                     className="press relative w-full text-left p-4 flex flex-col items-start gap-3 min-h-[180px]"
                   >
                     <div className="flex items-center gap-3 w-full min-w-0">
-                      <div className="relative h-11 w-11 rounded-[12px] flex items-center justify-center shrink-0 bg-white/[0.06] backdrop-blur-md border border-white/10">
-                        <Folder className="h-5 w-5 text-foreground/80" strokeWidth={2} />
+                      <div className="relative h-11 w-11 flex items-center justify-center shrink-0">
+                        <Folder className="h-7 w-7 text-foreground/85" strokeWidth={2} />
                       </div>
                       <div className="min-w-0 flex-1">
                         <p className="font-semibold text-[15px] truncate leading-tight tracking-tight">
@@ -283,7 +284,7 @@ export const FoldersPage = ({ onOpenFolder, onOpenRecent, onBack }: Props) => {
                         folderPreviews.map((item) => (
                           <div
                             key={item.id}
-                            className="flex items-center gap-1.5 rounded-md px-1.5 py-1 bg-white/[0.03] border border-white/5"
+                            className="flex items-center gap-1.5 px-0.5 py-0.5"
                           >
                             <SourceIcon
                               type={item.source_type}
@@ -305,7 +306,7 @@ export const FoldersPage = ({ onOpenFolder, onOpenRecent, onBack }: Props) => {
 
                   <DropdownMenu>
                     <DropdownMenuTrigger
-                      className="absolute top-2 right-2 h-8 w-8 rounded-full bg-white/[0.06] backdrop-blur-md border border-white/10 flex items-center justify-center text-muted-foreground hover:text-foreground md:opacity-0 md:group-hover:opacity-100 md:focus:opacity-100 md:data-[state=open]:opacity-100 transition-opacity"
+                      className="absolute top-2 right-2 h-8 w-8 flex items-center justify-center text-muted-foreground hover:text-foreground md:opacity-0 md:group-hover:opacity-100 md:focus:opacity-100 md:data-[state=open]:opacity-100 transition-opacity"
                       aria-label="Folder actions"
                       onClick={(e) => e.stopPropagation()}
                     >

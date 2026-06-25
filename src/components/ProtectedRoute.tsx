@@ -64,10 +64,10 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
           className="absolute inset-0 pointer-events-none"
           style={{ background: "radial-gradient(700px 500px at 50% 40%, transparent, rgba(0,0,0,0.55) 80%)" }}
         />
-        {/* Glass card hosting the keypad */}
-        <div className="relative z-10 w-full max-w-sm mx-6 rounded-3xl bg-white/[0.04] backdrop-blur-2xl border border-white/10 shadow-[0_30px_80px_-30px_rgba(0,0,0,0.8),inset_0_1px_0_rgba(255,255,255,0.08)] px-6 py-10">
+        <div className="relative z-10 w-full max-w-sm mx-6 px-6 py-10">
           <PasscodeKeypad onUnlocked={() => setUnlocked(true)} />
         </div>
+
       </main>
     );
   }

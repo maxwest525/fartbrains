@@ -205,15 +205,16 @@ const Shell = () => {
 
 
   return (
-    <div className="flex flex-col h-[100dvh] w-full bg-background overflow-hidden relative">
+    <div className="flex flex-col h-[100dvh] w-full bg-transparent overflow-hidden relative">
 
 
       {/* Top bar — search + (desktop) inline nav. Hidden on mobile when viewing detail or the folders page (folders has its own header). */}
       {!showDetailOnly && !(isMobile && showFolders) && !(isMobile && showCalendar) && (
         <header className={cn(
-          "sticky top-0 z-20 bg-background/70 backdrop-blur-xl border-b border-border/60",
+          "sticky top-0 z-20 bg-transparent backdrop-blur-xl",
           filter.kind !== "all" && "safe-top"
         )}>
+
           <div aria-hidden className="absolute inset-x-0 -top-px h-px bg-gradient-to-r from-transparent via-primary/60 to-transparent" />
           <div className="px-3 sm:px-5 lg:px-8 py-1.5 lg:py-2.5 flex items-center gap-2 sm:gap-3 lg:gap-4">
 
@@ -237,7 +238,7 @@ const Shell = () => {
                   value={searchValue}
                   onChange={(e) => onSearch(e.target.value)}
                   placeholder="Search"
-                  className="pl-9 pr-9 h-9 rounded-[10px] bg-secondary border-transparent focus-visible:bg-card text-[15px]"
+                  className="pl-9 pr-9 h-9 rounded-[10px] bg-white/[0.04] border-transparent focus-visible:bg-white/[0.06] text-[15px]"
                 />
                 {searchValue && (
                   <button
@@ -316,7 +317,7 @@ const Shell = () => {
         {/* Capture view — compose only, full width. Shown when filter is "all" (the default landing). */}
         {!showFolders && !showCalendar && !showDetailOnly && filter.kind === "all" && (
           <div
-            className="w-full flex-1 min-w-0 flex flex-col min-h-0 bg-background overflow-y-auto scroll-momentum touch-pan-y"
+            className="w-full flex-1 min-w-0 flex flex-col min-h-0 bg-transparent overflow-y-auto scroll-momentum touch-pan-y"
             style={{ paddingBottom: "calc(var(--ash-dock-h, 0px) + env(safe-area-inset-bottom) + (var(--mobile-tabbar-h, 0px)) + 1.25rem)" }}
           >
 
@@ -345,7 +346,7 @@ const Shell = () => {
         {/* Browse view — flat list of ideas (Recents, Favorites, Folder-filtered, Search). */}
         {!showFolders && !showCalendar && !showDetailOnly && filter.kind !== "all" && (
           <div
-            className="w-full flex-1 min-w-0 md:w-[28rem] md:flex-none md:shrink-0 md:border-r border-border flex flex-col min-h-0 bg-background md:overflow-hidden overflow-y-auto scroll-momentum touch-pan-y"
+            className="w-full flex-1 min-w-0 md:w-[28rem] md:flex-none md:shrink-0 md:border-r border-border flex flex-col min-h-0 bg-transparent md:overflow-hidden overflow-y-auto scroll-momentum touch-pan-y"
             style={{ paddingBottom: isMobile ? "calc(var(--ash-dock-h, 0px) + var(--mobile-tabbar-h, 0px) + env(safe-area-inset-bottom) + 1rem)" : "1.5rem" }}
           >
 
