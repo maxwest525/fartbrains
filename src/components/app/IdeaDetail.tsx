@@ -329,14 +329,8 @@ export const IdeaDetail = ({ ideaId, onClose, backLabel = "Back", onSelectIdea }
         <SourceMetaCard idea={idea} />
 
 
-        <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-xs font-medium text-muted-foreground mr-1">Priority</span>
-          <PrioritySelector
-            value={idea.priority}
-            onChange={(p) => updateIdea.mutate({ id: idea.id, patch: { priority: p } })}
-            disabled={updateIdea.isPending}
-          />
-          {idea.remind_at && (
+        {idea.remind_at && (
+          <div className="flex items-center gap-2 flex-wrap">
             <button
               onClick={() => setReminderOpen(true)}
               className="ml-auto inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full bg-accent/10 text-accent hover:bg-accent/15 press"
@@ -351,19 +345,20 @@ export const IdeaDetail = ({ ideaId, onClose, backLabel = "Back", onSelectIdea }
                   .join(" + ") || "muted"}
               </span>
             </button>
-          )}
-        </div>
+          </div>
+        )}
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-muted-foreground">
-          <div>
+          <div className="whitespace-nowrap overflow-hidden text-ellipsis">
             <span className="font-medium text-foreground">Created:</span>{" "}
             {new Date(idea.created_at).toLocaleString()}
           </div>
-          <div>
+          <div className="whitespace-nowrap overflow-hidden text-ellipsis">
             <span className="font-medium text-foreground">Updated:</span>{" "}
             {new Date(idea.updated_at).toLocaleString()}
           </div>
         </div>
+
 
         {editing && (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
