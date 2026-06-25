@@ -90,18 +90,17 @@ export const MobileTabBar = ({ filter, view, onFilterChange, onOpenFolders, onOp
   return (
     <nav
       ref={navRef}
-      className="md:hidden fixed bottom-0 inset-x-0 z-30 safe-bottom"
+      className="md:hidden fixed bottom-0 inset-x-0 z-30"
       aria-label="Primary"
     >
       {/* Top hairline gradient */}
       <div aria-hidden className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/15 to-transparent" />
       <div
-        className="relative bg-black/45"
+        className="relative bg-background"
         style={{
-          backdropFilter: "blur(22px) saturate(180%)",
-          WebkitBackdropFilter: "blur(22px) saturate(180%)",
           boxShadow:
             "inset 0 1px 0 hsl(0 0% 100% / 0.06), 0 -8px 30px -10px hsl(0 0% 0% / 0.55)",
+          paddingBottom: "env(safe-area-inset-bottom)",
         }}
       >
         <div className="flex items-stretch h-[72px]">
@@ -113,5 +112,6 @@ export const MobileTabBar = ({ filter, view, onFilterChange, onOpenFolders, onOp
         </div>
       </div>
     </nav>
+
   );
 };
