@@ -115,9 +115,10 @@ export const FoldersPage = ({ onOpenFolder, onOpenRecent, onBack }: Props) => {
   };
 
   return (
-    <div className="flex-1 flex flex-col h-full bg-background overflow-hidden">
+    <div className="flex-1 flex flex-col h-full bg-transparent overflow-hidden">
       {/* iOS-style nav bar */}
-      <div className="safe-top shrink-0 z-10 bg-background px-1 sm:px-5 pt-0 pb-3 md:border-b border-border">
+      <div className="safe-top shrink-0 z-10 bg-transparent px-1 sm:px-5 pt-0 pb-3">
+
         <div className="flex items-center min-h-[36px] gap-1 px-2 sm:px-0">
           {isMobile && onBack && (
             <button
