@@ -89,7 +89,7 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("ideas")
-        .select("id,title,folder_id,raw_note,ai_summary,extracted_text")
+        .select("id,title,folder_id,raw_note,ai_summary,extracted_text,tags")
         .order("updated_at", { ascending: false })
         .limit(400);
       if (error) throw error;
