@@ -42,16 +42,17 @@ const toolbarBtn = cn(
   "disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-[color:var(--g-text-disabled)] disabled:cursor-not-allowed",
 );
 
-type CaptureMode = "dictate" | "record" | "live";
+type CaptureMode = "dictate" | "record";
 
 type VoiceOrbProps = {
   /** Send a transcript into the bottom composer (dictate mode). */
   onDictate?: (text: string) => void;
-  /** Fired with a transcript when in Live mode (sent to Ash chat). */
+  /** Fired with a transcript when in Live mode (sent to Ash chat). Deprecated — kept for compat. */
   onLiveTranscript?: (text: string) => void;
   /** True while Ash is speaking back — animates the orb in a different color. */
   speaking?: boolean;
 };
+
 
 export const VoiceOrb = ({ onDictate, onLiveTranscript, speaking = false }: VoiceOrbProps) => {
   const voice = useVoiceCapture({ maxSeconds: 180 });
