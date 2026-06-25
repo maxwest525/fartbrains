@@ -93,9 +93,9 @@ export const CalendarPage = ({ onBack }: Props) => {
   };
 
   return (
-    <div className="flex-1 min-w-0 flex flex-col min-h-0 bg-background overflow-y-auto scroll-momentum pb-[calc(5.75rem+env(safe-area-inset-bottom))] md:pb-6">
+    <div className="flex-1 min-w-0 flex flex-col min-h-0 bg-transparent overflow-y-auto scroll-momentum pb-[calc(5.75rem+env(safe-area-inset-bottom))] md:pb-6">
       {/* Header */}
-      <div className="safe-top sticky top-0 z-10 bg-background/80 backdrop-blur-xl border-b border-border">
+      <div className="safe-top sticky top-0 z-10 bg-transparent backdrop-blur-xl">
         <div className="px-3 sm:px-5 py-3 flex items-center gap-2">
           {onBack && (
             <button
@@ -115,7 +115,7 @@ export const CalendarPage = ({ onBack }: Props) => {
 
       {/* Month grid */}
       <div className="px-3 sm:px-6 pt-3">
-        <div className="rounded-3xl bg-white/[0.04] backdrop-blur-xl border border-white/10 p-3 sm:p-4 mx-auto w-fit max-w-full shadow-[0_8px_24px_-14px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.06)]">
+        <div className="rounded-3xl bg-white/[0.08] backdrop-blur-2xl border border-white/15 p-3 sm:p-4 mx-auto w-fit max-w-full shadow-[0_20px_60px_-20px_rgba(0,0,0,0.6),inset_0_1px_0_rgba(255,255,255,0.12)]">
           <Calendar
             mode="single"
             selected={selected}
@@ -140,7 +140,7 @@ export const CalendarPage = ({ onBack }: Props) => {
           <p className="text-xs uppercase tracking-wider text-muted-foreground mb-2">
             {selected.toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })}
           </p>
-          <div className="rounded-2xl bg-card border border-border/60 divide-y divide-border/60 overflow-hidden">
+          <div className="rounded-2xl bg-white/[0.06] backdrop-blur-xl border border-white/10 divide-y divide-white/5 overflow-hidden shadow-[0_12px_32px_-18px_rgba(0,0,0,0.6)]">
             {selectedEvents.map((ev) => (
               <EventRow key={ev.id} ev={ev} onClick={() => openEdit(ev)} />
             ))}
@@ -152,22 +152,22 @@ export const CalendarPage = ({ onBack }: Props) => {
       <div className="px-3 sm:px-6 pt-5 pb-4">
         <p className="text-xs uppercase tracking-wider text-muted-foreground mb-2">Upcoming</p>
         {upcoming.length === 0 ? (
-          <div className="rounded-2xl bg-card border border-border/60 p-6 text-center">
+          <div className="rounded-2xl bg-white/[0.06] backdrop-blur-xl border border-white/10 p-6 text-center shadow-[0_12px_32px_-18px_rgba(0,0,0,0.6)]">
             <p className="text-sm text-muted-foreground mb-3">No events yet.</p>
             <Button size="sm" onClick={() => openCreate()} className="rounded-full">
               <Plus className="h-4 w-4 mr-1" /> Add your first
             </Button>
           </div>
         ) : (
-          <div className="rounded-2xl bg-card border border-border/60 divide-y divide-border/60 overflow-hidden">
+          <div className="rounded-2xl bg-white/[0.06] backdrop-blur-xl border border-white/10 divide-y divide-white/5 overflow-hidden shadow-[0_12px_32px_-18px_rgba(0,0,0,0.6)]">
             {upcoming.map(({ ev, next, days }) => (
               <button
                 key={ev.id}
                 onClick={() => openEdit(ev)}
-                className="w-full flex items-center gap-3 px-4 py-3 text-left press hover:bg-secondary/40"
+                className="w-full flex items-center gap-3 px-4 py-3 text-left press hover:bg-white/[0.04]"
               >
-                <div className="h-11 w-11 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                  <EventIcon type={ev.event_type} className="h-5 w-5 text-primary" />
+                <div className="h-11 w-11 flex items-center justify-center shrink-0">
+                  <EventIcon type={ev.event_type} className="h-6 w-6 text-primary" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-[15px] font-medium truncate">
@@ -181,11 +181,11 @@ export const CalendarPage = ({ onBack }: Props) => {
                   </p>
                 </div>
                 <div className={cn(
-                  "text-xs font-semibold tabular-nums shrink-0 px-2 py-1 rounded-full",
+                  "text-xs font-semibold tabular-nums shrink-0",
                   days === 0
-                    ? "bg-destructive/15 text-destructive"
+                    ? "text-destructive"
                     : days <= 7
-                      ? "bg-primary/15 text-primary"
+                      ? "text-primary"
                       : "text-muted-foreground"
                 )}>
                   {whenLabel(next)}
@@ -207,9 +207,9 @@ export const CalendarPage = ({ onBack }: Props) => {
 };
 
 const EventRow = ({ ev, onClick }: { ev: CalendarEvent; onClick: () => void }) => (
-  <button onClick={onClick} className="w-full flex items-center gap-3 px-4 py-3 text-left press hover:bg-secondary/40">
-    <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-      <EventIcon type={ev.event_type} className="h-5 w-5 text-primary" />
+  <button onClick={onClick} className="w-full flex items-center gap-3 px-4 py-3 text-left press hover:bg-white/[0.04]">
+    <div className="h-10 w-10 flex items-center justify-center shrink-0">
+      <EventIcon type={ev.event_type} className="h-6 w-6 text-primary" />
     </div>
     <div className="flex-1 min-w-0">
       <p className="text-[15px] font-medium truncate flex items-center gap-1.5">
