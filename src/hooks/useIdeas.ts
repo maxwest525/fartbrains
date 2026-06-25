@@ -147,13 +147,40 @@ export function useCreateIdea() {
         window.dispatchEvent(new CustomEvent("idea:created"));
       }
       toast.success("Idea saved", { description: "Captured to your vault." });
-      // Kick off background reference extraction (fire-and-forget).
-      if (data && typeof (data as { id?: string }).id === "string") {
-        triggerExtractReferences((data as { id: string }).id);
+      const row = data as { id?: string; title?: string; raw_note?: string | null; ai_summary?: string | null; extracted_text?: string | null; tags?: string[] } | null;
+      if (row?.id) {
+        // Kick off background reference extraction (fire-and-forget).
+        triggerExtractReferences(row.id);
+        // Auto-tag from content if no tags were set explicitly.
+        if (!row.tags || row.tags.length === 0) {
+          triggerAutoTag(row.id, {
+            title: row.title ?? "",
+            text: [row.raw_note, row.ai_summary, row.extracted_text].filter(Boolean).join("\n\n"),
+          }).then((added) => {
+            if (added.length > 0) {
+              qc.invalidateQueries({ queryKey: ["ideas"] });
+              qc.invalidateQueries({ queryKey: ["idea", row.id] });
+            }
+          });
+        }
       }
     },
     onError: (e: Error) => toast.error(e.message),
   });
+}
+
+async function triggerAutoTag(id: string, payload: { title: string; text: string }): Promise<string[]> {
+  try {
+    const { data, error } = await supabase.functions.invoke("auto-tag", { body: payload });
+    if (error) return [];
+    const tags = Array.isArray(data?.tags) ? (data.tags as string[]) : [];
+    if (tags.length === 0) return [];
+    const { error: upErr } = await supabase.from("ideas").update({ tags } as never).eq("id", id);
+    if (upErr) return [];
+    return tags;
+  } catch (_e) {
+    return [];
+  }
 }
 
 export function useUpdateIdea() {

@@ -89,7 +89,7 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("ideas")
-        .select("id,title,folder_id,raw_note,ai_summary,extracted_text")
+        .select("id,title,folder_id,raw_note,ai_summary,extracted_text,tags")
         .order("updated_at", { ascending: false })
         .limit(400);
       if (error) throw error;
@@ -116,8 +116,12 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
 
     const ideaTokens = new Map<string, string[]>();
     ideas.forEach((i: any) => {
-      const t = tokens(`${i.title ?? ""} ${i.raw_note ?? ""} ${i.ai_summary ?? ""}`).slice(0, 12);
-      ideaTokens.set(i.id, t);
+      const t = tokens(`${i.title ?? ""} ${i.raw_note ?? ""} ${i.ai_summary ?? ""}`).slice(0, 10);
+      // Auto-tags carry intentional grouping signal — fold them in (normalized).
+      const tagToks = Array.isArray(i.tags)
+        ? i.tags.map((s: string) => String(s).toLowerCase().replace(/[^a-z0-9]+/g, "")).filter((s: string) => s.length >= 3)
+        : [];
+      ideaTokens.set(i.id, [...new Set([...t, ...tagToks])]);
     });
 
     const edgeMap = new Map<string, GraphEdge>();
@@ -133,6 +137,8 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
       } else edgeMap.set(k, { a, b, w, kind });
     };
 
+    // Folder edges: only link each idea to its 1 nearest folder-mate (low weight).
+    // Folders alone would create a giant cluster — keep them as a faint scaffold.
     const byFolder = new Map<string, any[]>();
     ideas.forEach((i: any) => {
       if (!i.folder_id) return;
@@ -141,26 +147,37 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
     });
     byFolder.forEach((arr) => {
       for (let i = 0; i < arr.length; i++) {
-        for (let j = i + 1; j < Math.min(arr.length, i + 4); j++) {
-          addEdge(arr[i].id, arr[j].id, 0.4, "folder");
-        }
+        // chain: i → i+1 only, so a folder is a thin necklace not a clique
+        if (i + 1 < arr.length) addEdge(arr[i].id, arr[i + 1].id, 0.25, "folder");
       }
     });
 
+    // Keyword edges: stricter. Require longer tokens, ignore very common ones,
+    // and only emit when a token is shared by 2-4 ideas (otherwise it's noise).
     const tokenIndex = new Map<string, string[]>();
     ideaTokens.forEach((toks, id) => {
       toks.forEach((t) => {
+        if (t.length < 5) return;
         const a = tokenIndex.get(t) ?? [];
         a.push(id); tokenIndex.set(t, a);
       });
     });
+    // Count shared tokens between pairs — require at least 2 shared tokens to draw an edge.
+    const pairShared = new Map<string, number>();
+    const pairKey = (a: string, b: string) => (a < b ? `${a}|${b}` : `${b}|${a}`);
     tokenIndex.forEach((ids) => {
-      if (ids.length < 2 || ids.length > 8) return;
+      if (ids.length < 2 || ids.length > 4) return;
       for (let i = 0; i < ids.length; i++) {
         for (let j = i + 1; j < ids.length; j++) {
-          addEdge(ids[i], ids[j], 0.7, "kw");
+          const k = pairKey(ids[i], ids[j]);
+          pairShared.set(k, (pairShared.get(k) ?? 0) + 1);
         }
       }
+    });
+    pairShared.forEach((count, k) => {
+      if (count < 2) return;
+      const [a, b] = k.split("|");
+      addEdge(a, b, 0.6 + Math.min(count, 4) * 0.2, "kw");
     });
 
     if (refsQuery.data) {
@@ -197,7 +214,7 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
         x: W / 2 + Math.cos(angle) * radius,
         y: H / 2 + Math.sin(angle) * radius,
         vx: 0, vy: 0,
-        r: 4 + Math.min(14, deg * 1.2),
+        r: 2.5 + Math.min(7, deg * 0.6),
         color: i.folder_id ? (folderColor.get(i.folder_id) ?? "hsl(262 80% 65%)") : "hsl(200 8% 70%)",
         degree: deg,
       };
