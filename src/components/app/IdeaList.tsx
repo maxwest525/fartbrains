@@ -177,10 +177,8 @@ export const IdeaList = ({ filter, selectedId, onSelect, onBackToFolders, onFilt
                   key={tag}
                   onClick={() => toggleTag(tag)}
                   className={cn(
-                    "press shrink-0 inline-flex items-center gap-1 h-7 px-2.5 rounded-full text-[12.5px] font-medium border transition-colors",
-                    active
-                      ? "bg-primary text-primary-foreground border-primary"
-                      : "bg-card text-foreground/80 border-border hover:bg-muted",
+                    "press shrink-0 inline-flex items-center gap-1 h-7 px-2 text-[12.5px] font-medium transition-colors bg-transparent border-0",
+                    active ? "text-foreground" : "text-muted-foreground",
                   )}
                   aria-pressed={active}
                   title={`${count} idea${count === 1 ? "" : "s"} tagged "${tag}"`}
@@ -190,6 +188,7 @@ export const IdeaList = ({ filter, selectedId, onSelect, onBackToFolders, onFilt
                     {count}
                   </span>
                 </button>
+
               );
             })}
             {selectedTags.length > 0 && (
