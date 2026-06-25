@@ -28,7 +28,7 @@ import type { IdeaFilter } from "@/hooks/useIdeas";
 
 
 
-type View = "ideas" | "folders" | "calendar";
+type View = "ideas" | "folders" | "calendar" | "graph";
 
 const Shell = () => {
   const [view, setView] = useState<View>("ideas");
