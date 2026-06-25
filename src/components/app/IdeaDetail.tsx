@@ -242,9 +242,9 @@ export const IdeaDetail = ({ ideaId, onClose, backLabel = "Back", onSelectIdea }
   };
 
   return (
-    <div ref={containerRef} className="flex-1 flex flex-col h-full overflow-hidden bg-background md:animate-none anim-slide-in">
+    <div ref={containerRef} className="flex-1 flex flex-col h-full overflow-hidden bg-transparent md:animate-none anim-slide-in">
       {/* iOS-style nav bar: text "Back" on left, action cluster on right */}
-      <div className="safe-top sticky top-0 z-10 bg-background/80 backdrop-blur-xl px-1 sm:px-4 py-1 sm:py-2 md:border-b border-border flex items-center gap-1 min-h-[44px]">
+      <div className="safe-top sticky top-0 z-10 bg-transparent backdrop-blur-xl px-1 sm:px-4 py-1 sm:py-2 flex items-center gap-1 min-h-[44px]">
         <button
           onClick={onClose}
           className="press md:hidden flex items-center text-primary -ml-1 pl-1 pr-2 h-10 text-[17px] max-w-[55%]"
@@ -444,11 +444,11 @@ export const IdeaDetail = ({ ideaId, onClose, backLabel = "Back", onSelectIdea }
               </div>
             </div>
             {idea.generated_prompt ? (
-              <div className="rounded-xl bg-card border border-border p-4 text-sm whitespace-pre-wrap font-mono leading-relaxed select-text">
+              <div className="rounded-xl glass-card-quiet p-4 text-sm whitespace-pre-wrap font-mono leading-relaxed select-text">
                 {idea.generated_prompt}
               </div>
             ) : (
-              <div className="rounded-xl bg-muted/40 border border-dashed border-border p-4 text-xs text-muted-foreground">
+              <div className="rounded-xl glass-card-quiet border-dashed p-4 text-xs text-muted-foreground">
                 Combine your note with the AI summary into a single prompt you can paste into ChatGPT, Claude, or Gemini.
               </div>
             )}
@@ -486,11 +486,11 @@ export const IdeaDetail = ({ ideaId, onClose, backLabel = "Back", onSelectIdea }
                 placeholder="No summary yet — click Generate to create one from your note or extracted text."
               />
             ) : idea.ai_summary ? (
-              <div className="rounded-md bg-muted/40 p-4 text-sm prose prose-sm dark:prose-invert max-w-none prose-headings:mt-3 prose-headings:mb-2 prose-headings:font-semibold prose-h1:text-lg prose-h2:text-base prose-h3:text-sm prose-p:my-2 prose-ul:my-2 prose-ol:my-2 prose-li:my-0.5 prose-strong:text-foreground prose-a:text-primary prose-code:text-xs prose-code:bg-muted prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:before:content-none prose-code:after:content-none">
+              <div className="rounded-xl glass-card-quiet p-4 text-sm prose prose-sm dark:prose-invert max-w-none prose-headings:mt-3 prose-headings:mb-2 prose-headings:font-semibold prose-h1:text-lg prose-h2:text-base prose-h3:text-sm prose-p:my-2 prose-ul:my-2 prose-ol:my-2 prose-li:my-0.5 prose-strong:text-foreground prose-a:text-primary prose-code:text-xs prose-code:bg-muted prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:before:content-none prose-code:after:content-none">
                 <ReactMarkdown remarkPlugins={[remarkGfm]}>{idea.ai_summary}</ReactMarkdown>
               </div>
             ) : (
-              <div className="rounded-md border border-dashed border-border bg-muted/20 p-4 text-xs text-muted-foreground">
+              <div className="rounded-xl glass-card-quiet border-dashed p-4 text-xs text-muted-foreground">
                 No summary yet — click <span className="font-medium text-foreground">Generate</span> above to create one from your note or extracted text.
               </div>
             )}
@@ -552,7 +552,7 @@ export const IdeaDetail = ({ ideaId, onClose, backLabel = "Back", onSelectIdea }
                   className={isProject ? "font-mono text-xs" : undefined}
                 />
               ) : isChecklist ? (
-                <div className="rounded-md bg-muted/40 p-4 text-sm prose prose-sm dark:prose-invert max-w-none prose-ul:my-0 prose-li:my-0.5">
+                <div className="rounded-xl glass-card-quiet p-4 text-sm prose prose-sm dark:prose-invert max-w-none prose-ul:my-0 prose-li:my-0.5">
                   <ReactMarkdown
                     remarkPlugins={[remarkGfm]}
                     components={{
@@ -596,7 +596,7 @@ export const IdeaDetail = ({ ideaId, onClose, backLabel = "Back", onSelectIdea }
                 className="text-xs leading-relaxed"
               />
             ) : (
-              <div className="rounded-md border border-border bg-muted/20 p-4 text-xs whitespace-pre-wrap">
+              <div className="rounded-xl glass-card-quiet p-4 text-xs whitespace-pre-wrap">
                 {idea.extracted_text}
               </div>
             )}
