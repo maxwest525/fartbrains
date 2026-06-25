@@ -344,9 +344,9 @@ export const VoiceOrb = ({ onDictate, onLiveTranscript, speaking = false }: Voic
   const charCount = (draft ?? "").length;
 
   const modeCopy: Record<CaptureMode, { idle: string; hint: string }> = {
-    dictate: { idle: "Tap to dictate", hint: "Transcribes into the composer below." },
-    record:  { idle: "Tap to record",  hint: "Saves a voice note — no transcription." },
-    live:    { idle: "Tap to talk to Ash", hint: "Ash listens, replies, and speaks back." },
+    dictate: { idle: "Tap for voice to text", hint: "Transcribes your speech into the composer below." },
+    record:  { idle: "Tap for voice prompt",  hint: "Records a voice prompt and sends it to Ash." },
+    live:    { idle: "Tap to talk to Ash",    hint: "Ash listens, replies, and speaks back." },
   };
 
   const status = isRecording
