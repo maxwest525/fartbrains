@@ -195,6 +195,10 @@ export const VoiceOrb = ({ onDictate, onLiveTranscript, speaking = false }: Voic
   const onTap = async () => {
     try {
       if (voice.state === "idle") {
+        if (micPerm === "denied") {
+          toast.error("Microphone is blocked. Enable mic access in your browser settings.");
+          return;
+        }
         await voice.start();
         return;
       }
@@ -205,6 +209,26 @@ export const VoiceOrb = ({ onDictate, onLiveTranscript, speaking = false }: Voic
           voice.finishProcessing();
           return;
         }
+
+        // RECORD mode: save the voice note as an idea without transcribing.
+        if (mode === "record") {
+          setSubmitting(true);
+          try {
+            const seconds = Math.max(1, Math.round(blob.size / 16000));
+            await createIdea.mutateAsync({
+              title: `Voice note · ${fmtSeconds(seconds)}`,
+              raw_note: `🎙 Voice note (${fmtSeconds(seconds)}) — saved without transcription.`,
+              source_type: "audio",
+              folder_id: folderId,
+            });
+            toast.success("Voice note saved");
+          } finally {
+            setSubmitting(false);
+          }
+          return;
+        }
+
+        // DICTATE / LIVE: transcribe.
         const audioBase64 = await blobToBase64(blob);
         const { data, error } = await supabase.functions.invoke("transcribe-deliverables", {
           body: { audioBase64, mimeType, allowedTypes: ["other"] },
@@ -216,19 +240,21 @@ export const VoiceOrb = ({ onDictate, onLiveTranscript, speaking = false }: Voic
           toast.message("Nothing heard — try again.");
           return;
         }
-        // Live mode: skip the draft editor and stream the transcript straight into Ash chat.
-        if (liveMode && onLiveTranscript) {
+
+        if (mode === "live" && onLiveTranscript) {
           onLiveTranscript(transcript.trim());
           return;
         }
-        // Append to any existing draft so prior edits aren't lost.
-        setDraft((prev) => {
-          if (prev && prev.trim()) {
-            pushHistory(prev);
-            return `${prev.trim()}\n\n${transcript.trim()}`;
+
+        // DICTATE: push into the bottom composer instead of opening the draft editor.
+        if (mode === "dictate") {
+          if (onDictate) onDictate(transcript.trim());
+          else {
+            window.dispatchEvent(new CustomEvent("idea-vault:dictate", { detail: transcript.trim() }));
           }
-          return transcript.trim();
-        });
+          toast.success("Added to composer");
+          return;
+        }
       }
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Voice capture failed");
@@ -236,6 +262,7 @@ export const VoiceOrb = ({ onDictate, onLiveTranscript, speaking = false }: Voic
       voice.finishProcessing();
     }
   };
+
 
   const saveDraft = async () => {
     const raw = (draft ?? "").trim();
