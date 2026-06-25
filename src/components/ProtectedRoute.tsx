@@ -47,23 +47,25 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   // Gate stays first — show keypad before doing anything cloud-related.
   if (!unlocked) {
     return (
-      <main className="relative min-h-dvh w-full flex items-center justify-center overflow-hidden bg-black text-white">
-        <img
-          src={spaceBg}
-          alt=""
+      <main className="relative min-h-dvh w-full flex items-center justify-center overflow-hidden text-white bg-[radial-gradient(ellipse_at_top,_hsl(265_60%_14%)_0%,_hsl(240_30%_6%)_55%,_#000_100%)]">
+        {/* Ambient blurred orbs for glass depth */}
+        <div
           aria-hidden
-          className="absolute inset-0 h-full w-full object-cover scale-110 opacity-70"
-          fetchPriority="high"
+          className="absolute -top-32 -left-24 h-[420px] w-[420px] rounded-full opacity-50 blur-[120px]"
+          style={{ background: "radial-gradient(circle, hsl(265 90% 60% / 0.55), transparent 70%)" }}
         />
         <div
           aria-hidden
-          className="absolute inset-0"
-          style={{
-            background:
-              "radial-gradient(700px 500px at 50% 40%, rgba(0,0,0,0.55), rgba(0,0,0,0.85) 80%)",
-          }}
+          className="absolute -bottom-40 -right-24 h-[460px] w-[460px] rounded-full opacity-40 blur-[140px]"
+          style={{ background: "radial-gradient(circle, hsl(210 90% 55% / 0.55), transparent 70%)" }}
         />
-        <div className="relative z-10 w-full max-w-sm px-6">
+        <div
+          aria-hidden
+          className="absolute inset-0 pointer-events-none"
+          style={{ background: "radial-gradient(700px 500px at 50% 40%, transparent, rgba(0,0,0,0.55) 80%)" }}
+        />
+        {/* Glass card hosting the keypad */}
+        <div className="relative z-10 w-full max-w-sm mx-6 rounded-3xl bg-white/[0.04] backdrop-blur-2xl border border-white/10 shadow-[0_30px_80px_-30px_rgba(0,0,0,0.8),inset_0_1px_0_rgba(255,255,255,0.08)] px-6 py-10">
           <PasscodeKeypad onUnlocked={() => setUnlocked(true)} />
         </div>
       </main>
