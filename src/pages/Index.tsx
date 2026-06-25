@@ -205,15 +205,16 @@ const Shell = () => {
 
 
   return (
-    <div className="flex flex-col h-[100dvh] w-full bg-background overflow-hidden relative">
+    <div className="flex flex-col h-[100dvh] w-full bg-transparent overflow-hidden relative">
 
 
       {/* Top bar — search + (desktop) inline nav. Hidden on mobile when viewing detail or the folders page (folders has its own header). */}
       {!showDetailOnly && !(isMobile && showFolders) && !(isMobile && showCalendar) && (
         <header className={cn(
-          "sticky top-0 z-20 bg-background/70 backdrop-blur-xl border-b border-border/60",
+          "sticky top-0 z-20 bg-transparent backdrop-blur-xl",
           filter.kind !== "all" && "safe-top"
         )}>
+
           <div aria-hidden className="absolute inset-x-0 -top-px h-px bg-gradient-to-r from-transparent via-primary/60 to-transparent" />
           <div className="px-3 sm:px-5 lg:px-8 py-1.5 lg:py-2.5 flex items-center gap-2 sm:gap-3 lg:gap-4">
 
