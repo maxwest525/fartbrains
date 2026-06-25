@@ -5,12 +5,14 @@ import { MaterialIcon } from "@/components/ui/MaterialIcon";
 import { useFolders } from "@/hooks/useFolders";
 import { cn } from "@/lib/utils";
 
-type EdgeKind = "folder" | "ref" | "kw";
+type EdgeKind = "tag" | "folder" | "ref" | "kw";
 
 type GraphNode = {
   id: string;
   title: string;
   folderId: string | null;
+  tags: string[];
+  primaryTag: string | null;
   tokens: string[];
   x: number;
   y: number;
@@ -46,6 +48,7 @@ function hashColor(seed: string) {
 }
 
 const EDGE_STYLE: Record<EdgeKind, { stroke: string; label: string; icon: string }> = {
+  tag:    { stroke: "rgba(244,114,182,0.50)", label: "Shared tag",       icon: "label" },
   ref:    { stroke: "rgba(34,211,238,0.45)",  label: "Shared reference", icon: "link" },
   kw:     { stroke: "rgba(168,85,247,0.28)",  label: "Shared keyword",   icon: "tag" },
   folder: { stroke: "rgba(255,255,255,0.16)", label: "Same folder",      icon: "folder" },
@@ -56,25 +59,53 @@ type Props = {
   onBack?: () => void;
 };
 
+const LS_KEY = "graph-tuning-v1";
+type Tuning = {
+  repulsion: number;     // 0..1
+  linkStrength: number;  // 0..1
+  tagGravity: number;    // 0..1 — how hard tags pull their cluster together
+  strictness: number;    // 1..5 — min shared signal before drawing edges
+};
+const DEFAULT_TUNING: Tuning = { repulsion: 0.55, linkStrength: 0.5, tagGravity: 0.65, strictness: 2 };
+
 export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
   const { data: folders = [] } = useFolders();
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const nodesRef = useRef<GraphNode[]>([]);
   const edgesRef = useRef<GraphEdge[]>([]);
+  const tagAnchorsRef = useRef<Map<string, { x: number; y: number }>>(new Map());
   const visibleNodeIdsRef = useRef<Set<string>>(new Set());
-  const enabledKindsRef = useRef<Record<EdgeKind, boolean>>({ folder: true, ref: true, kw: true });
+  const enabledKindsRef = useRef<Record<EdgeKind, boolean>>({ tag: true, folder: true, ref: true, kw: true });
+  const tuningRef = useRef<Tuning>(DEFAULT_TUNING);
   const cameraRef = useRef({ x: 0, y: 0, zoom: 1, tx: 0, ty: 0, tz: 1, animating: false });
   const hoverRef = useRef<string | null>(null);
   const draggingRef = useRef<{ id: string | null; px: number; py: number; panning: boolean }>({ id: null, px: 0, py: 0, panning: false });
+  const pointersRef = useRef<Map<number, { x: number; y: number }>>(new Map());
+  const pinchRef = useRef<{ dist: number; zoom: number; cx: number; cy: number } | null>(null);
   const [size, setSize] = useState({ w: 800, h: 600 });
   const [search, setSearch] = useState("");
   const [ready, setReady] = useState(false);
 
-  const [enabledKinds, setEnabledKinds] = useState<Record<EdgeKind, boolean>>({ folder: true, ref: true, kw: true });
-  const [folderFilter, setFolderFilter] = useState<Set<string>>(new Set()); // empty = all
-  const [keywordFilter, setKeywordFilter] = useState<Set<string>>(new Set()); // empty = no constraint
+  const [enabledKinds, setEnabledKinds] = useState<Record<EdgeKind, boolean>>({ tag: true, folder: true, ref: true, kw: true });
+  const [folderFilter, setFolderFilter] = useState<Set<string>>(new Set());
+  const [keywordFilter, setKeywordFilter] = useState<Set<string>>(new Set());
+  const [tagFilter, setTagFilter] = useState<Set<string>>(new Set());
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [tuningOpen, setTuningOpen] = useState(false);
+
+  // Tuning persisted to localStorage
+  const [tuning, setTuning] = useState<Tuning>(() => {
+    try {
+      const raw = typeof window !== "undefined" ? window.localStorage.getItem(LS_KEY) : null;
+      if (raw) return { ...DEFAULT_TUNING, ...JSON.parse(raw) };
+    } catch { /* */ }
+    return DEFAULT_TUNING;
+  });
+  useEffect(() => {
+    tuningRef.current = tuning;
+    try { window.localStorage.setItem(LS_KEY, JSON.stringify(tuning)); } catch { /* */ }
+  }, [tuning]);
 
   useEffect(() => { enabledKindsRef.current = enabledKinds; }, [enabledKinds]);
 
@@ -108,20 +139,40 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
     },
   });
 
-  // Build nodes + edges
+  // Build nodes + edges. Re-runs when ideas, refs, or strictness change.
   useEffect(() => {
     if (!ideasQuery.data) return;
     const ideas = ideasQuery.data;
     const W = size.w, H = size.h;
+    const strict = tuning.strictness;
+
+    // Normalize tags per idea
+    const ideaTagsRaw = new Map<string, string[]>();
+    ideas.forEach((i: any) => {
+      const t = Array.isArray(i.tags)
+        ? i.tags.map((s: string) => String(s).toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "")).filter((s: string) => s.length >= 2)
+        : [];
+      ideaTagsRaw.set(i.id, [...new Set(t)]);
+    });
+
+    // Count tag frequency to pick "primary tag" per idea (= most common tag in dataset)
+    const tagCount = new Map<string, number>();
+    ideaTagsRaw.forEach((ts) => ts.forEach((t) => tagCount.set(t, (tagCount.get(t) ?? 0) + 1)));
+    const ideaPrimaryTag = new Map<string, string | null>();
+    ideaTagsRaw.forEach((ts, id) => {
+      let best: string | null = null;
+      let bestCount = 0;
+      for (const t of ts) {
+        const c = tagCount.get(t) ?? 0;
+        if (c > bestCount) { best = t; bestCount = c; }
+      }
+      ideaPrimaryTag.set(id, best);
+    });
 
     const ideaTokens = new Map<string, string[]>();
     ideas.forEach((i: any) => {
       const t = tokens(`${i.title ?? ""} ${i.raw_note ?? ""} ${i.ai_summary ?? ""}`).slice(0, 10);
-      // Auto-tags carry intentional grouping signal — fold them in (normalized).
-      const tagToks = Array.isArray(i.tags)
-        ? i.tags.map((s: string) => String(s).toLowerCase().replace(/[^a-z0-9]+/g, "")).filter((s: string) => s.length >= 3)
-        : [];
-      ideaTokens.set(i.id, [...new Set([...t, ...tagToks])]);
+      ideaTokens.set(i.id, t);
     });
 
     const edgeMap = new Map<string, GraphEdge>();
@@ -132,28 +183,56 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
       const e = edgeMap.get(k);
       if (e) {
         e.w = Math.max(e.w, w);
-        // priority: ref > kw > folder
-        if (kind === "ref" || (kind === "kw" && e.kind === "folder")) e.kind = kind;
+        // priority: ref > tag > kw > folder
+        const rank = { ref: 4, tag: 3, kw: 2, folder: 1 } as Record<EdgeKind, number>;
+        if (rank[kind] > rank[e.kind]) e.kind = kind;
       } else edgeMap.set(k, { a, b, w, kind });
     };
 
-    // Folder edges: only link each idea to its 1 nearest folder-mate (low weight).
-    // Folders alone would create a giant cluster — keep them as a faint scaffold.
-    const byFolder = new Map<string, any[]>();
-    ideas.forEach((i: any) => {
-      if (!i.folder_id) return;
-      const arr = byFolder.get(i.folder_id) ?? [];
-      arr.push(i); byFolder.set(i.folder_id, arr);
+    // Tag edges — strong, drive clustering. Pair ideas that share a tag.
+    // For very popular tags (used by lots of ideas), require more shared tags
+    // so we don't make every idea a hub.
+    const byTag = new Map<string, string[]>();
+    ideaTagsRaw.forEach((ts, id) => {
+      ts.forEach((t) => {
+        const a = byTag.get(t) ?? [];
+        a.push(id); byTag.set(t, a);
+      });
     });
-    byFolder.forEach((arr) => {
-      for (let i = 0; i < arr.length; i++) {
-        // chain: i → i+1 only, so a folder is a thin necklace not a clique
-        if (i + 1 < arr.length) addEdge(arr[i].id, arr[i + 1].id, 0.25, "folder");
+    const pairTagShared = new Map<string, number>();
+    byTag.forEach((ids) => {
+      if (ids.length < 2) return;
+      for (let i = 0; i < ids.length; i++) {
+        for (let j = i + 1; j < ids.length; j++) {
+          const k = key(ids[i], ids[j]);
+          pairTagShared.set(k, (pairTagShared.get(k) ?? 0) + 1);
+        }
       }
     });
+    pairTagShared.forEach((count, k) => {
+      // strictness 1 → any shared tag connects; strictness 5 → need 3+ shared tags
+      const minShared = Math.max(1, Math.ceil(strict / 2));
+      if (count < minShared) return;
+      const [a, b] = k.split("|");
+      addEdge(a, b, 0.9 + Math.min(count, 4) * 0.3, "tag");
+    });
 
-    // Keyword edges: stricter. Require longer tokens, ignore very common ones,
-    // and only emit when a token is shared by 2-4 ideas (otherwise it's noise).
+    // Folder edges: faint scaffold chain (only with strictness ≤ 3)
+    if (strict <= 3) {
+      const byFolder = new Map<string, any[]>();
+      ideas.forEach((i: any) => {
+        if (!i.folder_id) return;
+        const arr = byFolder.get(i.folder_id) ?? [];
+        arr.push(i); byFolder.set(i.folder_id, arr);
+      });
+      byFolder.forEach((arr) => {
+        for (let i = 0; i < arr.length; i++) {
+          if (i + 1 < arr.length) addEdge(arr[i].id, arr[i + 1].id, 0.25, "folder");
+        }
+      });
+    }
+
+    // Keyword edges: stricter. Increase floor with strictness slider.
     const tokenIndex = new Map<string, string[]>();
     ideaTokens.forEach((toks, id) => {
       toks.forEach((t) => {
@@ -162,20 +241,20 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
         a.push(id); tokenIndex.set(t, a);
       });
     });
-    // Count shared tokens between pairs — require at least 2 shared tokens to draw an edge.
     const pairShared = new Map<string, number>();
-    const pairKey = (a: string, b: string) => (a < b ? `${a}|${b}` : `${b}|${a}`);
+    const maxCluster = Math.max(2, 6 - strict); // strict=1 → up to 5; strict=5 → only pairs
     tokenIndex.forEach((ids) => {
-      if (ids.length < 2 || ids.length > 4) return;
+      if (ids.length < 2 || ids.length > maxCluster) return;
       for (let i = 0; i < ids.length; i++) {
         for (let j = i + 1; j < ids.length; j++) {
-          const k = pairKey(ids[i], ids[j]);
+          const k = key(ids[i], ids[j]);
           pairShared.set(k, (pairShared.get(k) ?? 0) + 1);
         }
       }
     });
+    const kwMinShared = Math.max(2, strict);
     pairShared.forEach((count, k) => {
-      if (count < 2) return;
+      if (count < kwMinShared) return;
       const [a, b] = k.split("|");
       addEdge(a, b, 0.6 + Math.min(count, 4) * 0.2, "kw");
     });
@@ -202,20 +281,43 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
       degree.set(e.b, (degree.get(e.b) ?? 0) + 1);
     });
 
+    // Tag anchors: lay top tags around a circle so they form distinct clusters.
+    const topTags = [...tagCount.entries()]
+      .filter(([, c]) => c >= 2)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 12)
+      .map(([t]) => t);
+    const anchors = new Map<string, { x: number; y: number }>();
+    const cx = W / 2, cy = H / 2;
+    const R = Math.min(W, H) * 0.32;
+    topTags.forEach((t, i) => {
+      const ang = (i / topTags.length) * Math.PI * 2;
+      anchors.set(t, { x: cx + Math.cos(ang) * R, y: cy + Math.sin(ang) * R });
+    });
+    tagAnchorsRef.current = anchors;
+
     const nodes: GraphNode[] = ideas.map((i: any) => {
       const deg = degree.get(i.id) ?? 0;
+      const pTag = ideaPrimaryTag.get(i.id) ?? null;
+      const anchor = pTag ? anchors.get(pTag) : null;
       const angle = Math.random() * Math.PI * 2;
-      const radius = 60 + Math.random() * Math.min(W, H) * 0.35;
+      const jitter = 30 + Math.random() * 60;
+      const sx = anchor ? anchor.x + Math.cos(angle) * jitter : cx + (Math.random() - 0.5) * R;
+      const sy = anchor ? anchor.y + Math.sin(angle) * jitter : cy + (Math.random() - 0.5) * R;
+      const tagColor = pTag ? hashColor(`tag:${pTag}`) : null;
+      const fColor = i.folder_id ? folderColor.get(i.folder_id) : null;
       return {
         id: i.id,
         title: i.title || "Untitled",
         folderId: i.folder_id,
+        tags: ideaTagsRaw.get(i.id) ?? [],
+        primaryTag: pTag,
         tokens: ideaTokens.get(i.id) ?? [],
-        x: W / 2 + Math.cos(angle) * radius,
-        y: H / 2 + Math.sin(angle) * radius,
+        x: sx,
+        y: sy,
         vx: 0, vy: 0,
         r: 2.5 + Math.min(7, deg * 0.6),
-        color: i.folder_id ? (folderColor.get(i.folder_id) ?? "hsl(262 80% 65%)") : "hsl(200 8% 70%)",
+        color: tagColor ?? fColor ?? "hsl(220 10% 70%)",
         degree: deg,
       };
     });
@@ -223,9 +325,18 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
     nodesRef.current = nodes;
     edgesRef.current = edges;
     setReady(true);
-  }, [ideasQuery.data, refsQuery.data, folderColor, size.w, size.h]);
+  }, [ideasQuery.data, refsQuery.data, folderColor, size.w, size.h, tuning.strictness]);
 
-  // Top keywords for filter chips
+  // Top tags / keywords for filter chips
+  const topTags = useMemo(() => {
+    const counts = new Map<string, number>();
+    nodesRef.current.forEach((n) => n.tags.forEach((t) => counts.set(t, (counts.get(t) ?? 0) + 1)));
+    return [...counts.entries()]
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 30)
+      .map(([t, c]) => ({ tag: t, count: c }));
+  }, [ready, ideasQuery.data]);
+
   const topKeywords = useMemo(() => {
     const counts = new Map<string, number>();
     nodesRef.current.forEach((n) => n.tokens.forEach((t) => counts.set(t, (counts.get(t) ?? 0) + 1)));
@@ -241,18 +352,18 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
     const vis = new Set<string>();
     const useFolder = folderFilter.size > 0;
     const useKw = keywordFilter.size > 0;
+    const useTag = tagFilter.size > 0;
     for (const n of nodesRef.current) {
       if (useFolder) {
-        const key = n.folderId ?? "__none__";
-        if (!folderFilter.has(key)) continue;
+        const k = n.folderId ?? "__none__";
+        if (!folderFilter.has(k)) continue;
       }
-      if (useKw) {
-        if (!n.tokens.some((t) => keywordFilter.has(t))) continue;
-      }
+      if (useKw && !n.tokens.some((t) => keywordFilter.has(t))) continue;
+      if (useTag && !n.tags.some((t) => tagFilter.has(t))) continue;
       vis.add(n.id);
     }
     visibleNodeIdsRef.current = vis;
-  }, [folderFilter, keywordFilter, ready]);
+  }, [folderFilter, keywordFilter, tagFilter, ready]);
 
   // Resize observer
   useEffect(() => {
@@ -287,11 +398,17 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
       const nodes = nodesRef.current;
       const edges = edgesRef.current;
       const enabledNow = enabledKindsRef.current;
+      const tun = tuningRef.current;
       const visible = visibleNodeIdsRef.current;
       const hasFilter = visible.size > 0 && visible.size !== nodes.length;
       const isVis = (id: string) => !hasFilter || visible.has(id);
+      const anchors = tagAnchorsRef.current;
       const W = size.w, H = size.h;
       const cx = W / 2, cy = H / 2;
+
+      const repulseStrength = 400 + tun.repulsion * 1400; // 400..1800
+      const linkK = 0.005 + tun.linkStrength * 0.06;      // 0.005..0.065
+      const tagPullK = tun.tagGravity * 0.04;             // 0..0.04
 
       // Repulsion
       for (let i = 0; i < nodes.length; i++) {
@@ -302,7 +419,7 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
           let d2 = dx * dx + dy * dy;
           if (d2 < 0.01) { d2 = 0.01; dx = Math.random(); dy = Math.random(); }
           const d = Math.sqrt(d2);
-          const f = (800 * alpha) / d2;
+          const f = (repulseStrength * alpha) / d2;
           const fx = (dx / d) * f, fy = (dy / d) * f;
           a.vx += fx; a.vy += fy;
           b.vx -= fx; b.vy -= fy;
@@ -317,15 +434,25 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
         const dx = b.x - a.x, dy = b.y - a.y;
         const d = Math.sqrt(dx * dx + dy * dy) || 1;
         const target = 90 / e.w;
-        const k = 0.02 * alpha;
+        const k = linkK * alpha * (e.kind === "tag" ? 1.4 : 1);
         const f = (d - target) * k;
         const fx = (dx / d) * f, fy = (dy / d) * f;
         a.vx += fx; a.vy += fy;
         b.vx -= fx; b.vy -= fy;
       }
+      // Tag gravity wells — pull each node toward its primary tag anchor
+      if (tagPullK > 0) {
+        for (const n of nodes) {
+          if (!n.primaryTag) continue;
+          const an = anchors.get(n.primaryTag);
+          if (!an) continue;
+          n.vx += (an.x - n.x) * tagPullK;
+          n.vy += (an.y - n.y) * tagPullK;
+        }
+      }
       for (const n of nodes) {
-        n.vx += (cx - n.x) * 0.002;
-        n.vy += (cy - n.y) * 0.002;
+        n.vx += (cx - n.x) * 0.001;
+        n.vy += (cy - n.y) * 0.001;
         n.vx *= 0.86; n.vy *= 0.86;
         if (draggingRef.current.id !== n.id) {
           n.x += n.vx; n.y += n.vy;
@@ -353,8 +480,22 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
       const hover = hoverRef.current;
       const q = search.trim().toLowerCase();
       const matchSet = new Set<string>();
-      if (q) for (const n of nodes) if (n.title.toLowerCase().includes(q)) matchSet.add(n.id);
+      if (q) for (const n of nodes) if (n.title.toLowerCase().includes(q) || n.tags.some((t) => t.includes(q))) matchSet.add(n.id);
       const hasQuery = matchSet.size > 0;
+
+      // tag cluster halos (subtle background bubble per tag)
+      anchors.forEach((pos, tag) => {
+        ctx.beginPath();
+        ctx.fillStyle = hashColor(`tag:${tag}`);
+        ctx.globalAlpha = 0.05;
+        ctx.arc(pos.x, pos.y, 110, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.globalAlpha = 1;
+        ctx.fillStyle = "rgba(255,255,255,0.55)";
+        ctx.font = "11px ui-sans-serif, system-ui";
+        ctx.textAlign = "center";
+        ctx.fillText(`#${tag}`, pos.x, pos.y - 118);
+      });
 
       // edges
       for (const e of edges) {
@@ -386,7 +527,6 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
         const alphaNode = dim ? 0.22 : 1;
         ctx.globalAlpha = alphaNode;
 
-        // outer halo
         if (isHover || match) {
           ctx.beginPath();
           ctx.fillStyle = n.color;
@@ -404,7 +544,6 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
         ctx.fill();
         ctx.shadowBlur = 0;
 
-        // inner highlight
         ctx.beginPath();
         ctx.fillStyle = "rgba(255,255,255,0.35)";
         ctx.arc(n.x - n.r * 0.3, n.y - n.r * 0.3, Math.max(1, n.r * 0.35), 0, Math.PI * 2);
@@ -426,7 +565,7 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
     return () => cancelAnimationFrame(raf);
   }, [ready, size.w, size.h, search]);
 
-  // Pointer interaction
+  // Pointer interaction (mouse + touch with pinch zoom)
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -443,14 +582,39 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
         const n = ns[i];
         if (hasFilter && !vis.has(n.id)) continue;
         const dx = n.x - x, dy = n.y - y;
-        if (dx * dx + dy * dy <= (n.r + 6) * (n.r + 6)) return n;
+        if (dx * dx + dy * dy <= (n.r + 8) * (n.r + 8)) return n;
       }
       return null;
     };
-    const onMove = (ev: PointerEvent) => {
+    const rectXY = (ev: PointerEvent) => {
       const rect = canvas.getBoundingClientRect();
-      const cx = ev.clientX - rect.left;
-      const cy = ev.clientY - rect.top;
+      return { x: ev.clientX - rect.left, y: ev.clientY - rect.top };
+    };
+    const onMove = (ev: PointerEvent) => {
+      const { x: cx, y: cy } = rectXY(ev);
+      if (pointersRef.current.has(ev.pointerId)) {
+        pointersRef.current.set(ev.pointerId, { x: cx, y: cy });
+      }
+      // Pinch zoom with two pointers
+      if (pointersRef.current.size === 2) {
+        const pts = [...pointersRef.current.values()];
+        const dx = pts[0].x - pts[1].x, dy = pts[0].y - pts[1].y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        const midX = (pts[0].x + pts[1].x) / 2;
+        const midY = (pts[0].y + pts[1].y) / 2;
+        if (!pinchRef.current) {
+          pinchRef.current = { dist, zoom: cameraRef.current.zoom, cx: midX, cy: midY };
+        } else {
+          const cam = cameraRef.current;
+          const nextZoom = Math.min(3, Math.max(0.25, pinchRef.current.zoom * (dist / pinchRef.current.dist)));
+          // zoom around the midpoint
+          cam.x = midX - (midX - cam.x) * (nextZoom / cam.zoom);
+          cam.y = midY - (midY - cam.y) * (nextZoom / cam.zoom);
+          cam.zoom = nextZoom;
+          cam.animating = false;
+        }
+        return;
+      }
       const drag = draggingRef.current;
       if (drag.id) {
         const { x, y } = toWorld(cx, cy);
@@ -468,9 +632,14 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
       }
     };
     const onDown = (ev: PointerEvent) => {
-      const rect = canvas.getBoundingClientRect();
-      const cx = ev.clientX - rect.left;
-      const cy = ev.clientY - rect.top;
+      const { x: cx, y: cy } = rectXY(ev);
+      pointersRef.current.set(ev.pointerId, { x: cx, y: cy });
+      if (pointersRef.current.size >= 2) {
+        // entering pinch — cancel any drag/pan
+        draggingRef.current = { id: null, px: 0, py: 0, panning: false };
+        pinchRef.current = null;
+        return;
+      }
       const hit = pick(cx, cy);
       if (hit) draggingRef.current = { id: hit.id, px: cx, py: cy, panning: false };
       else draggingRef.current = { id: null, px: cx, py: cy, panning: true };
@@ -478,12 +647,12 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
     };
     const onUp = (ev: PointerEvent) => {
       const drag = draggingRef.current;
-      const rect = canvas.getBoundingClientRect();
-      const cx = ev.clientX - rect.left;
-      const cy = ev.clientY - rect.top;
+      const { x: cx, y: cy } = rectXY(ev);
       const movedFar = Math.abs(cx - drag.px) > 4 || Math.abs(cy - drag.py) > 4;
-      if (drag.id && !movedFar) onOpenIdea(drag.id);
+      if (drag.id && !movedFar && pointersRef.current.size <= 1) onOpenIdea(drag.id);
       draggingRef.current = { id: null, px: 0, py: 0, panning: false };
+      pointersRef.current.delete(ev.pointerId);
+      if (pointersRef.current.size < 2) pinchRef.current = null;
       try { canvas.releasePointerCapture(ev.pointerId); } catch { /* */ }
     };
     const onWheel = (ev: WheelEvent) => {
@@ -493,7 +662,7 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
       const cy = ev.clientY - rect.top;
       const cam = cameraRef.current;
       const factor = Math.exp(-ev.deltaY * 0.0015);
-      const nextZoom = Math.min(3, Math.max(0.3, cam.zoom * factor));
+      const nextZoom = Math.min(3, Math.max(0.25, cam.zoom * factor));
       cam.x = cx - (cx - cam.x) * (nextZoom / cam.zoom);
       cam.y = cy - (cy - cam.y) * (nextZoom / cam.zoom);
       cam.zoom = nextZoom;
@@ -502,11 +671,13 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
     canvas.addEventListener("pointermove", onMove);
     canvas.addEventListener("pointerdown", onDown);
     canvas.addEventListener("pointerup", onUp);
+    canvas.addEventListener("pointercancel", onUp);
     canvas.addEventListener("wheel", onWheel, { passive: false });
     return () => {
       canvas.removeEventListener("pointermove", onMove);
       canvas.removeEventListener("pointerdown", onDown);
       canvas.removeEventListener("pointerup", onUp);
+      canvas.removeEventListener("pointercancel", onUp);
       canvas.removeEventListener("wheel", onWheel);
     };
   }, [onOpenIdea]);
@@ -516,10 +687,21 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
     cam.tx = 0; cam.ty = 0; cam.tz = 1; cam.animating = true;
   };
 
+  const stepZoom = (dir: 1 | -1) => {
+    const cam = cameraRef.current;
+    const factor = dir === 1 ? 1.25 : 0.8;
+    const mx = size.w / 2, my = size.h / 2;
+    const nextZoom = Math.min(3, Math.max(0.25, cam.zoom * factor));
+    cam.tx = mx - (mx - cam.x) * (nextZoom / cam.zoom);
+    cam.ty = my - (my - cam.y) * (nextZoom / cam.zoom);
+    cam.tz = nextZoom;
+    cam.animating = true;
+  };
+
   const focusOnMatch = () => {
     const q = search.trim().toLowerCase();
     if (!q) return;
-    const hit = nodesRef.current.find((n) => n.title.toLowerCase().includes(q));
+    const hit = nodesRef.current.find((n) => n.title.toLowerCase().includes(q) || n.tags.some((t) => t.includes(q)));
     if (!hit) return;
     const targetZoom = 1.6;
     const cam = cameraRef.current;
@@ -531,23 +713,16 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
   };
 
   const toggleKind = (k: EdgeKind) => setEnabledKinds((p) => ({ ...p, [k]: !p[k] }));
-
-  const toggleFolder = (id: string) => {
-    setFolderFilter((p) => {
-      const n = new Set(p);
-      n.has(id) ? n.delete(id) : n.add(id);
-      return n;
-    });
+  const toggleIn = <T,>(set: Set<T>, v: T): Set<T> => {
+    const n = new Set(set);
+    n.has(v) ? n.delete(v) : n.add(v);
+    return n;
   };
-  const toggleKeyword = (k: string) => {
-    setKeywordFilter((p) => {
-      const n = new Set(p);
-      n.has(k) ? n.delete(k) : n.add(k);
-      return n;
-    });
-  };
-  const clearFilters = () => { setFolderFilter(new Set()); setKeywordFilter(new Set()); };
-  const filterCount = folderFilter.size + keywordFilter.size;
+  const toggleFolder = (id: string) => setFolderFilter((p) => toggleIn(p, id));
+  const toggleKeyword = (k: string) => setKeywordFilter((p) => toggleIn(p, k));
+  const toggleTag = (t: string) => setTagFilter((p) => toggleIn(p, t));
+  const clearFilters = () => { setFolderFilter(new Set()); setKeywordFilter(new Set()); setTagFilter(new Set()); };
+  const filterCount = folderFilter.size + keywordFilter.size + tagFilter.size;
 
   return (
     <div
@@ -574,7 +749,7 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search ideas… (Enter to focus)"
+            placeholder="Search ideas or #tags…"
             className="w-full h-9 rounded-full bg-black/40 backdrop-blur-md border border-white/10 pl-9 pr-9 text-[13px] text-white placeholder:text-white/40 outline-none focus:border-white/30"
           />
           {search && (
@@ -589,7 +764,7 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
           )}
         </form>
         <button
-          onClick={() => setFiltersOpen((v) => !v)}
+          onClick={() => { setFiltersOpen((v) => !v); setTuningOpen(false); }}
           className={cn(
             "h-9 px-3 rounded-full backdrop-blur-md border text-[13px] inline-flex items-center gap-1.5 transition-colors",
             filtersOpen || filterCount
@@ -605,12 +780,15 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
           )}
         </button>
         <button
-          onClick={recenter}
-          className="h-9 w-9 shrink-0 rounded-full bg-black/40 backdrop-blur-md border border-white/10 flex items-center justify-center text-white/80 hover:text-white"
-          aria-label="Recenter"
-          title="Recenter"
+          onClick={() => { setTuningOpen((v) => !v); setFiltersOpen(false); }}
+          className={cn(
+            "h-9 w-9 shrink-0 rounded-full backdrop-blur-md border flex items-center justify-center transition-colors",
+            tuningOpen ? "bg-cyan-500/20 border-cyan-400/40 text-white" : "bg-black/40 border-white/10 text-white/80 hover:text-white"
+          )}
+          aria-label="Clustering"
+          title="Clustering controls"
         >
-          <MaterialIcon name="my_location" size={16} />
+          <MaterialIcon name="hub" size={16} />
         </button>
       </div>
 
@@ -623,6 +801,33 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
               <button onClick={clearFilters} className="text-[11px] text-white/60 hover:text-white">Clear all</button>
             )}
           </div>
+
+          {topTags.length > 0 && (
+            <div className="mb-3">
+              <div className="text-[11px] uppercase tracking-wider text-white/50 mb-1.5">Tags</div>
+              <div className="flex flex-wrap gap-1.5">
+                {topTags.map(({ tag, count }) => {
+                  const active = tagFilter.has(tag);
+                  return (
+                    <button
+                      key={tag}
+                      onClick={() => toggleTag(tag)}
+                      className={cn(
+                        "px-2.5 h-7 rounded-full text-[11px] border inline-flex items-center gap-1.5 transition-colors",
+                        active
+                          ? "bg-white/15 border-white/30 text-white"
+                          : "bg-white/[0.04] border-white/10 text-white/70 hover:text-white"
+                      )}
+                    >
+                      <span className="h-2 w-2 rounded-full" style={{ background: hashColor(`tag:${tag}`) }} />
+                      #{tag}
+                      <span className="opacity-50">{count}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           <div className="mb-3">
             <div className="text-[11px] uppercase tracking-wider text-white/50 mb-1.5">Folders</div>
@@ -677,7 +882,7 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
                           : "bg-white/[0.04] border-white/10 text-white/70 hover:text-white"
                       )}
                     >
-                      #{k}
+                      ·{k}
                     </button>
                   );
                 })}
@@ -687,10 +892,53 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
         </div>
       )}
 
+      {/* Clustering / tuning panel */}
+      {tuningOpen && (
+        <div className="absolute top-14 right-3 z-10 w-[min(320px,calc(100vw-1.5rem))] rounded-2xl bg-black/60 backdrop-blur-xl border border-white/10 p-3 shadow-2xl space-y-3">
+          <div className="flex items-center justify-between">
+            <h3 className="text-[13px] font-semibold text-white">Clustering</h3>
+            <button
+              onClick={() => setTuning(DEFAULT_TUNING)}
+              className="text-[11px] text-white/60 hover:text-white"
+            >
+              Reset
+            </button>
+          </div>
+          <Slider
+            label="Strictness"
+            hint="How much shared signal before two ideas connect"
+            value={tuning.strictness}
+            min={1} max={5} step={1}
+            onChange={(v) => setTuning((t) => ({ ...t, strictness: v }))}
+          />
+          <Slider
+            label="Tag gravity"
+            hint="Pulls ideas toward their primary tag cluster"
+            value={tuning.tagGravity}
+            min={0} max={1} step={0.05}
+            onChange={(v) => setTuning((t) => ({ ...t, tagGravity: v }))}
+          />
+          <Slider
+            label="Link tension"
+            hint="Tighter springs = denser clusters"
+            value={tuning.linkStrength}
+            min={0} max={1} step={0.05}
+            onChange={(v) => setTuning((t) => ({ ...t, linkStrength: v }))}
+          />
+          <Slider
+            label="Repulsion"
+            hint="Spreads nodes apart"
+            value={tuning.repulsion}
+            min={0} max={1} step={0.05}
+            onChange={(v) => setTuning((t) => ({ ...t, repulsion: v }))}
+          />
+        </div>
+      )}
+
       {/* Legend + edge toggles */}
       <div className="absolute bottom-3 left-3 z-10 flex flex-col gap-1 text-[11px] text-white/70 bg-black/50 backdrop-blur-xl border border-white/10 rounded-2xl px-2.5 py-2 shadow-2xl">
         <div className="px-1 pb-0.5 text-[10px] uppercase tracking-wider text-white/40">Connections</div>
-        {(["ref", "kw", "folder"] as EdgeKind[]).map((k) => {
+        {(["tag", "ref", "kw", "folder"] as EdgeKind[]).map((k) => {
           const on = enabledKinds[k];
           return (
             <button
@@ -709,9 +957,37 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
         })}
       </div>
 
+      {/* Zoom + recenter cluster, bottom-right */}
+      <div className="absolute bottom-3 right-3 z-10 flex flex-col gap-1.5">
+        <button
+          onClick={() => stepZoom(1)}
+          className="h-9 w-9 rounded-full bg-black/50 backdrop-blur-xl border border-white/10 text-white/85 hover:text-white flex items-center justify-center shadow-lg"
+          aria-label="Zoom in"
+          title="Zoom in"
+        >
+          <MaterialIcon name="add" size={18} />
+        </button>
+        <button
+          onClick={() => stepZoom(-1)}
+          className="h-9 w-9 rounded-full bg-black/50 backdrop-blur-xl border border-white/10 text-white/85 hover:text-white flex items-center justify-center shadow-lg"
+          aria-label="Zoom out"
+          title="Zoom out"
+        >
+          <MaterialIcon name="remove" size={18} />
+        </button>
+        <button
+          onClick={recenter}
+          className="h-9 w-9 rounded-full bg-black/50 backdrop-blur-xl border border-white/10 text-white/85 hover:text-white flex items-center justify-center shadow-lg"
+          aria-label="Recenter"
+          title="Recenter"
+        >
+          <MaterialIcon name="my_location" size={16} />
+        </button>
+      </div>
+
       {/* Stats */}
       <div className="absolute top-14 left-3 z-10 text-[11px] text-white/60 bg-black/40 backdrop-blur-md border border-white/10 rounded-full px-3 py-1.5">
-        {nodesRef.current.length} ideas · {edgesRef.current.length} links
+        {nodesRef.current.length} ideas · {edgesRef.current.length} links · {tagAnchorsRef.current.size} clusters
       </div>
 
       {/* Background glow */}
@@ -734,3 +1010,29 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
     </div>
   );
 };
+
+function Slider({
+  label, hint, value, min, max, step, onChange,
+}: {
+  label: string; hint?: string; value: number; min: number; max: number; step: number;
+  onChange: (v: number) => void;
+}) {
+  return (
+    <div>
+      <div className="flex items-baseline justify-between">
+        <label className="text-[12px] text-white/85 font-medium">{label}</label>
+        <span className="text-[11px] text-white/55 tabular-nums">{Number(value).toFixed(step < 1 ? 2 : 0)}</span>
+      </div>
+      <input
+        type="range"
+        min={min}
+        max={max}
+        step={step}
+        value={value}
+        onChange={(e) => onChange(parseFloat(e.target.value))}
+        className="w-full mt-1 accent-violet-400"
+      />
+      {hint && <div className="text-[10.5px] text-white/45 mt-0.5">{hint}</div>}
+    </div>
+  );
+}
