@@ -369,7 +369,7 @@ const Shell = () => {
       </div>
 
       {/* Mobile bottom tab bar (iOS-style) */}
-      {isMobile && !showDetailOnly && (
+      {isMobile && (
         <MobileTabBar
           filter={filter}
           view={view === "folders" ? "folders" : view === "calendar" ? "calendar" : "ideas"}

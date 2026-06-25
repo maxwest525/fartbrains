@@ -29,7 +29,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { useSwipeGesture } from "@/hooks/useSwipeGesture";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { PrioritySelector } from "./PrioritySelector";
+import { ThinkingPanel } from "./ThinkingPanel";
 import { IdeaReminderDialog } from "./IdeaReminderDialog";
 import { ProjectBoard } from "./ProjectBoard";
 import { PROJECT_TAG } from "@/lib/deliverables";
@@ -313,7 +313,7 @@ export const IdeaDetail = ({ ideaId, onClose, backLabel = "Back", onSelectIdea }
         </div>
       </div>
 
-      <div className="flex-1 min-h-0 overflow-y-auto scroll-momentum touch-pan-y px-4 sm:px-6 pt-4 sm:pt-5 pb-[calc(2rem+env(safe-area-inset-bottom))] space-y-5">
+      <div className="flex-1 min-h-0 overflow-y-auto scroll-momentum touch-pan-y px-4 sm:px-6 pt-4 sm:pt-5 pb-[calc(2rem+var(--mobile-tabbar-h,0px)+env(safe-area-inset-bottom))] space-y-5">
         {editing ? (
           <Input
             value={title}
@@ -329,14 +329,8 @@ export const IdeaDetail = ({ ideaId, onClose, backLabel = "Back", onSelectIdea }
         <SourceMetaCard idea={idea} />
 
 
-        <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-xs font-medium text-muted-foreground mr-1">Priority</span>
-          <PrioritySelector
-            value={idea.priority}
-            onChange={(p) => updateIdea.mutate({ id: idea.id, patch: { priority: p } })}
-            disabled={updateIdea.isPending}
-          />
-          {idea.remind_at && (
+        {idea.remind_at && (
+          <div className="flex items-center gap-2 flex-wrap">
             <button
               onClick={() => setReminderOpen(true)}
               className="ml-auto inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full bg-accent/10 text-accent hover:bg-accent/15 press"
@@ -351,19 +345,20 @@ export const IdeaDetail = ({ ideaId, onClose, backLabel = "Back", onSelectIdea }
                   .join(" + ") || "muted"}
               </span>
             </button>
-          )}
-        </div>
+          </div>
+        )}
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-muted-foreground">
-          <div>
+          <div className="whitespace-nowrap overflow-hidden text-ellipsis">
             <span className="font-medium text-foreground">Created:</span>{" "}
             {new Date(idea.created_at).toLocaleString()}
           </div>
-          <div>
+          <div className="whitespace-nowrap overflow-hidden text-ellipsis">
             <span className="font-medium text-foreground">Updated:</span>{" "}
             {new Date(idea.updated_at).toLocaleString()}
           </div>
         </div>
+
 
         {editing && (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -401,111 +396,6 @@ export const IdeaDetail = ({ ideaId, onClose, backLabel = "Back", onSelectIdea }
             ))}
           </div>
         )}
-
-        {!editing && (idea.generated_prompt || idea.raw_note || idea.ai_summary) && (
-          <section>
-            <div className="flex items-center justify-between mb-2 gap-2">
-              <h3 className="text-sm font-semibold flex items-center gap-1.5">
-                <Wand2 className="h-3.5 w-3.5 text-primary" /> Ready-to-paste prompt
-              </h3>
-              <div className="flex items-center gap-1.5">
-                {idea.generated_prompt && (
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="h-8 rounded-full text-xs"
-                    onClick={onCopyPrompt}
-                  >
-                    {copied ? (
-                      <><Check className="h-3.5 w-3.5 mr-1" /> Copied</>
-                    ) : (
-                      <><Copy className="h-3.5 w-3.5 mr-1" /> Copy</>
-                    )}
-                  </Button>
-                )}
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="h-8 rounded-full text-xs"
-                  onClick={onGeneratePrompt}
-                  disabled={generating}
-                >
-                  {generating ? (
-                    <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" />
-                  ) : idea.generated_prompt ? (
-                    <RefreshCw className="h-3.5 w-3.5 mr-1" />
-                  ) : (
-                    <Wand2 className="h-3.5 w-3.5 mr-1" />
-                  )}
-                  {idea.generated_prompt ? "Regenerate" : "Generate prompt"}
-                </Button>
-              </div>
-            </div>
-            {idea.generated_prompt ? (
-              <div className="rounded-xl glass-card-quiet p-4 text-sm whitespace-pre-wrap font-mono leading-relaxed select-text">
-                {idea.generated_prompt}
-              </div>
-            ) : (
-              <div className="rounded-xl glass-card-quiet border-dashed p-4 text-xs text-muted-foreground">
-                Combine your note with the AI summary into a single prompt you can paste into ChatGPT, Claude, or Gemini.
-              </div>
-            )}
-          </section>
-        )}
-
-        {(editing || idea.ai_summary || idea.raw_note || idea.extracted_text) && (
-          <section>
-            <div className="mb-2 flex items-center justify-between gap-2">
-              <h3 className="text-sm font-semibold flex items-center gap-1.5">
-                <Sparkles className="h-3.5 w-3.5 text-accent" /> Summary
-              </h3>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={onRegenerateSummary}
-                disabled={regenerating || updateIdea.isPending}
-                className="h-7 px-2 text-xs gap-1 text-muted-foreground hover:text-foreground"
-                title="Re-run AI summary from the current note or extracted text"
-              >
-                {regenerating ? (
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                ) : (
-                  <RefreshCw className="h-3.5 w-3.5" />
-                )}
-                {idea.ai_summary ? "Regenerate" : "Generate"}
-              </Button>
-            </div>
-            {editing ? (
-              <Textarea
-                value={summary}
-                onChange={(e) => setSummary(e.target.value)}
-                rows={8}
-                className="font-mono text-sm"
-                placeholder="No summary yet — click Generate to create one from your note or extracted text."
-              />
-            ) : idea.ai_summary ? (
-              <div className="rounded-xl glass-card-quiet p-4 text-sm prose prose-sm dark:prose-invert max-w-none prose-headings:mt-3 prose-headings:mb-2 prose-headings:font-semibold prose-h1:text-lg prose-h2:text-base prose-h3:text-sm prose-p:my-2 prose-ul:my-2 prose-ol:my-2 prose-li:my-0.5 prose-strong:text-foreground prose-a:text-primary prose-code:text-xs prose-code:bg-muted prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:before:content-none prose-code:after:content-none">
-                <ReactMarkdown remarkPlugins={[remarkGfm]}>{idea.ai_summary}</ReactMarkdown>
-              </div>
-            ) : (
-              <div className="rounded-xl glass-card-quiet border-dashed p-4 text-xs text-muted-foreground">
-                No summary yet — click <span className="font-medium text-foreground">Generate</span> above to create one from your note or extracted text.
-              </div>
-            )}
-          </section>
-        )}
-
-        {!editing && idea && (
-          <IdeaReferences ideaId={idea.id} />
-        )}
-
-        {!editing && idea && (
-          <RelatedIdeas ideaId={idea.id} onSelect={onSelectIdea} />
-        )}
-
-
 
         {(() => {
           const isProject = idea.tags.includes(PROJECT_TAG);
@@ -584,6 +474,112 @@ export const IdeaDetail = ({ ideaId, onClose, backLabel = "Back", onSelectIdea }
             </section>
           );
         })()}
+
+        {!editing && (idea.generated_prompt || idea.raw_note || idea.ai_summary) && (
+          <section>
+            <div className="flex items-center justify-between mb-2 gap-2">
+              <h3 className="text-sm font-semibold flex items-center gap-1.5">
+                <Wand2 className="h-3.5 w-3.5 text-primary" /> Ready-to-paste prompt
+              </h3>
+              <div className="flex items-center gap-1.5">
+                {idea.generated_prompt && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 rounded-full text-xs"
+                    onClick={onCopyPrompt}
+                  >
+                    {copied ? (
+                      <><Check className="h-3.5 w-3.5 mr-1" /> Copied</>
+                    ) : (
+                      <><Copy className="h-3.5 w-3.5 mr-1" /> Copy</>
+                    )}
+                  </Button>
+                )}
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="h-8 rounded-full text-xs"
+                  onClick={onGeneratePrompt}
+                  disabled={generating}
+                >
+                  {generating ? (
+                    <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" />
+                  ) : idea.generated_prompt ? (
+                    <RefreshCw className="h-3.5 w-3.5 mr-1" />
+                  ) : (
+                    <Wand2 className="h-3.5 w-3.5 mr-1" />
+                  )}
+                  {idea.generated_prompt ? "Regenerate" : "Generate prompt"}
+                </Button>
+              </div>
+            </div>
+            {generating && <ThinkingPanel active className="mb-2" />}
+            {idea.generated_prompt ? (
+              <div className="rounded-xl glass-card-quiet p-4 text-sm whitespace-pre-wrap font-mono leading-relaxed select-text">
+                {idea.generated_prompt}
+              </div>
+            ) : (
+              <div className="rounded-xl glass-card-quiet border-dashed p-4 text-xs text-muted-foreground">
+                Combine your note with the AI summary into a single prompt you can paste into ChatGPT, Claude, or Gemini.
+              </div>
+            )}
+          </section>
+        )}
+
+        {(editing || idea.ai_summary || idea.raw_note || idea.extracted_text) && (
+          <section>
+            <div className="mb-2 flex items-center justify-between gap-2">
+              <h3 className="text-sm font-semibold flex items-center gap-1.5">
+                <Sparkles className="h-3.5 w-3.5 text-accent" /> Summary
+              </h3>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onRegenerateSummary}
+                disabled={regenerating || updateIdea.isPending}
+                className="h-7 px-2 text-xs gap-1 text-muted-foreground hover:text-foreground"
+                title="Re-run AI summary from the current note or extracted text"
+              >
+                {regenerating ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <RefreshCw className="h-3.5 w-3.5" />
+                )}
+                {idea.ai_summary ? "Regenerate" : "Generate"}
+              </Button>
+            </div>
+            <ThinkingPanel active={regenerating} className="mb-2" />
+            {editing ? (
+              <Textarea
+                value={summary}
+                onChange={(e) => setSummary(e.target.value)}
+                rows={8}
+                className="font-mono text-sm"
+                placeholder="No summary yet — click Generate to create one from your note or extracted text."
+              />
+            ) : idea.ai_summary ? (
+              <div className="rounded-xl glass-card-quiet p-4 text-sm prose prose-sm dark:prose-invert max-w-none prose-headings:mt-3 prose-headings:mb-2 prose-headings:font-semibold prose-h1:text-lg prose-h2:text-base prose-h3:text-sm prose-p:my-2 prose-ul:my-2 prose-ol:my-2 prose-li:my-0.5 prose-strong:text-foreground prose-a:text-primary prose-code:text-xs prose-code:bg-muted prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:before:content-none prose-code:after:content-none">
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>{idea.ai_summary}</ReactMarkdown>
+              </div>
+            ) : (
+              <div className="rounded-xl glass-card-quiet border-dashed p-4 text-xs text-muted-foreground">
+                No summary yet — click <span className="font-medium text-foreground">Generate</span> above to create one from your note or extracted text.
+              </div>
+            )}
+          </section>
+        )}
+
+        {!editing && idea && (
+          <IdeaReferences ideaId={idea.id} />
+        )}
+
+        {!editing && idea && (
+          <RelatedIdeas ideaId={idea.id} onSelect={onSelectIdea} />
+        )}
+
 
         {(editing ? extractedText : idea.extracted_text) && (
           <section>
