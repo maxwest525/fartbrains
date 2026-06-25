@@ -238,7 +238,7 @@ const Shell = () => {
                   value={searchValue}
                   onChange={(e) => onSearch(e.target.value)}
                   placeholder="Search"
-                  className="pl-9 pr-9 h-9 rounded-[10px] bg-secondary border-transparent focus-visible:bg-card text-[15px]"
+                  className="pl-9 pr-9 h-9 rounded-[10px] bg-white/[0.04] border-transparent focus-visible:bg-white/[0.06] text-[15px]"
                 />
                 {searchValue && (
                   <button
