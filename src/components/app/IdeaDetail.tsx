@@ -29,7 +29,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { useSwipeGesture } from "@/hooks/useSwipeGesture";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { PrioritySelector } from "./PrioritySelector";
+import { ThinkingPanel } from "./ThinkingPanel";
 import { IdeaReminderDialog } from "./IdeaReminderDialog";
 import { ProjectBoard } from "./ProjectBoard";
 import { PROJECT_TAG } from "@/lib/deliverables";
