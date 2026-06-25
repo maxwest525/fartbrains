@@ -116,8 +116,12 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
 
     const ideaTokens = new Map<string, string[]>();
     ideas.forEach((i: any) => {
-      const t = tokens(`${i.title ?? ""} ${i.raw_note ?? ""} ${i.ai_summary ?? ""}`).slice(0, 12);
-      ideaTokens.set(i.id, t);
+      const t = tokens(`${i.title ?? ""} ${i.raw_note ?? ""} ${i.ai_summary ?? ""}`).slice(0, 10);
+      // Auto-tags carry intentional grouping signal — fold them in (normalized).
+      const tagToks = Array.isArray(i.tags)
+        ? i.tags.map((s: string) => String(s).toLowerCase().replace(/[^a-z0-9]+/g, "")).filter((s: string) => s.length >= 3)
+        : [];
+      ideaTokens.set(i.id, [...new Set([...t, ...tagToks])]);
     });
 
     const edgeMap = new Map<string, GraphEdge>();
