@@ -238,7 +238,7 @@ export const VoiceOrb = ({ onDictate, onLiveTranscript, speaking = false }: Voic
               source_type: "audio",
               source_url: pub.publicUrl,
               source_label: "Voice prompt",
-              source_meta: { audio: { url: pub.publicUrl, mimeType, durationSeconds: seconds } } as never,
+              source_meta: { audio: { url: pub.publicUrl, mimeType, durationSeconds: seconds } },
               folder_id: folderId,
             });
             toast.success("Voice prompt saved");
