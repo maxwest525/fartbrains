@@ -104,7 +104,7 @@ export const IdeaList = ({ filter, selectedId, onSelect, onBackToFolders, onFilt
             : (folderName ?? "Folder");
 
   return (
-    <div className={cn("w-full flex flex-col bg-background", pageScroll ? "h-auto" : "h-full")}>
+    <div className={cn("w-full flex flex-col bg-transparent", pageScroll ? "h-auto" : "h-full")}>
       {/* iOS large title (mobile only). Desktop keeps the compact label. */}
       <div className="px-4 sm:px-5 pt-2 pb-2 md:py-4 md:border-b border-border">
         {filter.kind === "folder" && onBackToFolders && (
@@ -222,7 +222,7 @@ export const IdeaList = ({ filter, selectedId, onSelect, onBackToFolders, onFilt
             style={{ height: pull, transition: refreshing ? "height 180ms ease" : undefined }}
           >
             <div
-              className="mt-2 h-8 w-8 rounded-full bg-card shadow-md flex items-center justify-center"
+              className="mt-2 h-8 w-8 flex items-center justify-center"
               style={{
                 opacity: Math.min(1, pull / threshold),
                 transform: refreshing ? "none" : `rotate(${Math.min(360, (pull / threshold) * 360)}deg)`,
@@ -326,7 +326,7 @@ export const IdeaList = ({ filter, selectedId, onSelect, onBackToFolders, onFilt
                   </p>
                   <button
                     onClick={clearTags}
-                    className="press mt-3 inline-flex items-center gap-1 h-8 px-3 rounded-full text-[13px] font-medium bg-card border border-border hover:bg-muted"
+                    className="press mt-3 inline-flex items-center gap-1 h-8 text-[13px] font-medium hover:text-foreground"
                   >
                     <X className="h-3.5 w-3.5" />
                     Clear tag filters
@@ -340,7 +340,7 @@ export const IdeaList = ({ filter, selectedId, onSelect, onBackToFolders, onFilt
           <>
             {/* MOBILE — grouped inset card with hairline separators */}
             <div className="md:hidden px-4 pt-1">
-              <div className="rounded-2xl bg-card overflow-hidden ios-separator-inset">
+              <div className="overflow-hidden ios-separator-inset">
                 {visibleIdeas.map((idea) => {
                   const isProject = idea.tags.includes(PROJECT_TAG);
                   const stats = isProject ? deliverableStats(idea.raw_note) : null;
