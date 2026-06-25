@@ -986,6 +986,13 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
             </button>
           </div>
           <Slider
+            label="Cluster count"
+            hint="Force this many distinct tag groupings"
+            value={tuning.clusterCount}
+            min={2} max={10} step={1}
+            onChange={(v) => setTuning((t) => ({ ...t, clusterCount: v }))}
+          />
+          <Slider
             label="Strictness"
             hint="How much shared signal before two ideas connect"
             value={tuning.strictness}
