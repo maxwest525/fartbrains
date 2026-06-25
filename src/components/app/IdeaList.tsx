@@ -12,12 +12,13 @@ import { PROJECT_TAG, deliverableStats } from "@/lib/deliverables";
 import { FolderProjectsBoard } from "./FolderProjectsBoard";
 
 const sourceMeta = (s: Idea["source_type"]) => {
-  // iOS-style colored squircles per source type
-  if (s === "webpage")    return { Icon: Link2,         tone: "bg-[hsl(211_100%_50%)] text-white" };
-  if (s === "transcript") return { Icon: MessageSquare, tone: "bg-[hsl(140_70%_45%)] text-white" };
-  if (s === "audio")      return { Icon: Mic,           tone: "bg-[hsl(28_100%_55%)] text-white" };
-  return { Icon: FileText, tone: "bg-[hsl(240_6%_60%)] text-white" };
+  // Icon-only — no background tile, just the glyph colored per source type
+  if (s === "webpage")    return { Icon: Link2,         tone: "text-[hsl(211_100%_60%)]" };
+  if (s === "transcript") return { Icon: MessageSquare, tone: "text-[hsl(140_70%_55%)]" };
+  if (s === "audio")      return { Icon: Mic,           tone: "text-[hsl(28_100%_60%)]" };
+  return { Icon: FileText, tone: "text-muted-foreground" };
 };
+
 
 const formatDate = (iso: string) => {
   const d = new Date(iso);
@@ -147,16 +148,15 @@ export const IdeaList = ({ filter, selectedId, onSelect, onBackToFolders, onFilt
                   key={label}
                   onClick={() => onFilterChange({ ...filter, sourceType: key } as IdeaFilter)}
                   className={cn(
-                    "press shrink-0 inline-flex items-center gap-1.5 h-7 px-2.5 rounded-full text-[12.5px] font-medium border transition-colors",
-                    active
-                      ? "bg-primary text-primary-foreground border-primary"
-                      : "bg-card text-foreground/80 border-border hover:bg-muted"
+                    "press shrink-0 inline-flex items-center gap-1.5 h-7 px-2.5 text-[12.5px] font-medium transition-colors bg-transparent border-0",
+                    active ? "text-foreground" : "text-muted-foreground"
                   )}
                   aria-pressed={active}
                 >
                   <Icon className="h-3.5 w-3.5" />
                   {label}
                 </button>
+
               );
             })}
           </div>
@@ -177,10 +177,8 @@ export const IdeaList = ({ filter, selectedId, onSelect, onBackToFolders, onFilt
                   key={tag}
                   onClick={() => toggleTag(tag)}
                   className={cn(
-                    "press shrink-0 inline-flex items-center gap-1 h-7 px-2.5 rounded-full text-[12.5px] font-medium border transition-colors",
-                    active
-                      ? "bg-primary text-primary-foreground border-primary"
-                      : "bg-card text-foreground/80 border-border hover:bg-muted",
+                    "press shrink-0 inline-flex items-center gap-1 h-7 px-2 text-[12.5px] font-medium transition-colors bg-transparent border-0",
+                    active ? "text-foreground" : "text-muted-foreground",
                   )}
                   aria-pressed={active}
                   title={`${count} idea${count === 1 ? "" : "s"} tagged "${tag}"`}
@@ -190,6 +188,7 @@ export const IdeaList = ({ filter, selectedId, onSelect, onBackToFolders, onFilt
                     {count}
                   </span>
                 </button>
+
               );
             })}
             {selectedTags.length > 0 && (
@@ -346,7 +345,7 @@ export const IdeaList = ({ filter, selectedId, onSelect, onBackToFolders, onFilt
                   const isProject = idea.tags.includes(PROJECT_TAG);
                   const stats = isProject ? deliverableStats(idea.raw_note) : null;
                   const { Icon, tone } = isProject
-                    ? { Icon: Briefcase, tone: "bg-primary text-primary-foreground" }
+                    ? { Icon: Briefcase, tone: "text-primary" }
                     : sourceMeta(idea.source_type);
                   const preview = isProject
                     ? `${stats!.done} of ${stats!.total} deliverables done`
@@ -363,9 +362,10 @@ export const IdeaList = ({ filter, selectedId, onSelect, onBackToFolders, onFilt
                       onClick={() => onSelect(idea.id)}
                       className="row-press w-full text-left flex items-start gap-3 px-3.5 py-2.5 min-h-[60px] active:bg-secondary"
                     >
-                      <div className={cn("h-9 w-9 rounded-[8px] flex items-center justify-center shrink-0 mt-0.5", tone)}>
-                        <Icon className="h-[18px] w-[18px]" />
+                      <div className="h-9 w-9 flex items-center justify-center shrink-0 mt-0.5">
+                        <Icon className={cn("h-[20px] w-[20px]", tone)} />
                       </div>
+
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-1.5">
                           {idea.pinned_at && (
@@ -460,16 +460,15 @@ export const IdeaList = ({ filter, selectedId, onSelect, onBackToFolders, onFilt
                               toggleTag(t);
                             }}
                             className={cn(
-                              "press inline-flex items-center h-5 px-1.5 rounded-full text-[10.5px] font-medium border transition-colors",
-                              isActive
-                                ? "bg-primary text-primary-foreground border-primary"
-                                : "bg-card border-border hover:bg-muted",
+                              "press inline-flex items-center h-5 px-1 text-[10.5px] font-medium transition-colors bg-transparent border-0",
+                              isActive ? "text-foreground" : "text-muted-foreground",
                             )}
                             aria-pressed={isActive}
                             title={`Filter by #${t}`}
                           >
                             #{t}
                           </button>
+
                         );
                       })}
                     </div>

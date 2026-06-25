@@ -30,12 +30,7 @@ const Tab = ({
     className="flex-1 flex flex-col items-center justify-center gap-0.5 h-full press relative"
     aria-label={label}
   >
-    <span
-      className={cn(
-        "relative inline-flex items-center justify-center h-10 w-16 rounded-full transition-all duration-300",
-        active && "bg-white/[0.10] shadow-[inset_0_0_0_1px_hsl(0_0%_100%/0.2),0_10px_28px_-12px_hsl(265_90%_70%/0.6)]"
-      )}
-    >
+    <span className="relative inline-flex items-center justify-center h-10 w-16">
       <MaterialIcon
         name={icon}
         filled={active}
@@ -51,6 +46,7 @@ const Tab = ({
         }
       />
     </span>
+
     <span
       className={cn(
         "text-[11px] font-medium tracking-tight transition-colors duration-300",
@@ -94,18 +90,17 @@ export const MobileTabBar = ({ filter, view, onFilterChange, onOpenFolders, onOp
   return (
     <nav
       ref={navRef}
-      className="md:hidden fixed bottom-0 inset-x-0 z-30 safe-bottom"
+      className="md:hidden fixed bottom-0 inset-x-0 z-30"
       aria-label="Primary"
     >
       {/* Top hairline gradient */}
       <div aria-hidden className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/15 to-transparent" />
       <div
-        className="relative bg-black/45"
+        className="relative bg-background"
         style={{
-          backdropFilter: "blur(22px) saturate(180%)",
-          WebkitBackdropFilter: "blur(22px) saturate(180%)",
           boxShadow:
             "inset 0 1px 0 hsl(0 0% 100% / 0.06), 0 -8px 30px -10px hsl(0 0% 0% / 0.55)",
+          paddingBottom: "env(safe-area-inset-bottom)",
         }}
       >
         <div className="flex items-stretch h-[72px]">
@@ -117,5 +112,6 @@ export const MobileTabBar = ({ filter, view, onFilterChange, onOpenFolders, onOp
         </div>
       </div>
     </nav>
+
   );
 };
