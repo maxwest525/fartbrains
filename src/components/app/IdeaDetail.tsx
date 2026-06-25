@@ -41,6 +41,46 @@ import { IdeaReferences } from "./IdeaReferences";
 
 const NO_FOLDER = "__none__";
 
+function InlineAddTag({ onAdd }: { onAdd: (tag: string) => void | Promise<void> }) {
+  const [open, setOpen] = useState(false);
+  const [val, setVal] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    if (open) inputRef.current?.focus();
+  }, [open]);
+  const commit = async () => {
+    const cleaned = val.trim().toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "").slice(0, 32);
+    if (cleaned.length >= 2) await onAdd(cleaned);
+    setVal("");
+    setOpen(false);
+  };
+  if (!open) {
+    return (
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className="inline-flex items-center gap-1 px-2 h-6 rounded-full border border-dashed border-white/15 text-[11px] text-muted-foreground hover:text-foreground"
+      >
+        + tag
+      </button>
+    );
+  }
+  return (
+    <input
+      ref={inputRef}
+      value={val}
+      onChange={(e) => setVal(e.target.value)}
+      onBlur={commit}
+      onKeyDown={(e) => {
+        if (e.key === "Enter") { e.preventDefault(); commit(); }
+        if (e.key === "Escape") { setVal(""); setOpen(false); }
+      }}
+      placeholder="new-tag"
+      className="h-6 px-2 rounded-full bg-white/[0.06] border border-white/15 text-[11px] text-foreground outline-none w-24 focus:border-white/30"
+    />
+  );
+}
+
 type Props = {
   ideaId: string | null;
   onClose: () => void;
@@ -388,13 +428,104 @@ export const IdeaDetail = ({ ideaId, onClose, backLabel = "Back", onSelectIdea }
           </div>
         )}
 
-        {!editing && idea.tags.length > 0 && (
-          <div className="flex flex-wrap gap-1.5">
-            {idea.tags.map((t) => (
-              <Badge key={t} variant="outline">
-                {t}
-              </Badge>
-            ))}
+        {!editing && (
+          <div className="space-y-2">
+            <div className="flex flex-wrap items-center gap-1.5">
+              {idea.tags.map((t) => (
+                <span
+                  key={t}
+                  className="inline-flex items-center gap-1 px-2 h-6 rounded-full border border-white/15 bg-white/[0.04] text-[11px] text-foreground/85"
+                >
+                  #{t}
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      const next = idea.tags.filter((x) => x !== t);
+                      await updateIdea.mutateAsync({
+                        id: idea.id,
+                        patch: {
+                          tags: next,
+                          tag_meta: { ...(idea.tag_meta ?? {}), source: "manual" },
+                        },
+                      });
+                    }}
+                    className="opacity-60 hover:opacity-100"
+                    aria-label={`Remove tag ${t}`}
+                  >
+                    <Trash2 className="h-3 w-3" />
+                  </button>
+                </span>
+              ))}
+              <InlineAddTag
+                onAdd={async (tag) => {
+                  if (!tag) return;
+                  if (idea.tags.includes(tag)) return;
+                  await updateIdea.mutateAsync({
+                    id: idea.id,
+                    patch: {
+                      tags: [...idea.tags, tag],
+                      tag_meta: { ...(idea.tag_meta ?? {}), source: "manual" },
+                    },
+                  });
+                }}
+              />
+              <button
+                type="button"
+                onClick={async () => {
+                  try {
+                    const { data, error } = await supabase.functions.invoke("auto-tag", {
+                      body: {
+                        title: idea.title,
+                        text: [idea.raw_note, idea.ai_summary, idea.extracted_text]
+                          .filter(Boolean)
+                          .join("\n\n"),
+                      },
+                    });
+                    if (error) throw new Error(error.message);
+                    const tags: string[] = Array.isArray(data?.tags) ? data.tags : [];
+                    if (tags.length === 0) {
+                      toast.info("Auto-tagger didn't find anything specific.");
+                      return;
+                    }
+                    await updateIdea.mutateAsync({
+                      id: idea.id,
+                      patch: {
+                        tags,
+                        tag_meta: {
+                          source: "auto",
+                          reasoning: typeof data?.reasoning === "string" ? data.reasoning : "",
+                          confidence: typeof data?.confidence === "number" ? data.confidence : null,
+                          generated_at: new Date().toISOString(),
+                        },
+                      },
+                    });
+                    toast.success("Tags refreshed");
+                  } catch (e) {
+                    toast.error(e instanceof Error ? e.message : "Auto-tag failed");
+                  }
+                }}
+                className="inline-flex items-center gap-1 px-2 h-6 rounded-full border border-white/10 bg-white/[0.02] text-[11px] text-muted-foreground hover:text-foreground"
+                title="Re-run auto-tagger"
+              >
+                <Sparkles className="h-3 w-3" /> Auto-tag
+              </button>
+            </div>
+            {idea.tag_meta?.reasoning && (
+              <div className="text-[11px] text-muted-foreground flex items-start gap-1.5">
+                <Sparkles className="h-3 w-3 mt-0.5 text-accent shrink-0" />
+                <span className="leading-snug">
+                  <span className="opacity-80">{idea.tag_meta.reasoning}</span>
+                  {typeof idea.tag_meta.confidence === "number" && (
+                    <span className="ml-1.5 opacity-60">
+                      · {Math.round((idea.tag_meta.confidence ?? 0) * 100)}% confidence
+                    </span>
+                  )}
+                  {idea.tag_meta.source === "manual" && (
+                    <span className="ml-1.5 opacity-60">· edited</span>
+                  )}
+                </span>
+              </div>
+            )}
           </div>
         )}
 
@@ -601,7 +732,28 @@ export const IdeaDetail = ({ ideaId, onClose, backLabel = "Back", onSelectIdea }
 
         {(editing ? extractedText : idea.extracted_text) && (
           <section>
-            <h3 className="text-sm font-semibold mb-2">Original extracted text</h3>
+            <div className="mb-2 flex items-center justify-between gap-2">
+              <h3 className="text-sm font-semibold">Original extracted text</h3>
+              {!editing && idea.extracted_text && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 rounded-full text-xs gap-1 text-muted-foreground hover:text-foreground"
+                  onClick={async () => {
+                    try {
+                      await navigator.clipboard.writeText(idea.extracted_text ?? "");
+                      toast.success("Raw text copied");
+                    } catch {
+                      toast.error("Couldn't copy — select and copy manually.");
+                    }
+                  }}
+                  title="Copy raw extracted text (separate from the AI summary)"
+                >
+                  <Copy className="h-3.5 w-3.5" /> Copy raw text
+                </Button>
+              )}
+            </div>
             {editing ? (
               <Textarea
                 value={extractedText}

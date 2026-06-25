@@ -17,6 +17,13 @@ export type SourceMeta = {
   audio?: { url: string; mimeType?: string; durationSeconds?: number };
 };
 
+export type TagMeta = {
+  reasoning?: string;
+  confidence?: number;
+  source?: "auto" | "manual";
+  generated_at?: string;
+};
+
 export type Idea = {
   id: string;
   folder_id: string | null;
@@ -33,6 +40,8 @@ export type Idea = {
   generated_prompt: string | null;
   priority: Priority;
   tags: string[];
+  /** Optional auto-tagger metadata: reasoning, confidence, source. */
+  tag_meta?: TagMeta | null;
   is_favorite: boolean;
   remind_at: string | null;
   notify_push: boolean;
@@ -175,7 +184,16 @@ async function triggerAutoTag(id: string, payload: { title: string; text: string
     if (error) return [];
     const tags = Array.isArray(data?.tags) ? (data.tags as string[]) : [];
     if (tags.length === 0) return [];
-    const { error: upErr } = await supabase.from("ideas").update({ tags } as never).eq("id", id);
+    const tag_meta = {
+      source: "auto" as const,
+      reasoning: typeof data?.reasoning === "string" ? data.reasoning : "",
+      confidence: typeof data?.confidence === "number" ? data.confidence : null,
+      generated_at: new Date().toISOString(),
+    };
+    const { error: upErr } = await supabase
+      .from("ideas")
+      .update({ tags, tag_meta } as never)
+      .eq("id", id);
     if (upErr) return [];
     return tags;
   } catch (_e) {

@@ -290,6 +290,7 @@ export type Database = {
           source_meta: Json | null
           source_type: Database["public"]["Enums"]["idea_source_type"]
           source_url: string | null
+          tag_meta: Json | null
           tags: string[]
           title: string
           updated_at: string
@@ -314,6 +315,7 @@ export type Database = {
           source_meta?: Json | null
           source_type?: Database["public"]["Enums"]["idea_source_type"]
           source_url?: string | null
+          tag_meta?: Json | null
           tags?: string[]
           title: string
           updated_at?: string
@@ -338,6 +340,7 @@ export type Database = {
           source_meta?: Json | null
           source_type?: Database["public"]["Enums"]["idea_source_type"]
           source_url?: string | null
+          tag_meta?: Json | null
           tags?: string[]
           title?: string
           updated_at?: string
