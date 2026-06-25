@@ -54,19 +54,41 @@ type SectionProps = {
 
 const ResultBox = ({ result }: { result: { title: string; body: string } }) => {
   const [open, setOpen] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const copy = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      await navigator.clipboard.writeText(`# ${result.title}\n\n${result.body}`);
+      setCopied(true);
+      toast.success("Copied to clipboard");
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      toast.error("Copy failed");
+    }
+  };
   return (
     <div className="rounded-xl glass-card-quiet overflow-hidden">
-      <button
-        type="button"
-        onClick={() => setOpen((v) => !v)}
-        className="w-full flex items-center justify-between gap-2 px-4 py-2.5 text-left hover:bg-white/[0.03]"
-      >
-        <div className="min-w-0">
-          <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Latest result</div>
-          <div className="text-sm font-medium truncate">{result.title}</div>
-        </div>
-        <ChevronDown className={cn("h-4 w-4 shrink-0 text-muted-foreground transition-transform", open && "rotate-180")} />
-      </button>
+      <div className="flex items-center gap-1 px-2 py-1.5">
+        <button
+          type="button"
+          onClick={() => setOpen((v) => !v)}
+          className="flex-1 min-w-0 flex items-center justify-between gap-2 px-2 py-1 text-left rounded-md hover:bg-white/[0.03]"
+        >
+          <div className="min-w-0">
+            <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Latest result</div>
+            <div className="text-sm font-medium truncate">{result.title}</div>
+          </div>
+          <ChevronDown className={cn("h-4 w-4 shrink-0 text-muted-foreground transition-transform", open && "rotate-180")} />
+        </button>
+        <button
+          type="button"
+          onClick={copy}
+          aria-label="Copy result"
+          className="shrink-0 h-8 w-8 inline-flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-white/[0.05]"
+        >
+          {copied ? <Check className="h-3.5 w-3.5 text-emerald-400" /> : <Copy className="h-3.5 w-3.5" />}
+        </button>
+      </div>
       <div
         className={cn(
           "relative px-4 transition-all",
