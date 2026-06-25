@@ -13,6 +13,7 @@ import { MobileTabBar } from "@/components/app/MobileTabBar";
 import { SettingsSheet } from "@/components/app/SettingsSheet";
 import { FoldersPage } from "@/components/app/FoldersPage";
 import { CalendarPage } from "@/components/app/CalendarPage";
+import { GraphPage } from "@/components/app/GraphPage";
 import { AlarmOverlay } from "@/components/app/AlarmOverlay";
 import { AshDock } from "@/components/app/AshDock";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
