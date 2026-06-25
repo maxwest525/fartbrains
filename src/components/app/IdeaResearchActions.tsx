@@ -1,11 +1,13 @@
 import { useMemo, useState } from "react";
-import { Globe, Microscope, Loader2, RefreshCw, ChevronDown } from "lucide-react";
+import { Globe, Microscope, Loader2, RefreshCw, ChevronDown, X, Copy, Check } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { ThinkingPanel } from "./ThinkingPanel";
+import { cn } from "@/lib/utils";
 import { ThinkingPanel } from "./ThinkingPanel";
 import { cn } from "@/lib/utils";
 
