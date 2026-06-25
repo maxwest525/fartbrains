@@ -12,12 +12,13 @@ import { PROJECT_TAG, deliverableStats } from "@/lib/deliverables";
 import { FolderProjectsBoard } from "./FolderProjectsBoard";
 
 const sourceMeta = (s: Idea["source_type"]) => {
-  // iOS-style colored squircles per source type
-  if (s === "webpage")    return { Icon: Link2,         tone: "bg-[hsl(211_100%_50%)] text-white" };
-  if (s === "transcript") return { Icon: MessageSquare, tone: "bg-[hsl(140_70%_45%)] text-white" };
-  if (s === "audio")      return { Icon: Mic,           tone: "bg-[hsl(28_100%_55%)] text-white" };
-  return { Icon: FileText, tone: "bg-[hsl(240_6%_60%)] text-white" };
+  // Icon-only — no background tile, just the glyph colored per source type
+  if (s === "webpage")    return { Icon: Link2,         tone: "text-[hsl(211_100%_60%)]" };
+  if (s === "transcript") return { Icon: MessageSquare, tone: "text-[hsl(140_70%_55%)]" };
+  if (s === "audio")      return { Icon: Mic,           tone: "text-[hsl(28_100%_60%)]" };
+  return { Icon: FileText, tone: "text-muted-foreground" };
 };
+
 
 const formatDate = (iso: string) => {
   const d = new Date(iso);
