@@ -1,5 +1,5 @@
-import { useQuery } from "@tanstack/react-query";
-import { Sparkles, ArrowRight, Loader2 } from "lucide-react";
+import { useQueryClient, useQuery } from "@tanstack/react-query";
+import { Sparkles, ArrowRight, Loader2, RefreshCw } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 type RelatedItem = { id: string; title: string; reason: string };
@@ -10,12 +10,13 @@ type Props = {
 };
 
 /**
- * Smart Connections — AI-suggested related ideas from the user's library.
- * Quietly hides itself when there are no meaningful matches so it never
- * adds noise to the detail view.
+ * Related nodes — hybrid recommender (tag overlap + folder/reference signals
+ * pre-filtered server-side, then re-ranked by AI for one-line reasoning).
+ * Quietly hides itself when there are no meaningful matches.
  */
 export const RelatedIdeas = ({ ideaId, onSelect }: Props) => {
-  const { data, isLoading, isError } = useQuery({
+  const qc = useQueryClient();
+  const { data, isLoading, isError, isFetching } = useQuery({
     queryKey: ["related-ideas", ideaId],
     queryFn: async (): Promise<RelatedItem[]> => {
       const { data, error } = await supabase.functions.invoke("related-ideas", {
@@ -30,16 +31,33 @@ export const RelatedIdeas = ({ ideaId, onSelect }: Props) => {
 
   if (isError) return null;
 
+  const Header = ({ children }: { children?: React.ReactNode }) => (
+    <div className="mb-2 flex items-center justify-between gap-2">
+      <h3 className="text-sm font-semibold flex items-center gap-1.5">
+        <Sparkles className="h-3.5 w-3.5 text-primary" />
+        Related nodes
+      </h3>
+      <button
+        type="button"
+        onClick={() => qc.invalidateQueries({ queryKey: ["related-ideas", ideaId] })}
+        className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground disabled:opacity-50"
+        disabled={isFetching}
+        title="Find more related nodes"
+      >
+        {isFetching ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
+        Refresh
+      </button>
+      {children}
+    </div>
+  );
+
   if (isLoading) {
     return (
       <section>
-        <h3 className="text-sm font-semibold mb-2 flex items-center gap-1.5">
-          <Sparkles className="h-3.5 w-3.5 text-primary" />
-          Smart connections
-        </h3>
+        <Header />
         <div className="rounded-md border border-border/60 bg-muted/20 p-3 flex items-center gap-2 text-xs text-muted-foreground">
           <Loader2 className="h-3.5 w-3.5 animate-spin" />
-          Finding related ideas…
+          Matching nodes by tags and meaning…
         </div>
       </section>
     );
@@ -49,10 +67,7 @@ export const RelatedIdeas = ({ ideaId, onSelect }: Props) => {
 
   return (
     <section>
-      <h3 className="text-sm font-semibold mb-2 flex items-center gap-1.5">
-        <Sparkles className="h-3.5 w-3.5 text-primary" />
-        Smart connections
-      </h3>
+      <Header />
       <ul className="space-y-1.5">
         {data.map((item) => (
           <li key={item.id}>
