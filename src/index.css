@@ -557,3 +557,47 @@ html:not(.dark) .gemini ::selection {
 .animate-alarm-pulse { animation: alarm-pulse 0.6s ease-in-out infinite; }
 .animate-alarm-strobe { animation: alarm-strobe 0.4s steps(2) infinite; }
 .animate-alarm-ring { animation: alarm-ring 1.1s ease-out infinite; }
+
+/* --------------------------------------------------------------
+   Idea-created burst — viewport-edge rainbow glow + soft inner halo.
+   Fires once on the "idea:created" CustomEvent via <IdeaCreatedFx />.
+   -------------------------------------------------------------- */
+@keyframes idea-burst-in {
+  0%   { opacity: 0; transform: scale(1.02); }
+  18%  { opacity: 1; }
+  100% { opacity: 0; transform: scale(1); }
+}
+@keyframes idea-burst-sweep {
+  0%   { background-position: 0% 50%; }
+  100% { background-position: 200% 50%; }
+}
+.idea-burst {
+  border-radius: 28px;
+  padding: 3px;                       /* hairline thickness of the glow band */
+  background: linear-gradient(
+    115deg,
+    hsl(335 95% 60%) 0%,
+    hsl(280 95% 65%) 22%,
+    hsl(220 95% 60%) 44%,
+    hsl(190 95% 55%) 62%,
+    hsl(30 100% 60%) 82%,
+    hsl(335 95% 60%) 100%
+  );
+  background-size: 220% 220%;
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+          mask-composite: exclude;
+  filter: blur(10px) saturate(180%);
+  box-shadow:
+    0 0 60px 12px hsl(280 95% 65% / 0.35),
+    inset 0 0 60px 12px hsl(220 95% 60% / 0.30);
+  animation:
+    idea-burst-in 1.6s cubic-bezier(.2,.7,.2,1) forwards,
+    idea-burst-sweep 1.6s linear forwards;
+}
+@media (prefers-reduced-motion: reduce) {
+  .idea-burst { animation: idea-burst-in 0.6s ease-out forwards; }
+}
+

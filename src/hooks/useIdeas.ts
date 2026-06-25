@@ -140,7 +140,11 @@ export function useCreateIdea() {
       qc.invalidateQueries({ queryKey: ["ideas"] });
       qc.invalidateQueries({ queryKey: ["folder-counts"] });
       qc.invalidateQueries({ queryKey: ["folder-previews"] });
-      toast.success("Idea saved");
+      // Trigger the viewport-edge gradient burst (rendered by <IdeaCreatedFx />).
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("idea:created"));
+      }
+      toast.success("Idea saved", { description: "Captured to your vault." });
       // Kick off background reference extraction (fire-and-forget).
       if (data && typeof (data as { id?: string }).id === "string") {
         triggerExtractReferences((data as { id: string }).id);
