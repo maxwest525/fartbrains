@@ -96,13 +96,12 @@ export const MobileTabBar = ({ filter, view, onFilterChange, onOpenFolders, onOp
       {/* Top hairline gradient */}
       <div aria-hidden className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/15 to-transparent" />
       <div
-        className="relative bg-background"
+        className="relative bg-black/40 backdrop-blur-2xl"
         style={{
-          boxShadow:
-            "inset 0 1px 0 hsl(0 0% 100% / 0.06), 0 -8px 30px -10px hsl(0 0% 0% / 0.55)",
           paddingBottom: "env(safe-area-inset-bottom)",
         }}
       >
+
         <div className="flex items-stretch h-[72px]">
           <Tab active={isAll} icon="auto_awesome" label="Capture" onClick={() => onFilterChange({ kind: "all" })} />
           <Tab active={isHistory} icon="history" label="Recents" onClick={() => onFilterChange({ kind: "recent" })} />
