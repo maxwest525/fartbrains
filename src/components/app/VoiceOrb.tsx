@@ -217,7 +217,7 @@ export const VoiceOrb = ({ onDictate, onLiveTranscript, speaking = false }: Voic
             const seconds = Math.max(1, Math.round(blob.size / 16000));
             await createIdea.mutateAsync({
               title: `Voice note · ${fmtSeconds(seconds)}`,
-              raw_note: `🎙 Voice note (${fmtSeconds(seconds)}) — saved without transcription.`,
+              raw_note: `Voice note (${fmtSeconds(seconds)}) — saved without transcription.`,
               source_type: "audio",
               folder_id: folderId,
             });

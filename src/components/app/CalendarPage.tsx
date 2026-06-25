@@ -1,5 +1,12 @@
 import { useMemo, useState } from "react";
-import { Plus, Cake, Gift, ChevronLeft } from "lucide-react";
+import { Plus, Cake, Gift, ChevronLeft, CalendarDays, Pin } from "lucide-react";
+
+const EventIcon = ({ type, className }: { type: string; className?: string }) => {
+  if (type === "birthday") return <Cake className={className} />;
+  if (type === "floating_holiday") return <CalendarDays className={className} />;
+  if (type === "custom") return <Pin className={className} />;
+  return <Gift className={className} />;
+};
 import { Calendar } from "@/components/ui/calendar";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -108,7 +115,7 @@ export const CalendarPage = ({ onBack }: Props) => {
 
       {/* Month grid */}
       <div className="px-3 sm:px-6 pt-3">
-        <div className="rounded-2xl bg-card border border-border/60 p-2 sm:p-3 mx-auto w-fit max-w-full">
+        <div className="rounded-3xl bg-white/[0.04] backdrop-blur-xl border border-white/10 p-3 sm:p-4 mx-auto w-fit max-w-full shadow-[0_8px_24px_-14px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.06)]">
           <Calendar
             mode="single"
             selected={selected}
@@ -124,6 +131,8 @@ export const CalendarPage = ({ onBack }: Props) => {
           />
         </div>
       </div>
+
+
 
       {/* Selected day's events */}
       {selected && selectedEvents.length > 0 && (
@@ -157,8 +166,8 @@ export const CalendarPage = ({ onBack }: Props) => {
                 onClick={() => openEdit(ev)}
                 className="w-full flex items-center gap-3 px-4 py-3 text-left press hover:bg-secondary/40"
               >
-                <div className="h-11 w-11 rounded-xl bg-primary/10 flex items-center justify-center text-2xl shrink-0">
-                  {ev.emoji ?? (ev.event_type === "birthday" ? "🎂" : "🎉")}
+                <div className="h-11 w-11 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                  <EventIcon type={ev.event_type} className="h-5 w-5 text-primary" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-[15px] font-medium truncate">
@@ -199,8 +208,8 @@ export const CalendarPage = ({ onBack }: Props) => {
 
 const EventRow = ({ ev, onClick }: { ev: CalendarEvent; onClick: () => void }) => (
   <button onClick={onClick} className="w-full flex items-center gap-3 px-4 py-3 text-left press hover:bg-secondary/40">
-    <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center text-xl shrink-0">
-      {ev.emoji ?? (ev.event_type === "birthday" ? "🎂" : "🎉")}
+    <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+      <EventIcon type={ev.event_type} className="h-5 w-5 text-primary" />
     </div>
     <div className="flex-1 min-w-0">
       <p className="text-[15px] font-medium truncate flex items-center gap-1.5">
