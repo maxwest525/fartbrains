@@ -368,8 +368,8 @@ export const VoiceOrb = ({ onDictate, onLiveTranscript, speaking = false }: Voic
   const modeBtns: Array<{ id: CaptureMode; label: string; Icon: typeof Mic; tone: string }> = [
     { id: "dictate", label: "Voice to Text", Icon: Keyboard, tone: "from-[#9B72CB] to-[#4285F4]" },
     { id: "record",  label: "Voice Prompt",  Icon: Send,     tone: "from-[#D96570] to-[#F2A4AC]" },
-    { id: "live",    label: "Live",          Icon: Radio,    tone: "from-[#4285F4] to-[#9B72CB]" },
   ];
+
 
   return (
     <div className="gemini dark relative flex flex-col items-center justify-center gap-5 sm:gap-6 py-6 sm:py-8 px-3 sm:px-6 text-[color:var(--g-text)] w-full">
