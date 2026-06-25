@@ -65,8 +65,9 @@ type Tuning = {
   linkStrength: number;  // 0..1
   tagGravity: number;    // 0..1 — how hard tags pull their cluster together
   strictness: number;    // 1..5 — min shared signal before drawing edges
+  clusterCount: number;  // 2..10 — forced max number of distinct tag clusters
 };
-const DEFAULT_TUNING: Tuning = { repulsion: 0.55, linkStrength: 0.5, tagGravity: 0.65, strictness: 2 };
+const DEFAULT_TUNING: Tuning = { repulsion: 0.55, linkStrength: 0.5, tagGravity: 0.75, strictness: 2, clusterCount: 5 };
 
 export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
   const { data: folders = [] } = useFolders();
