@@ -344,7 +344,6 @@ export const VoiceOrb = ({ onDictate, onLiveTranscript, speaking = false }: Voic
   const modeCopy: Record<CaptureMode, { idle: string; hint: string }> = {
     dictate: { idle: "Tap for voice to text", hint: "Transcribes your speech into the composer below." },
     record:  { idle: "Tap for voice prompt",  hint: "Records a voice prompt and sends it to Ash." },
-    live:    { idle: "Tap to talk to Ash",    hint: "Ash listens, replies, and speaks back." },
   };
 
   const status = isRecording
@@ -364,6 +363,7 @@ export const VoiceOrb = ({ onDictate, onLiveTranscript, speaking = false }: Voic
       : micPerm === "prompt"
         ? { Icon: ShieldQuestion, label: "Mic permission needed", tone: "text-amber-200 bg-amber-400/10 border-amber-400/30" }
         : { Icon: ShieldQuestion, label: "Tap to allow mic", tone: "text-white/60 bg-white/[0.04] border-white/10" };
+
 
   const modeBtns: Array<{ id: CaptureMode; label: string; Icon: typeof Mic; tone: string }> = [
     { id: "dictate", label: "Voice to Text", Icon: Keyboard, tone: "from-[#9B72CB] to-[#4285F4]" },
