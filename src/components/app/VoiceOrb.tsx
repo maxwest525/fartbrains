@@ -579,21 +579,41 @@ export const VoiceOrb = ({ onDictate, onLiveTranscript, speaking = false }: Voic
               >
                 <X className="h-4 w-4 mr-1.5" /> Discard
               </Button>
-              <Button
-                type="button"
-                size="sm"
-                onClick={saveDraft}
-                disabled={submitting || !draft.trim()}
-                className="rounded-full text-white border-0 shadow-[0_6px_20px_-6px_rgba(155,114,203,0.6)] hover:opacity-95 focus-visible:ring-2 focus-visible:ring-[color:var(--g-focus-ring)] focus-visible:ring-offset-0 disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none"
-                style={{ background: "var(--g-gradient)" }}
-              >
-                {submitting ? (
-                  <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
-                ) : (
-                  <Check className="h-4 w-4 mr-1.5" />
-                )}
-                Save idea
-              </Button>
+              <div className="flex items-center gap-1.5">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    const text = (draft ?? "").trim();
+                    if (!text) return;
+                    if (onDictate) onDictate(text);
+                    else window.dispatchEvent(new CustomEvent("idea-vault:dictate", { detail: text }));
+                    toast.success("Sent to composer");
+                    discard();
+                  }}
+                  disabled={submitting || !draft.trim()}
+                  className={toolbarBtn}
+                  aria-label="Send transcript to composer"
+                >
+                  <Send className="h-4 w-4 mr-1.5" /> To composer
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={saveDraft}
+                  disabled={submitting || !draft.trim()}
+                  className="rounded-full text-white border-0 shadow-[0_6px_20px_-6px_rgba(155,114,203,0.6)] hover:opacity-95 focus-visible:ring-2 focus-visible:ring-[color:var(--g-focus-ring)] focus-visible:ring-offset-0 disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none"
+                  style={{ background: "var(--g-gradient)" }}
+                >
+                  {submitting ? (
+                    <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
+                  ) : (
+                    <Check className="h-4 w-4 mr-1.5" />
+                  )}
+                  Save idea
+                </Button>
+              </div>
             </div>
           </div>
         </div>
