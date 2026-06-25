@@ -383,7 +383,7 @@ export const AshDock = ({ className }: { className?: string }) => {
         )}
       >
 
-        <div className="gemini gemini-ring rounded-2xl bg-card/85 backdrop-blur-xl shadow-2xl shadow-black/30 transition-all">
+        <div className="gemini gemini-ring rounded-2xl bg-black/40 backdrop-blur-2xl shadow-2xl shadow-black/40 transition-all">
           {collapsed ? (
             <div id="ash-dock-body" className="flex items-center gap-1.5 px-2.5 pb-2 pt-0.5">
               <button
