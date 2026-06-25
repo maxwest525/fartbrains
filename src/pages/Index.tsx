@@ -202,6 +202,12 @@ const Shell = () => {
       onClick: openFoldersPage,
     },
     {
+      label: "Graph",
+      icon: "hub",
+      active: view === "graph",
+      onClick: openGraphPage,
+    },
+    {
       label: "Favorites",
       icon: "star",
       active: view === "ideas" && filter.kind === "favorites",
