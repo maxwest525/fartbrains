@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Mic, Square, Loader2, Check, X, Undo2, Redo2, Search, Replace as ReplaceIcon,
-  Radio, Send, Keyboard, ShieldAlert, ShieldCheck, ShieldQuestion,
+  Send, Keyboard, ShieldAlert, ShieldCheck, ShieldQuestion,
 } from "lucide-react";
+
 import { cn } from "@/lib/utils";
 import { useVoiceCapture, blobToBase64 } from "@/hooks/useVoiceCapture";
 import { useCreateIdea } from "@/hooks/useIdeas";
@@ -41,16 +42,17 @@ const toolbarBtn = cn(
   "disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-[color:var(--g-text-disabled)] disabled:cursor-not-allowed",
 );
 
-type CaptureMode = "dictate" | "record" | "live";
+type CaptureMode = "dictate" | "record";
 
 type VoiceOrbProps = {
   /** Send a transcript into the bottom composer (dictate mode). */
   onDictate?: (text: string) => void;
-  /** Fired with a transcript when in Live mode (sent to Ash chat). */
+  /** Fired with a transcript when in Live mode (sent to Ash chat). Deprecated — kept for compat. */
   onLiveTranscript?: (text: string) => void;
   /** True while Ash is speaking back — animates the orb in a different color. */
   speaking?: boolean;
 };
+
 
 export const VoiceOrb = ({ onDictate, onLiveTranscript, speaking = false }: VoiceOrbProps) => {
   const voice = useVoiceCapture({ maxSeconds: 180 });
@@ -241,11 +243,6 @@ export const VoiceOrb = ({ onDictate, onLiveTranscript, speaking = false }: Voic
           return;
         }
 
-        if (mode === "live" && onLiveTranscript) {
-          onLiveTranscript(transcript.trim());
-          return;
-        }
-
         // DICTATE: push into the bottom composer instead of opening the draft editor.
         if (mode === "dictate") {
           if (onDictate) onDictate(transcript.trim());
@@ -255,6 +252,7 @@ export const VoiceOrb = ({ onDictate, onLiveTranscript, speaking = false }: Voic
           toast.success("Added to composer");
           return;
         }
+
       }
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Voice capture failed");
@@ -346,7 +344,6 @@ export const VoiceOrb = ({ onDictate, onLiveTranscript, speaking = false }: Voic
   const modeCopy: Record<CaptureMode, { idle: string; hint: string }> = {
     dictate: { idle: "Tap for voice to text", hint: "Transcribes your speech into the composer below." },
     record:  { idle: "Tap for voice prompt",  hint: "Records a voice prompt and sends it to Ash." },
-    live:    { idle: "Tap to talk to Ash",    hint: "Ash listens, replies, and speaks back." },
   };
 
   const status = isRecording
@@ -367,11 +364,12 @@ export const VoiceOrb = ({ onDictate, onLiveTranscript, speaking = false }: Voic
         ? { Icon: ShieldQuestion, label: "Mic permission needed", tone: "text-amber-200 bg-amber-400/10 border-amber-400/30" }
         : { Icon: ShieldQuestion, label: "Tap to allow mic", tone: "text-white/60 bg-white/[0.04] border-white/10" };
 
+
   const modeBtns: Array<{ id: CaptureMode; label: string; Icon: typeof Mic; tone: string }> = [
     { id: "dictate", label: "Voice to Text", Icon: Keyboard, tone: "from-[#9B72CB] to-[#4285F4]" },
     { id: "record",  label: "Voice Prompt",  Icon: Send,     tone: "from-[#D96570] to-[#F2A4AC]" },
-    { id: "live",    label: "Live",          Icon: Radio,    tone: "from-[#4285F4] to-[#9B72CB]" },
   ];
+
 
   return (
     <div className="gemini dark relative flex flex-col items-center justify-center gap-5 sm:gap-6 py-6 sm:py-8 px-3 sm:px-6 text-[color:var(--g-text)] w-full">
