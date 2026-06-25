@@ -38,7 +38,7 @@ import { formatReminder } from "@/lib/formatTime";
 import { SourceMetaCard } from "./SourceMetaCard";
 import { RelatedIdeas } from "./RelatedIdeas";
 import { IdeaReferences } from "./IdeaReferences";
-import { CrossPollination } from "./CrossPollination";
+import { CollapsibleSection } from "./CollapsibleSection";
 
 const NO_FOLDER = "__none__";
 
