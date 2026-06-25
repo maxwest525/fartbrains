@@ -377,6 +377,20 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
     visibleNodeIdsRef.current = vis;
   }, [folderFilter, keywordFilter, tagFilter, ready]);
 
+  // Snap-to-cluster when tag filter changes — pan to first selected tag's anchor
+  useEffect(() => {
+    if (!ready || tagFilter.size === 0) return;
+    const firstTag = [...tagFilter][0];
+    const anchor = tagAnchorsRef.current.get(firstTag);
+    if (!anchor) return;
+    const cam = cameraRef.current;
+    const targetZoom = 1.4;
+    cam.tz = targetZoom;
+    cam.tx = size.w / 2 - anchor.x * targetZoom;
+    cam.ty = size.h / 2 - anchor.y * targetZoom;
+    cam.animating = true;
+  }, [tagFilter, ready, size.w, size.h]);
+
   // Resize observer
   useEffect(() => {
     const el = containerRef.current;
