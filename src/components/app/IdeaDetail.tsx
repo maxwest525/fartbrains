@@ -730,6 +730,10 @@ export const IdeaDetail = ({ ideaId, onClose, backLabel = "Back", onSelectIdea }
           <RelatedIdeas ideaId={idea.id} onSelect={onSelectIdea} />
         )}
 
+        {!editing && idea && (
+          <CrossPollination ideaId={idea.id} onSelect={onSelectIdea} />
+        )}
+
 
         {(editing ? extractedText : idea.extracted_text) && (
           <section>
