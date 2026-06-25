@@ -152,7 +152,7 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
       const t = Array.isArray(i.tags)
         ? i.tags.map((s: string) => String(s).toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "")).filter((s: string) => s.length >= 2)
         : [];
-      ideaTagsRaw.set(i.id, [...new Set(t)]);
+      ideaTagsRaw.set(i.id, [...new Set<string>(t)]);
     });
 
     // Count tag frequency to pick "primary tag" per idea (= most common tag in dataset)
