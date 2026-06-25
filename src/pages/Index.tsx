@@ -13,6 +13,7 @@ import { MobileTabBar } from "@/components/app/MobileTabBar";
 import { SettingsSheet } from "@/components/app/SettingsSheet";
 import { FoldersPage } from "@/components/app/FoldersPage";
 import { CalendarPage } from "@/components/app/CalendarPage";
+import { GraphPage } from "@/components/app/GraphPage";
 import { AlarmOverlay } from "@/components/app/AlarmOverlay";
 import { AshDock } from "@/components/app/AshDock";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
@@ -27,7 +28,7 @@ import type { IdeaFilter } from "@/hooks/useIdeas";
 
 
 
-type View = "ideas" | "folders" | "calendar";
+type View = "ideas" | "folders" | "calendar" | "graph";
 
 const Shell = () => {
   const [view, setView] = useState<View>("ideas");
@@ -157,9 +158,15 @@ const Shell = () => {
     setSelectedId(null);
   };
 
+  const openGraphPage = () => {
+    setView("graph");
+    setSelectedId(null);
+  };
+
   const showDetailOnly = isMobile && selectedId !== null;
   const showFolders = view === "folders" && !showDetailOnly;
   const showCalendar = view === "calendar" && !showDetailOnly;
+  const showGraph = view === "graph" && !showDetailOnly;
   const defaultFolderId = filter.kind === "folder" ? filter.folderId : null;
 
   const activeFolderName =
@@ -195,6 +202,12 @@ const Shell = () => {
       onClick: openFoldersPage,
     },
     {
+      label: "Graph",
+      icon: "hub",
+      active: view === "graph",
+      onClick: openGraphPage,
+    },
+    {
       label: "Favorites",
       icon: "star",
       active: view === "ideas" && filter.kind === "favorites",
@@ -208,7 +221,7 @@ const Shell = () => {
 
 
       {/* Top bar — search + (desktop) inline nav. Hidden on mobile when viewing detail or the folders page (folders has its own header). */}
-      {!showDetailOnly && !(isMobile && showFolders) && !(isMobile && showCalendar) && (
+      {!showDetailOnly && !(isMobile && showFolders) && !(isMobile && showCalendar) && !(isMobile && showGraph) && (
         <header className={cn(
           "sticky top-0 z-20 bg-transparent backdrop-blur-xl",
           filter.kind !== "all" && "safe-top"
@@ -310,11 +323,17 @@ const Shell = () => {
           <CalendarPage onBack={isMobile ? () => setView("ideas") : undefined} />
         )}
 
-
+        {/* Graph page — Obsidian-style brain map */}
+        {showGraph && (
+          <GraphPage
+            onOpenIdea={(id) => { setView("ideas"); setSelectedId(id); }}
+            onBack={isMobile ? () => setView("ideas") : undefined}
+          />
+        )}
 
 
         {/* Capture view — compose only, full width. Shown when filter is "all" (the default landing). */}
-        {!showFolders && !showCalendar && !showDetailOnly && filter.kind === "all" && (
+        {!showFolders && !showCalendar && !showGraph && !showDetailOnly && filter.kind === "all" && (
           <div
             className="w-full flex-1 min-w-0 flex flex-col min-h-0 bg-transparent overflow-y-auto scroll-momentum touch-pan-y"
             style={{ paddingBottom: "calc(var(--ash-dock-h, 0px) + env(safe-area-inset-bottom) + (var(--mobile-tabbar-h, 0px)) + 1.25rem)" }}
@@ -343,7 +362,7 @@ const Shell = () => {
         )}
 
         {/* Browse view — flat list of ideas (Recents, Favorites, Folder-filtered, Search). */}
-        {!showFolders && !showCalendar && !showDetailOnly && filter.kind !== "all" && (
+        {!showFolders && !showCalendar && !showGraph && !showDetailOnly && filter.kind !== "all" && (
           <div
             className="w-full flex-1 min-w-0 md:w-[28rem] md:flex-none md:shrink-0 md:border-r border-border flex flex-col min-h-0 bg-transparent md:overflow-hidden overflow-y-auto scroll-momentum touch-pan-y"
             style={{ paddingBottom: isMobile ? "calc(var(--ash-dock-h, 0px) + var(--mobile-tabbar-h, 0px) + env(safe-area-inset-bottom) + 1rem)" : "1.5rem" }}
@@ -363,7 +382,7 @@ const Shell = () => {
         )}
 
         {/* Detail — desktop always shows, mobile only when an idea is selected */}
-        {!showFolders && !showCalendar && (!isMobile || showDetailOnly) && (
+        {!showFolders && !showCalendar && !showGraph && (!isMobile || showDetailOnly) && (
           <IdeaDetail ideaId={selectedId} onClose={() => setSelectedId(null)} backLabel={backLabel} onSelectIdea={setSelectedId} />
         )}
       </div>
@@ -372,10 +391,11 @@ const Shell = () => {
       {isMobile && (
         <MobileTabBar
           filter={filter}
-          view={view === "folders" ? "folders" : view === "calendar" ? "calendar" : "ideas"}
+          view={view === "folders" ? "folders" : view === "calendar" ? "calendar" : view === "graph" ? "graph" : "ideas"}
           onFilterChange={handleFilterChange}
           onOpenFolders={openFoldersPage}
           onOpenCalendar={openCalendarPage}
+          onOpenGraph={openGraphPage}
           onOpenSettings={() => setSettingsOpen(true)}
         />
       )}
