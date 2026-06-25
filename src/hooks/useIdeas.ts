@@ -17,6 +17,13 @@ export type SourceMeta = {
   audio?: { url: string; mimeType?: string; durationSeconds?: number };
 };
 
+export type TagMeta = {
+  reasoning?: string;
+  confidence?: number;
+  source?: "auto" | "manual";
+  generated_at?: string;
+};
+
 export type Idea = {
   id: string;
   folder_id: string | null;
@@ -33,6 +40,8 @@ export type Idea = {
   generated_prompt: string | null;
   priority: Priority;
   tags: string[];
+  /** Optional auto-tagger metadata: reasoning, confidence, source. */
+  tag_meta?: TagMeta | null;
   is_favorite: boolean;
   remind_at: string | null;
   notify_push: boolean;
