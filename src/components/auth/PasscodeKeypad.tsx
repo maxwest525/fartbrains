@@ -134,12 +134,10 @@ export const PasscodeKeypad = ({ onUnlocked }: Props) => {
 
   return (
     <div className="flex flex-col items-center gap-7 select-none">
-      <div
-        className="h-14 w-14 rounded-2xl flex items-center justify-center text-white shadow-[0_8px_24px_-8px_rgba(155,114,203,0.7)]"
-        style={{ background: "var(--g-gradient)" }}
-      >
-        <Lock className="h-6 w-6" />
+      <div className="flex items-center justify-center text-white/90">
+        <Lock className="h-8 w-8" strokeWidth={1.8} />
       </div>
+
 
       <div className="text-center">
         <h1 className="text-[20px] font-semibold tracking-tight text-white">
