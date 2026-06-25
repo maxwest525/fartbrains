@@ -243,11 +243,6 @@ export const VoiceOrb = ({ onDictate, onLiveTranscript, speaking = false }: Voic
           return;
         }
 
-        if (mode === "live" && onLiveTranscript) {
-          onLiveTranscript(transcript.trim());
-          return;
-        }
-
         // DICTATE: push into the bottom composer instead of opening the draft editor.
         if (mode === "dictate") {
           if (onDictate) onDictate(transcript.trim());
@@ -257,6 +252,7 @@ export const VoiceOrb = ({ onDictate, onLiveTranscript, speaking = false }: Voic
           toast.success("Added to composer");
           return;
         }
+
       }
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Voice capture failed");
