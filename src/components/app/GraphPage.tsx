@@ -1017,7 +1017,10 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
       )}
 
       {/* Legend + edge toggles */}
-      <div className="absolute bottom-3 left-3 z-10 flex flex-col gap-1 text-[11px] text-white/70 bg-black/50 backdrop-blur-xl border border-white/10 rounded-2xl px-2.5 py-2 shadow-2xl">
+      <div
+        className="absolute left-3 z-10 flex flex-col gap-1 text-[11px] text-white/70 bg-black/60 backdrop-blur-xl border border-white/10 rounded-2xl px-2.5 py-2 shadow-2xl"
+        style={{ bottom: "calc(0.75rem + var(--mobile-tabbar-h, 0px))" }}
+      >
         <div className="px-1 pb-0.5 text-[10px] uppercase tracking-wider text-white/40">Connections</div>
         {(["tag", "ref", "kw", "folder"] as EdgeKind[]).map((k) => {
           const on = enabledKinds[k];
@@ -1038,11 +1041,43 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
         })}
       </div>
 
+      {/* Minimap */}
+      <div
+        className="absolute right-3 z-10 rounded-xl overflow-hidden border border-white/15 shadow-2xl"
+        style={{ bottom: "calc(0.75rem + var(--mobile-tabbar-h, 0px) + 9.25rem)" }}
+        aria-label="Minimap"
+      >
+        <canvas
+          ref={minimapRef}
+          width={150 * Math.min(2, typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1)}
+          height={100 * Math.min(2, typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1)}
+          style={{ width: 150, height: 100, display: "block", cursor: "crosshair" }}
+          onPointerDown={(e) => {
+            const mini = minimapRef.current as any;
+            const tx = mini?.__tx;
+            if (!tx) return;
+            const rect = mini.getBoundingClientRect();
+            const px = e.clientX - rect.left;
+            const py = e.clientY - rect.top;
+            const wx = (px - tx.ox) / tx.s;
+            const wy = (py - tx.oy) / tx.s;
+            const cam = cameraRef.current;
+            cam.tx = size.w / 2 - wx * cam.zoom;
+            cam.ty = size.h / 2 - wy * cam.zoom;
+            cam.tz = cam.zoom;
+            cam.animating = true;
+          }}
+        />
+      </div>
+
       {/* Zoom + recenter cluster, bottom-right */}
-      <div className="absolute bottom-3 right-3 z-10 flex flex-col gap-1.5">
+      <div
+        className="absolute right-3 z-10 flex flex-col gap-1.5"
+        style={{ bottom: "calc(0.75rem + var(--mobile-tabbar-h, 0px))" }}
+      >
         <button
           onClick={() => stepZoom(1)}
-          className="h-9 w-9 rounded-full bg-black/50 backdrop-blur-xl border border-white/10 text-white/85 hover:text-white flex items-center justify-center shadow-lg"
+          className="h-9 w-9 rounded-full bg-black/60 backdrop-blur-xl border border-white/10 text-white/85 hover:text-white flex items-center justify-center shadow-lg"
           aria-label="Zoom in"
           title="Zoom in"
         >
@@ -1050,7 +1085,7 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
         </button>
         <button
           onClick={() => stepZoom(-1)}
-          className="h-9 w-9 rounded-full bg-black/50 backdrop-blur-xl border border-white/10 text-white/85 hover:text-white flex items-center justify-center shadow-lg"
+          className="h-9 w-9 rounded-full bg-black/60 backdrop-blur-xl border border-white/10 text-white/85 hover:text-white flex items-center justify-center shadow-lg"
           aria-label="Zoom out"
           title="Zoom out"
         >
@@ -1058,7 +1093,7 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
         </button>
         <button
           onClick={recenter}
-          className="h-9 w-9 rounded-full bg-black/50 backdrop-blur-xl border border-white/10 text-white/85 hover:text-white flex items-center justify-center shadow-lg"
+          className="h-9 w-9 rounded-full bg-black/60 backdrop-blur-xl border border-white/10 text-white/85 hover:text-white flex items-center justify-center shadow-lg"
           aria-label="Recenter"
           title="Recenter"
         >
