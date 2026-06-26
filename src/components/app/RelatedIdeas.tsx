@@ -48,7 +48,7 @@ export const RelatedIdeas = ({ ideaId, onSelect }: Props) => {
   if (isLoading) {
     return (
       <CollapsibleSection id={`${ideaId}:related`} title={<span className="flex items-center gap-1.5"><Sparkles className="h-3.5 w-3.5 text-primary" /> Idea node match</span>} actions={actions}>
-        <div className="rounded-md border border-border/60 bg-muted/20 p-3 flex items-center gap-2 text-xs text-muted-foreground">
+        <div className="flex items-center gap-2 py-2 text-xs text-muted-foreground">
           <Loader2 className="h-3.5 w-3.5 animate-spin" />
           Matching nodes by tags and meaning…
         </div>
@@ -66,7 +66,7 @@ export const RelatedIdeas = ({ ideaId, onSelect }: Props) => {
             <button
               type="button"
               onClick={() => onSelect?.(item.id)}
-              className="group w-full text-left rounded-md border border-border/60 bg-muted/20 hover:bg-muted/40 hover:border-border transition p-3 flex items-start gap-3"
+              className="group w-full text-left py-2 transition flex items-start gap-3"
             >
               <div className="flex-1 min-w-0">
                 <div className="text-sm font-medium truncate">{item.title}</div>
