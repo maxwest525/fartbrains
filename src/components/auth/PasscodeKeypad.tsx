@@ -133,7 +133,7 @@ export const PasscodeKeypad = ({ onUnlocked }: Props) => {
     : "Enter the passcode to unlock";
 
   return (
-    <div className="flex flex-col items-center gap-7 sm:gap-8 select-none w-full">
+    <div className="flex flex-col items-center gap-8 sm:gap-9 select-none w-full">
       <div className="flex items-center justify-center text-white/90">
         <Lock className="h-8 w-8" strokeWidth={1.8} />
       </div>
@@ -184,7 +184,7 @@ export const PasscodeKeypad = ({ onUnlocked }: Props) => {
             {n}
           </KeyButton>
         ))}
-        <div className="h-[clamp(82px,24vw,96px)] w-[clamp(82px,24vw,96px)]" />
+        <div className="h-[clamp(88px,26vw,108px)] w-[clamp(88px,26vw,108px)]" />
         <KeyButton onClick={() => press("0")} disabled={lockoutLeft > 0}>
           0
         </KeyButton>
@@ -193,7 +193,7 @@ export const PasscodeKeypad = ({ onUnlocked }: Props) => {
           onClick={backspace}
           disabled={lockoutLeft > 0 || code.length === 0}
           aria-label="Backspace"
-          className="h-[clamp(82px,24vw,96px)] w-[clamp(82px,24vw,96px)] rounded-full flex items-center justify-center text-white/90 hover:bg-white/10 active:bg-white/15 active:scale-95 transition disabled:opacity-30"
+          className="h-[clamp(88px,26vw,108px)] w-[clamp(88px,26vw,108px)] rounded-full flex items-center justify-center text-white/90 hover:bg-white/10 active:bg-white/15 active:scale-95 transition disabled:opacity-30"
         >
           <Delete className="h-7 w-7" />
         </button>
@@ -246,10 +246,10 @@ const KeyButton = ({
     onClick={onClick}
     disabled={disabled}
     className={cn(
-      "h-[clamp(82px,24vw,96px)] w-[clamp(82px,24vw,96px)] rounded-full",
+      "h-[clamp(88px,26vw,108px)] w-[clamp(88px,26vw,108px)] rounded-full",
       "bg-white/[0.08] hover:bg-white/[0.14] active:bg-white/[0.20]",
       "border border-white/15 backdrop-blur-xl",
-      "text-[32px] sm:text-[34px] font-light text-white",
+      "text-[34px] sm:text-[36px] font-light text-white",
       "transition-all duration-100 active:scale-95",
       "focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40",
       "disabled:opacity-40 disabled:cursor-not-allowed",
