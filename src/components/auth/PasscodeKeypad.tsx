@@ -178,13 +178,13 @@ export const PasscodeKeypad = ({ onUnlocked }: Props) => {
       </div>
 
       {/* Keypad */}
-      <div className="grid grid-cols-3 gap-3.5 sm:gap-5">
+      <div className="grid w-full max-w-[25.5rem] grid-cols-3 gap-3 sm:gap-4">
         {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => (
           <KeyButton key={n} onClick={() => press(String(n))} disabled={lockoutLeft > 0}>
             {n}
           </KeyButton>
         ))}
-        <div className="h-[clamp(92px,28vw,112px)] w-[clamp(92px,28vw,112px)]" />
+        <div className="aspect-square w-full" />
         <KeyButton onClick={() => press("0")} disabled={lockoutLeft > 0}>
           0
         </KeyButton>
@@ -193,7 +193,7 @@ export const PasscodeKeypad = ({ onUnlocked }: Props) => {
           onClick={backspace}
           disabled={lockoutLeft > 0 || code.length === 0}
           aria-label="Backspace"
-          className="h-[clamp(92px,28vw,112px)] w-[clamp(92px,28vw,112px)] rounded-full flex items-center justify-center text-white/90 hover:bg-white/10 active:bg-white/15 active:scale-95 transition disabled:opacity-30"
+          className="aspect-square w-full rounded-full flex items-center justify-center text-white/90 hover:bg-white/10 active:bg-white/15 active:scale-95 transition disabled:opacity-30"
         >
           <Delete className="h-7 w-7" />
         </button>
@@ -246,10 +246,10 @@ const KeyButton = ({
     onClick={onClick}
     disabled={disabled}
     className={cn(
-      "h-[clamp(92px,28vw,112px)] w-[clamp(92px,28vw,112px)] rounded-full",
+      "aspect-square w-full rounded-full",
       "bg-white/[0.08] hover:bg-white/[0.14] active:bg-white/[0.20]",
       "border border-white/15 backdrop-blur-xl",
-      "text-[36px] sm:text-[38px] font-light text-white",
+      "text-[clamp(36px,9vw,44px)] font-light text-white",
       "transition-all duration-100 active:scale-95",
       "focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40",
       "disabled:opacity-40 disabled:cursor-not-allowed",
