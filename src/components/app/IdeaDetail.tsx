@@ -543,7 +543,9 @@ export const IdeaDetail = ({ ideaId, onClose, backLabel = "Back", onSelectIdea }
               />
             );
           }
-          if (!editing && !idea.raw_note) return null;
+          // Always render the Note section above Generate Prompt so the idea
+          // field is visible even when empty — keeps the prompt card from
+          // floating to the top and covering the idea.
           const isChecklist = !!idea.raw_note && /^\s*- \[[ xX]\] /m.test(idea.raw_note);
           const toggleItem = (index: number) => {
             if (!idea.raw_note) return;
@@ -601,8 +603,12 @@ export const IdeaDetail = ({ ideaId, onClose, backLabel = "Back", onSelectIdea }
                     {idea.raw_note ?? ""}
                   </ReactMarkdown>
                 </div>
-              ) : (
+              ) : idea.raw_note ? (
                 <p className="whitespace-pre-wrap text-sm">{idea.raw_note}</p>
+              ) : (
+                <div className="rounded-xl glass-card-quiet border-dashed p-4 text-xs text-muted-foreground">
+                  No note yet — tap Edit to add the idea text.
+                </div>
               )}
             </CollapsibleSection>
           );
