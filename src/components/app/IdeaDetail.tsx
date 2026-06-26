@@ -543,7 +543,9 @@ export const IdeaDetail = ({ ideaId, onClose, backLabel = "Back", onSelectIdea }
               />
             );
           }
-          if (!editing && !idea.raw_note) return null;
+          // Always render the Note section above Generate Prompt so the idea
+          // field is visible even when empty — keeps the prompt card from
+          // floating to the top and covering the idea.
           const isChecklist = !!idea.raw_note && /^\s*- \[[ xX]\] /m.test(idea.raw_note);
           const toggleItem = (index: number) => {
             if (!idea.raw_note) return;
