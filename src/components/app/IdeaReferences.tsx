@@ -67,7 +67,7 @@ export const IdeaReferences = ({ ideaId }: Props) => {
     >
 
       {data.length === 0 && running ? (
-        <div className="rounded-md border border-border/60 bg-muted/20 p-3 flex items-center gap-2 text-xs text-muted-foreground">
+        <div className="flex items-center gap-2 py-2 text-xs text-muted-foreground">
           <Loader2 className="h-3.5 w-3.5 animate-spin" />
           Finding links for what you saved…
         </div>
@@ -91,10 +91,10 @@ const ReferenceRow = ({ item: ref }: { item: IdeaReference }) => {
         href={ref.url}
         target="_blank"
         rel="noopener noreferrer"
-        className="group block rounded-md border border-border/60 bg-muted/20 hover:bg-muted/40 hover:border-border transition p-3"
+        className="group block py-2 transition"
       >
         <div className="flex items-start gap-3">
-          <div className="h-7 w-7 rounded-md bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0 text-primary">
+          <div className="h-7 w-7 flex items-center justify-center shrink-0 text-primary">
             <Icon className="h-3.5 w-3.5" />
           </div>
           <div className="flex-1 min-w-0">
