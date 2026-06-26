@@ -1048,34 +1048,6 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
         })}
       </div>
 
-      {/* Minimap */}
-      <div
-        className="absolute right-3 z-10 rounded-xl overflow-hidden border border-white/15 shadow-2xl"
-        style={{ bottom: "calc(0.75rem + var(--mobile-tabbar-h, 0px) + 9.25rem)" }}
-        aria-label="Minimap"
-      >
-        <canvas
-          ref={minimapRef}
-          width={150 * Math.min(2, typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1)}
-          height={100 * Math.min(2, typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1)}
-          style={{ width: 150, height: 100, display: "block", cursor: "crosshair" }}
-          onPointerDown={(e) => {
-            const mini = minimapRef.current as any;
-            const tx = mini?.__tx;
-            if (!tx) return;
-            const rect = mini.getBoundingClientRect();
-            const px = e.clientX - rect.left;
-            const py = e.clientY - rect.top;
-            const wx = (px - tx.ox) / tx.s;
-            const wy = (py - tx.oy) / tx.s;
-            const cam = cameraRef.current;
-            cam.tx = size.w / 2 - wx * cam.zoom;
-            cam.ty = size.h / 2 - wy * cam.zoom;
-            cam.tz = cam.zoom;
-            cam.animating = true;
-          }}
-        />
-      </div>
 
       {/* Zoom + recenter cluster, bottom-right */}
       <div
