@@ -126,6 +126,23 @@
     background-attachment: fixed;
   }
 
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background:
+      radial-gradient(420px 420px at -6% -8%, hsl(265 90% 60% / 0.42), transparent 72%),
+      radial-gradient(520px 520px at 108% 108%, hsl(210 90% 55% / 0.34), transparent 74%),
+      radial-gradient(760px 500px at 50% 42%, transparent 0%, hsl(240 25% 4% / 0.50) 82%);
+  }
+
+  #root {
+    position: relative;
+    z-index: 1;
+  }
+
 
   h1, h2, h3, .font-display {
     font-family: "Space Grotesk", "Inter", system-ui, sans-serif;
