@@ -64,7 +64,7 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
           className="absolute inset-0 pointer-events-none"
           style={{ background: "radial-gradient(700px 500px at 50% 40%, transparent, rgba(0,0,0,0.55) 80%)" }}
         />
-        <div className="relative z-10 w-full max-w-[30rem] mx-1 sm:mx-6 px-1 sm:px-6 py-6 sm:py-10">
+        <div className="relative z-10 w-full max-w-[31rem] mx-0 sm:mx-6 px-3 sm:px-6 py-6 sm:py-10">
           <PasscodeKeypad onUnlocked={() => setUnlocked(true)} />
         </div>
 
