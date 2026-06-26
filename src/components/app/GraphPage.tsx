@@ -880,9 +880,19 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
         >
           <MaterialIcon name="hub" size={16} />
         </button>
+        <button
+          onClick={toggleOverlays}
+          className={cn(
+            "h-9 w-9 shrink-0 rounded-full backdrop-blur-md border flex items-center justify-center transition-colors",
+            overlaysHidden ? "bg-black/40 border-white/10 text-white/50 hover:text-white" : "bg-black/40 border-white/10 text-white/80 hover:text-white"
+          )}
+          aria-label={overlaysHidden ? "Show overlays" : "Hide overlays"}
+          title={overlaysHidden ? "Show overlays" : "Hide overlays"}
+        >
+          <MaterialIcon name={overlaysHidden ? "visibility" : "visibility_off"} size={16} />
+        </button>
       </div>
 
-      {/* Filter panel */}
       {filtersOpen && (
         <div className="absolute top-14 right-3 z-10 w-[min(360px,calc(100vw-1.5rem))] max-h-[70vh] overflow-y-auto rounded-2xl bg-black/60 backdrop-blur-xl border border-white/10 p-3 shadow-2xl">
           <div className="flex items-center justify-between mb-2">
