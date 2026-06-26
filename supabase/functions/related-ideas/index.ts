@@ -122,7 +122,7 @@ Deno.serve(async (req) => {
     if (scored.length === 0) return json({ related: [] });
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) return json({ error: "AI key missing" }, 500);
+    if (!LOVABLE_API_KEY) return json({ related: fallbackRelated(scored) });
 
     const targetBlock = [
       `TITLE: ${target.title ?? ""}`,
@@ -165,11 +165,7 @@ No prose, no markdown fences.`;
       if (resp.status === 429) return json({ error: "Rate limit, try again shortly" }, 429);
       if (resp.status === 402) return json({ error: "AI credits exhausted" }, 402);
       // Fall back to top scored, no reasons.
-      return json({
-        related: scored.slice(0, 5).map((c) => ({
-          id: c.id, title: c.title, reason: `Shared tags: ${c.tags.slice(0, 3).join(", ") || "—"}`,
-        })),
-      });
+      return json({ related: fallbackRelated(scored) });
     }
 
     const data = await resp.json();
@@ -191,7 +187,7 @@ No prose, no markdown fences.`;
         reason: String(r.reason ?? "").slice(0, 140),
       }));
 
-    return json({ related });
+    return json({ related: related.length ? related : fallbackRelated(scored) });
   } catch (e) {
     console.error("related-ideas error:", e);
     return json({ error: e instanceof Error ? e.message : "Unknown error" }, 500);
@@ -227,4 +223,14 @@ function tokenOverlap(a: Set<string>, b: Set<string>): number {
   let inter = 0;
   for (const t of b) if (a.has(t)) inter += 1;
   return inter / Math.sqrt(a.size * b.size);
+}
+
+function fallbackRelated(scored: ScoredCandidate[]) {
+  return scored.slice(0, 5).map((c) => ({
+    id: c.id,
+    title: c.title,
+    reason: c.tags.length
+      ? `Shared theme: ${c.tags.slice(0, 3).join(", ")}`
+      : "Similar wording and idea context",
+  }));
 }
