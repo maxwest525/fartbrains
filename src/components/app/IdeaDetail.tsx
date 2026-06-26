@@ -613,9 +613,6 @@ export const IdeaDetail = ({ ideaId, onClose, backLabel = "Back", onSelectIdea }
             </CollapsibleSection>
           );
         })()}
-            </CollapsibleSection>
-          );
-        })()}
 
         {!editing && (idea.generated_prompt || idea.raw_note || idea.ai_summary) && (
           <CollapsibleSection
