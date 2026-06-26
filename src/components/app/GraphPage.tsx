@@ -1101,6 +1101,7 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
           <MaterialIcon name="my_location" size={16} />
         </button>
       </div>
+      )}
 
       {/* Stats */}
       <div className="absolute top-14 left-3 z-10 text-[11px] text-white/60 bg-black/40 backdrop-blur-md border border-white/10 rounded-full px-3 py-1.5">
