@@ -691,8 +691,9 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
               if (optimizedPrompt) setOptimizedPrompt(null);
             }}
             placeholder={ph.note}
-            rows={6}
-            className="rounded-2xl bg-secondary/60 border-transparent text-[16px] px-4 py-3 leading-snug resize-none placeholder:text-muted-foreground/70"
+            rows={4}
+            className="rounded-2xl bg-secondary/60 border-transparent text-[15px] px-4 py-2.5 leading-snug resize-none placeholder:text-muted-foreground/70"
+
           />
           <div className="text-[11.5px] text-muted-foreground px-1 flex justify-between">
             <span>{note.trim().length.toLocaleString()} chars</span>
@@ -1085,8 +1086,9 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
               setTimeout(() => handleGenerateAndSave({ note: pasted }), 0);
             }}
             placeholder={ph.note}
-            rows={isTranscript ? 8 : source === "list" ? 5 : 4}
-            className="rounded-2xl bg-secondary/60 border-transparent text-[18px] font-medium px-4 py-3 leading-snug resize-none placeholder:font-normal placeholder:text-muted-foreground/70"
+            rows={isTranscript ? 6 : source === "list" ? 4 : 3}
+            className="rounded-2xl bg-secondary/60 border-transparent text-[16px] font-medium px-4 py-2.5 leading-snug resize-none placeholder:font-normal placeholder:text-muted-foreground/70"
+
           />
         </div>
       ) : !preview ? (
