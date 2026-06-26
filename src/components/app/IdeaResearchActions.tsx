@@ -131,7 +131,7 @@ const ResearchSection = ({
           size="sm"
           onClick={onRun}
           disabled={busy}
-          className="h-7 px-2 text-xs gap-1 text-muted-foreground hover:text-foreground"
+          className="h-7 px-0 text-xs gap-1 rounded-none text-muted-foreground hover:text-foreground"
         >
           {busy ? (
             <Loader2 className="h-3.5 w-3.5 animate-spin" />
