@@ -133,7 +133,7 @@ export const PasscodeKeypad = ({ onUnlocked }: Props) => {
     : "Enter the passcode to unlock";
 
   return (
-    <div className="flex flex-col items-center gap-7 sm:gap-9 select-none w-full">
+    <div className="flex flex-col items-center gap-[clamp(0.75rem,3dvh,2.25rem)] select-none w-full">
       <div className="flex items-center justify-center text-white/90">
         <Lock className="h-8 w-8" strokeWidth={1.8} />
       </div>
