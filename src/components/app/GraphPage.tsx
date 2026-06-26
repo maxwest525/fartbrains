@@ -1067,9 +1067,11 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
           );
         })}
       </div>
+      )}
 
 
       {/* Zoom + recenter cluster, bottom-right */}
+      {!overlaysHidden && (
       <div
         className="absolute right-3 z-10 flex flex-col gap-1.5"
         style={{ bottom: "calc(0.75rem + var(--mobile-tabbar-h, 0px))" }}
