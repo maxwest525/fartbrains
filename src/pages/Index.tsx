@@ -358,7 +358,7 @@ const Shell = () => {
             style={{ paddingBottom: "calc(var(--ash-dock-h, 0px) + env(safe-area-inset-bottom) + (var(--mobile-tabbar-h, 0px)) + 1.25rem)" }}
           >
 
-            <div ref={composeRef} className="w-full px-3 sm:px-6 lg:px-10 pt-6 sm:pt-10 pb-4 flex-1 min-h-0 flex flex-col items-center gap-5 sm:gap-6 max-w-3xl mx-auto">
+            <div ref={composeRef} className="w-full px-3 sm:px-6 lg:px-10 pt-3 sm:pt-8 pb-4 flex-1 min-h-0 flex flex-col items-center gap-3 sm:gap-6 max-w-3xl mx-auto">
 
 
               <ComposeIdea
