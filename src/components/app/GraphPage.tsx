@@ -95,6 +95,15 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
   const [tagFilter, setTagFilter] = useState<Set<string>>(new Set());
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [tuningOpen, setTuningOpen] = useState(false);
+  // Hides bottom overlays (legend + zoom) so the cluster gets the full viewport.
+  const [overlaysHidden, setOverlaysHidden] = useState<boolean>(() => {
+    try { return window.localStorage.getItem("graph-overlays-hidden") === "1"; } catch { return false; }
+  });
+  const toggleOverlays = () => setOverlaysHidden((v) => {
+    const next = !v;
+    try { window.localStorage.setItem("graph-overlays-hidden", next ? "1" : "0"); } catch { /* */ }
+    return next;
+  });
 
   // Tuning persisted to localStorage
   const [tuning, setTuning] = useState<Tuning>(() => {
