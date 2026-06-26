@@ -8,8 +8,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { ThinkingPanel } from "./ThinkingPanel";
 import { cn } from "@/lib/utils";
+import { CollapsibleSection } from "./CollapsibleSection";
 
 type Props = {
+  ideaId: string;
   ideaTitle: string;
   /** Current value of `extracted_text` so we can surface the most recent saved result inline. */
   extractedText?: string | null;
@@ -39,6 +41,7 @@ const markdownClass =
   "text-sm prose prose-sm dark:prose-invert max-w-none prose-headings:mt-3 prose-headings:mb-2 prose-headings:font-semibold prose-h1:text-base prose-h2:text-sm prose-h3:text-sm prose-p:my-2 prose-ul:my-2 prose-ol:my-2 prose-li:my-0.5 prose-strong:text-foreground prose-a:text-primary prose-code:text-xs prose-code:bg-muted prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:before:content-none prose-code:after:content-none";
 
 type SectionProps = {
+  sectionId: string;
   icon: "research" | "scrape";
   title: string;
   placeholder: string;
@@ -114,24 +117,23 @@ const ResultBox = ({ result }: { result: { title: string; body: string } }) => {
 };
 
 const ResearchSection = ({
-  icon, title, placeholder, inputValue, onInputChange, onRun, busy, hasResult, result, runLabel, inputMode,
+  sectionId, icon, title, placeholder, inputValue, onInputChange, onRun, busy, hasResult, result, runLabel, inputMode,
 }: SectionProps) => {
   const Icon = icon === "research" ? Microscope : Globe;
   const accent = icon === "research" ? "text-primary" : "text-accent";
 
   return (
-    <section>
-      <div className="mb-2 flex items-center justify-between gap-2">
-        <h3 className="text-sm font-semibold flex items-center gap-1.5">
-          <Icon className={cn("h-3.5 w-3.5", accent)} /> {title}
-        </h3>
+    <CollapsibleSection
+      id={sectionId}
+      title={<span className="flex items-center gap-1.5"><Icon className={cn("h-3.5 w-3.5", accent)} /> {title}</span>}
+      actions={
         <Button
           type="button"
           variant="ghost"
           size="sm"
           onClick={onRun}
           disabled={busy}
-          className="h-7 px-2 text-xs gap-1 text-muted-foreground hover:text-foreground"
+          className="h-7 px-0 text-xs gap-1 rounded-none text-muted-foreground hover:text-foreground"
         >
           {busy ? (
             <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -142,7 +144,8 @@ const ResearchSection = ({
           )}
           {hasResult ? "Run again" : runLabel}
         </Button>
-      </div>
+      }
+    >
 
       <div className="space-y-2">
         <div className="relative">
@@ -182,12 +185,12 @@ const ResearchSection = ({
           </div>
         )}
       </div>
-    </section>
+    </CollapsibleSection>
   );
 };
 
 export const IdeaResearchActions = ({
-  ideaTitle, extractedText, onAppendExtracted, onSetSummaryIfEmpty,
+  ideaId, ideaTitle, extractedText, onAppendExtracted, onSetSummaryIfEmpty,
 }: Props) => {
   const [query, setQuery] = useState(ideaTitle);
   const [url, setUrl] = useState("");
@@ -246,6 +249,7 @@ export const IdeaResearchActions = ({
   return (
     <div className="space-y-5">
       <ResearchSection
+        sectionId={`${ideaId}:research:deep`}
         icon="research"
         title="Deep research"
         placeholder="What should I research?"
@@ -258,6 +262,7 @@ export const IdeaResearchActions = ({
         runLabel="Research"
       />
       <ResearchSection
+        sectionId={`${ideaId}:research:scrape`}
         icon="scrape"
         title="Scrape URL"
         placeholder="https://…"

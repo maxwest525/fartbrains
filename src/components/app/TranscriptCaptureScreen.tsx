@@ -225,10 +225,10 @@ export const TranscriptCaptureScreen = ({ defaultFolderId, defaultText, onBack, 
               type="button"
               onClick={() => setFolder(NO_FOLDER)}
               className={cn(
-                "shrink-0 inline-flex items-center gap-1 h-8 px-3 rounded-full text-[13px] font-medium border transition-colors press",
+                "shrink-0 inline-flex items-center gap-1 h-8 px-1 text-[13px] font-medium transition-colors press",
                 folder === NO_FOLDER
-                  ? "bg-primary text-primary-foreground border-primary"
-                  : "bg-secondary/60 text-muted-foreground border-transparent hover:text-foreground"
+                  ? "text-primary"
+                  : "text-muted-foreground hover:text-foreground"
               )}
             >
               <Inbox className="h-3.5 w-3.5" />
@@ -242,10 +242,10 @@ export const TranscriptCaptureScreen = ({ defaultFolderId, defaultText, onBack, 
                   type="button"
                   onClick={() => setFolder(f.id)}
                   className={cn(
-                    "shrink-0 inline-flex items-center gap-1 h-8 px-3 rounded-full text-[13px] font-medium border transition-colors press max-w-[160px]",
+                    "shrink-0 inline-flex items-center gap-1 h-8 px-1 text-[13px] font-medium transition-colors press max-w-[160px]",
                     active
-                      ? "bg-primary text-primary-foreground border-primary"
-                      : "bg-secondary/60 text-muted-foreground border-transparent hover:text-foreground"
+                      ? "text-primary"
+                      : "text-muted-foreground hover:text-foreground"
                   )}
                   title={f.name}
                 >
@@ -257,7 +257,7 @@ export const TranscriptCaptureScreen = ({ defaultFolderId, defaultText, onBack, 
             <button
               type="button"
               onClick={() => setNewFolderOpen(true)}
-              className="shrink-0 inline-flex items-center gap-1 h-8 px-3 rounded-full text-[13px] font-medium border border-dashed border-border/70 text-muted-foreground hover:text-foreground hover:border-primary/50 transition-colors press"
+              className="shrink-0 inline-flex items-center gap-1 h-8 px-1 text-[13px] font-medium text-muted-foreground hover:text-foreground transition-colors press"
             >
               <Plus className="h-3.5 w-3.5" />
               New

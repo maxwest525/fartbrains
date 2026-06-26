@@ -5,7 +5,6 @@ import { Star, Trash2, ExternalLink, Sparkles, ChevronLeft, Wand2, Copy, Check, 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -60,7 +59,7 @@ function InlineAddTag({ onAdd }: { onAdd: (tag: string) => void | Promise<void> 
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="inline-flex items-center gap-1 px-2 h-6 rounded-full border border-dashed border-white/15 text-[11px] text-muted-foreground hover:text-foreground"
+        className="inline-flex items-center gap-1 text-[12px] text-muted-foreground hover:text-foreground"
       >
         + tag
       </button>
@@ -77,7 +76,7 @@ function InlineAddTag({ onAdd }: { onAdd: (tag: string) => void | Promise<void> 
         if (e.key === "Escape") { setVal(""); setOpen(false); }
       }}
       placeholder="new-tag"
-      className="h-6 px-2 rounded-full bg-white/[0.06] border border-white/15 text-[11px] text-foreground outline-none w-24 focus:border-white/30"
+      className="h-7 px-0 bg-transparent border-0 border-b border-white/20 text-[12px] text-foreground outline-none w-24 focus:border-white/40"
     />
   );
 }
@@ -296,9 +295,9 @@ export const IdeaDetail = ({ ideaId, onClose, backLabel = "Back", onSelectIdea }
           <span className="font-normal truncate">{backLabel}</span>
         </button>
         <div className="hidden md:flex items-center gap-2 min-w-0 flex-1 px-2">
-          <Badge variant="secondary" className="capitalize">
+          <span className="text-xs capitalize text-muted-foreground">
             {idea.source_label || idea.source_type}
-          </Badge>
+          </span>
         </div>
         <div className="flex-1 md:hidden" />
         <div className="flex items-center gap-0 sm:gap-1 shrink-0 pr-1">
@@ -368,14 +367,18 @@ export const IdeaDetail = ({ ideaId, onClose, backLabel = "Back", onSelectIdea }
           </h1>
         )}
 
-        <SourceMetaCard idea={idea} />
+        {(idea.source_type !== "manual" || idea.source_url) && (
+          <CollapsibleSection id={`${idea.id}:source`} title="Source">
+            <SourceMetaCard idea={idea} />
+          </CollapsibleSection>
+        )}
 
 
         {idea.remind_at && (
           <div className="flex items-center gap-2 flex-wrap">
             <button
               onClick={() => setReminderOpen(true)}
-              className="ml-auto inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full bg-accent/10 text-accent hover:bg-accent/15 press"
+              className="ml-auto inline-flex items-center gap-1.5 text-xs text-accent hover:text-accent/80 press"
               title="Edit reminder"
             >
               <Bell className="h-3 w-3" />
@@ -430,12 +433,13 @@ export const IdeaDetail = ({ ideaId, onClose, backLabel = "Back", onSelectIdea }
         )}
 
         {!editing && (
+          <CollapsibleSection id={`${idea.id}:tags`} title="Tags" defaultOpen>
           <div className="space-y-2">
             <div className="flex flex-wrap items-center gap-1.5">
               {idea.tags.map((t) => (
                 <span
                   key={t}
-                  className="inline-flex items-center gap-1 px-2 h-6 rounded-full border border-white/15 bg-white/[0.04] text-[11px] text-foreground/85"
+                  className="inline-flex items-center gap-1 text-[12px] text-foreground/85"
                 >
                   #{t}
                   <button
@@ -505,7 +509,7 @@ export const IdeaDetail = ({ ideaId, onClose, backLabel = "Back", onSelectIdea }
                     toast.error(e instanceof Error ? e.message : "Auto-tag failed");
                   }
                 }}
-                className="inline-flex items-center gap-1 px-2 h-6 rounded-full border border-white/10 bg-white/[0.02] text-[11px] text-muted-foreground hover:text-foreground"
+                className="inline-flex items-center gap-1 text-[12px] text-muted-foreground hover:text-foreground"
                 title="Re-run auto-tagger"
               >
                 <Sparkles className="h-3 w-3" /> Auto-tag
@@ -528,19 +532,22 @@ export const IdeaDetail = ({ ideaId, onClose, backLabel = "Back", onSelectIdea }
               </div>
             )}
           </div>
+          </CollapsibleSection>
         )}
 
         {(() => {
           const isProject = idea.tags.includes(PROJECT_TAG);
           if (isProject && !editing) {
             return (
-              <ProjectBoard
-                rawNote={idea.raw_note}
-                projectName={idea.title}
-                onChange={(next) =>
-                  updateIdea.mutate({ id: idea.id, patch: { raw_note: next } })
-                }
-              />
+              <CollapsibleSection id={`${idea.id}:project`} title="Deliverables">
+                <ProjectBoard
+                  rawNote={idea.raw_note}
+                  projectName={idea.title}
+                  onChange={(next) =>
+                    updateIdea.mutate({ id: idea.id, patch: { raw_note: next } })
+                  }
+                />
+              </CollapsibleSection>
             );
           }
           // Always render the Note section above Generate Prompt so the idea
@@ -700,6 +707,7 @@ export const IdeaDetail = ({ ideaId, onClose, backLabel = "Back", onSelectIdea }
 
         {!editing && idea && (
           <IdeaResearchActions
+            ideaId={idea.id}
             ideaTitle={idea.title}
             extractedText={idea.extracted_text}
             onAppendExtracted={async (block) => {

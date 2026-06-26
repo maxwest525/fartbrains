@@ -1,6 +1,7 @@
 import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { Sparkles, ArrowRight, Loader2, RefreshCw } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { CollapsibleSection } from "./CollapsibleSection";
 
 type RelatedItem = { id: string; title: string; reason: string };
 
@@ -31,13 +32,8 @@ export const RelatedIdeas = ({ ideaId, onSelect }: Props) => {
 
   if (isError) return null;
 
-  const Header = ({ children }: { children?: React.ReactNode }) => (
-    <div className="mb-2 flex items-center justify-between gap-2">
-      <h3 className="text-sm font-semibold flex items-center gap-1.5">
-        <Sparkles className="h-3.5 w-3.5 text-primary" />
-        Related nodes
-      </h3>
-      <button
+  const actions = (
+    <button
         type="button"
         onClick={() => qc.invalidateQueries({ queryKey: ["related-ideas", ideaId] })}
         className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground disabled:opacity-50"
@@ -47,34 +43,30 @@ export const RelatedIdeas = ({ ideaId, onSelect }: Props) => {
         {isFetching ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
         Refresh
       </button>
-      {children}
-    </div>
   );
 
   if (isLoading) {
     return (
-      <section>
-        <Header />
-        <div className="rounded-md border border-border/60 bg-muted/20 p-3 flex items-center gap-2 text-xs text-muted-foreground">
+      <CollapsibleSection id={`${ideaId}:related`} title={<span className="flex items-center gap-1.5"><Sparkles className="h-3.5 w-3.5 text-primary" /> Idea node match</span>} actions={actions}>
+        <div className="flex items-center gap-2 py-2 text-xs text-muted-foreground">
           <Loader2 className="h-3.5 w-3.5 animate-spin" />
           Matching nodes by tags and meaning…
         </div>
-      </section>
+      </CollapsibleSection>
     );
   }
 
   if (!data || data.length === 0) return null;
 
   return (
-    <section>
-      <Header />
+    <CollapsibleSection id={`${ideaId}:related`} title={<span className="flex items-center gap-1.5"><Sparkles className="h-3.5 w-3.5 text-primary" /> Idea node match</span>} actions={actions}>
       <ul className="space-y-1.5">
         {data.map((item) => (
           <li key={item.id}>
             <button
               type="button"
               onClick={() => onSelect?.(item.id)}
-              className="group w-full text-left rounded-md border border-border/60 bg-muted/20 hover:bg-muted/40 hover:border-border transition p-3 flex items-start gap-3"
+              className="group w-full text-left py-2 transition flex items-start gap-3"
             >
               <div className="flex-1 min-w-0">
                 <div className="text-sm font-medium truncate">{item.title}</div>
@@ -89,6 +81,6 @@ export const RelatedIdeas = ({ ideaId, onSelect }: Props) => {
           </li>
         ))}
       </ul>
-    </section>
+    </CollapsibleSection>
   );
 };
