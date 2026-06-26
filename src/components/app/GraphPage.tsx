@@ -95,6 +95,15 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
   const [tagFilter, setTagFilter] = useState<Set<string>>(new Set());
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [tuningOpen, setTuningOpen] = useState(false);
+  // Hides bottom overlays (legend + zoom) so the cluster gets the full viewport.
+  const [overlaysHidden, setOverlaysHidden] = useState<boolean>(() => {
+    try { return window.localStorage.getItem("graph-overlays-hidden") === "1"; } catch { return false; }
+  });
+  const toggleOverlays = () => setOverlaysHidden((v) => {
+    const next = !v;
+    try { window.localStorage.setItem("graph-overlays-hidden", next ? "1" : "0"); } catch { /* */ }
+    return next;
+  });
 
   // Tuning persisted to localStorage
   const [tuning, setTuning] = useState<Tuning>(() => {
@@ -871,9 +880,19 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
         >
           <MaterialIcon name="hub" size={16} />
         </button>
+        <button
+          onClick={toggleOverlays}
+          className={cn(
+            "h-9 w-9 shrink-0 rounded-full backdrop-blur-md border flex items-center justify-center transition-colors",
+            overlaysHidden ? "bg-black/40 border-white/10 text-white/50 hover:text-white" : "bg-black/40 border-white/10 text-white/80 hover:text-white"
+          )}
+          aria-label={overlaysHidden ? "Show overlays" : "Hide overlays"}
+          title={overlaysHidden ? "Show overlays" : "Hide overlays"}
+        >
+          <MaterialIcon name={overlaysHidden ? "visibility" : "visibility_off"} size={16} />
+        </button>
       </div>
 
-      {/* Filter panel */}
       {filtersOpen && (
         <div className="absolute top-14 right-3 z-10 w-[min(360px,calc(100vw-1.5rem))] max-h-[70vh] overflow-y-auto rounded-2xl bg-black/60 backdrop-blur-xl border border-white/10 p-3 shadow-2xl">
           <div className="flex items-center justify-between mb-2">
@@ -1024,6 +1043,7 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
       )}
 
       {/* Legend + edge toggles */}
+      {!overlaysHidden && (
       <div
         className="absolute left-3 z-10 flex flex-col gap-1 text-[11px] text-white/70 bg-black/60 backdrop-blur-xl border border-white/10 rounded-2xl px-2.5 py-2 shadow-2xl"
         style={{ bottom: "calc(0.75rem + var(--mobile-tabbar-h, 0px))" }}
@@ -1047,9 +1067,11 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
           );
         })}
       </div>
+      )}
 
 
       {/* Zoom + recenter cluster, bottom-right */}
+      {!overlaysHidden && (
       <div
         className="absolute right-3 z-10 flex flex-col gap-1.5"
         style={{ bottom: "calc(0.75rem + var(--mobile-tabbar-h, 0px))" }}
@@ -1079,6 +1101,7 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
           <MaterialIcon name="my_location" size={16} />
         </button>
       </div>
+      )}
 
       {/* Stats */}
       <div className="absolute top-14 left-3 z-10 text-[11px] text-white/60 bg-black/40 backdrop-blur-md border border-white/10 rounded-full px-3 py-1.5">
