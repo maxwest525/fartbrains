@@ -603,9 +603,16 @@ export const IdeaDetail = ({ ideaId, onClose, backLabel = "Back", onSelectIdea }
                     {idea.raw_note ?? ""}
                   </ReactMarkdown>
                 </div>
-              ) : (
+              ) : idea.raw_note ? (
                 <p className="whitespace-pre-wrap text-sm">{idea.raw_note}</p>
+              ) : (
+                <div className="rounded-xl glass-card-quiet border-dashed p-4 text-xs text-muted-foreground">
+                  No note yet — tap Edit to add the idea text.
+                </div>
               )}
+            </CollapsibleSection>
+          );
+        })()}
             </CollapsibleSection>
           );
         })()}
