@@ -1085,8 +1085,9 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
               setTimeout(() => handleGenerateAndSave({ note: pasted }), 0);
             }}
             placeholder={ph.note}
-            rows={isTranscript ? 8 : source === "list" ? 5 : 4}
-            className="rounded-2xl bg-secondary/60 border-transparent text-[18px] font-medium px-4 py-3 leading-snug resize-none placeholder:font-normal placeholder:text-muted-foreground/70"
+            rows={isTranscript ? 6 : source === "list" ? 4 : 3}
+            className="rounded-2xl bg-secondary/60 border-transparent text-[16px] font-medium px-4 py-2.5 leading-snug resize-none placeholder:font-normal placeholder:text-muted-foreground/70"
+
           />
         </div>
       ) : !preview ? (
