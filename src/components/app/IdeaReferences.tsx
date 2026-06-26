@@ -5,6 +5,7 @@ import {
   useAutoRefreshReferences,
   type IdeaReference,
 } from "@/hooks/useIdeaReferences";
+import { CollapsibleSection } from "./CollapsibleSection";
 
 type Props = { ideaId: string };
 
@@ -44,17 +45,15 @@ export const IdeaReferences = ({ ideaId }: Props) => {
   if (!isLoading && !running && data.length === 0) return null;
 
   return (
-    <section>
-      <div className="flex items-center justify-between mb-2 gap-2">
-        <h3 className="text-sm font-semibold flex items-center gap-1.5">
-          <Sparkles className="h-3.5 w-3.5 text-primary" />
-          Links &amp; references
-        </h3>
+    <CollapsibleSection
+      id={`${ideaId}:references`}
+      title={<span className="flex items-center gap-1.5"><Sparkles className="h-3.5 w-3.5 text-primary" /> Links &amp; references</span>}
+      actions={
         <button
           type="button"
           onClick={() => refresh()}
           disabled={running}
-          className="inline-flex items-center gap-1 h-7 px-2.5 rounded-full text-[11.5px] font-medium text-muted-foreground hover:text-foreground hover:bg-secondary/60 transition disabled:opacity-50"
+          className="inline-flex items-center gap-1 text-[11.5px] font-medium text-muted-foreground hover:text-foreground transition disabled:opacity-50"
           title="Re-find links"
         >
           {running ? (
@@ -64,7 +63,8 @@ export const IdeaReferences = ({ ideaId }: Props) => {
           )}
           {running ? "Finding…" : "Refresh"}
         </button>
-      </div>
+      }
+    >
 
       {data.length === 0 && running ? (
         <div className="rounded-md border border-border/60 bg-muted/20 p-3 flex items-center gap-2 text-xs text-muted-foreground">
@@ -78,7 +78,7 @@ export const IdeaReferences = ({ ideaId }: Props) => {
           ))}
         </ul>
       )}
-    </section>
+    </CollapsibleSection>
   );
 };
 
@@ -101,7 +101,7 @@ const ReferenceRow = ({ item: ref }: { item: IdeaReference }) => {
             <div className="flex items-center gap-2 min-w-0">
               <div className="text-sm font-medium truncate">{ref.name}</div>
               {ref.source === "ai_guess" && (
-                <span className="text-[10px] uppercase tracking-wide px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground border border-border/60 shrink-0">
+                  <span className="text-[10px] uppercase tracking-wide text-muted-foreground shrink-0">
                   best guess
                 </span>
               )}

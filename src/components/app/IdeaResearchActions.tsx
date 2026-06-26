@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { ThinkingPanel } from "./ThinkingPanel";
 import { cn } from "@/lib/utils";
+import { CollapsibleSection } from "./CollapsibleSection";
 
 type Props = {
   ideaTitle: string;
@@ -120,11 +121,10 @@ const ResearchSection = ({
   const accent = icon === "research" ? "text-primary" : "text-accent";
 
   return (
-    <section>
-      <div className="mb-2 flex items-center justify-between gap-2">
-        <h3 className="text-sm font-semibold flex items-center gap-1.5">
-          <Icon className={cn("h-3.5 w-3.5", accent)} /> {title}
-        </h3>
+    <CollapsibleSection
+      id={`research:${title.toLowerCase().replace(/\s+/g, "-")}`}
+      title={<span className="flex items-center gap-1.5"><Icon className={cn("h-3.5 w-3.5", accent)} /> {title}</span>}
+      actions={
         <Button
           type="button"
           variant="ghost"
@@ -142,7 +142,8 @@ const ResearchSection = ({
           )}
           {hasResult ? "Run again" : runLabel}
         </Button>
-      </div>
+      }
+    >
 
       <div className="space-y-2">
         <div className="relative">
@@ -182,7 +183,7 @@ const ResearchSection = ({
           </div>
         )}
       </div>
-    </section>
+    </CollapsibleSection>
   );
 };
 
