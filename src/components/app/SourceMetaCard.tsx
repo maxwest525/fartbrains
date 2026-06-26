@@ -14,16 +14,16 @@ type Display = {
 };
 
 const KIND_DISPLAY: Record<NonNullable<SourceMeta["kind"]>, Display> = {
-  instagram: { Icon: Instagram, label: "Instagram", tone: "text-pink-500", desc: "Reel / post" },
-  tiktok:    { Icon: Music2,    label: "TikTok",    tone: "text-foreground", desc: "Short video" },
-  youtube:   { Icon: Youtube,   label: "YouTube",   tone: "text-red-500", desc: "Video" },
-  webpage:   { Icon: Globe,     label: "Webpage",   tone: "text-primary", desc: "Article" },
+  instagram: { Icon: Instagram, label: "Instagram", tone: "bg-pink-500/10 text-pink-500 border-pink-500/20",        desc: "Reel / post" },
+  tiktok:    { Icon: Music2,    label: "TikTok",    tone: "bg-foreground/10 text-foreground border-border",         desc: "Short video" },
+  youtube:   { Icon: Youtube,   label: "YouTube",   tone: "bg-red-500/10 text-red-500 border-red-500/20",            desc: "Video" },
+  webpage:   { Icon: Globe,     label: "Webpage",   tone: "bg-primary/10 text-primary border-primary/20",            desc: "Article" },
 };
 
 const DEFAULT_DISPLAY: Display = {
   Icon: FileText,
   label: "Source",
-  tone: "text-muted-foreground",
+  tone: "bg-muted text-muted-foreground border-border",
   desc: "",
 };
 
@@ -62,19 +62,22 @@ export const SourceMetaCard = ({ idea }: Props) => {
             onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
           />
         ) : (
-          <div className={cn("h-16 w-16 sm:h-20 sm:w-20 flex items-center justify-center shrink-0", display.tone)}>
+          <div className={cn("h-16 w-16 sm:h-20 sm:w-20 rounded-xl flex items-center justify-center shrink-0", display.tone)}>
             <Icon className="h-7 w-7" strokeWidth={1.8} />
           </div>
         )}
 
         <div className="flex-1 min-w-0 space-y-1.5">
           <div className="flex items-center gap-1.5 flex-wrap">
-            <span className={cn("inline-flex items-center gap-1 text-[10.5px] font-semibold uppercase tracking-wide", display.tone)}>
+            <span className={cn(
+              "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10.5px] font-semibold uppercase tracking-wide",
+              display.tone
+            )}>
               <Icon className="h-3 w-3" />
               {display.label}
             </span>
             {meta.hasTranscript && (
-              <span className="inline-flex items-center gap-1 text-[10.5px] font-semibold uppercase tracking-wide text-accent">
+              <span className="inline-flex items-center gap-1 rounded-full border border-accent/30 bg-accent/10 px-2 py-0.5 text-[10.5px] font-semibold uppercase tracking-wide text-accent">
                 <Mic className="h-3 w-3" />
                 Transcribed
               </span>

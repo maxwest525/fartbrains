@@ -1,7 +1,7 @@
-// Idea node match: hybrid recommender.
-// 1) Prefilter by tag overlap, lightweight text similarity, shared folder,
+// Related Nodes: hybrid recommender.
+// 1) Prefilter the user's library by tag overlap (Jaccard), shared folder,
 //    and shared idea_references hosts.
-// 2) Send the top candidates to AI to re-rank with a short reason.
+// 2) Send the top ~15 candidates to the LLM to re-rank with a short reason.
 // Returns up to 5 results. Quality over quantity — empty array if nothing fits.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
@@ -16,7 +16,6 @@ type IdeaRow = {
   title: string | null;
   ai_summary: string | null;
   raw_note: string | null;
-  extracted_text: string | null;
   tags: string[] | null;
   folder_id: string | null;
 };
@@ -53,7 +52,7 @@ Deno.serve(async (req) => {
 
     const { data: all, error: ideasErr } = await userClient
       .from("ideas")
-      .select("id, title, ai_summary, raw_note, extracted_text, tags, folder_id")
+      .select("id, title, ai_summary, raw_note, tags, folder_id")
       .order("updated_at", { ascending: false })
       .limit(400);
     if (ideasErr) return json({ error: ideasErr.message }, 500);
@@ -82,7 +81,6 @@ Deno.serve(async (req) => {
     const targetTags = new Set((target.tags ?? []).map((t: string) => t.toLowerCase()));
     const targetHosts = hostsByIdea.get(target.id) ?? new Set<string>();
     const targetFolder = target.folder_id;
-    const targetTokens = tokens([target.title, target.ai_summary, target.raw_note, target.extracted_text].filter(Boolean).join(" "));
 
     const scored: ScoredCandidate[] = (all ?? [])
       .filter((i: IdeaRow) => i.id !== ideaId)
@@ -103,26 +101,24 @@ Deno.serve(async (req) => {
         let hostHits = 0;
         for (const h of hosts) if (targetHosts.has(h)) hostHits += 1;
         const hostBonus = Math.min(hostHits, 3) * 0.08;
-        const candidateTokens = tokens([i.title, i.ai_summary, i.raw_note, i.extracted_text].filter(Boolean).join(" "));
-        const semanticOverlap = tokenOverlap(targetTokens, candidateTokens);
 
-        const score = (jaccard * 0.58) + (semanticOverlap * 0.27) + folderBonus + hostBonus;
+        const score = jaccard + folderBonus + hostBonus;
         return {
           id: i.id,
           title: i.title ?? "",
-          summary: (i.ai_summary ?? i.raw_note ?? i.extracted_text ?? "").slice(0, 420),
+          summary: (i.ai_summary ?? i.raw_note ?? "").slice(0, 320),
           tags,
           score,
         };
       })
-      .filter((c) => c.score >= 0.035)
+      .filter((c) => c.score > 0)
       .sort((a, b) => b.score - a.score)
       .slice(0, 15);
 
     if (scored.length === 0) return json({ related: [] });
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) return json({ related: fallbackRelated(scored) });
+    if (!LOVABLE_API_KEY) return json({ error: "AI key missing" }, 500);
 
     const targetBlock = [
       `TITLE: ${target.title ?? ""}`,
@@ -135,7 +131,7 @@ Deno.serve(async (req) => {
         `[${idx}] id=${c.id} score=${c.score.toFixed(2)}\n  title: ${c.title}\n  ${c.summary ? `notes: ${c.summary}` : ""}${c.tags.length ? `\n  tags: ${c.tags.join(", ")}` : ""}`,
       ).join("\n\n");
 
-    const systemPrompt = `You are the Idea Node Match engine for a personal idea graph. Candidates were pre-ranked by tag overlap, text similarity, shared folders, and shared references. Re-rank and pick up to 5 that are MEANINGFULLY related — same topic, complementary insight, contrasting take, useful next step, or shared theme. Quality over quantity; return [] if nothing fits.
+    const systemPrompt = `You connect related nodes in a personal idea library. Candidates were pre-ranked by tag/folder/reference overlap. Re-rank and pick up to 5 that are MEANINGFULLY related — same topic, complementary insight, contrasting take, useful next step, or shared theme. Quality over quantity; return [] if nothing fits.
 
 Respond with ONLY valid JSON:
 {"related":[{"id":"<uuid>","reason":"<max 12 words explaining the connection>"}]}
@@ -151,7 +147,7 @@ No prose, no markdown fences.`;
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
+        model: "google/gemini-2.5-flash-lite",
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: userPrompt },
@@ -165,7 +161,11 @@ No prose, no markdown fences.`;
       if (resp.status === 429) return json({ error: "Rate limit, try again shortly" }, 429);
       if (resp.status === 402) return json({ error: "AI credits exhausted" }, 402);
       // Fall back to top scored, no reasons.
-      return json({ related: fallbackRelated(scored) });
+      return json({
+        related: scored.slice(0, 5).map((c) => ({
+          id: c.id, title: c.title, reason: `Shared tags: ${c.tags.slice(0, 3).join(", ") || "—"}`,
+        })),
+      });
     }
 
     const data = await resp.json();
@@ -187,7 +187,7 @@ No prose, no markdown fences.`;
         reason: String(r.reason ?? "").slice(0, 140),
       }));
 
-    return json({ related: related.length ? related : fallbackRelated(scored) });
+    return json({ related });
   } catch (e) {
     console.error("related-ideas error:", e);
     return json({ error: e instanceof Error ? e.message : "Unknown error" }, 500);
@@ -199,38 +199,4 @@ function json(body: unknown, status = 200) {
     status,
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
-}
-
-const STOP = new Set([
-  "the", "and", "for", "with", "that", "this", "from", "have", "you", "your", "are", "was", "but", "not", "can", "into", "about", "they", "them", "then", "than", "what", "when", "where", "how", "why", "its", "all", "out", "use", "using", "idea", "ideas",
-]);
-
-function tokens(text: string): Set<string> {
-  return new Set(
-    text
-      .toLowerCase()
-      .replace(/https?:\/\/\S+/g, " ")
-      .replace(/[^a-z0-9\s-]/g, " ")
-      .split(/\s+/)
-      .map((t) => t.replace(/^-+|-+$/g, ""))
-      .filter((t) => t.length >= 4 && !STOP.has(t))
-      .slice(0, 140),
-  );
-}
-
-function tokenOverlap(a: Set<string>, b: Set<string>): number {
-  if (a.size === 0 || b.size === 0) return 0;
-  let inter = 0;
-  for (const t of b) if (a.has(t)) inter += 1;
-  return inter / Math.sqrt(a.size * b.size);
-}
-
-function fallbackRelated(scored: ScoredCandidate[]) {
-  return scored.slice(0, 5).map((c) => ({
-    id: c.id,
-    title: c.title,
-    reason: c.tags.length
-      ? `Shared theme: ${c.tags.slice(0, 3).join(", ")}`
-      : "Similar wording and idea context",
-  }));
 }

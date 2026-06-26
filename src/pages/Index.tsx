@@ -4,6 +4,7 @@ import { MaterialIcon } from "@/components/ui/MaterialIcon";
 import { Input } from "@/components/ui/input";
 import { IdeaList } from "@/components/app/IdeaList";
 import { IdeaDetail } from "@/components/app/IdeaDetail";
+import { AshChatPanel, type AshChatHandle } from "@/components/app/home/AshChatPanel";
 import { VoiceOrb } from "@/components/app/VoiceOrb";
 import { UrlCaptureScreen } from "@/components/app/UrlCaptureScreen";
 import { ComposeIdea } from "@/components/app/ComposeIdea";
@@ -48,6 +49,7 @@ const Shell = () => {
   const isMobile = useIsMobile();
   const [liveMode, setLiveMode] = useState(false);
   const [speaking, setSpeaking] = useState(false);
+  const chatRef = useRef<AshChatHandle>(null);
   const composeRef = useRef<HTMLDivElement>(null);
 
   // Live chat: stream replies via useAshChat and speak the assistant's reply.
@@ -358,20 +360,8 @@ const Shell = () => {
             style={{ paddingBottom: "calc(var(--ash-dock-h, 0px) + env(safe-area-inset-bottom) + (var(--mobile-tabbar-h, 0px)) + 1.25rem)" }}
           >
 
-            <div ref={composeRef} className="w-full px-3 sm:px-6 lg:px-10 pt-3 sm:pt-8 pb-4 flex-1 min-h-0 flex flex-col items-center gap-3 sm:gap-6 max-w-3xl mx-auto">
+            <div ref={composeRef} className="w-full px-3 sm:px-6 lg:px-10 pt-6 sm:pt-10 pb-4 flex-1 min-h-0 flex flex-col items-center gap-5 sm:gap-6 max-w-3xl mx-auto">
 
-
-              <ComposeIdea
-                defaultFolderId={defaultFolderId}
-                onCreated={(id) => {
-                  setSelectedId(id);
-                  handleFilterChange({ kind: "recent" });
-                }}
-                onOpenExisting={(id) => {
-                  setSelectedId(id);
-                  handleFilterChange({ kind: "recent" });
-                }}
-              />
 
               <VoiceOrb
                 speaking={speaking}

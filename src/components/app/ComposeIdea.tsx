@@ -580,10 +580,10 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
           type="button"
           onClick={() => setFolder(NO_FOLDER)}
           className={cn(
-            "shrink-0 inline-flex items-center gap-1 h-8 px-1 text-[13px] font-medium transition-colors press",
+            "shrink-0 inline-flex items-center gap-1 h-8 px-3 rounded-full text-[13px] font-medium border transition-colors press",
             folder === NO_FOLDER
-              ? "text-primary"
-              : "text-muted-foreground hover:text-foreground"
+              ? "bg-primary text-primary-foreground border-primary"
+              : "bg-secondary/60 text-muted-foreground border-transparent hover:text-foreground"
           )}
         >
           <Inbox className="h-3.5 w-3.5" />
@@ -597,10 +597,10 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
               type="button"
               onClick={() => setFolder(f.id)}
               className={cn(
-                "shrink-0 inline-flex items-center gap-1 h-8 px-1 text-[13px] font-medium transition-colors press max-w-[160px]",
+                "shrink-0 inline-flex items-center gap-1 h-8 px-3 rounded-full text-[13px] font-medium border transition-colors press max-w-[160px]",
                 active
-                  ? "text-primary"
-                  : "text-muted-foreground hover:text-foreground"
+                  ? "bg-primary text-primary-foreground border-primary"
+                  : "bg-secondary/60 text-muted-foreground border-transparent hover:text-foreground"
               )}
               title={f.name}
             >
@@ -612,7 +612,7 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
         <button
           type="button"
           onClick={() => setNewFolderOpen(true)}
-          className="shrink-0 inline-flex items-center gap-1 h-8 px-1 text-[13px] font-medium text-muted-foreground hover:text-foreground transition-colors press"
+          className="shrink-0 inline-flex items-center gap-1 h-8 px-3 rounded-full text-[13px] font-medium border border-dashed border-border/70 text-muted-foreground hover:text-foreground hover:border-primary/50 transition-colors press"
         >
           <Plus className="h-3.5 w-3.5" />
           New
@@ -625,7 +625,7 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
   if (source === "transcript") {
     return (
       <>
-        <div className="w-full rounded-2xl bg-card border border-border/60 p-3 sm:p-4 space-y-3 shadow-sm">
+        <div className="rounded-2xl bg-card border border-border/60 p-3 sm:p-4 space-y-3 shadow-sm">
           <SourcePicker value={source} onChange={handleSourceChange} />
           {folderChips}
         </div>
@@ -643,7 +643,7 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
 
   if (source === "project") {
     return (
-      <div className="w-full rounded-2xl bg-card border border-border/60 p-3 sm:p-4 space-y-3 shadow-sm">
+      <div className="rounded-2xl bg-card border border-border/60 p-3 sm:p-4 space-y-3 shadow-sm">
         <SourcePicker value={source} onChange={handleSourceChange} />
         <ProjectComposer saving={saving || createIdea.isPending} onCreate={handleCreateProject} />
         {folderChips}
@@ -653,7 +653,7 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
 
   if (source === "prompt") {
     return (
-      <div className="w-full rounded-2xl bg-card border border-border/60 p-3 sm:p-4 space-y-3 shadow-sm">
+      <div className="rounded-2xl bg-card border border-border/60 p-3 sm:p-4 space-y-3 shadow-sm">
         <SourcePicker value={source} onChange={handleSourceChange} />
 
         <div className="rounded-xl bg-secondary/40 border border-border/50 px-3 py-2.5 flex items-start gap-2.5">
@@ -691,9 +691,8 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
               if (optimizedPrompt) setOptimizedPrompt(null);
             }}
             placeholder={ph.note}
-            rows={4}
-            className="rounded-2xl bg-secondary/60 border-transparent text-[15px] px-4 py-2.5 leading-snug resize-none placeholder:text-muted-foreground/70"
-
+            rows={6}
+            className="rounded-2xl bg-secondary/60 border-transparent text-[16px] px-4 py-3 leading-snug resize-none placeholder:text-muted-foreground/70"
           />
           <div className="text-[11.5px] text-muted-foreground px-1 flex justify-between">
             <span>{note.trim().length.toLocaleString()} chars</span>
@@ -847,7 +846,7 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
   }
 
   return (
-    <div className="w-full rounded-2xl bg-card border border-border/60 p-3 sm:p-4 space-y-3 shadow-sm">
+    <div className="rounded-2xl bg-card border border-border/60 p-3 sm:p-4 space-y-3 shadow-sm">
       <SourcePicker value={source} onChange={handleSourceChange} />
 
       {needsUrl && (
@@ -890,10 +889,13 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
               det.kind === "youtube"   ? Youtube :
               det.kind === "webpage"   ? Globe :
                                          Link2;
-            const tone = det.kind === "invalid" ? "text-destructive" : "text-primary";
+            const tone =
+              det.kind === "invalid"
+                ? "text-destructive bg-destructive/10 border-destructive/30"
+                : "text-primary bg-primary/10 border-primary/20";
             return (
               <div className={cn(
-                "flex items-center gap-2 px-0 py-1.5 text-[12px]",
+                "flex items-center gap-2 rounded-lg border px-2.5 py-1.5 text-[12px]",
                 tone,
               )}>
                 <Icon className="h-3.5 w-3.5 shrink-0" />
@@ -966,25 +968,25 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
         <div ref={previewRef} className="rounded-2xl border border-border/70 bg-secondary/30 p-3 sm:p-4 space-y-3 scroll-mt-20">
           {(() => {
             const meta = {
-              instagram: { Icon: Instagram, label: "Instagram", desc: "Audio transcription + caption", tone: "text-pink-500" },
-              tiktok:    { Icon: Music2,    label: "TikTok",    desc: "Title & description",           tone: "text-foreground" },
-              youtube:   { Icon: Youtube,   label: "YouTube",   desc: "Audio transcription",            tone: "text-red-500" },
-              webpage:   { Icon: Globe,     label: "Webpage",   desc: "Article extract",                tone: "text-primary" },
+              instagram: { Icon: Instagram, label: "Instagram", desc: "Audio transcription + caption", tone: "bg-pink-500/10 text-pink-500" },
+              tiktok:    { Icon: Music2,    label: "TikTok",    desc: "Title & description",           tone: "bg-foreground/10 text-foreground" },
+              youtube:   { Icon: Youtube,   label: "YouTube",   desc: "Audio transcription",            tone: "bg-red-500/10 text-red-500" },
+              webpage:   { Icon: Globe,     label: "Webpage",   desc: "Article extract",                tone: "bg-primary/10 text-primary" },
             }[preview.sourceKind];
             const SrcIcon = meta.Icon;
             return (
           <div className="flex items-start gap-2">
-            <div className={cn("h-9 w-9 flex items-center justify-center shrink-0 mt-0.5", meta.tone)}>
+            <div className={cn("h-9 w-9 rounded-[10px] flex items-center justify-center shrink-0 mt-0.5", meta.tone)}>
               <SrcIcon className="h-4 w-4" />
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-1.5 flex-wrap">
-                <span className={cn("inline-flex items-center gap-1 px-0 py-0.5 text-[10.5px] font-semibold uppercase tracking-wide", meta.tone)}>
+                <span className={cn("inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10.5px] font-semibold uppercase tracking-wide", meta.tone)}>
                   <SrcIcon className="h-3 w-3" />
                   {meta.label}
                 </span>
                 {preview.hasTranscript && (
-                  <span className="inline-flex items-center px-0 py-0.5 text-[10.5px] font-semibold uppercase tracking-wide text-muted-foreground">
+                  <span className="inline-flex items-center rounded-full bg-secondary px-2 py-0.5 text-[10.5px] font-semibold uppercase tracking-wide text-muted-foreground">
                     Transcribed
                   </span>
                 )}
@@ -1069,21 +1071,10 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
       )}
 
       {!preview && (source === "note" || source === "list" || isTranscript) ? (
-        <div className="space-y-2">
+        <div className="space-y-1.5">
           <label className="block text-[11px] font-semibold uppercase tracking-wide text-muted-foreground px-1">
             {isTranscript ? "Transcript or long text" : source === "list" ? "Checklist items" : "Your idea"}
           </label>
-          {/* Optional title input — gives the user a visible "idea name" field
-              before the body, instead of relying on the first line. */}
-          {!isTranscript && (
-            <Input
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="Title (optional)"
-              maxLength={200}
-              className="h-11 rounded-xl bg-secondary/60 border-transparent text-[15px] font-medium px-4 placeholder:font-normal placeholder:text-muted-foreground/70"
-            />
-          )}
           <Textarea
             ref={noteTextareaRef}
             value={note}
@@ -1097,8 +1088,8 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
               setTimeout(() => handleGenerateAndSave({ note: pasted }), 0);
             }}
             placeholder={ph.note}
-            rows={isTranscript ? 6 : source === "list" ? 4 : 3}
-            className="rounded-2xl bg-secondary/60 border-transparent text-[16px] font-medium px-4 py-2.5 leading-snug resize-none placeholder:font-normal placeholder:text-muted-foreground/70"
+            rows={isTranscript ? 8 : source === "list" ? 5 : 4}
+            className="rounded-2xl bg-secondary/60 border-transparent text-[18px] font-medium px-4 py-3 leading-snug resize-none placeholder:font-normal placeholder:text-muted-foreground/70"
           />
         </div>
       ) : !preview ? (

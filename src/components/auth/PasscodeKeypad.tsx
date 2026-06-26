@@ -133,7 +133,7 @@ export const PasscodeKeypad = ({ onUnlocked }: Props) => {
     : "Enter the passcode to unlock";
 
   return (
-    <div className="flex flex-col items-center gap-[clamp(0.75rem,3dvh,2.25rem)] select-none w-full">
+    <div className="flex flex-col items-center gap-7 select-none">
       <div className="flex items-center justify-center text-white/90">
         <Lock className="h-8 w-8" strokeWidth={1.8} />
       </div>
@@ -177,14 +177,14 @@ export const PasscodeKeypad = ({ onUnlocked }: Props) => {
           : (error ?? "")}
       </div>
 
-      {/* Keypad — fills the available width on mobile so each digit is a fat target. */}
-      <div className="grid w-full max-w-[min(34rem,92vw)] grid-cols-3 gap-4 sm:gap-5">
+      {/* Keypad */}
+      <div className="grid grid-cols-3 gap-5 sm:gap-4">
         {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => (
           <KeyButton key={n} onClick={() => press(String(n))} disabled={lockoutLeft > 0}>
             {n}
           </KeyButton>
         ))}
-        <div className="aspect-square w-full" />
+        <div className="h-[76px] w-[76px] sm:h-16 sm:w-16" />
         <KeyButton onClick={() => press("0")} disabled={lockoutLeft > 0}>
           0
         </KeyButton>
@@ -193,9 +193,9 @@ export const PasscodeKeypad = ({ onUnlocked }: Props) => {
           onClick={backspace}
           disabled={lockoutLeft > 0 || code.length === 0}
           aria-label="Backspace"
-          className="aspect-square w-full rounded-full flex items-center justify-center text-white/90 hover:bg-white/10 active:bg-white/15 active:scale-95 transition disabled:opacity-30"
+          className="h-[76px] w-[76px] sm:h-16 sm:w-16 rounded-full flex items-center justify-center text-white/90 hover:bg-white/10 active:bg-white/15 active:scale-95 transition disabled:opacity-30"
         >
-          <Delete className="h-9 w-9 sm:h-10 sm:w-10" />
+          <Delete className="h-6 w-6 sm:h-5 sm:w-5" />
         </button>
       </div>
 
@@ -246,10 +246,10 @@ const KeyButton = ({
     onClick={onClick}
     disabled={disabled}
     className={cn(
-      "aspect-square w-full rounded-full",
+      "h-[76px] w-[76px] sm:h-16 sm:w-16 rounded-full",
       "bg-white/[0.08] hover:bg-white/[0.14] active:bg-white/[0.20]",
       "border border-white/15 backdrop-blur-xl",
-      "text-[clamp(40px,12vw,56px)] font-light text-white",
+      "text-[30px] sm:text-[26px] font-light text-white",
       "transition-all duration-100 active:scale-95",
       "focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40",
       "disabled:opacity-40 disabled:cursor-not-allowed",
