@@ -707,6 +707,7 @@ export const IdeaDetail = ({ ideaId, onClose, backLabel = "Back", onSelectIdea }
 
         {!editing && idea && (
           <IdeaResearchActions
+            ideaId={idea.id}
             ideaTitle={idea.title}
             extractedText={idea.extracted_text}
             onAppendExtracted={async (block) => {
