@@ -625,7 +625,7 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
   if (source === "transcript") {
     return (
       <>
-        <div className="rounded-2xl bg-card border border-border/60 p-3 sm:p-4 space-y-3 shadow-sm">
+        <div className="w-full rounded-2xl bg-card border border-border/60 p-3 sm:p-4 space-y-3 shadow-sm">
           <SourcePicker value={source} onChange={handleSourceChange} />
           {folderChips}
         </div>
@@ -643,7 +643,7 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
 
   if (source === "project") {
     return (
-      <div className="rounded-2xl bg-card border border-border/60 p-3 sm:p-4 space-y-3 shadow-sm">
+      <div className="w-full rounded-2xl bg-card border border-border/60 p-3 sm:p-4 space-y-3 shadow-sm">
         <SourcePicker value={source} onChange={handleSourceChange} />
         <ProjectComposer saving={saving || createIdea.isPending} onCreate={handleCreateProject} />
         {folderChips}
@@ -653,7 +653,7 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
 
   if (source === "prompt") {
     return (
-      <div className="rounded-2xl bg-card border border-border/60 p-3 sm:p-4 space-y-3 shadow-sm">
+      <div className="w-full rounded-2xl bg-card border border-border/60 p-3 sm:p-4 space-y-3 shadow-sm">
         <SourcePicker value={source} onChange={handleSourceChange} />
 
         <div className="rounded-xl bg-secondary/40 border border-border/50 px-3 py-2.5 flex items-start gap-2.5">
@@ -846,7 +846,7 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
   }
 
   return (
-    <div className="rounded-2xl bg-card border border-border/60 p-3 sm:p-4 space-y-3 shadow-sm">
+    <div className="w-full rounded-2xl bg-card border border-border/60 p-3 sm:p-4 space-y-3 shadow-sm">
       <SourcePicker value={source} onChange={handleSourceChange} />
 
       {needsUrl && (
