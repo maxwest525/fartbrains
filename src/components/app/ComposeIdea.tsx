@@ -1069,10 +1069,21 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
       )}
 
       {!preview && (source === "note" || source === "list" || isTranscript) ? (
-        <div className="space-y-1.5">
+        <div className="space-y-2">
           <label className="block text-[11px] font-semibold uppercase tracking-wide text-muted-foreground px-1">
             {isTranscript ? "Transcript or long text" : source === "list" ? "Checklist items" : "Your idea"}
           </label>
+          {/* Optional title input — gives the user a visible "idea name" field
+              before the body, instead of relying on the first line. */}
+          {!isTranscript && (
+            <Input
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="Title (optional)"
+              maxLength={200}
+              className="h-11 rounded-xl bg-secondary/60 border-transparent text-[15px] font-medium px-4 placeholder:font-normal placeholder:text-muted-foreground/70"
+            />
+          )}
           <Textarea
             ref={noteTextareaRef}
             value={note}
@@ -1088,7 +1099,6 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
             placeholder={ph.note}
             rows={isTranscript ? 6 : source === "list" ? 4 : 3}
             className="rounded-2xl bg-secondary/60 border-transparent text-[16px] font-medium px-4 py-2.5 leading-snug resize-none placeholder:font-normal placeholder:text-muted-foreground/70"
-
           />
         </div>
       ) : !preview ? (
