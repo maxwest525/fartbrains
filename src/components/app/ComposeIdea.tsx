@@ -889,13 +889,10 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
               det.kind === "youtube"   ? Youtube :
               det.kind === "webpage"   ? Globe :
                                          Link2;
-            const tone =
-              det.kind === "invalid"
-                ? "text-destructive bg-destructive/10 border-destructive/30"
-                : "text-primary bg-primary/10 border-primary/20";
+            const tone = det.kind === "invalid" ? "text-destructive" : "text-primary";
             return (
               <div className={cn(
-                "flex items-center gap-2 rounded-lg border px-2.5 py-1.5 text-[12px]",
+                "flex items-center gap-2 px-0 py-1.5 text-[12px]",
                 tone,
               )}>
                 <Icon className="h-3.5 w-3.5 shrink-0" />
@@ -968,25 +965,25 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
         <div ref={previewRef} className="rounded-2xl border border-border/70 bg-secondary/30 p-3 sm:p-4 space-y-3 scroll-mt-20">
           {(() => {
             const meta = {
-              instagram: { Icon: Instagram, label: "Instagram", desc: "Audio transcription + caption", tone: "bg-pink-500/10 text-pink-500" },
-              tiktok:    { Icon: Music2,    label: "TikTok",    desc: "Title & description",           tone: "bg-foreground/10 text-foreground" },
-              youtube:   { Icon: Youtube,   label: "YouTube",   desc: "Audio transcription",            tone: "bg-red-500/10 text-red-500" },
-              webpage:   { Icon: Globe,     label: "Webpage",   desc: "Article extract",                tone: "bg-primary/10 text-primary" },
+              instagram: { Icon: Instagram, label: "Instagram", desc: "Audio transcription + caption", tone: "text-pink-500" },
+              tiktok:    { Icon: Music2,    label: "TikTok",    desc: "Title & description",           tone: "text-foreground" },
+              youtube:   { Icon: Youtube,   label: "YouTube",   desc: "Audio transcription",            tone: "text-red-500" },
+              webpage:   { Icon: Globe,     label: "Webpage",   desc: "Article extract",                tone: "text-primary" },
             }[preview.sourceKind];
             const SrcIcon = meta.Icon;
             return (
           <div className="flex items-start gap-2">
-            <div className={cn("h-9 w-9 rounded-[10px] flex items-center justify-center shrink-0 mt-0.5", meta.tone)}>
+            <div className={cn("h-9 w-9 flex items-center justify-center shrink-0 mt-0.5", meta.tone)}>
               <SrcIcon className="h-4 w-4" />
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-1.5 flex-wrap">
-                <span className={cn("inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10.5px] font-semibold uppercase tracking-wide", meta.tone)}>
+                <span className={cn("inline-flex items-center gap-1 px-0 py-0.5 text-[10.5px] font-semibold uppercase tracking-wide", meta.tone)}>
                   <SrcIcon className="h-3 w-3" />
                   {meta.label}
                 </span>
                 {preview.hasTranscript && (
-                  <span className="inline-flex items-center rounded-full bg-secondary px-2 py-0.5 text-[10.5px] font-semibold uppercase tracking-wide text-muted-foreground">
+                  <span className="inline-flex items-center px-0 py-0.5 text-[10.5px] font-semibold uppercase tracking-wide text-muted-foreground">
                     Transcribed
                   </span>
                 )}
