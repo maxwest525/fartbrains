@@ -91,6 +91,7 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
   const tuningRef = useRef<Tuning>(DEFAULT_TUNING);
   const cameraRef = useRef({ x: 0, y: 0, zoom: 0.6, tx: 0, ty: 0, tz: 0.6, animating: false });
   const introRef = useRef<{ start: number; duration: number } | null>(null);
+  const reducedMotionRef = useRef<boolean>(prefersReducedMotion());
 
   const hoverRef = useRef<string | null>(null);
   const draggingRef = useRef<{ id: string | null; px: number; py: number; panning: boolean }>({ id: null, px: 0, py: 0, panning: false });
@@ -134,6 +135,16 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
   }, [tuning]);
 
   useEffect(() => { enabledKindsRef.current = enabledKinds; }, [enabledKinds]);
+
+  // Track prefers-reduced-motion live so a mid-session toggle is respected.
+  useEffect(() => {
+    if (typeof window === "undefined" || !window.matchMedia) return;
+    const mql = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const update = () => { reducedMotionRef.current = mql.matches; };
+    update();
+    mql.addEventListener?.("change", update);
+    return () => mql.removeEventListener?.("change", update);
+  }, []);
 
   const folderColor = useMemo(() => {
     const m = new Map<string, string>();
@@ -360,8 +371,9 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
 
     nodesRef.current = nodes;
     edgesRef.current = edges;
-    if (!ready && !__graphIntroPlayed && !prefersReducedMotion()) {
-      introRef.current = { start: performance.now(), duration: 350 };
+    if (!ready && !__graphIntroPlayed && !reducedMotionRef.current) {
+      // Start immediately at mount-time; short + ease-out so it lands fast.
+      introRef.current = { start: performance.now(), duration: 220 };
       __graphIntroPlayed = true;
     } else {
       introRef.current = null;
