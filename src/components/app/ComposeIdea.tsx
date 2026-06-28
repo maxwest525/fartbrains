@@ -847,7 +847,7 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
 
   return (
     <div className="composer-rainbow">
-      <div className="glass-card rounded-[calc(1.25rem-1.5px)] p-3 sm:p-4 space-y-3 text-foreground">
+      <div className="glass-card-strong rounded-[calc(1.25rem-1.5px)] p-3 sm:p-4 space-y-3 text-white">
       <SourcePicker value={source} onChange={handleSourceChange} />
 
 
