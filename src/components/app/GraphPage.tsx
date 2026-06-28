@@ -80,7 +80,9 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
   const visibleNodeIdsRef = useRef<Set<string>>(new Set());
   const enabledKindsRef = useRef<Record<EdgeKind, boolean>>({ tag: true, folder: true, ref: true, kw: true });
   const tuningRef = useRef<Tuning>(DEFAULT_TUNING);
-  const cameraRef = useRef({ x: 0, y: 0, zoom: 1, tx: 0, ty: 0, tz: 1, animating: false });
+  const cameraRef = useRef({ x: 0, y: 0, zoom: 0.6, tx: 0, ty: 0, tz: 0.6, animating: false });
+  const introRef = useRef<{ start: number; duration: number } | null>(null);
+
   const hoverRef = useRef<string | null>(null);
   const draggingRef = useRef<{ id: string | null; px: number; py: number; panning: boolean }>({ id: null, px: 0, py: 0, panning: false });
   const pointersRef = useRef<Map<number, { x: number; y: number }>>(new Map());
@@ -349,7 +351,9 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
 
     nodesRef.current = nodes;
     edgesRef.current = edges;
+    if (!ready) introRef.current = { start: performance.now(), duration: 1600 };
     setReady(true);
+
   }, [ideasQuery.data, refsQuery.data, folderColor, size.w, size.h, tuning.strictness, tuning.clusterCount]);
 
   // Top tags / keywords for filter chips
@@ -513,8 +517,33 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
       // Render
       ctx.clearRect(0, 0, W, H);
       ctx.save();
+      // Intro animation: spin + slope (Y-skew) that eases out
+      const intro = introRef.current;
+      let introRot = 0;
+      let introSkew = 0;
+      let introScale = 1;
+      if (intro) {
+        const t = Math.min(1, (performance.now() - intro.start) / intro.duration);
+        if (t >= 1) {
+          introRef.current = null;
+        } else {
+          const ease = 1 - Math.pow(1 - t, 3); // easeOutCubic
+          const remain = 1 - ease;
+          introRot = remain * Math.PI * 0.9;     // ~160deg spin -> 0
+          introSkew = remain * 0.35;             // slope down -> flat
+          introScale = 0.7 + 0.3 * ease;         // grow into place
+        }
+      }
       ctx.translate(cam.x, cam.y);
+      if (introRot || introSkew || introScale !== 1) {
+        ctx.translate(W / 2 - cam.x, H / 2 - cam.y);
+        ctx.rotate(introRot);
+        ctx.transform(1, introSkew, 0, 1, 0, 0);
+        ctx.scale(introScale, introScale);
+        ctx.translate(-(W / 2 - cam.x), -(H / 2 - cam.y));
+      }
       ctx.scale(cam.zoom, cam.zoom);
+
 
       const hover = hoverRef.current;
       const q = search.trim().toLowerCase();
@@ -840,20 +869,20 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
           )}
           <form
             onSubmit={(e) => { e.preventDefault(); focusOnMatch(); }}
-            className="flex-1 relative"
+            className="flex-1 min-w-0 relative"
           >
-            <MaterialIcon name="search" size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/50" />
+            <MaterialIcon name="search" size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/50 pointer-events-none" />
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search ideas or #tags…"
-              className="w-full h-9 rounded-full bg-black/40 backdrop-blur-md border border-white/10 pl-9 pr-9 text-[13px] text-white placeholder:text-white/40 outline-none focus:border-white/30"
+              className="w-full h-9 rounded-full bg-black/40 backdrop-blur-md border border-white/10 pl-10 pr-10 text-[13px] leading-none text-white placeholder:text-white/40 outline-none focus:border-white/30"
             />
             {search && (
               <button
                 type="button"
                 onClick={() => setSearch("")}
-                className="absolute right-2 top-1/2 -translate-y-1/2 h-6 w-6 rounded-full flex items-center justify-center text-white/50 hover:text-white"
+                className="absolute right-1.5 top-1/2 -translate-y-1/2 h-6 w-6 rounded-full flex items-center justify-center text-white/50 hover:text-white"
                 aria-label="Clear search"
                 title="Clear search"
               >
@@ -861,10 +890,11 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
               </button>
             )}
           </form>
+
         </div>
 
         {/* Row 2: control circles */}
-        <div className="flex items-center gap-1.5 flex-wrap">
+        <div className="flex items-center justify-start gap-1.5 flex-nowrap overflow-x-auto no-scrollbar -mx-1 px-1">
           <button
             onClick={() => { setFiltersOpen((v) => !v); setTuningOpen(false); setLegendOpen(false); }}
             className={cn(
