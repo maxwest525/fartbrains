@@ -947,7 +947,8 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
 
 
       {filtersOpen && (
-        <div className="absolute top-14 right-3 z-10 w-[min(360px,calc(100vw-1.5rem))] max-h-[70vh] overflow-y-auto rounded-2xl bg-black/60 backdrop-blur-xl border border-white/10 p-3 shadow-2xl">
+        <div className="absolute top-[6.5rem] right-3 z-10 w-[min(360px,calc(100vw-1.5rem))] max-h-[70vh] overflow-y-auto rounded-2xl bg-black/60 backdrop-blur-xl border border-white/10 p-3 shadow-2xl">
+
           <div className="flex items-center justify-between mb-2">
             <h3 className="text-[13px] font-semibold text-white">Filters</h3>
             {filterCount > 0 && (
