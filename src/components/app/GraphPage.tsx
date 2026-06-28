@@ -372,8 +372,8 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
     nodesRef.current = nodes;
     edgesRef.current = edges;
     if (!ready && !__graphIntroPlayed && !reducedMotionRef.current) {
-      // Start immediately at mount-time; short + ease-out so it lands fast.
-      introRef.current = { start: performance.now(), duration: 220 };
+      // Start immediately at mount-time; fast spin + slight spread that settles in under 1s.
+      introRef.current = { start: performance.now(), duration: 850 };
       __graphIntroPlayed = true;
     } else {
       introRef.current = null;
