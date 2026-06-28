@@ -372,8 +372,8 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
     nodesRef.current = nodes;
     edgesRef.current = edges;
     if (!ready && !__graphIntroPlayed && !reducedMotionRef.current) {
-      // Start immediately at mount-time; short + ease-out so it lands fast.
-      introRef.current = { start: performance.now(), duration: 220 };
+      // Start immediately at mount-time; fast spin + slight spread that settles in under 1s.
+      introRef.current = { start: performance.now(), duration: 850 };
       __graphIntroPlayed = true;
     } else {
       introRef.current = null;
@@ -556,9 +556,10 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
         } else {
           const ease = 1 - Math.pow(1 - t, 3); // easeOutCubic
           const remain = 1 - ease;
-          introRot = remain * Math.PI * 0.9;     // ~160deg spin -> 0
-          introSkew = remain * 0.35;             // slope down -> flat
-          introScale = 0.7 + 0.3 * ease;         // grow into place
+          // Fast multi-turn spin that winds down, slightly spread (scale > 1 -> 1), no skew.
+          introRot = remain * Math.PI * 5;       // ~2.5 turns -> 0
+          introSkew = 0;
+          introScale = 1.18 - 0.18 * ease;       // slightly spread -> settle
         }
       }
       ctx.translate(cam.x, cam.y);
