@@ -351,7 +351,9 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
 
     nodesRef.current = nodes;
     edgesRef.current = edges;
+    if (!ready) introRef.current = { start: performance.now(), duration: 1600 };
     setReady(true);
+
   }, [ideasQuery.data, refsQuery.data, folderColor, size.w, size.h, tuning.strictness, tuning.clusterCount]);
 
   // Top tags / keywords for filter chips
