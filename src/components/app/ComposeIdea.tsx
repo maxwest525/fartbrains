@@ -551,7 +551,7 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
               }
             }}
             placeholder="New folder name"
-            className="h-11 rounded-xl bg-secondary/60 border-transparent text-[15px] flex-1"
+            className="h-11 rounded-xl text-[15px] flex-1"
             maxLength={60}
           />
           <Button
@@ -625,7 +625,7 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
   if (source === "transcript") {
     return (
       <>
-        <div className="rounded-2xl bg-card border border-border/60 p-3 sm:p-4 space-y-3 shadow-sm">
+        <div className="glass-card rounded-2xl p-3 sm:p-4 space-y-3 text-foreground">
           <SourcePicker value={source} onChange={handleSourceChange} />
           {folderChips}
         </div>
@@ -643,7 +643,7 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
 
   if (source === "project") {
     return (
-      <div className="rounded-2xl bg-card border border-border/60 p-3 sm:p-4 space-y-3 shadow-sm">
+      <div className="glass-card rounded-2xl p-3 sm:p-4 space-y-3 text-foreground">
         <SourcePicker value={source} onChange={handleSourceChange} />
         <ProjectComposer saving={saving || createIdea.isPending} onCreate={handleCreateProject} />
         {folderChips}
@@ -653,7 +653,7 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
 
   if (source === "prompt") {
     return (
-      <div className="rounded-2xl bg-card border border-border/60 p-3 sm:p-4 space-y-3 shadow-sm">
+      <div className="glass-card rounded-2xl p-3 sm:p-4 space-y-3 text-foreground">
         <SourcePicker value={source} onChange={handleSourceChange} />
 
         <div className="rounded-xl bg-secondary/40 border border-border/50 px-3 py-2.5 flex items-start gap-2.5">
@@ -692,7 +692,7 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
             }}
             placeholder={ph.note}
             rows={6}
-            className="rounded-2xl bg-secondary/60 border-transparent text-[16px] px-4 py-3 leading-snug resize-none placeholder:text-muted-foreground/70"
+            className="rounded-2xl text-[16px] px-4 py-3 leading-snug resize-none placeholder:text-muted-foreground/70"
           />
           <div className="text-[11.5px] text-muted-foreground px-1 flex justify-between">
             <span>{note.trim().length.toLocaleString()} chars</span>
@@ -737,7 +737,7 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
               onChange={(e) => setTitle(e.target.value)}
               placeholder={`Title (default: "Prompt for ${promptTarget}")`}
               maxLength={200}
-              className="h-10 rounded-xl bg-card border-border/60 text-[14px]"
+              className="h-10 rounded-xl text-[14px]"
             />
 
             <Textarea
@@ -749,7 +749,7 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
                 setOverrideWarnings(false);
               }}
               rows={10}
-              className="rounded-xl bg-card border-border/60 text-[13.5px] leading-relaxed font-mono resize-y max-h-[50vh]"
+              className="rounded-xl text-[13.5px] leading-relaxed font-mono resize-y max-h-[50vh]"
             />
 
             {promptValidation && (promptValidation.errors.length > 0 || promptValidation.warnings.length > 0) && (
@@ -846,8 +846,10 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
   }
 
   return (
-    <div className="rounded-2xl bg-card border border-border/60 p-3 sm:p-4 space-y-3 shadow-sm">
+    <div className="composer-rainbow">
+      <div className="glass-card rounded-[calc(1.25rem-1.5px)] p-3 sm:p-4 space-y-3 text-foreground">
       <SourcePicker value={source} onChange={handleSourceChange} />
+
 
       {needsUrl && (
         <div className="space-y-1.5">
@@ -878,7 +880,7 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
             autoCapitalize="none"
             autoCorrect="off"
             autoFocus
-            className="h-16 rounded-2xl bg-secondary/60 border-transparent text-[18px] font-medium px-4 placeholder:font-normal placeholder:text-muted-foreground/70"
+            className="h-16 rounded-2xl text-[18px] font-medium px-4 placeholder:font-normal placeholder:text-muted-foreground/70"
           />
           {url.trim() && (() => {
             const det = detectUrlPlatform(url);
@@ -1018,7 +1020,7 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
             onChange={(e) => setTitle(e.target.value)}
             placeholder="Title (optional — AI will suggest one)"
             maxLength={200}
-            className="h-10 rounded-xl bg-card border-border/60 text-[14px]"
+            className="h-10 rounded-xl text-[14px]"
           />
 
           {/* Editable extracted text — user can trim before saving */}
@@ -1026,7 +1028,7 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
             value={preview.text}
             onChange={(e) => setPreview({ ...preview, text: e.target.value })}
             rows={8}
-            className="rounded-xl bg-card border-border/60 text-[13.5px] leading-relaxed resize-y max-h-[40vh]"
+            className="rounded-xl text-[13.5px] leading-relaxed resize-y max-h-[40vh]"
           />
 
           <div className="flex items-center justify-between text-[11.5px] text-muted-foreground">
@@ -1089,7 +1091,7 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
             }}
             placeholder={ph.note}
             rows={isTranscript ? 8 : source === "list" ? 5 : 4}
-            className="rounded-2xl bg-secondary/60 border-transparent text-[18px] font-medium px-4 py-3 leading-snug resize-none placeholder:font-normal placeholder:text-muted-foreground/70"
+            className="rounded-2xl text-[18px] font-medium px-4 py-3 leading-snug resize-none placeholder:font-normal placeholder:text-muted-foreground/70"
           />
         </div>
       ) : !preview ? (
@@ -1098,7 +1100,7 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
           value={note}
           onChange={(e) => setNote(e.target.value)}
           placeholder={ph.note}
-          className="h-16 rounded-2xl bg-secondary/60 border-transparent text-[18px] font-medium px-4 placeholder:font-normal placeholder:text-muted-foreground/70"
+          className="h-16 rounded-2xl text-[18px] font-medium px-4 placeholder:font-normal placeholder:text-muted-foreground/70"
         />
       ) : null}
 
@@ -1126,6 +1128,8 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
           )}
         </Button>
       )}
+      </div>
     </div>
   );
 };
+
