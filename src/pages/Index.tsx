@@ -373,9 +373,6 @@ const Shell = () => {
                   window.dispatchEvent(new CustomEvent("idea-vault:dictate", { detail: text }));
                 }}
               />
-              <p className="text-center text-[12px] text-muted-foreground">
-                Captures land in <button onClick={() => handleFilterChange({ kind: "recent" })} className="underline underline-offset-2 hover:text-foreground">Recents</button> and the All folder.
-              </p>
             </div>
 
 
