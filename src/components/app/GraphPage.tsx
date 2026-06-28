@@ -517,8 +517,33 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
       // Render
       ctx.clearRect(0, 0, W, H);
       ctx.save();
+      // Intro animation: spin + slope (Y-skew) that eases out
+      const intro = introRef.current;
+      let introRot = 0;
+      let introSkew = 0;
+      let introScale = 1;
+      if (intro) {
+        const t = Math.min(1, (performance.now() - intro.start) / intro.duration);
+        if (t >= 1) {
+          introRef.current = null;
+        } else {
+          const ease = 1 - Math.pow(1 - t, 3); // easeOutCubic
+          const remain = 1 - ease;
+          introRot = remain * Math.PI * 0.9;     // ~160deg spin -> 0
+          introSkew = remain * 0.35;             // slope down -> flat
+          introScale = 0.7 + 0.3 * ease;         // grow into place
+        }
+      }
       ctx.translate(cam.x, cam.y);
+      if (introRot || introSkew || introScale !== 1) {
+        ctx.translate(W / 2 - cam.x, H / 2 - cam.y);
+        ctx.rotate(introRot);
+        ctx.transform(1, introSkew, 0, 1, 0, 0);
+        ctx.scale(introScale, introScale);
+        ctx.translate(-(W / 2 - cam.x), -(H / 2 - cam.y));
+      }
       ctx.scale(cam.zoom, cam.zoom);
+
 
       const hover = hoverRef.current;
       const q = search.trim().toLowerCase();
