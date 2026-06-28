@@ -831,77 +831,120 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
       style={{ paddingBottom: "var(--mobile-tabbar-h, 0px)" }}
     >
       {/* Top toolbar */}
-      <div className="absolute top-3 left-3 right-3 z-10 flex items-center gap-2">
-        {onBack && (
-          <button
-            onClick={onBack}
-            className="h-9 w-9 shrink-0 rounded-full bg-black/40 backdrop-blur-md border border-white/10 flex items-center justify-center text-white/80 hover:text-white"
-            aria-label="Back"
-          >
-            <MaterialIcon name="arrow_back" size={20} />
-          </button>
-        )}
-        <form
-          onSubmit={(e) => { e.preventDefault(); focusOnMatch(); }}
-          className="flex-1 max-w-md relative"
-        >
-          <MaterialIcon name="search" size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/50" />
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search ideas or #tags…"
-            className="w-full h-9 rounded-full bg-black/40 backdrop-blur-md border border-white/10 pl-9 pr-9 text-[13px] text-white placeholder:text-white/40 outline-none focus:border-white/30"
-          />
-          {search && (
+      <div className="absolute top-3 left-3 right-3 z-10 flex flex-col gap-2">
+        {/* Row 1: back + search */}
+        <div className="flex items-center gap-2">
+          {onBack && (
             <button
-              type="button"
-              onClick={() => setSearch("")}
-              className="absolute right-2 top-1/2 -translate-y-1/2 h-6 w-6 rounded-full flex items-center justify-center text-white/50 hover:text-white"
-              aria-label="Clear"
+              onClick={onBack}
+              className="h-9 w-9 shrink-0 rounded-full bg-black/40 backdrop-blur-md border border-white/10 flex items-center justify-center text-white/80 hover:text-white"
+              aria-label="Back"
+              title="Back"
             >
-              <MaterialIcon name="close" size={14} />
+              <MaterialIcon name="arrow_back" size={20} />
             </button>
           )}
-        </form>
-        <button
-          onClick={() => { setFiltersOpen((v) => !v); setTuningOpen(false); }}
-          className={cn(
-            "h-9 px-3 rounded-full backdrop-blur-md border text-[13px] inline-flex items-center gap-1.5 transition-colors",
-            filtersOpen || filterCount
-              ? "bg-violet-500/20 border-violet-400/40 text-white"
-              : "bg-black/40 border-white/10 text-white/80 hover:text-white"
-          )}
-          aria-label="Filters"
-        >
-          <MaterialIcon name="tune" size={16} />
-          <span className="hidden sm:inline">Filters</span>
-          {filterCount > 0 && (
-            <span className="ml-0.5 h-5 min-w-[20px] px-1 rounded-full bg-violet-500/80 text-[10px] font-semibold flex items-center justify-center">{filterCount}</span>
-          )}
-        </button>
-        <button
-          onClick={() => { setTuningOpen((v) => !v); setFiltersOpen(false); }}
-          className={cn(
-            "h-9 w-9 shrink-0 rounded-full backdrop-blur-md border flex items-center justify-center transition-colors",
-            tuningOpen ? "bg-cyan-500/20 border-cyan-400/40 text-white" : "bg-black/40 border-white/10 text-white/80 hover:text-white"
-          )}
-          aria-label="Clustering"
-          title="Clustering controls"
-        >
-          <MaterialIcon name="hub" size={16} />
-        </button>
-        <button
-          onClick={toggleOverlays}
-          className={cn(
-            "h-9 w-9 shrink-0 rounded-full backdrop-blur-md border flex items-center justify-center transition-colors",
-            overlaysHidden ? "bg-black/40 border-white/10 text-white/50 hover:text-white" : "bg-black/40 border-white/10 text-white/80 hover:text-white"
-          )}
-          aria-label={overlaysHidden ? "Show overlays" : "Hide overlays"}
-          title={overlaysHidden ? "Show overlays" : "Hide overlays"}
-        >
-          <MaterialIcon name={overlaysHidden ? "visibility" : "visibility_off"} size={16} />
-        </button>
+          <form
+            onSubmit={(e) => { e.preventDefault(); focusOnMatch(); }}
+            className="flex-1 relative"
+          >
+            <MaterialIcon name="search" size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/50" />
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search ideas or #tags…"
+              className="w-full h-9 rounded-full bg-black/40 backdrop-blur-md border border-white/10 pl-9 pr-9 text-[13px] text-white placeholder:text-white/40 outline-none focus:border-white/30"
+            />
+            {search && (
+              <button
+                type="button"
+                onClick={() => setSearch("")}
+                className="absolute right-2 top-1/2 -translate-y-1/2 h-6 w-6 rounded-full flex items-center justify-center text-white/50 hover:text-white"
+                aria-label="Clear search"
+                title="Clear search"
+              >
+                <MaterialIcon name="close" size={14} />
+              </button>
+            )}
+          </form>
+        </div>
+
+        {/* Row 2: control circles */}
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <button
+            onClick={() => { setFiltersOpen((v) => !v); setTuningOpen(false); setLegendOpen(false); }}
+            className={cn(
+              "h-9 w-9 shrink-0 rounded-full backdrop-blur-md border flex items-center justify-center transition-colors relative",
+              filtersOpen || filterCount
+                ? "bg-violet-500/20 border-violet-400/40 text-white"
+                : "bg-black/40 border-white/10 text-white/80 hover:text-white"
+            )}
+            aria-label="Filters"
+            title="Filters"
+          >
+            <MaterialIcon name="tune" size={16} />
+            {filterCount > 0 && (
+              <span className="absolute -top-1 -right-1 h-4 min-w-[16px] px-1 rounded-full bg-violet-500 text-[9px] font-semibold flex items-center justify-center text-white">{filterCount}</span>
+            )}
+          </button>
+          <button
+            onClick={() => { setTuningOpen((v) => !v); setFiltersOpen(false); setLegendOpen(false); }}
+            className={cn(
+              "h-9 w-9 shrink-0 rounded-full backdrop-blur-md border flex items-center justify-center transition-colors",
+              tuningOpen ? "bg-cyan-500/20 border-cyan-400/40 text-white" : "bg-black/40 border-white/10 text-white/80 hover:text-white"
+            )}
+            aria-label="Clustering controls"
+            title="Clustering controls"
+          >
+            <MaterialIcon name="hub" size={16} />
+          </button>
+          <button
+            onClick={() => { setLegendOpen((v) => !v); setFiltersOpen(false); setTuningOpen(false); }}
+            className={cn(
+              "h-9 w-9 shrink-0 rounded-full backdrop-blur-md border flex items-center justify-center transition-colors",
+              legendOpen ? "bg-pink-500/20 border-pink-400/40 text-white" : "bg-black/40 border-white/10 text-white/80 hover:text-white"
+            )}
+            aria-label="Connections"
+            title="Connections"
+          >
+            <MaterialIcon name="share" size={16} />
+          </button>
+          <button
+            onClick={toggleOverlays}
+            className="h-9 w-9 shrink-0 rounded-full backdrop-blur-md border bg-black/40 border-white/10 text-white/80 hover:text-white flex items-center justify-center transition-colors"
+            aria-label={overlaysHidden ? "Show overlays" : "Hide overlays"}
+            title={overlaysHidden ? "Show overlays" : "Hide overlays"}
+          >
+            <MaterialIcon name={overlaysHidden ? "visibility" : "visibility_off"} size={16} />
+          </button>
+          <div className="w-px h-6 bg-white/10 mx-0.5" />
+          <button
+            onClick={() => stepZoom(1)}
+            className="h-9 w-9 shrink-0 rounded-full bg-black/40 backdrop-blur-md border border-white/10 text-white/80 hover:text-white flex items-center justify-center"
+            aria-label="Zoom in"
+            title="Zoom in"
+          >
+            <MaterialIcon name="add" size={18} />
+          </button>
+          <button
+            onClick={() => stepZoom(-1)}
+            className="h-9 w-9 shrink-0 rounded-full bg-black/40 backdrop-blur-md border border-white/10 text-white/80 hover:text-white flex items-center justify-center"
+            aria-label="Zoom out"
+            title="Zoom out"
+          >
+            <MaterialIcon name="remove" size={18} />
+          </button>
+          <button
+            onClick={recenter}
+            className="h-9 w-9 shrink-0 rounded-full bg-black/40 backdrop-blur-md border border-white/10 text-white/80 hover:text-white flex items-center justify-center"
+            aria-label="Recenter view"
+            title="Recenter view"
+          >
+            <MaterialIcon name="my_location" size={16} />
+          </button>
+        </div>
       </div>
+
 
       {filtersOpen && (
         <div className="absolute top-14 right-3 z-10 w-[min(360px,calc(100vw-1.5rem))] max-h-[70vh] overflow-y-auto rounded-2xl bg-black/60 backdrop-blur-xl border border-white/10 p-3 shadow-2xl">
