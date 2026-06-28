@@ -1186,6 +1186,13 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
         className={cn("block touch-none select-none", !ready && "opacity-0")}
       />
 
+      {!ready && (
+        <div className="absolute inset-0 flex items-center justify-center text-white/60 text-sm">
+          Mapping your brain…
+        </div>
+      )}
+
+
       {/* Cluster header label — always shows at least one orienting tag/keyword/match
           unless filters are explicitly emptying the view. Uses the new white-glass
           variant so it pops against the dark aurora. */}
