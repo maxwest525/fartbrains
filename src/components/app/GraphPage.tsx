@@ -91,6 +91,7 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
   const tuningRef = useRef<Tuning>(DEFAULT_TUNING);
   const cameraRef = useRef({ x: 0, y: 0, zoom: 0.6, tx: 0, ty: 0, tz: 0.6, animating: false });
   const introRef = useRef<{ start: number; duration: number } | null>(null);
+  const reducedMotionRef = useRef<boolean>(prefersReducedMotion());
 
   const hoverRef = useRef<string | null>(null);
   const draggingRef = useRef<{ id: string | null; px: number; py: number; panning: boolean }>({ id: null, px: 0, py: 0, panning: false });
