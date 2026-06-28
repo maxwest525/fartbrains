@@ -80,7 +80,9 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
   const visibleNodeIdsRef = useRef<Set<string>>(new Set());
   const enabledKindsRef = useRef<Record<EdgeKind, boolean>>({ tag: true, folder: true, ref: true, kw: true });
   const tuningRef = useRef<Tuning>(DEFAULT_TUNING);
-  const cameraRef = useRef({ x: 0, y: 0, zoom: 1, tx: 0, ty: 0, tz: 1, animating: false });
+  const cameraRef = useRef({ x: 0, y: 0, zoom: 0.6, tx: 0, ty: 0, tz: 0.6, animating: false });
+  const introRef = useRef<{ start: number; duration: number } | null>(null);
+
   const hoverRef = useRef<string | null>(null);
   const draggingRef = useRef<{ id: string | null; px: number; py: number; panning: boolean }>({ id: null, px: 0, py: 0, panning: false });
   const pointersRef = useRef<Map<number, { x: number; y: number }>>(new Map());
