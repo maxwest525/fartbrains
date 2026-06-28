@@ -1088,9 +1088,9 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
       {/* Zoom + recenter cluster, bottom-right */}
       {!overlaysHidden && (
       <div
-        className="absolute right-3 z-10 flex flex-col gap-1.5"
-        style={{ bottom: "calc(0.75rem + var(--mobile-tabbar-h, 0px))" }}
+        className="absolute right-3 top-14 z-10 flex flex-row gap-1.5"
       >
+
         <button
           onClick={() => stepZoom(1)}
           className="h-9 w-9 rounded-full bg-black/60 backdrop-blur-xl border border-white/10 text-white/85 hover:text-white flex items-center justify-center shadow-lg"
