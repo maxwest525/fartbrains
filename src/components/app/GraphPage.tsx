@@ -1186,11 +1186,35 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
         className={cn("block touch-none select-none", !ready && "opacity-0")}
       />
 
-      {!ready && (
-        <div className="absolute inset-0 flex items-center justify-center text-white/60 text-sm">
-          Mapping your brain…
-        </div>
-      )}
+      {/* Cluster header label — always shows at least one orienting tag/keyword/match
+          unless filters are explicitly emptying the view. Uses the new white-glass
+          variant so it pops against the dark aurora. */}
+      {ready && (() => {
+        const q = search.trim().toLowerCase();
+        const firstTag = tagFilter.size > 0 ? [...tagFilter][0] : null;
+        const firstFolder = folderFilter.size > 0 ? [...folderFilter][0] : null;
+        const firstKw = keywordFilter.size > 0 ? [...keywordFilter][0] : null;
+        const label =
+          firstTag ? `#${firstTag}` :
+          firstKw ? firstKw :
+          firstFolder ? (folders.find((f) => f.id === firstFolder)?.name ?? "Folder") :
+          q ? `Matching "${q}"` :
+          topTags[0]?.tag ? `#${topTags[0].tag}` :
+          topKeywords[0] ? topKeywords[0] :
+          "All ideas";
+        const sub =
+          filterCount > 0 ? `${visibleNodeIdsRef.current.size || 0} of ${nodesRef.current.length} visible` :
+          `${nodesRef.current.length} nodes · ${edgesRef.current.length} links`;
+        return (
+          <div className="pointer-events-none absolute left-1/2 -translate-x-1/2 z-[5]" style={{ top: 104 }}>
+            <GlassSurface variant="white" className="px-3.5 py-1.5 rounded-full flex items-center gap-2 shadow-lg">
+              <MaterialIcon name="hub" size={14} className="opacity-70" />
+              <span className="text-[12px] font-semibold tracking-tight">{label}</span>
+              <span className="text-[11px] opacity-60">· {sub}</span>
+            </GlassSurface>
+          </div>
+        );
+      })()}
     </div>
   );
 };
