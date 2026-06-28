@@ -1097,78 +1097,41 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
         </div>
       )}
 
-      {/* Legend + edge toggles */}
-      {!overlaysHidden && (
-      <div
-        className="absolute left-3 top-24 z-10 flex flex-col gap-1 text-[11px] text-white/70 bg-black/60 backdrop-blur-xl border border-white/10 rounded-2xl px-2.5 py-2 shadow-2xl"
-      >
-
-        <button
-          onClick={toggleLegend}
-          className="flex items-center gap-1.5 px-1 pb-0.5 text-[10px] uppercase tracking-wider text-white/50 hover:text-white/80 transition-colors"
-          aria-expanded={!legendCollapsed}
-        >
-          <MaterialIcon name={legendCollapsed ? "chevron_right" : "expand_more"} size={12} />
-          Connections
-        </button>
-        {!legendCollapsed && (["tag", "ref", "kw", "folder"] as EdgeKind[]).map((k) => {
-          const on = enabledKinds[k];
-          return (
-            <button
-              key={k}
-              onClick={() => toggleKind(k)}
-              className={cn(
-                "flex items-center gap-2 px-2 py-1 rounded-lg transition-colors text-left",
-                on ? "text-white hover:bg-white/10" : "text-white/35 hover:bg-white/5"
-              )}
-            >
-              <span className="h-2 w-6 rounded-full" style={{ background: on ? EDGE_STYLE[k].stroke.replace(/0\.\d+/, "0.85") : "rgba(255,255,255,0.1)" }} />
-              <span className="flex-1">{EDGE_STYLE[k].label}</span>
-              <MaterialIcon name={on ? "visibility" : "visibility_off"} size={14} />
-            </button>
-          );
-        })}
-      </div>
-      )}
-
-
-      {/* Zoom + recenter cluster, bottom-right */}
-      {!overlaysHidden && (
-      <div
-        className="absolute right-3 top-14 z-10 flex flex-row gap-1.5"
-      >
-
-        <button
-          onClick={() => stepZoom(1)}
-          className="h-9 w-9 rounded-full bg-black/60 backdrop-blur-xl border border-white/10 text-white/85 hover:text-white flex items-center justify-center shadow-lg"
-          aria-label="Zoom in"
-          title="Zoom in"
-        >
-          <MaterialIcon name="add" size={18} />
-        </button>
-        <button
-          onClick={() => stepZoom(-1)}
-          className="h-9 w-9 rounded-full bg-black/60 backdrop-blur-xl border border-white/10 text-white/85 hover:text-white flex items-center justify-center shadow-lg"
-          aria-label="Zoom out"
-          title="Zoom out"
-        >
-          <MaterialIcon name="remove" size={18} />
-        </button>
-        <button
-          onClick={recenter}
-          className="h-9 w-9 rounded-full bg-black/60 backdrop-blur-xl border border-white/10 text-white/85 hover:text-white flex items-center justify-center shadow-lg"
-          aria-label="Recenter"
-          title="Recenter"
-        >
-          <MaterialIcon name="my_location" size={16} />
-        </button>
-      </div>
+      {/* Connections legend popover */}
+      {legendOpen && (
+        <div className="absolute top-[6.5rem] right-3 z-10 w-[min(280px,calc(100vw-1.5rem))] rounded-2xl bg-black/60 backdrop-blur-xl border border-white/10 p-3 shadow-2xl">
+          <div className="text-[11px] uppercase tracking-wider text-white/50 mb-2">Connections</div>
+          <div className="flex flex-col gap-1 text-[12px] text-white/70">
+            {(["tag", "ref", "kw", "folder"] as EdgeKind[]).map((k) => {
+              const on = enabledKinds[k];
+              return (
+                <button
+                  key={k}
+                  onClick={() => toggleKind(k)}
+                  className={cn(
+                    "flex items-center gap-2 px-2 py-1.5 rounded-lg transition-colors text-left",
+                    on ? "text-white hover:bg-white/10" : "text-white/35 hover:bg-white/5"
+                  )}
+                >
+                  <span className="h-2 w-6 rounded-full" style={{ background: on ? EDGE_STYLE[k].stroke.replace(/0\.\d+/, "0.85") : "rgba(255,255,255,0.1)" }} />
+                  <span className="flex-1">{EDGE_STYLE[k].label}</span>
+                  <MaterialIcon name={on ? "visibility" : "visibility_off"} size={14} />
+                </button>
+              );
+            })}
+          </div>
+        </div>
       )}
 
       {/* Stats */}
-      <div className="absolute top-14 left-3 z-10 text-[11px] text-white/60 bg-black/40 backdrop-blur-md border border-white/10 rounded-full px-3 py-1.5">
-        {nodesRef.current.length} ideas · {edgesRef.current.length} links · {tagAnchorsRef.current.size} clusters
-      </div>
+      {!overlaysHidden && (
+        <div className="absolute bottom-3 left-3 z-10 text-[11px] text-white/60 bg-black/40 backdrop-blur-md border border-white/10 rounded-full px-3 py-1.5"
+          style={{ bottom: "calc(0.75rem + var(--mobile-tabbar-h, 0px))" }}
+        >
+          {nodesRef.current.length} ideas · {edgesRef.current.length} links · {tagAnchorsRef.current.size} clusters
+        </div>
+      )}
+
 
       {/* Background glow */}
       <div aria-hidden className="absolute inset-0 pointer-events-none">
