@@ -129,7 +129,7 @@
     pointer-events: none;
     background-color: #1a1530;
     background-image:
-      radial-gradient(ellipse at 50% 35%, rgba(0,0,0,0.10) 0%, rgba(0,0,0,0.35) 60%, rgba(0,0,0,0.60) 100%),
+      radial-gradient(ellipse at 50% 35%, rgba(0,0,0,0) 0%, rgba(0,0,0,0.15) 60%, rgba(0,0,0,0.32) 100%),
       url("/aurora-bg.jpg");
     background-size: cover, cover;
     background-position: center, center;
