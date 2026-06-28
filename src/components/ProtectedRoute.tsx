@@ -48,14 +48,14 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   // Gate stays first — show keypad before doing anything cloud-related.
   if (!unlocked) {
     return (
-      <main className="relative min-h-dvh w-full flex items-center justify-center overflow-hidden text-white">
+      <main className="relative min-h-dvh w-full flex items-center justify-center overflow-hidden text-foreground animate-fade-in">
         {/* Inherit global aurora body background; add vignette for legibility */}
         <div
           aria-hidden
-          className="absolute inset-0 pointer-events-none"
+          className="absolute inset-0 pointer-events-none animate-fade-in"
           style={{ background: "radial-gradient(900px 600px at 50% 45%, rgba(0,0,0,0) 0%, rgba(0,0,0,0.10) 70%, rgba(0,0,0,0.22) 100%)" }}
         />
-        <div className="relative z-10 w-full max-w-md mx-6 px-6 py-10">
+        <div className="relative z-10 w-full max-w-md mx-6 px-6 py-10 animate-fade-in">
           <PasscodeKeypad onUnlocked={() => setUnlocked(true)} />
         </div>
       </main>
@@ -64,7 +64,7 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 
   if (!loading && !user && failed) {
     return (
-      <div className="flex min-h-screen items-center justify-center text-muted-foreground">
+      <div className="flex min-h-dvh items-center justify-center text-muted-foreground animate-fade-in">
         Sign-in failed. Refresh to retry.
       </div>
     );
@@ -72,11 +72,12 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 
   if (loading || signingIn || !user) {
     return (
-      <div className="flex min-h-screen items-center justify-center text-muted-foreground">
+      <div className="flex min-h-dvh items-center justify-center text-muted-foreground animate-fade-in">
         Loading…
       </div>
     );
   }
+
 
   return <>{children}</>;
 };
