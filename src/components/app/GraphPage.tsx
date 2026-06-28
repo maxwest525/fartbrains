@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { MaterialIcon } from "@/components/ui/MaterialIcon";
+import { GlassSurface } from "@/components/ui/GlassSurface";
 import { useFolders } from "@/hooks/useFolders";
 import { cn } from "@/lib/utils";
 
@@ -805,10 +806,26 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
     };
   }, [onOpenIdea]);
 
-  const recenter = () => {
+  const centerCamera = (zoom = 0.6, animate = true) => {
     const cam = cameraRef.current;
-    cam.tx = 0; cam.ty = 0; cam.tz = 1; cam.animating = true;
+    const W = size.w, H = size.h;
+    const targetX = W / 2 - (W / 2) * zoom;
+    const targetY = H / 2 - (H / 2) * zoom;
+    cam.tx = targetX; cam.ty = targetY; cam.tz = zoom;
+    if (!animate) { cam.x = targetX; cam.y = targetY; cam.zoom = zoom; cam.animating = false; }
+    else cam.animating = true;
   };
+
+  const recenter = () => centerCamera(0.9, true);
+
+  // Initial centering after first layout / when the cluster (re)builds.
+  const didCenterRef = useRef(false);
+  useEffect(() => {
+    if (!ready || size.w < 2 || size.h < 2) return;
+    if (didCenterRef.current) return;
+    didCenterRef.current = true;
+    centerCamera(0.6, false);
+  }, [ready, size.w, size.h]);
 
   const stepZoom = (dir: 1 | -1) => {
     const cam = cameraRef.current;
@@ -1174,6 +1191,37 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
           Mapping your brain…
         </div>
       )}
+
+
+      {/* Cluster header label — always shows at least one orienting tag/keyword/match
+          unless filters are explicitly emptying the view. Uses the new white-glass
+          variant so it pops against the dark aurora. */}
+      {ready && (() => {
+        const q = search.trim().toLowerCase();
+        const firstTag = tagFilter.size > 0 ? [...tagFilter][0] : null;
+        const firstFolder = folderFilter.size > 0 ? [...folderFilter][0] : null;
+        const firstKw = keywordFilter.size > 0 ? [...keywordFilter][0] : null;
+        const label =
+          firstTag ? `#${firstTag}` :
+          firstKw ? firstKw :
+          firstFolder ? (folders.find((f) => f.id === firstFolder)?.name ?? "Folder") :
+          q ? `Matching "${q}"` :
+          topTags[0]?.tag ? `#${topTags[0].tag}` :
+          topKeywords[0] ? topKeywords[0] :
+          "All ideas";
+        const sub =
+          filterCount > 0 ? `${visibleNodeIdsRef.current.size || 0} of ${nodesRef.current.length} visible` :
+          `${nodesRef.current.length} nodes · ${edgesRef.current.length} links`;
+        return (
+          <div className="pointer-events-none absolute left-1/2 -translate-x-1/2 z-[5]" style={{ top: 104 }}>
+            <GlassSurface variant="white" className="px-3.5 py-1.5 rounded-full flex items-center gap-2 shadow-lg">
+              <MaterialIcon name="hub" size={14} className="opacity-70" />
+              <span className="text-[12px] font-semibold tracking-tight">{label}</span>
+              <span className="text-[11px] opacity-60">· {sub}</span>
+            </GlassSurface>
+          </div>
+        );
+      })()}
     </div>
   );
 };
