@@ -886,8 +886,7 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
     >
       {/* Top toolbar */}
       <div className="absolute top-3 left-3 right-3 z-10 flex flex-col gap-2">
-      {/* Top toolbar */}
-      <div className="absolute top-3 left-3 right-3 z-10 flex flex-col gap-2">
+
         {/* Row 1: search */}
         <div className="flex items-center gap-2">
           <form
