@@ -493,34 +493,42 @@ html:not(.dark) .gemini ::selection {
      follows. Mirror "Continue with Google" pill from the reference.
      ---------------------------------------------------------- */
   .glass-card {
-    background-color: rgba(15, 18, 32, 0.58);
-    border: 1px solid rgba(255, 255, 255, 0.18);
-    backdrop-filter: blur(26px) saturate(180%);
-    -webkit-backdrop-filter: blur(26px) saturate(180%);
+    background-color: rgba(255, 255, 255, 0.18);
+    border: 1px solid rgba(255, 255, 255, 0.45);
+    backdrop-filter: blur(28px) saturate(200%) brightness(1.12);
+    -webkit-backdrop-filter: blur(28px) saturate(200%) brightness(1.12);
     box-shadow:
-      0 16px 42px -18px rgba(0, 0, 0, 0.80),
-      inset 0 1px 0 rgba(255, 255, 255, 0.16);
-    color: rgba(240, 242, 248, 0.96);
+      0 18px 44px -20px rgba(0, 0, 0, 0.55),
+      inset 0 1px 0 rgba(255, 255, 255, 0.65),
+      inset 0 0 0 1px rgba(255, 255, 255, 0.14);
+    color: #ffffff;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
   }
+  .glass-card :where(p, span, li, h1, h2, h3, h4, h5, h6) { color: inherit; }
   /* Slightly brighter — for elevated/primary surfaces (modals, hero cards). */
   .glass-card-strong {
-    background-color: rgba(18, 22, 38, 0.72);
-    border: 1px solid rgba(255, 255, 255, 0.24);
-    backdrop-filter: blur(32px) saturate(190%);
-    -webkit-backdrop-filter: blur(32px) saturate(190%);
+    background-color: rgba(255, 255, 255, 0.26);
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    backdrop-filter: blur(34px) saturate(210%) brightness(1.18);
+    -webkit-backdrop-filter: blur(34px) saturate(210%) brightness(1.18);
     box-shadow:
-      0 28px 68px -26px rgba(0, 0, 0, 0.90),
-      inset 0 1px 0 rgba(255, 255, 255, 0.22);
-    color: rgba(244, 246, 252, 0.98);
+      0 28px 68px -26px rgba(0, 0, 0, 0.7),
+      inset 0 1px 0 rgba(255, 255, 255, 0.8),
+      inset 0 0 0 1px rgba(255, 255, 255, 0.2);
+    color: #ffffff;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
   }
+  .glass-card-strong :where(p, span, li, h1, h2, h3, h4, h5, h6) { color: inherit; }
   /* Quiet inset — nested panels inside another glass-card (summary, note). */
   .glass-card-quiet {
-    background-color: rgba(10, 14, 26, 0.48);
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    backdrop-filter: blur(20px) saturate(170%);
-    -webkit-backdrop-filter: blur(20px) saturate(170%);
-    color: rgba(232, 236, 244, 0.94);
+    background-color: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.32);
+    backdrop-filter: blur(22px) saturate(190%) brightness(1.08);
+    -webkit-backdrop-filter: blur(22px) saturate(190%) brightness(1.08);
+    color: #ffffff;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
   }
+  .glass-card-quiet :where(p, span, li, h1, h2, h3, h4, h5, h6) { color: inherit; }
   /* Bright "white glass" — for highlight cards and contrast accents over the aurora. */
   .glass-card-white {
     background-color: rgba(255, 255, 255, 0.22);
