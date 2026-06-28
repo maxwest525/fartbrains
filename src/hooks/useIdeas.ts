@@ -109,6 +109,50 @@ export function useIdea(id: string | null) {
   });
 }
 
+/**
+ * Auto-route a new capture to one of the canonical default folders when the
+ * user hasn't picked one explicitly. Pure content heuristic — no AI call:
+ *   - Checklists: markdown checkbox lines, or a "list"-shaped paste
+ *   - Todo:       starts with a todo/action cue ("todo:", "remind me", "need to"…)
+ *   - Notes:      short manual jot with no extracted/summarized content
+ *   - Ideas:      everything else (URLs, transcripts, long captures, prompts)
+ */
+function classifyDefaultFolder(payload: {
+  raw_note?: string | null;
+  source_type: SourceType;
+  source_url?: string | null;
+  extracted_text?: string | null;
+  ai_summary?: string | null;
+  title: string;
+}): "Ideas" | "Notes" | "Todo" | "Checklists" {
+  const note = (payload.raw_note ?? "").trim();
+  const lower = note.toLowerCase();
+  const lines = note.split("\n").map((l) => l.trim()).filter(Boolean);
+
+  if (/^- \[[ xX]\] /m.test(note)) return "Checklists";
+  if (lines.length >= 3 && lines.every((l) => l.length < 80 && !/[.!?]$/.test(l))) {
+    return "Checklists";
+  }
+
+  if (/^(todo[:\-\s]|to-do|to do|remind me|don'?t forget|need to|must |should |buy |call |email |finish |fix |ship )/i.test(lower)) {
+    return "Todo";
+  }
+
+  if (
+    payload.source_type === "manual" &&
+    !payload.source_url &&
+    !payload.extracted_text &&
+    !payload.ai_summary &&
+    note.length > 0 &&
+    note.length < 280 &&
+    lines.length <= 3
+  ) {
+    return "Notes";
+  }
+
+  return "Ideas";
+}
+
 export function useCreateIdea() {
   const qc = useQueryClient();
   return useMutation({
@@ -127,6 +171,31 @@ export function useCreateIdea() {
     }) => {
       const { data: userData } = await supabase.auth.getUser();
       if (!userData.user) throw new Error("Not authenticated");
+
+      // Auto-route to a default folder when the caller didn't pick one.
+      let folderId = payload.folder_id ?? null;
+      if (!folderId) {
+        const target = classifyDefaultFolder(payload);
+        const { data: match } = await supabase
+          .from("folders")
+          .select("id")
+          .ilike("name", target)
+          .limit(1)
+          .maybeSingle();
+        if (match?.id) {
+          folderId = match.id;
+        } else {
+          // Folder doesn't exist yet (first capture before Folders page mount).
+          // Create it on the fly so auto-routing still works.
+          const { data: created } = await supabase
+            .from("folders")
+            .insert({ name: target, user_id: userData.user.id })
+            .select("id")
+            .single();
+          folderId = created?.id ?? null;
+        }
+      }
+
       const { data, error } = await supabase
         .from("ideas")
         .insert({
@@ -139,7 +208,7 @@ export function useCreateIdea() {
           source_meta: payload.source_meta ?? null,
           extracted_text: payload.extracted_text ?? null,
           ai_summary: payload.ai_summary ?? null,
-          folder_id: payload.folder_id ?? null,
+          folder_id: folderId,
           tags: payload.tags ?? [],
         } as never)
         .select()
