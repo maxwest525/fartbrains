@@ -360,8 +360,14 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
 
     nodesRef.current = nodes;
     edgesRef.current = edges;
-    if (!ready) introRef.current = { start: performance.now(), duration: 500 };
+    if (!ready && !__graphIntroPlayed && !prefersReducedMotion()) {
+      introRef.current = { start: performance.now(), duration: 350 };
+      __graphIntroPlayed = true;
+    } else {
+      introRef.current = null;
+    }
     setReady(true);
+
 
   }, [ideasQuery.data, refsQuery.data, folderColor, size.w, size.h, tuning.strictness, tuning.clusterCount]);
 
