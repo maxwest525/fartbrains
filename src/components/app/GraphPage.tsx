@@ -352,7 +352,7 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
 
     nodesRef.current = nodes;
     edgesRef.current = edges;
-    if (!ready) introRef.current = { start: performance.now(), duration: 1100 };
+    if (!ready) introRef.current = { start: performance.now(), duration: 500 };
     setReady(true);
 
   }, [ideasQuery.data, refsQuery.data, folderColor, size.w, size.h, tuning.strictness, tuning.clusterCount]);
