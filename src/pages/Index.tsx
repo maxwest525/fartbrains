@@ -338,7 +338,7 @@ const Shell = () => {
             />
             {selectedId && (
               <div
-                className="absolute inset-0 z-30 bg-background/95 backdrop-blur-xl"
+                className="absolute inset-0 z-30 glass-card-strong rounded-none"
                 style={{ paddingBottom: "var(--mobile-tabbar-h, 0px)" }}
               >
                 <IdeaDetail
