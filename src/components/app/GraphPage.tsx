@@ -70,6 +70,14 @@ type Tuning = {
 };
 const DEFAULT_TUNING: Tuning = { repulsion: 0.55, linkStrength: 0.5, tagGravity: 0.75, strictness: 2, clusterCount: 5 };
 
+// Tracks whether the graph intro animation has already played this session,
+// so re-entering the Graph view doesn't replay the spin every time.
+let __graphIntroPlayed = false;
+const prefersReducedMotion = () => {
+  try { return typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches; } catch { return false; }
+};
+
+
 export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
   const { data: folders = [] } = useFolders();
   const containerRef = useRef<HTMLDivElement>(null);
