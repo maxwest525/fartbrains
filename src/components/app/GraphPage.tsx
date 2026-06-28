@@ -95,6 +95,8 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
   const [tagFilter, setTagFilter] = useState<Set<string>>(new Set());
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [tuningOpen, setTuningOpen] = useState(false);
+  const [legendOpen, setLegendOpen] = useState(false);
+
   // Hides bottom overlays (legend + zoom) so the cluster gets the full viewport.
   const [overlaysHidden, setOverlaysHidden] = useState<boolean>(() => {
     try { return window.localStorage.getItem("graph-overlays-hidden") === "1"; } catch { return false; }
@@ -104,14 +106,8 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
     try { window.localStorage.setItem("graph-overlays-hidden", next ? "1" : "0"); } catch { /* */ }
     return next;
   });
-  const [legendCollapsed, setLegendCollapsed] = useState<boolean>(() => {
-    try { return window.localStorage.getItem("graph-legend-collapsed") === "1"; } catch { return false; }
-  });
-  const toggleLegend = () => setLegendCollapsed((v) => {
-    const next = !v;
-    try { window.localStorage.setItem("graph-legend-collapsed", next ? "1" : "0"); } catch { /* */ }
-    return next;
-  });
+
+
 
   // Tuning persisted to localStorage
   const [tuning, setTuning] = useState<Tuning>(() => {
@@ -829,80 +825,124 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
       style={{ paddingBottom: "var(--mobile-tabbar-h, 0px)" }}
     >
       {/* Top toolbar */}
-      <div className="absolute top-3 left-3 right-3 z-10 flex items-center gap-2">
-        {onBack && (
-          <button
-            onClick={onBack}
-            className="h-9 w-9 shrink-0 rounded-full bg-black/40 backdrop-blur-md border border-white/10 flex items-center justify-center text-white/80 hover:text-white"
-            aria-label="Back"
-          >
-            <MaterialIcon name="arrow_back" size={20} />
-          </button>
-        )}
-        <form
-          onSubmit={(e) => { e.preventDefault(); focusOnMatch(); }}
-          className="flex-1 max-w-md relative"
-        >
-          <MaterialIcon name="search" size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/50" />
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search ideas or #tags…"
-            className="w-full h-9 rounded-full bg-black/40 backdrop-blur-md border border-white/10 pl-9 pr-9 text-[13px] text-white placeholder:text-white/40 outline-none focus:border-white/30"
-          />
-          {search && (
+      <div className="absolute top-3 left-3 right-3 z-10 flex flex-col gap-2">
+        {/* Row 1: back + search */}
+        <div className="flex items-center gap-2">
+          {onBack && (
             <button
-              type="button"
-              onClick={() => setSearch("")}
-              className="absolute right-2 top-1/2 -translate-y-1/2 h-6 w-6 rounded-full flex items-center justify-center text-white/50 hover:text-white"
-              aria-label="Clear"
+              onClick={onBack}
+              className="h-9 w-9 shrink-0 rounded-full bg-black/40 backdrop-blur-md border border-white/10 flex items-center justify-center text-white/80 hover:text-white"
+              aria-label="Back"
+              title="Back"
             >
-              <MaterialIcon name="close" size={14} />
+              <MaterialIcon name="arrow_back" size={20} />
             </button>
           )}
-        </form>
-        <button
-          onClick={() => { setFiltersOpen((v) => !v); setTuningOpen(false); }}
-          className={cn(
-            "h-9 px-3 rounded-full backdrop-blur-md border text-[13px] inline-flex items-center gap-1.5 transition-colors",
-            filtersOpen || filterCount
-              ? "bg-violet-500/20 border-violet-400/40 text-white"
-              : "bg-black/40 border-white/10 text-white/80 hover:text-white"
-          )}
-          aria-label="Filters"
-        >
-          <MaterialIcon name="tune" size={16} />
-          <span className="hidden sm:inline">Filters</span>
-          {filterCount > 0 && (
-            <span className="ml-0.5 h-5 min-w-[20px] px-1 rounded-full bg-violet-500/80 text-[10px] font-semibold flex items-center justify-center">{filterCount}</span>
-          )}
-        </button>
-        <button
-          onClick={() => { setTuningOpen((v) => !v); setFiltersOpen(false); }}
-          className={cn(
-            "h-9 w-9 shrink-0 rounded-full backdrop-blur-md border flex items-center justify-center transition-colors",
-            tuningOpen ? "bg-cyan-500/20 border-cyan-400/40 text-white" : "bg-black/40 border-white/10 text-white/80 hover:text-white"
-          )}
-          aria-label="Clustering"
-          title="Clustering controls"
-        >
-          <MaterialIcon name="hub" size={16} />
-        </button>
-        <button
-          onClick={toggleOverlays}
-          className={cn(
-            "h-9 w-9 shrink-0 rounded-full backdrop-blur-md border flex items-center justify-center transition-colors",
-            overlaysHidden ? "bg-black/40 border-white/10 text-white/50 hover:text-white" : "bg-black/40 border-white/10 text-white/80 hover:text-white"
-          )}
-          aria-label={overlaysHidden ? "Show overlays" : "Hide overlays"}
-          title={overlaysHidden ? "Show overlays" : "Hide overlays"}
-        >
-          <MaterialIcon name={overlaysHidden ? "visibility" : "visibility_off"} size={16} />
-        </button>
+          <form
+            onSubmit={(e) => { e.preventDefault(); focusOnMatch(); }}
+            className="flex-1 relative"
+          >
+            <MaterialIcon name="search" size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/50" />
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search ideas or #tags…"
+              className="w-full h-9 rounded-full bg-black/40 backdrop-blur-md border border-white/10 pl-9 pr-9 text-[13px] text-white placeholder:text-white/40 outline-none focus:border-white/30"
+            />
+            {search && (
+              <button
+                type="button"
+                onClick={() => setSearch("")}
+                className="absolute right-2 top-1/2 -translate-y-1/2 h-6 w-6 rounded-full flex items-center justify-center text-white/50 hover:text-white"
+                aria-label="Clear search"
+                title="Clear search"
+              >
+                <MaterialIcon name="close" size={14} />
+              </button>
+            )}
+          </form>
+        </div>
+
+        {/* Row 2: control circles */}
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <button
+            onClick={() => { setFiltersOpen((v) => !v); setTuningOpen(false); setLegendOpen(false); }}
+            className={cn(
+              "h-9 w-9 shrink-0 rounded-full backdrop-blur-md border flex items-center justify-center transition-colors relative",
+              filtersOpen || filterCount
+                ? "bg-violet-500/20 border-violet-400/40 text-white"
+                : "bg-black/40 border-white/10 text-white/80 hover:text-white"
+            )}
+            aria-label="Filters"
+            title="Filters"
+          >
+            <MaterialIcon name="tune" size={16} />
+            {filterCount > 0 && (
+              <span className="absolute -top-1 -right-1 h-4 min-w-[16px] px-1 rounded-full bg-violet-500 text-[9px] font-semibold flex items-center justify-center text-white">{filterCount}</span>
+            )}
+          </button>
+          <button
+            onClick={() => { setTuningOpen((v) => !v); setFiltersOpen(false); setLegendOpen(false); }}
+            className={cn(
+              "h-9 w-9 shrink-0 rounded-full backdrop-blur-md border flex items-center justify-center transition-colors",
+              tuningOpen ? "bg-cyan-500/20 border-cyan-400/40 text-white" : "bg-black/40 border-white/10 text-white/80 hover:text-white"
+            )}
+            aria-label="Clustering controls"
+            title="Clustering controls"
+          >
+            <MaterialIcon name="hub" size={16} />
+          </button>
+          <button
+            onClick={() => { setLegendOpen((v) => !v); setFiltersOpen(false); setTuningOpen(false); }}
+            className={cn(
+              "h-9 w-9 shrink-0 rounded-full backdrop-blur-md border flex items-center justify-center transition-colors",
+              legendOpen ? "bg-pink-500/20 border-pink-400/40 text-white" : "bg-black/40 border-white/10 text-white/80 hover:text-white"
+            )}
+            aria-label="Connections"
+            title="Connections"
+          >
+            <MaterialIcon name="share" size={16} />
+          </button>
+          <button
+            onClick={toggleOverlays}
+            className="h-9 w-9 shrink-0 rounded-full backdrop-blur-md border bg-black/40 border-white/10 text-white/80 hover:text-white flex items-center justify-center transition-colors"
+            aria-label={overlaysHidden ? "Show overlays" : "Hide overlays"}
+            title={overlaysHidden ? "Show overlays" : "Hide overlays"}
+          >
+            <MaterialIcon name={overlaysHidden ? "visibility" : "visibility_off"} size={16} />
+          </button>
+          <div className="w-px h-6 bg-white/10 mx-0.5" />
+          <button
+            onClick={() => stepZoom(1)}
+            className="h-9 w-9 shrink-0 rounded-full bg-black/40 backdrop-blur-md border border-white/10 text-white/80 hover:text-white flex items-center justify-center"
+            aria-label="Zoom in"
+            title="Zoom in"
+          >
+            <MaterialIcon name="add" size={18} />
+          </button>
+          <button
+            onClick={() => stepZoom(-1)}
+            className="h-9 w-9 shrink-0 rounded-full bg-black/40 backdrop-blur-md border border-white/10 text-white/80 hover:text-white flex items-center justify-center"
+            aria-label="Zoom out"
+            title="Zoom out"
+          >
+            <MaterialIcon name="remove" size={18} />
+          </button>
+          <button
+            onClick={recenter}
+            className="h-9 w-9 shrink-0 rounded-full bg-black/40 backdrop-blur-md border border-white/10 text-white/80 hover:text-white flex items-center justify-center"
+            aria-label="Recenter view"
+            title="Recenter view"
+          >
+            <MaterialIcon name="my_location" size={16} />
+          </button>
+        </div>
       </div>
 
+
       {filtersOpen && (
-        <div className="absolute top-14 right-3 z-10 w-[min(360px,calc(100vw-1.5rem))] max-h-[70vh] overflow-y-auto rounded-2xl bg-black/60 backdrop-blur-xl border border-white/10 p-3 shadow-2xl">
+        <div className="absolute top-[6.5rem] right-3 z-10 w-[min(360px,calc(100vw-1.5rem))] max-h-[70vh] overflow-y-auto rounded-2xl bg-black/60 backdrop-blur-xl border border-white/10 p-3 shadow-2xl">
+
           <div className="flex items-center justify-between mb-2">
             <h3 className="text-[13px] font-semibold text-white">Filters</h3>
             {filterCount > 0 && (
@@ -1002,7 +1042,8 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
 
       {/* Clustering / tuning panel */}
       {tuningOpen && (
-        <div className="absolute top-14 right-3 z-10 w-[min(320px,calc(100vw-1.5rem))] rounded-2xl bg-black/60 backdrop-blur-xl border border-white/10 p-3 shadow-2xl space-y-3">
+        <div className="absolute top-[6.5rem] right-3 z-10 w-[min(320px,calc(100vw-1.5rem))] rounded-2xl bg-black/60 backdrop-blur-xl border border-white/10 p-3 shadow-2xl space-y-3">
+
           <div className="flex items-center justify-between">
             <h3 className="text-[13px] font-semibold text-white">Clustering</h3>
             <button
@@ -1050,78 +1091,41 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
         </div>
       )}
 
-      {/* Legend + edge toggles */}
-      {!overlaysHidden && (
-      <div
-        className="absolute left-3 top-24 z-10 flex flex-col gap-1 text-[11px] text-white/70 bg-black/60 backdrop-blur-xl border border-white/10 rounded-2xl px-2.5 py-2 shadow-2xl"
-      >
-
-        <button
-          onClick={toggleLegend}
-          className="flex items-center gap-1.5 px-1 pb-0.5 text-[10px] uppercase tracking-wider text-white/50 hover:text-white/80 transition-colors"
-          aria-expanded={!legendCollapsed}
-        >
-          <MaterialIcon name={legendCollapsed ? "chevron_right" : "expand_more"} size={12} />
-          Connections
-        </button>
-        {!legendCollapsed && (["tag", "ref", "kw", "folder"] as EdgeKind[]).map((k) => {
-          const on = enabledKinds[k];
-          return (
-            <button
-              key={k}
-              onClick={() => toggleKind(k)}
-              className={cn(
-                "flex items-center gap-2 px-2 py-1 rounded-lg transition-colors text-left",
-                on ? "text-white hover:bg-white/10" : "text-white/35 hover:bg-white/5"
-              )}
-            >
-              <span className="h-2 w-6 rounded-full" style={{ background: on ? EDGE_STYLE[k].stroke.replace(/0\.\d+/, "0.85") : "rgba(255,255,255,0.1)" }} />
-              <span className="flex-1">{EDGE_STYLE[k].label}</span>
-              <MaterialIcon name={on ? "visibility" : "visibility_off"} size={14} />
-            </button>
-          );
-        })}
-      </div>
-      )}
-
-
-      {/* Zoom + recenter cluster, bottom-right */}
-      {!overlaysHidden && (
-      <div
-        className="absolute right-3 top-14 z-10 flex flex-row gap-1.5"
-      >
-
-        <button
-          onClick={() => stepZoom(1)}
-          className="h-9 w-9 rounded-full bg-black/60 backdrop-blur-xl border border-white/10 text-white/85 hover:text-white flex items-center justify-center shadow-lg"
-          aria-label="Zoom in"
-          title="Zoom in"
-        >
-          <MaterialIcon name="add" size={18} />
-        </button>
-        <button
-          onClick={() => stepZoom(-1)}
-          className="h-9 w-9 rounded-full bg-black/60 backdrop-blur-xl border border-white/10 text-white/85 hover:text-white flex items-center justify-center shadow-lg"
-          aria-label="Zoom out"
-          title="Zoom out"
-        >
-          <MaterialIcon name="remove" size={18} />
-        </button>
-        <button
-          onClick={recenter}
-          className="h-9 w-9 rounded-full bg-black/60 backdrop-blur-xl border border-white/10 text-white/85 hover:text-white flex items-center justify-center shadow-lg"
-          aria-label="Recenter"
-          title="Recenter"
-        >
-          <MaterialIcon name="my_location" size={16} />
-        </button>
-      </div>
+      {/* Connections legend popover */}
+      {legendOpen && (
+        <div className="absolute top-[6.5rem] right-3 z-10 w-[min(280px,calc(100vw-1.5rem))] rounded-2xl bg-black/60 backdrop-blur-xl border border-white/10 p-3 shadow-2xl">
+          <div className="text-[11px] uppercase tracking-wider text-white/50 mb-2">Connections</div>
+          <div className="flex flex-col gap-1 text-[12px] text-white/70">
+            {(["tag", "ref", "kw", "folder"] as EdgeKind[]).map((k) => {
+              const on = enabledKinds[k];
+              return (
+                <button
+                  key={k}
+                  onClick={() => toggleKind(k)}
+                  className={cn(
+                    "flex items-center gap-2 px-2 py-1.5 rounded-lg transition-colors text-left",
+                    on ? "text-white hover:bg-white/10" : "text-white/35 hover:bg-white/5"
+                  )}
+                >
+                  <span className="h-2 w-6 rounded-full" style={{ background: on ? EDGE_STYLE[k].stroke.replace(/0\.\d+/, "0.85") : "rgba(255,255,255,0.1)" }} />
+                  <span className="flex-1">{EDGE_STYLE[k].label}</span>
+                  <MaterialIcon name={on ? "visibility" : "visibility_off"} size={14} />
+                </button>
+              );
+            })}
+          </div>
+        </div>
       )}
 
       {/* Stats */}
-      <div className="absolute top-14 left-3 z-10 text-[11px] text-white/60 bg-black/40 backdrop-blur-md border border-white/10 rounded-full px-3 py-1.5">
-        {nodesRef.current.length} ideas · {edgesRef.current.length} links · {tagAnchorsRef.current.size} clusters
-      </div>
+      {!overlaysHidden && (
+        <div className="absolute bottom-3 left-3 z-10 text-[11px] text-white/60 bg-black/40 backdrop-blur-md border border-white/10 rounded-full px-3 py-1.5"
+          style={{ bottom: "calc(0.75rem + var(--mobile-tabbar-h, 0px))" }}
+        >
+          {nodesRef.current.length} ideas · {edgesRef.current.length} links · {tagAnchorsRef.current.size} clusters
+        </div>
+      )}
+
 
       {/* Background glow */}
       <div aria-hidden className="absolute inset-0 pointer-events-none">
