@@ -894,7 +894,7 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
         </div>
 
         {/* Row 2: control circles */}
-        <div className="flex items-center gap-1.5 flex-wrap">
+        <div className="flex items-center justify-start gap-1.5 flex-nowrap overflow-x-auto no-scrollbar -mx-1 px-1">
           <button
             onClick={() => { setFiltersOpen((v) => !v); setTuningOpen(false); setLegendOpen(false); }}
             className={cn(
