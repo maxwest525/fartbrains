@@ -373,7 +373,23 @@ const Shell = () => {
                   window.dispatchEvent(new CustomEvent("idea-vault:dictate", { detail: text }));
                 }}
               />
+
+              <button
+                type="button"
+                onClick={async () => {
+                  let url = "";
+                  try {
+                    const clip = await navigator.clipboard?.readText?.();
+                    if (clip && /^https?:\/\//i.test(clip.trim())) url = clip.trim();
+                  } catch { /* ignore */ }
+                  setCapture({ kind: "url", url });
+                }}
+                className="text-[13px] text-white/60 hover:text-white/90 transition underline-offset-4 hover:underline"
+              >
+                Paste a link to extract
+              </button>
             </div>
+
 
 
 
