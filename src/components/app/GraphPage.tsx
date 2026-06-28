@@ -872,18 +872,8 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
     >
       {/* Top toolbar */}
       <div className="absolute top-3 left-3 right-3 z-10 flex flex-col gap-2">
-        {/* Row 1: back + search */}
+        {/* Row 1: search */}
         <div className="flex items-center gap-2">
-          {onBack && (
-            <button
-              onClick={onBack}
-              className="h-9 w-9 shrink-0 rounded-full bg-black/40 backdrop-blur-md border border-white/10 flex items-center justify-center text-white/80 hover:text-white"
-              aria-label="Back"
-              title="Back"
-            >
-              <MaterialIcon name="arrow_back" size={20} />
-            </button>
-          )}
           <form
             onSubmit={(e) => { e.preventDefault(); focusOnMatch(); }}
             className="flex-1 min-w-0 relative"
@@ -910,12 +900,22 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
 
         </div>
 
-        {/* Row 2: control circles */}
-        <div className="flex items-center justify-start gap-1.5 flex-nowrap overflow-x-auto no-scrollbar -mx-1 px-1">
+        {/* Row 2: 8 equal control circles (back + filters + hub + share + visibility + zoom in + zoom out + recenter) */}
+        <div className="grid grid-cols-8 gap-1.5">
+          {onBack && (
+            <button
+              onClick={onBack}
+              className="h-9 w-full rounded-full bg-black/40 backdrop-blur-md border border-white/10 flex items-center justify-center text-white/80 hover:text-white"
+              aria-label="Back"
+              title="Back"
+            >
+              <MaterialIcon name="arrow_back" size={18} />
+            </button>
+          )}
           <button
             onClick={() => { setFiltersOpen((v) => !v); setTuningOpen(false); setLegendOpen(false); }}
             className={cn(
-              "h-9 w-9 shrink-0 rounded-full backdrop-blur-md border flex items-center justify-center transition-colors relative",
+              "h-9 w-full rounded-full backdrop-blur-md border flex items-center justify-center transition-colors relative",
               filtersOpen || filterCount
                 ? "bg-violet-500/20 border-violet-400/40 text-white"
                 : "bg-black/40 border-white/10 text-white/80 hover:text-white"
@@ -931,7 +931,7 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
           <button
             onClick={() => { setTuningOpen((v) => !v); setFiltersOpen(false); setLegendOpen(false); }}
             className={cn(
-              "h-9 w-9 shrink-0 rounded-full backdrop-blur-md border flex items-center justify-center transition-colors",
+              "h-9 w-full rounded-full backdrop-blur-md border flex items-center justify-center transition-colors",
               tuningOpen ? "bg-cyan-500/20 border-cyan-400/40 text-white" : "bg-black/40 border-white/10 text-white/80 hover:text-white"
             )}
             aria-label="Clustering controls"
@@ -942,7 +942,7 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
           <button
             onClick={() => { setLegendOpen((v) => !v); setFiltersOpen(false); setTuningOpen(false); }}
             className={cn(
-              "h-9 w-9 shrink-0 rounded-full backdrop-blur-md border flex items-center justify-center transition-colors",
+              "h-9 w-full rounded-full backdrop-blur-md border flex items-center justify-center transition-colors",
               legendOpen ? "bg-pink-500/20 border-pink-400/40 text-white" : "bg-black/40 border-white/10 text-white/80 hover:text-white"
             )}
             aria-label="Connections"
@@ -952,16 +952,15 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
           </button>
           <button
             onClick={toggleOverlays}
-            className="h-9 w-9 shrink-0 rounded-full backdrop-blur-md border bg-black/40 border-white/10 text-white/80 hover:text-white flex items-center justify-center transition-colors"
+            className="h-9 w-full rounded-full backdrop-blur-md border bg-black/40 border-white/10 text-white/80 hover:text-white flex items-center justify-center transition-colors"
             aria-label={overlaysHidden ? "Show overlays" : "Hide overlays"}
             title={overlaysHidden ? "Show overlays" : "Hide overlays"}
           >
             <MaterialIcon name={overlaysHidden ? "visibility" : "visibility_off"} size={16} />
           </button>
-          <div className="w-px h-6 bg-white/10 mx-0.5" />
           <button
             onClick={() => stepZoom(1)}
-            className="h-9 w-9 shrink-0 rounded-full bg-black/40 backdrop-blur-md border border-white/10 text-white/80 hover:text-white flex items-center justify-center"
+            className="h-9 w-full rounded-full bg-black/40 backdrop-blur-md border border-white/10 text-white/80 hover:text-white flex items-center justify-center"
             aria-label="Zoom in"
             title="Zoom in"
           >
@@ -969,7 +968,7 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
           </button>
           <button
             onClick={() => stepZoom(-1)}
-            className="h-9 w-9 shrink-0 rounded-full bg-black/40 backdrop-blur-md border border-white/10 text-white/80 hover:text-white flex items-center justify-center"
+            className="h-9 w-full rounded-full bg-black/40 backdrop-blur-md border border-white/10 text-white/80 hover:text-white flex items-center justify-center"
             aria-label="Zoom out"
             title="Zoom out"
           >
@@ -977,7 +976,7 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
           </button>
           <button
             onClick={recenter}
-            className="h-9 w-9 shrink-0 rounded-full bg-black/40 backdrop-blur-md border border-white/10 text-white/80 hover:text-white flex items-center justify-center"
+            className="h-9 w-full rounded-full bg-black/40 backdrop-blur-md border border-white/10 text-white/80 hover:text-white flex items-center justify-center"
             aria-label="Recenter view"
             title="Recenter view"
           >
