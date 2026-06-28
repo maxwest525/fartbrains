@@ -104,6 +104,14 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
     try { window.localStorage.setItem("graph-overlays-hidden", next ? "1" : "0"); } catch { /* */ }
     return next;
   });
+  const [legendCollapsed, setLegendCollapsed] = useState<boolean>(() => {
+    try { return window.localStorage.getItem("graph-legend-collapsed") === "1"; } catch { return false; }
+  });
+  const toggleLegend = () => setLegendCollapsed((v) => {
+    const next = !v;
+    try { window.localStorage.setItem("graph-legend-collapsed", next ? "1" : "0"); } catch { /* */ }
+    return next;
+  });
 
   // Tuning persisted to localStorage
   const [tuning, setTuning] = useState<Tuning>(() => {
@@ -1048,8 +1056,15 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
         className="absolute left-3 z-10 flex flex-col gap-1 text-[11px] text-white/70 bg-black/60 backdrop-blur-xl border border-white/10 rounded-2xl px-2.5 py-2 shadow-2xl"
         style={{ bottom: "calc(0.75rem + var(--mobile-tabbar-h, 0px))" }}
       >
-        <div className="px-1 pb-0.5 text-[10px] uppercase tracking-wider text-white/40">Connections</div>
-        {(["tag", "ref", "kw", "folder"] as EdgeKind[]).map((k) => {
+        <button
+          onClick={toggleLegend}
+          className="flex items-center gap-1.5 px-1 pb-0.5 text-[10px] uppercase tracking-wider text-white/50 hover:text-white/80 transition-colors"
+          aria-expanded={!legendCollapsed}
+        >
+          <MaterialIcon name={legendCollapsed ? "chevron_right" : "expand_more"} size={12} />
+          Connections
+        </button>
+        {!legendCollapsed && (["tag", "ref", "kw", "folder"] as EdgeKind[]).map((k) => {
           const on = enabledKinds[k];
           return (
             <button
