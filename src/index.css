@@ -521,6 +521,18 @@ html:not(.dark) .gemini ::selection {
     -webkit-backdrop-filter: blur(20px) saturate(170%);
     color: rgba(232, 236, 244, 0.94);
   }
+  /* Bright "white glass" — for highlight cards and contrast accents over the aurora. */
+  .glass-card-white {
+    background-color: rgba(255, 255, 255, 0.78);
+    border: 1px solid rgba(255, 255, 255, 0.65);
+    backdrop-filter: blur(24px) saturate(180%);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+    box-shadow:
+      0 20px 50px -22px rgba(0, 0, 0, 0.55),
+      inset 0 1px 0 rgba(255, 255, 255, 0.9);
+    color: #0F172A;
+  }
+  .glass-card-white :where(p, span, li, h1, h2, h3, h4, h5, h6) { color: inherit; }
   /* Interactive variant — adds hover lift + visible keyboard focus ring. */
   .glass-card-interactive {
     transition: background-color 200ms ease, border-color 200ms ease,
