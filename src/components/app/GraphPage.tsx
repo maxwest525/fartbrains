@@ -806,10 +806,26 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
     };
   }, [onOpenIdea]);
 
-  const recenter = () => {
+  const centerCamera = (zoom = 0.6, animate = true) => {
     const cam = cameraRef.current;
-    cam.tx = 0; cam.ty = 0; cam.tz = 1; cam.animating = true;
+    const W = size.w, H = size.h;
+    const targetX = W / 2 - (W / 2) * zoom;
+    const targetY = H / 2 - (H / 2) * zoom;
+    cam.tx = targetX; cam.ty = targetY; cam.tz = zoom;
+    if (!animate) { cam.x = targetX; cam.y = targetY; cam.zoom = zoom; cam.animating = false; }
+    else cam.animating = true;
   };
+
+  const recenter = () => centerCamera(0.9, true);
+
+  // Initial centering after first layout / when the cluster (re)builds.
+  const didCenterRef = useRef(false);
+  useEffect(() => {
+    if (!ready || size.w < 2 || size.h < 2) return;
+    if (didCenterRef.current) return;
+    didCenterRef.current = true;
+    centerCamera(0.6, false);
+  }, [ready, size.w, size.h]);
 
   const stepZoom = (dir: 1 | -1) => {
     const cam = cameraRef.current;
