@@ -53,7 +53,7 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
         <div
           aria-hidden
           className="absolute inset-0 pointer-events-none"
-          style={{ background: "radial-gradient(900px 600px at 50% 45%, rgba(0,0,0,0.25), rgba(0,0,0,0.7) 85%)" }}
+          style={{ background: "radial-gradient(900px 600px at 50% 45%, rgba(0,0,0,0) 0%, rgba(0,0,0,0.25) 70%, rgba(0,0,0,0.45) 100%)" }}
         />
         <div className="relative z-10 w-full max-w-md mx-6 px-6 py-10">
           <PasscodeKeypad onUnlocked={() => setUnlocked(true)} />
