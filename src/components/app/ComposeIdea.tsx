@@ -1128,6 +1128,8 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
           )}
         </Button>
       )}
+      </div>
     </div>
   );
 };
+
