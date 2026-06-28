@@ -103,7 +103,8 @@
   }
 
   html, body {
-    @apply bg-background text-foreground;
+    @apply text-foreground;
+
     font-family: "Inter", -apple-system, BlinkMacSystemFont, "SF Pro Text",
                  "SF Pro Display", "Helvetica Neue", system-ui, "Segoe UI",
                  Roboto, sans-serif;
