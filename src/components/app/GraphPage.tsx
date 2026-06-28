@@ -1053,9 +1053,9 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
       {/* Legend + edge toggles */}
       {!overlaysHidden && (
       <div
-        className="absolute left-3 z-10 flex flex-col gap-1 text-[11px] text-white/70 bg-black/60 backdrop-blur-xl border border-white/10 rounded-2xl px-2.5 py-2 shadow-2xl"
-        style={{ bottom: "calc(0.75rem + var(--mobile-tabbar-h, 0px))" }}
+        className="absolute left-3 top-24 z-10 flex flex-col gap-1 text-[11px] text-white/70 bg-black/60 backdrop-blur-xl border border-white/10 rounded-2xl px-2.5 py-2 shadow-2xl"
       >
+
         <button
           onClick={toggleLegend}
           className="flex items-center gap-1.5 px-1 pb-0.5 text-[10px] uppercase tracking-wider text-white/50 hover:text-white/80 transition-colors"
