@@ -4,7 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { PasscodeKeypad } from "@/components/auth/PasscodeKeypad";
 import { isUnlocked } from "@/lib/passcode";
-import auroraMountains from "@/assets/aurora-mountains.jpg";
+
 
 
 // Single-user app: anyone who opens the URL is silently signed in as the
@@ -49,13 +49,7 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   if (!unlocked) {
     return (
       <main className="relative min-h-dvh w-full flex items-center justify-center overflow-hidden text-white">
-        {/* Aurora mountains background */}
-        <div
-          aria-hidden
-          className="absolute inset-0 bg-cover bg-center"
-          style={{ backgroundImage: `url(${auroraMountains})` }}
-        />
-        {/* Darkening vignette for legibility */}
+        {/* Inherit global aurora body background; add vignette for legibility */}
         <div
           aria-hidden
           className="absolute inset-0 pointer-events-none"
@@ -64,7 +58,6 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
         <div className="relative z-10 w-full max-w-md mx-6 px-6 py-10">
           <PasscodeKeypad onUnlocked={() => setUnlocked(true)} />
         </div>
-
       </main>
     );
   }
