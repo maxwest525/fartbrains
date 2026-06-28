@@ -493,30 +493,33 @@ html:not(.dark) .gemini ::selection {
      follows. Mirror "Continue with Google" pill from the reference.
      ---------------------------------------------------------- */
   .glass-card {
-    background-color: rgba(15, 18, 32, 0.42);
-    border: 1px solid rgba(255, 255, 255, 0.16);
-    backdrop-filter: blur(22px) saturate(170%);
-    -webkit-backdrop-filter: blur(22px) saturate(170%);
+    background-color: rgba(15, 18, 32, 0.58);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    backdrop-filter: blur(26px) saturate(180%);
+    -webkit-backdrop-filter: blur(26px) saturate(180%);
     box-shadow:
-      0 14px 38px -18px rgba(0, 0, 0, 0.75),
-      inset 0 1px 0 rgba(255, 255, 255, 0.14);
+      0 16px 42px -18px rgba(0, 0, 0, 0.80),
+      inset 0 1px 0 rgba(255, 255, 255, 0.16);
+    color: rgba(240, 242, 248, 0.96);
   }
   /* Slightly brighter — for elevated/primary surfaces (modals, hero cards). */
   .glass-card-strong {
-    background-color: rgba(18, 22, 38, 0.55);
-    border: 1px solid rgba(255, 255, 255, 0.22);
-    backdrop-filter: blur(28px) saturate(180%);
-    -webkit-backdrop-filter: blur(28px) saturate(180%);
+    background-color: rgba(18, 22, 38, 0.72);
+    border: 1px solid rgba(255, 255, 255, 0.24);
+    backdrop-filter: blur(32px) saturate(190%);
+    -webkit-backdrop-filter: blur(32px) saturate(190%);
     box-shadow:
-      0 26px 64px -26px rgba(0, 0, 0, 0.85),
-      inset 0 1px 0 rgba(255, 255, 255, 0.20);
+      0 28px 68px -26px rgba(0, 0, 0, 0.90),
+      inset 0 1px 0 rgba(255, 255, 255, 0.22);
+    color: rgba(244, 246, 252, 0.98);
   }
   /* Quiet inset — nested panels inside another glass-card (summary, note). */
   .glass-card-quiet {
-    background-color: rgba(10, 14, 26, 0.35);
-    border: 1px solid rgba(255, 255, 255, 0.10);
-    backdrop-filter: blur(18px) saturate(160%);
-    -webkit-backdrop-filter: blur(18px) saturate(160%);
+    background-color: rgba(10, 14, 26, 0.48);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    backdrop-filter: blur(20px) saturate(170%);
+    -webkit-backdrop-filter: blur(20px) saturate(170%);
+    color: rgba(232, 236, 244, 0.94);
   }
   /* Interactive variant — adds hover lift + visible keyboard focus ring. */
   .glass-card-interactive {
