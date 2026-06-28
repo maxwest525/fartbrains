@@ -136,6 +136,16 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
 
   useEffect(() => { enabledKindsRef.current = enabledKinds; }, [enabledKinds]);
 
+  // Track prefers-reduced-motion live so a mid-session toggle is respected.
+  useEffect(() => {
+    if (typeof window === "undefined" || !window.matchMedia) return;
+    const mql = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const update = () => { reducedMotionRef.current = mql.matches; };
+    update();
+    mql.addEventListener?.("change", update);
+    return () => mql.removeEventListener?.("change", update);
+  }, []);
+
   const folderColor = useMemo(() => {
     const m = new Map<string, string>();
     folders.forEach((f) => m.set(f.id, hashColor(f.id + f.name)));
