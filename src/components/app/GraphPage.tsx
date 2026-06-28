@@ -104,6 +104,14 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
     try { window.localStorage.setItem("graph-overlays-hidden", next ? "1" : "0"); } catch { /* */ }
     return next;
   });
+  const [legendCollapsed, setLegendCollapsed] = useState<boolean>(() => {
+    try { return window.localStorage.getItem("graph-legend-collapsed") === "1"; } catch { return false; }
+  });
+  const toggleLegend = () => setLegendCollapsed((v) => {
+    const next = !v;
+    try { window.localStorage.setItem("graph-legend-collapsed", next ? "1" : "0"); } catch { /* */ }
+    return next;
+  });
 
   // Tuning persisted to localStorage
   const [tuning, setTuning] = useState<Tuning>(() => {
