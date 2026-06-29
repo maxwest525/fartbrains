@@ -24,7 +24,7 @@ type GraphNode = {
   degree: number;
 };
 
-type GraphEdge = { a: string; b: string; w: number; kind: EdgeKind };
+type GraphEdge = { a: string; b: string; w: number; kind: EdgeKind; label?: string };
 
 const STOP = new Set([
   "the","and","for","with","that","this","from","your","you","are","but","not","have","has","was","were","its","into","about","what","when","where","which","who","how","why","they","them","their","our","ours","ive","im","ill","cant","wont","dont","just","like","more","most","some","any","all","one","two","over","under","then","than","also","very","much","make","made","get","got","let","via","onto","off","out","new","old"
@@ -214,7 +214,7 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
 
     const edgeMap = new Map<string, GraphEdge>();
     const key = (a: string, b: string) => (a < b ? `${a}|${b}` : `${b}|${a}`);
-    const addEdge = (a: string, b: string, w: number, kind: EdgeKind) => {
+    const addEdge = (a: string, b: string, w: number, kind: EdgeKind, label?: string) => {
       if (a === b) return;
       const k = key(a, b);
       const e = edgeMap.get(k);
@@ -222,8 +222,9 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
         e.w = Math.max(e.w, w);
         // priority: ref > tag > kw > folder
         const rank = { ref: 4, tag: 3, kw: 2, folder: 1 } as Record<EdgeKind, number>;
-        if (rank[kind] > rank[e.kind]) e.kind = kind;
-      } else edgeMap.set(k, { a, b, w, kind });
+        if (rank[kind] > rank[e.kind]) { e.kind = kind; if (label) e.label = label; }
+        else if (!e.label && label) e.label = label;
+      } else edgeMap.set(k, { a, b, w, kind, label });
     };
 
     // Tag edges — strong, drive clustering. Pair ideas that share a tag.
@@ -236,22 +237,27 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
         a.push(id); byTag.set(t, a);
       });
     });
-    const pairTagShared = new Map<string, number>();
-    byTag.forEach((ids) => {
+    const pairTagShared = new Map<string, { count: number; tags: string[] }>();
+    byTag.forEach((ids, tag) => {
       if (ids.length < 2) return;
       for (let i = 0; i < ids.length; i++) {
         for (let j = i + 1; j < ids.length; j++) {
           const k = key(ids[i], ids[j]);
-          pairTagShared.set(k, (pairTagShared.get(k) ?? 0) + 1);
+          const cur = pairTagShared.get(k) ?? { count: 0, tags: [] };
+          cur.count += 1;
+          cur.tags.push(tag);
+          pairTagShared.set(k, cur);
         }
       }
     });
-    pairTagShared.forEach((count, k) => {
+    pairTagShared.forEach(({ count, tags }, k) => {
       // strictness 1 → any shared tag connects; strictness 5 → need 3+ shared tags
       const minShared = Math.max(1, Math.ceil(strict / 2));
       if (count < minShared) return;
       const [a, b] = k.split("|");
-      addEdge(a, b, 0.9 + Math.min(count, 4) * 0.3, "tag");
+      // pick rarest shared tag as label (most informative)
+      const label = tags.slice().sort((x, y) => (tagCount.get(x) ?? 0) - (tagCount.get(y) ?? 0))[0];
+      addEdge(a, b, 0.9 + Math.min(count, 4) * 0.3, "tag", `#${label}`);
     });
 
     // Folder edges: faint scaffold chain (only with strictness ≤ 3)
@@ -278,22 +284,25 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
         a.push(id); tokenIndex.set(t, a);
       });
     });
-    const pairShared = new Map<string, number>();
+    const pairShared = new Map<string, { count: number; tokens: string[] }>();
     const maxCluster = Math.max(2, 6 - strict); // strict=1 → up to 5; strict=5 → only pairs
-    tokenIndex.forEach((ids) => {
+    tokenIndex.forEach((ids, tok) => {
       if (ids.length < 2 || ids.length > maxCluster) return;
       for (let i = 0; i < ids.length; i++) {
         for (let j = i + 1; j < ids.length; j++) {
           const k = key(ids[i], ids[j]);
-          pairShared.set(k, (pairShared.get(k) ?? 0) + 1);
+          const cur = pairShared.get(k) ?? { count: 0, tokens: [] };
+          cur.count += 1;
+          cur.tokens.push(tok);
+          pairShared.set(k, cur);
         }
       }
     });
     const kwMinShared = Math.max(2, strict);
-    pairShared.forEach((count, k) => {
+    pairShared.forEach(({ count, tokens: toks }, k) => {
       if (count < kwMinShared) return;
       const [a, b] = k.split("|");
-      addEdge(a, b, 0.6 + Math.min(count, 4) * 0.2, "kw");
+      addEdge(a, b, 0.6 + Math.min(count, 4) * 0.2, "kw", toks[0]);
     });
 
     if (refsQuery.data) {
@@ -303,10 +312,12 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
         const a = byUrl.get(r.url) ?? [];
         a.push(r.idea_id); byUrl.set(r.url, a);
       });
-      byUrl.forEach((ids) => {
+      byUrl.forEach((ids, url) => {
+        let host = url;
+        try { host = new URL(url).host.replace(/^www\./, ""); } catch { /* */ }
         for (let i = 0; i < ids.length; i++)
           for (let j = i + 1; j < ids.length; j++)
-            addEdge(ids[i], ids[j], 1.2, "ref");
+            addEdge(ids[i], ids[j], 1.2, "ref", host);
       });
     }
 
@@ -372,8 +383,8 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
     nodesRef.current = nodes;
     edgesRef.current = edges;
     if (!ready && !__graphIntroPlayed && !reducedMotionRef.current) {
-      // Start immediately at mount-time; fast spin + slight spread that settles in under 1s.
-      introRef.current = { start: performance.now(), duration: 850 };
+      // Fast spin-and-settle; user reaches the compact view in under half a second.
+      introRef.current = { start: performance.now(), duration: 380 };
       __graphIntroPlayed = true;
     } else {
       introRef.current = null;
@@ -476,9 +487,9 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
       const W = size.w, H = size.h;
       const cx = W / 2, cy = H / 2;
 
-      const repulseStrength = 400 + tun.repulsion * 1400; // 400..1800
+      const repulseStrength = (400 + tun.repulsion * 1400) * (hasFilter ? 2.2 : 1); // spread out under filter
       const linkK = 0.005 + tun.linkStrength * 0.06;      // 0.005..0.065
-      const tagPullK = tun.tagGravity * 0.04;             // 0..0.04
+      const tagPullK = (hasFilter ? 0 : tun.tagGravity) * 0.04; // disable tag wells when filtering
 
       // Repulsion
       for (let i = 0; i < nodes.length; i++) {
@@ -503,7 +514,7 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
         if (!a || !b) continue;
         const dx = b.x - a.x, dy = b.y - a.y;
         const d = Math.sqrt(dx * dx + dy * dy) || 1;
-        const target = 90 / e.w;
+        const target = (90 / e.w) * (hasFilter ? 1.8 : 1);
         const k = linkK * alpha * (e.kind === "tag" ? 1.4 : 1);
         const f = (d - target) * k;
         const fx = (dx / d) * f, fy = (dy / d) * f;
@@ -557,9 +568,9 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
           const ease = 1 - Math.pow(1 - t, 3); // easeOutCubic
           const remain = 1 - ease;
           // Fast multi-turn spin that winds down, slightly spread (scale > 1 -> 1), no skew.
-          introRot = remain * Math.PI * 5;       // ~2.5 turns -> 0
+          introRot = remain * Math.PI * 2.5;     // ~1.25 turns -> 0 (snappier)
           introSkew = 0;
-          introScale = 1.18 - 0.18 * ease;       // slightly spread -> settle
+          introScale = 1.1 - 0.1 * ease;         // slight spread -> settle
         }
       }
       ctx.translate(cam.x, cam.y);
@@ -594,13 +605,14 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
       });
 
       // edges
+      const labeledEdges: { e: GraphEdge; ax: number; ay: number; bx: number; by: number; active: boolean }[] = [];
       for (const e of edges) {
         if (!enabledNow[e.kind]) continue;
         if (!isVis(e.a) || !isVis(e.b)) continue;
         const a = nodes.find((n) => n.id === e.a);
         const b = nodes.find((n) => n.id === e.b);
         if (!a || !b) continue;
-        const active = hover && (a.id === hover || b.id === hover);
+        const active = !!hover && (a.id === hover || b.id === hover);
         const dim = hasQuery && !(matchSet.has(a.id) || matchSet.has(b.id));
         ctx.strokeStyle = active
           ? "rgba(168,85,247,0.95)"
@@ -612,6 +624,34 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
         ctx.moveTo(a.x, a.y);
         ctx.lineTo(b.x, b.y);
         ctx.stroke();
+        // queue label if relevant — show on hover, or whenever a filter narrows the view
+        if (e.label && !dim && (active || hasFilter)) {
+          labeledEdges.push({ e, ax: a.x, ay: a.y, bx: b.x, by: b.y, active });
+        }
+      }
+
+      // Edge labels — drawn after lines so they sit on top, rotated along the edge
+      if (labeledEdges.length) {
+        ctx.font = "10px ui-sans-serif, system-ui";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        for (const { e, ax, ay, bx, by, active } of labeledEdges) {
+          const mx = (ax + bx) / 2;
+          const my = (ay + by) / 2;
+          let ang = Math.atan2(by - ay, bx - ax);
+          if (ang > Math.PI / 2 || ang < -Math.PI / 2) ang += Math.PI; // keep upright
+          const label = e.label!;
+          ctx.save();
+          ctx.translate(mx, my);
+          ctx.rotate(ang);
+          const padX = 5;
+          const w = ctx.measureText(label).width + padX * 2;
+          ctx.fillStyle = active ? "rgba(168,85,247,0.85)" : "rgba(0,0,0,0.55)";
+          ctx.fillRect(-w / 2, -8, w, 14);
+          ctx.fillStyle = active ? "rgba(255,255,255,0.98)" : "rgba(255,255,255,0.78)";
+          ctx.fillText(label, 0, -1);
+          ctx.restore();
+        }
       }
 
       // nodes
