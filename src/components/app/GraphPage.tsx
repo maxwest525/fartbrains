@@ -514,7 +514,7 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
         if (!a || !b) continue;
         const dx = b.x - a.x, dy = b.y - a.y;
         const d = Math.sqrt(dx * dx + dy * dy) || 1;
-        const target = 90 / e.w;
+        const target = (90 / e.w) * (hasFilter ? 1.8 : 1);
         const k = linkK * alpha * (e.kind === "tag" ? 1.4 : 1);
         const f = (d - target) * k;
         const fx = (dx / d) * f, fy = (dy / d) * f;
