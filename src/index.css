@@ -423,34 +423,33 @@ html:not(.dark) .gemini ::selection {
     border-top: 0.5px solid hsl(var(--border));
   }
 
-  /* ---------- Reusable glass surfaces ----------
-     "White clear blue" glassmorphism, ~0.15rem blur. Works in both themes
-     because it sits on tinted backdrops and falls back to readable colors. */
-  /* ---------- Smoked obsidian glass (global) ----------
-     Apple visionOS / iOS 17 "smoked glass" recipe applied everywhere.
-     Tinted near-black base, heavy blur + saturation, hairline inner edge,
-     soft outer lift, subtle top inset highlight. */
+  /* ---------- Liquid Glass (white) — global recipe ----------
+     Apple visionOS / iOS 26 "liquid glass" but tinted WHITE instead of black.
+     Frosted white wash, heavy blur + saturation, bright hairline inner edge
+     top + bottom (refraction highlight), soft outer lift shadow. */
   .glass-field {
-    background-color: rgba(14, 16, 22, 0.72);
-    border: 1px solid rgba(255, 255, 255, 0.10);
+    background-color: rgba(255, 255, 255, 0.14);
+    border: 1px solid rgba(255, 255, 255, 0.28);
     backdrop-filter: blur(28px) saturate(180%);
     -webkit-backdrop-filter: blur(28px) saturate(180%);
     color: #FFFFFF;
     box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.06),
-      0 8px 24px -12px rgba(0, 0, 0, 0.5);
+      inset 0 1px 0 rgba(255, 255, 255, 0.45),
+      inset 0 -1px 0 rgba(255, 255, 255, 0.12),
+      0 8px 24px -12px rgba(0, 0, 0, 0.35);
     transition: background-color 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
   }
-  .glass-field::placeholder { color: rgba(255, 255, 255, 0.5); }
+  .glass-field::placeholder { color: rgba(255, 255, 255, 0.6); }
   .glass-field:focus-visible {
     outline: none;
-    background-color: rgba(14, 16, 22, 0.80);
-    border-color: rgba(255, 255, 255, 0.18);
+    background-color: rgba(255, 255, 255, 0.20);
+    border-color: rgba(255, 255, 255, 0.40);
     box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.10),
-      0 0 0 3px rgba(255, 255, 255, 0.12);
+      inset 0 1px 0 rgba(255, 255, 255, 0.55),
+      0 0 0 3px rgba(255, 255, 255, 0.18);
   }
   .dark .glass-field { color: #FFFFFF; }
+
 
   /* Animated rainbow border for the capture composer.
      Orange → red → green → blue conic gradient with a subtle drift. */
@@ -482,26 +481,27 @@ html:not(.dark) .gemini ::selection {
     initial-value: 0deg;
   }
 
-  /* Smoked glass pill — Apple-style dark obsidian. */
+  /* Liquid glass pill — white tinted. */
   .glass-pill {
-    background-color: rgba(14, 16, 22, 0.72);
-    border: 1px solid rgba(255, 255, 255, 0.10);
+    background-color: rgba(255, 255, 255, 0.14);
+    border: 1px solid rgba(255, 255, 255, 0.28);
     color: #FFFFFF;
     backdrop-filter: blur(28px) saturate(180%);
     -webkit-backdrop-filter: blur(28px) saturate(180%);
     box-shadow:
-      0 8px 32px rgba(0, 0, 0, 0.45),
-      inset 0 1px 0 rgba(255, 255, 255, 0.06);
+      0 8px 32px rgba(0, 0, 0, 0.28),
+      inset 0 1px 0 rgba(255, 255, 255, 0.45),
+      inset 0 -1px 0 rgba(255, 255, 255, 0.10);
     transition: background-color 220ms ease, border-color 220ms ease,
                 box-shadow 240ms ease, transform 180ms ease;
   }
   .glass-pill:hover {
-    background-color: rgba(20, 22, 28, 0.80);
-    border-color: rgba(255, 255, 255, 0.16);
+    background-color: rgba(255, 255, 255, 0.20);
+    border-color: rgba(255, 255, 255, 0.38);
   }
   .glass-pill:focus-visible {
-    background-color: rgba(20, 22, 28, 0.80);
-    border-color: rgba(255, 255, 255, 0.20);
+    background-color: rgba(255, 255, 255, 0.22);
+    border-color: rgba(255, 255, 255, 0.45);
   }
   .glass-pill:active { transform: scale(0.97); }
 
@@ -529,52 +529,56 @@ html:not(.dark) .gemini ::selection {
   .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
   /* ----------------------------------------------------------
-     Centralized smoked obsidian glass — single source of truth.
+     Centralized Liquid Glass (white) — single source of truth.
      Tweak values here and every card/modal/panel follows.
      ---------------------------------------------------------- */
   .glass-card {
-    background-color: rgba(14, 16, 22, 0.72);
-    border: 1px solid rgba(255, 255, 255, 0.10);
+    background-color: rgba(255, 255, 255, 0.13);
+    border: 1px solid rgba(255, 255, 255, 0.26);
     backdrop-filter: blur(28px) saturate(180%);
     -webkit-backdrop-filter: blur(28px) saturate(180%);
     box-shadow:
-      0 8px 32px rgba(0, 0, 0, 0.45),
-      inset 0 1px 0 rgba(255, 255, 255, 0.06);
+      0 8px 32px rgba(0, 0, 0, 0.28),
+      inset 0 1px 0 rgba(255, 255, 255, 0.45),
+      inset 0 -1px 0 rgba(255, 255, 255, 0.10);
     color: #ffffff;
   }
   .glass-card :where(p, span, li, h1, h2, h3, h4, h5, h6, label, button, a, svg) { color: inherit; }
-  .glass-card :where(.text-muted-foreground, .text-foreground) { color: rgba(255,255,255,0.70); }
+  .glass-card :where(.text-muted-foreground, .text-foreground) { color: rgba(255,255,255,0.75); }
   .glass-card svg { color: currentColor; }
-  /* Slightly deeper smoke for elevated surfaces (modals, hero). */
+  /* Brighter wash for elevated surfaces (modals, hero). */
   .glass-card-strong {
-    background-color: rgba(10, 12, 18, 0.82);
-    border: 1px solid rgba(255, 255, 255, 0.12);
+    background-color: rgba(255, 255, 255, 0.18);
+    border: 1px solid rgba(255, 255, 255, 0.32);
     backdrop-filter: blur(32px) saturate(190%);
     -webkit-backdrop-filter: blur(32px) saturate(190%);
     box-shadow:
-      0 16px 48px rgba(0, 0, 0, 0.60),
-      inset 0 1px 0 rgba(255, 255, 255, 0.08);
+      0 16px 48px rgba(0, 0, 0, 0.32),
+      inset 0 1px 0 rgba(255, 255, 255, 0.55),
+      inset 0 -1px 0 rgba(255, 255, 255, 0.14);
     color: #ffffff;
   }
   .glass-card-strong :where(p, span, li, h1, h2, h3, h4, h5, h6) { color: inherit; }
   /* Quiet inset — nested panels inside another glass-card. */
   .glass-card-quiet {
-    background-color: rgba(14, 16, 22, 0.55);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    background-color: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.18);
     backdrop-filter: blur(20px) saturate(170%);
     -webkit-backdrop-filter: blur(20px) saturate(170%);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.30);
     color: #ffffff;
   }
   .glass-card-quiet :where(p, span, li, h1, h2, h3, h4, h5, h6) { color: inherit; }
-  /* "white" variant kept as alias for the smoked recipe — no light fill. */
+  /* "white" variant — brightest wash. */
   .glass-card-white {
-    background-color: rgba(18, 20, 26, 0.74);
-    border: 1px solid rgba(255, 255, 255, 0.12);
+    background-color: rgba(255, 255, 255, 0.22);
+    border: 1px solid rgba(255, 255, 255, 0.36);
     backdrop-filter: blur(28px) saturate(180%);
     -webkit-backdrop-filter: blur(28px) saturate(180%);
     box-shadow:
-      0 8px 32px rgba(0, 0, 0, 0.45),
-      inset 0 1px 0 rgba(255, 255, 255, 0.08);
+      0 8px 32px rgba(0, 0, 0, 0.25),
+      inset 0 1px 0 rgba(255, 255, 255, 0.60),
+      inset 0 -1px 0 rgba(255, 255, 255, 0.16);
     color: #ffffff;
   }
   .glass-card-white :where(p, span, li, h1, h2, h3, h4, h5, h6) { color: inherit; }
@@ -584,20 +588,21 @@ html:not(.dark) .gemini ::selection {
                 box-shadow 240ms ease, transform 200ms ease;
   }
   .glass-card-interactive:hover {
-    background-color: rgba(28, 30, 38, 0.65);
-    border-color: rgba(255, 255, 255, 0.16);
+    background-color: rgba(255, 255, 255, 0.20);
+    border-color: rgba(255, 255, 255, 0.38);
     transform: translateY(-1px);
     box-shadow:
-      0 16px 44px rgba(0, 0, 0, 0.55),
-      inset 0 1px 0 rgba(255, 255, 255, 0.08);
+      0 16px 44px rgba(0, 0, 0, 0.32),
+      inset 0 1px 0 rgba(255, 255, 255, 0.55),
+      inset 0 -1px 0 rgba(255, 255, 255, 0.14);
   }
   .glass-card-interactive:focus-visible,
   .glass-card-interactive:focus-within {
     outline: none;
-    border-color: rgba(255, 255, 255, 0.22);
+    border-color: rgba(255, 255, 255, 0.50);
     box-shadow:
       0 0 0 3px hsl(var(--ring) / 0.45),
-      0 16px 44px rgba(0, 0, 0, 0.55),
+      0 16px 44px rgba(0, 0, 0, 0.32),
       inset 0 1px 0 rgba(255, 255, 255, 0.08);
   }
 
