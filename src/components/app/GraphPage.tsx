@@ -237,22 +237,27 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
         a.push(id); byTag.set(t, a);
       });
     });
-    const pairTagShared = new Map<string, number>();
-    byTag.forEach((ids) => {
+    const pairTagShared = new Map<string, { count: number; tags: string[] }>();
+    byTag.forEach((ids, tag) => {
       if (ids.length < 2) return;
       for (let i = 0; i < ids.length; i++) {
         for (let j = i + 1; j < ids.length; j++) {
           const k = key(ids[i], ids[j]);
-          pairTagShared.set(k, (pairTagShared.get(k) ?? 0) + 1);
+          const cur = pairTagShared.get(k) ?? { count: 0, tags: [] };
+          cur.count += 1;
+          cur.tags.push(tag);
+          pairTagShared.set(k, cur);
         }
       }
     });
-    pairTagShared.forEach((count, k) => {
+    pairTagShared.forEach(({ count, tags }, k) => {
       // strictness 1 → any shared tag connects; strictness 5 → need 3+ shared tags
       const minShared = Math.max(1, Math.ceil(strict / 2));
       if (count < minShared) return;
       const [a, b] = k.split("|");
-      addEdge(a, b, 0.9 + Math.min(count, 4) * 0.3, "tag");
+      // pick rarest shared tag as label (most informative)
+      const label = tags.slice().sort((x, y) => (tagCount.get(x) ?? 0) - (tagCount.get(y) ?? 0))[0];
+      addEdge(a, b, 0.9 + Math.min(count, 4) * 0.3, "tag", `#${label}`);
     });
 
     // Folder edges: faint scaffold chain (only with strictness ≤ 3)
