@@ -214,7 +214,7 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
 
     const edgeMap = new Map<string, GraphEdge>();
     const key = (a: string, b: string) => (a < b ? `${a}|${b}` : `${b}|${a}`);
-    const addEdge = (a: string, b: string, w: number, kind: EdgeKind) => {
+    const addEdge = (a: string, b: string, w: number, kind: EdgeKind, label?: string) => {
       if (a === b) return;
       const k = key(a, b);
       const e = edgeMap.get(k);
@@ -222,8 +222,9 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
         e.w = Math.max(e.w, w);
         // priority: ref > tag > kw > folder
         const rank = { ref: 4, tag: 3, kw: 2, folder: 1 } as Record<EdgeKind, number>;
-        if (rank[kind] > rank[e.kind]) e.kind = kind;
-      } else edgeMap.set(k, { a, b, w, kind });
+        if (rank[kind] > rank[e.kind]) { e.kind = kind; if (label) e.label = label; }
+        else if (!e.label && label) e.label = label;
+      } else edgeMap.set(k, { a, b, w, kind, label });
     };
 
     // Tag edges — strong, drive clustering. Pair ideas that share a tag.
