@@ -388,15 +388,8 @@ export const VoiceOrb = ({ onDictate, onLiveTranscript, speaking = false }: Voic
 
   return (
     <div className="gemini dark relative flex flex-col items-center justify-center gap-5 sm:gap-6 py-6 sm:py-8 px-3 sm:px-6 text-[color:var(--g-text)] w-full">
-      {/* Full-screen ambient Gemini glow — sits behind the entire capture page */}
-      <div
-        aria-hidden
-        className="pointer-events-none fixed inset-0 -z-10"
-        style={{
-          background:
-            "radial-gradient(60% 50% at 50% 30%, rgba(155,114,203,0.28), transparent 70%), radial-gradient(45% 40% at 20% 75%, rgba(66,133,244,0.22), transparent 75%), radial-gradient(45% 40% at 80% 80%, rgba(217,101,112,0.18), transparent 75%), linear-gradient(180deg, #0a0a14 0%, #05050b 100%)",
-        }}
-      />
+      {/* No full-screen background — let the global aurora show through */}
+
 
       {/* Mic permission status — plain text + icon, no pill */}
       <div className={cn("relative inline-flex items-center gap-1.5 text-[11.5px] font-medium", permMeta.tone.split(" ")[0])}>
