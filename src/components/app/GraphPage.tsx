@@ -1176,14 +1176,6 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
         </div>
       )}
 
-      {/* Stats */}
-      {!overlaysHidden && (
-        <div className="absolute bottom-3 left-3 z-10 text-[11px] text-white/60 bg-black/40 backdrop-blur-md border border-white/10 rounded-full px-3 py-1.5"
-          style={{ bottom: "calc(0.75rem + var(--mobile-tabbar-h, 0px))" }}
-        >
-          {nodesRef.current.length} ideas · {edgesRef.current.length} links · {tagAnchorsRef.current.size} clusters
-        </div>
-      )}
 
 
       {/* Background glow */}
