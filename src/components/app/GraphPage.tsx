@@ -605,13 +605,14 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
       });
 
       // edges
+      const labeledEdges: { e: GraphEdge; ax: number; ay: number; bx: number; by: number; active: boolean }[] = [];
       for (const e of edges) {
         if (!enabledNow[e.kind]) continue;
         if (!isVis(e.a) || !isVis(e.b)) continue;
         const a = nodes.find((n) => n.id === e.a);
         const b = nodes.find((n) => n.id === e.b);
         if (!a || !b) continue;
-        const active = hover && (a.id === hover || b.id === hover);
+        const active = !!hover && (a.id === hover || b.id === hover);
         const dim = hasQuery && !(matchSet.has(a.id) || matchSet.has(b.id));
         ctx.strokeStyle = active
           ? "rgba(168,85,247,0.95)"
@@ -623,6 +624,34 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
         ctx.moveTo(a.x, a.y);
         ctx.lineTo(b.x, b.y);
         ctx.stroke();
+        // queue label if relevant — show on hover, or whenever a filter narrows the view
+        if (e.label && !dim && (active || hasFilter)) {
+          labeledEdges.push({ e, ax: a.x, ay: a.y, bx: b.x, by: b.y, active });
+        }
+      }
+
+      // Edge labels — drawn after lines so they sit on top, rotated along the edge
+      if (labeledEdges.length) {
+        ctx.font = "10px ui-sans-serif, system-ui";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        for (const { e, ax, ay, bx, by, active } of labeledEdges) {
+          const mx = (ax + bx) / 2;
+          const my = (ay + by) / 2;
+          let ang = Math.atan2(by - ay, bx - ax);
+          if (ang > Math.PI / 2 || ang < -Math.PI / 2) ang += Math.PI; // keep upright
+          const label = e.label!;
+          ctx.save();
+          ctx.translate(mx, my);
+          ctx.rotate(ang);
+          const padX = 5;
+          const w = ctx.measureText(label).width + padX * 2;
+          ctx.fillStyle = active ? "rgba(168,85,247,0.85)" : "rgba(0,0,0,0.55)";
+          ctx.fillRect(-w / 2, -8, w, 14);
+          ctx.fillStyle = active ? "rgba(255,255,255,0.98)" : "rgba(255,255,255,0.78)";
+          ctx.fillText(label, 0, -1);
+          ctx.restore();
+        }
       }
 
       // nodes
