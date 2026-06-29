@@ -487,9 +487,9 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
       const W = size.w, H = size.h;
       const cx = W / 2, cy = H / 2;
 
-      const repulseStrength = 400 + tun.repulsion * 1400; // 400..1800
+      const repulseStrength = (400 + tun.repulsion * 1400) * (hasFilter ? 2.2 : 1); // spread out under filter
       const linkK = 0.005 + tun.linkStrength * 0.06;      // 0.005..0.065
-      const tagPullK = tun.tagGravity * 0.04;             // 0..0.04
+      const tagPullK = (hasFilter ? 0 : tun.tagGravity) * 0.04; // disable tag wells when filtering
 
       // Repulsion
       for (let i = 0; i < nodes.length; i++) {
