@@ -284,22 +284,25 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
         a.push(id); tokenIndex.set(t, a);
       });
     });
-    const pairShared = new Map<string, number>();
+    const pairShared = new Map<string, { count: number; tokens: string[] }>();
     const maxCluster = Math.max(2, 6 - strict); // strict=1 → up to 5; strict=5 → only pairs
-    tokenIndex.forEach((ids) => {
+    tokenIndex.forEach((ids, tok) => {
       if (ids.length < 2 || ids.length > maxCluster) return;
       for (let i = 0; i < ids.length; i++) {
         for (let j = i + 1; j < ids.length; j++) {
           const k = key(ids[i], ids[j]);
-          pairShared.set(k, (pairShared.get(k) ?? 0) + 1);
+          const cur = pairShared.get(k) ?? { count: 0, tokens: [] };
+          cur.count += 1;
+          cur.tokens.push(tok);
+          pairShared.set(k, cur);
         }
       }
     });
     const kwMinShared = Math.max(2, strict);
-    pairShared.forEach((count, k) => {
+    pairShared.forEach(({ count, tokens: toks }, k) => {
       if (count < kwMinShared) return;
       const [a, b] = k.split("|");
-      addEdge(a, b, 0.6 + Math.min(count, 4) * 0.2, "kw");
+      addEdge(a, b, 0.6 + Math.min(count, 4) * 0.2, "kw", toks[0]);
     });
 
     if (refsQuery.data) {
@@ -309,10 +312,12 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
         const a = byUrl.get(r.url) ?? [];
         a.push(r.idea_id); byUrl.set(r.url, a);
       });
-      byUrl.forEach((ids) => {
+      byUrl.forEach((ids, url) => {
+        let host = url;
+        try { host = new URL(url).host.replace(/^www\./, ""); } catch { /* */ }
         for (let i = 0; i < ids.length; i++)
           for (let j = i + 1; j < ids.length; j++)
-            addEdge(ids[i], ids[j], 1.2, "ref");
+            addEdge(ids[i], ids[j], 1.2, "ref", host);
       });
     }
 
