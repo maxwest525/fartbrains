@@ -484,23 +484,23 @@ html:not(.dark) .gemini ::selection {
 
   /* Smoked glass pill — Apple-style dark obsidian. */
   .glass-pill {
-    background-color: rgba(20, 22, 28, 0.55);
+    background-color: rgba(14, 16, 22, 0.72);
     border: 1px solid rgba(255, 255, 255, 0.10);
     color: #FFFFFF;
-    backdrop-filter: blur(24px) saturate(180%);
-    -webkit-backdrop-filter: blur(24px) saturate(180%);
+    backdrop-filter: blur(28px) saturate(180%);
+    -webkit-backdrop-filter: blur(28px) saturate(180%);
     box-shadow:
-      0 8px 32px rgba(0, 0, 0, 0.40),
+      0 8px 32px rgba(0, 0, 0, 0.45),
       inset 0 1px 0 rgba(255, 255, 255, 0.06);
     transition: background-color 220ms ease, border-color 220ms ease,
                 box-shadow 240ms ease, transform 180ms ease;
   }
   .glass-pill:hover {
-    background-color: rgba(28, 30, 38, 0.65);
+    background-color: rgba(20, 22, 28, 0.80);
     border-color: rgba(255, 255, 255, 0.16);
   }
   .glass-pill:focus-visible {
-    background-color: rgba(28, 30, 38, 0.65);
+    background-color: rgba(20, 22, 28, 0.80);
     border-color: rgba(255, 255, 255, 0.20);
   }
   .glass-pill:active { transform: scale(0.97); }
