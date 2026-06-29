@@ -24,7 +24,7 @@ type GraphNode = {
   degree: number;
 };
 
-type GraphEdge = { a: string; b: string; w: number; kind: EdgeKind };
+type GraphEdge = { a: string; b: string; w: number; kind: EdgeKind; label?: string };
 
 const STOP = new Set([
   "the","and","for","with","that","this","from","your","you","are","but","not","have","has","was","were","its","into","about","what","when","where","which","who","how","why","they","them","their","our","ours","ive","im","ill","cant","wont","dont","just","like","more","most","some","any","all","one","two","over","under","then","than","also","very","much","make","made","get","got","let","via","onto","off","out","new","old"
