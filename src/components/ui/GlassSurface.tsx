@@ -2,19 +2,18 @@ import { forwardRef, type HTMLAttributes } from "react";
 import { cn } from "@/lib/utils";
 
 /**
- * Single source of truth for glassmorphic surfaces.
- * All cards, modals, popovers, and floating panels should use this so
- * opacity, blur, border, and shadow stay perfectly consistent.
- *
- * Variants:
- *  - default:  standard card surface (dark frosted)
- *  - strong:   elevated surfaces (modals, hero cards)
- *  - quiet:    nested inset panel inside another glass surface
- *  - white:    bright frosted "white glass" for highlight cards
+ * Variants — pick by INTENT, not by look:
+ *  - clear:    near-invisible refraction. Floating overlays on rich
+ *              scenery (popovers, tooltips, dropdowns, command bars).
+ *  - default:  smoked dark frosted. Primary content surfaces (cards,
+ *              list rows, panels) where body text must stay legible.
+ *  - strong:   elevated dark surfaces (modals, sheets, hero cards).
+ *  - quiet:    nested inset panel inside another glass surface.
+ *  - white:    luminous frosted highlight (CTA wells, hero tiles).
  *
  * Use `interactive` to add hover lift + keyboard focus ring.
  */
-export type GlassVariant = "default" | "strong" | "quiet" | "white";
+export type GlassVariant = "clear" | "default" | "strong" | "quiet" | "white";
 
 export interface GlassSurfaceProps extends HTMLAttributes<HTMLDivElement> {
   variant?: GlassVariant;
@@ -23,6 +22,7 @@ export interface GlassSurfaceProps extends HTMLAttributes<HTMLDivElement> {
 }
 
 const VARIANT_CLASS: Record<GlassVariant, string> = {
+  clear: "glass-card-clear",
   default: "glass-card",
   strong: "glass-card-strong",
   quiet: "glass-card-quiet",
