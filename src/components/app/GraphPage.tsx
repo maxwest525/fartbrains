@@ -568,9 +568,9 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
           const ease = 1 - Math.pow(1 - t, 3); // easeOutCubic
           const remain = 1 - ease;
           // Fast multi-turn spin that winds down, slightly spread (scale > 1 -> 1), no skew.
-          introRot = remain * Math.PI * 5;       // ~2.5 turns -> 0
+          introRot = remain * Math.PI * 2.5;     // ~1.25 turns -> 0 (snappier)
           introSkew = 0;
-          introScale = 1.18 - 0.18 * ease;       // slightly spread -> settle
+          introScale = 1.1 - 0.1 * ease;         // slight spread -> settle
         }
       }
       ctx.translate(cam.x, cam.y);
