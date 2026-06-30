@@ -284,6 +284,40 @@ export const IdeaDetail = ({ ideaId, onClose, backLabel = "Back", onSelectIdea }
     }
   };
 
+  // Quick-add a new idea in the same folder as this one and jump to it.
+  const onAddSibling = async () => {
+    if (!idea) return;
+    try {
+      const folderName = idea.folder_id ? folders.find((f) => f.id === idea.folder_id)?.name ?? "Idea" : "Idea";
+      const created = await createIdea.mutateAsync({
+        title: `New ${folderName} entry`,
+        raw_note: "",
+        source_type: "manual",
+        folder_id: idea.folder_id ?? null,
+      });
+      const newId = (created as { id?: string } | null)?.id;
+      if (newId && onSelectIdea) onSelectIdea(newId);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Couldn't create idea");
+    }
+  };
+
+  // Collab: copy a shareable brainstorm link for this idea.
+  // A friend opening the link lands on the same idea; real-time co-edit is a
+  // follow-up (Supabase Realtime presence on a channel keyed by idea.id).
+  const onCollab = async () => {
+    if (!idea) return;
+    const url = `${window.location.origin}/?idea=${idea.id}&collab=1`;
+    try {
+      await navigator.clipboard.writeText(url);
+      toast.success("Collab link copied", {
+        description: "Send it to a friend — you'll both land on this idea.",
+      });
+    } catch {
+      toast.error("Couldn't copy link", { description: url });
+    }
+  };
+
   return (
     <div ref={containerRef} className="flex-1 flex flex-col h-full overflow-hidden bg-transparent md:animate-none anim-slide-in">
       {/* iOS-style nav bar: text "Back" on left, action cluster on right */}
