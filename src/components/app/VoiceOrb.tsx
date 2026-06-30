@@ -463,16 +463,15 @@ export const VoiceOrb = ({ onDictate, onLiveTranscript, speaking = false }: Voic
         </span>
       </button>
 
-      <div className="relative text-center space-y-1.5">
-        <p className="text-[14px] sm:text-[15px] font-medium tracking-tight">{status}</p>
-
-
+      <div className="relative text-center">
+        <p className="text-[14px] sm:text-[15px] font-medium tracking-tight leading-tight">{status}</p>
         {draft !== null && !isRecording && !isTranscribing && (
-          <p className="text-[11.5px] text-[color:var(--g-text-muted)]">
+          <p className="mt-1 text-[11.5px] leading-tight text-[color:var(--g-text-muted)]">
             Tap orb to add more — your edits are kept.
           </p>
         )}
       </div>
+
 
       {/* 3-mode segmented selector */}
       <div
