@@ -8,6 +8,7 @@ import { AshChatPanel, type AshChatHandle } from "@/components/app/home/AshChatP
 import { VoiceOrb } from "@/components/app/VoiceOrb";
 import { UrlCaptureScreen } from "@/components/app/UrlCaptureScreen";
 import { ComposeIdea } from "@/components/app/ComposeIdea";
+import { UrlQuickCapture } from "@/components/app/UrlQuickCapture";
 
 
 import { MobileTabBar } from "@/components/app/MobileTabBar";
