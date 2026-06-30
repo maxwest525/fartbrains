@@ -24,8 +24,10 @@ import { useAuth } from "@/hooks/useAuth";
 import { useFolders } from "@/hooks/useFolders";
 import { useReminderNotifier } from "@/hooks/useReminderNotifier";
 import { useAshChat } from "@/hooks/useAshChat";
+import { useCreateIdea } from "@/hooks/useIdeas";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { Plus } from "lucide-react";
 import type { IdeaFilter } from "@/hooks/useIdeas";
 
 
