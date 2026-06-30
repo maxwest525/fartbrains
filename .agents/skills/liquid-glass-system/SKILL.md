@@ -35,13 +35,28 @@ Prefer the React component:
 import { GlassSurface } from "@/components/ui/GlassSurface";
 
 <GlassSurface variant="clear" interactive className="p-4">…</GlassSurface>
+
+// Force the light-scenery recipe when CLEAR sits over a bright backdrop:
+<GlassSurface variant="clear" tone="light" className="p-4">…</GlassSurface>
 ```
 
 Raw class is fine in shadcn primitive files:
 
 ```tsx
 className="rounded-2xl glass-card-clear text-foreground p-4"
+// or, over light scenery:
+className="rounded-2xl glass-card-clear on-light p-4"
 ```
+
+### Tone adaptation (clear only)
+
+The `clear` variant adapts to the backdrop:
+
+- Default (no `.on-light` / `.on-dark`): follows the app theme. `.dark` html → white hairline + white text. Light html → dark hairline + dark text (auto via `html:not(.dark)` rule in `src/index.css`).
+- `.on-light` (or `<GlassSurface tone="light" />`) — force the dark-hairline / dark-text recipe. Use when the surface sits over bright imagery, a white panel, or a light hero inside an otherwise dark app.
+- `.on-dark` (or `<GlassSurface tone="dark" />`) — force the white-hairline / white-text recipe. Use when the surface sits over dark imagery inside an otherwise light wrapper.
+
+`tone` is a no-op on non-clear variants — `default` / `strong` / `quiet` are intentionally always dark, `white` is always luminous.
 
 ## Rules
 
