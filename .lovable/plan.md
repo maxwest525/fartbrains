@@ -1,85 +1,82 @@
+# IdeaVault — next build wave
 
-## Goal
-Turn the Capture page into a real funnel entry: paste a URL or type an idea → extract → generate prompt → chat with the result inside a branded in-app assistant. Lock V1 scope so nothing ships half-wired.
-
----
-
-## V1 (build now)
-
-### 1. Homepage URL capture → idea record
-- Add a URL input directly on the Capture screen (above the orb), with an "Extract" button.
-- Server: reuse `scrape-url` edge function. Save returned `markdown` to `ideas.extracted_text`, `summary` to `ideas.ai_summary`, title from page metadata.
-- New idea is created immediately in `Ideas` folder with `source_type='url'` and `source_url`. Toast: "Saved. Ready to prompt."
-- Works with **or without** an idea note. If both URL and note are filled, both are stored on the same idea.
-
-**Artifact:** `UrlQuickCapture.tsx` mounted in `Index.tsx` above `VoiceOrb`. **Done when:** pasting a URL creates an idea row with non-empty `extracted_text` and the user lands on the idea detail.
-
-### 2. "Generate Prompt" step (already exists — wire it as the funnel step)
-- Existing `generate-prompt` function already accepts `note + summary + extractedText`. Keep it.
-- Promote the Generate Prompt button to the **primary CTA** on a newly-created idea (top of detail, full-width gradient).
-- Add a 2-input MVP shortcut on the Capture page: if user filled BOTH idea note AND URL, auto-call `generate-prompt` after extraction completes and show the result inline with "Open chat with this prompt" CTA.
-
-**Artifact:** updated `IdeaDetail.tsx` + new auto-prompt branch in `UrlQuickCapture`. **Done when:** the generated prompt appears within ~5s of extraction in the 2-input path.
-
-### 3. Branded in-app chat ("Ash")
-- Reuse existing `AshDock` + `ash-chat` edge function (already streams via Gemini).
-- New entry path: "Open chat with this idea" button on idea detail → opens AshDock pre-seeded with a system message containing the idea's `extracted_text` + `ai_summary` + generated prompt.
-- Add a small "Save reply to idea" action on each Ash assistant message (already partially in `useSaveAshToIdea` — wire it to append to the current idea).
-- No model picker in V1 — default `google/gemini-3-flash-preview`.
-
-**Artifact:** updated `AshDock.tsx` with seeded-context mode. **Done when:** clicking "Chat with this idea" from a detail opens Ash with context loaded and first reply streams.
+Organized into **ship-now** (small/clear) and **configure-later** (needs setup or scope decisions). Nothing built yet — confirm or trim before I start.
 
 ---
 
-## V2 (defer — do not build now)
+## A. Ship-now (small, scoped, no extra config)
 
-Explicitly out of V1 so we don't ship dead buttons:
-- **Deep research** (multi-source synthesis) — keep `deep-research` function but hide the UI button until V2.
-- **Citations panel** — defer.
-- **Competitor analysis** — defer.
-- **Vertex grounding / branded search** — defer (requires Google Cloud project + billing).
-- **Image generation** — defer; see workflow map below.
-- **Video generation** — defer; see workflow map below.
-- **Per-user billing / friend access gating** — defer (separate plan when you're ready).
+1. **"+ Add" everywhere it should exist**
+   - Add button inside every Idea detail (adds a sub-note / linked sub-idea to the same parent)
+   - Add button inside every Folder (creates a new idea pre-assigned to that folder)
+   - Add button inside Project view (creates a task/idea scoped to that project)
 
----
+2. **Dark-glass modals globally**
+   - Audit every Dialog/Sheet/Popover and force the `strong` dark-glass variant (currently mixed).
 
-## Media generation workflow (mapped, not built)
+3. **Better loading states**
+   - Replace plain spinners with one of: shimmering skeleton previews, animated gradient progress bar, or a "neural pulse" orb. I'll pick one and apply to: research, scrape, summarize, generate-prompt, deep-research.
 
-Documenting now so when you say "build it" we don't redesign:
+4. **Calendar → gift idea generator** *(extends existing EventGiftsSection)*
+   - Multi-question wizard ("budget? their vibe? last gift?") → generates 3–5 gift ideas with links, saves them as ideas tagged to the event.
 
-**Image gen flow**
-1. Input: user clicks "Generate image" on an idea → modal with prompt prefilled from idea title + summary.
-2. Refine: user edits prompt; optional style chips (photoreal, illustration, diagram).
-3. Generate: edge function `generate-image` calls Lovable AI `google/gemini-3-flash-image` (Nano Banana).
-4. Storage: upload returned bytes to new `idea-media` bucket → insert row in new `idea_media` table (`idea_id`, `kind='image'`, `storage_path`, `prompt`, `model`).
-5. Display: gallery section on idea detail, click to enlarge, download, regenerate.
+5. **Idea-from-image upload**
+   - Drop an image on capture → Gemini vision describes it → becomes the seed idea. Supports lists/receipts/coupons/screenshots ("scan from phone").
 
-**Video gen flow** (same shape, heavier)
-1. Input: "Generate video" → modal w/ prompt + duration (4s/8s) + aspect ratio.
-2. Generate: edge function `generate-video` calls a video model (TBD — needs connector; flag this as a V2 dependency to pick provider).
-3. Storage: same `idea-media` bucket, `kind='video'`, plus poster frame.
-4. Display: inline `<video>` player in detail with download.
-
-**V2 prerequisites to confirm before building media:**
-- Pick video provider (Veo via Vertex? Runway? Pika?).
-- Confirm `idea_media` table + `idea-media` storage bucket schema.
-- Decide if media generation is gated/billed.
+6. **"Better alternatives with facts" action on any idea**
+   - New button inside idea detail → finds 3 alternatives with side-by-side fact comparison (price, features, ratings).
 
 ---
 
-## Technical notes
-- DB: no new tables for V1. Reuse `ideas.extracted_text`, `ai_summary`, `source_url`, `source_type`.
-- Edge functions: no new ones for V1 — `scrape-url`, `generate-prompt`, `ash-chat` already exist.
-- Auth: nothing new; existing protected route covers it.
-- New code: `UrlQuickCapture.tsx`, small edits to `Index.tsx`, `IdeaDetail.tsx`, `AshDock.tsx`.
+## B. Project memory architecture (medium, needs schema)
+
+7. **Projects = folders with memory**
+   - Promote `folders` to optionally act as "projects" with:
+     - **Internal memory**: scoped vector store of that project's ideas only
+     - **Shared memory**: opt-in pool every project can read from
+   - Ash chat inside a project auto-loads internal memory; toggle to "include shared brain" surfaces cross-project connections (with a "from project X" badge).
+   - Graph view gets a "project lens" — show only this project, or this project + dotted lines to cross-project matches.
 
 ---
 
-## Order of build (when you approve)
-1. `UrlQuickCapture` on homepage + idea record creation.
-2. Auto-generate-prompt when both inputs present.
-3. "Chat with this idea" → seeded AshDock.
-4. Hide V2 surfaces (deep research, citations, media buttons) behind a feature flag so the UI stays honest.
+## C. Templates & guided flows (list — pick which to build first)
 
-Reply **"go"** to switch to build mode and ship V1 in this order, or tell me what to cut/add first.
+8. **Idea-type templates** — when creating an idea, optional template picker:
+   - Brand kit (name, tagline, palette, logo brief)
+   - Logo brief
+   - Marketing kit (audience, channels, hook, CTAs)
+   - Deep research report
+   - Competitor analysis
+   - Grow my business / marketing strategy
+   - Product launch checklist
+   - Each template = preset fields + a tuned prompt + auto-runs the right edge function.
+
+---
+
+## D. Integrations (configure-later — each needs OAuth/API setup)
+
+9. **Google Calendar** — two-way sync (already have connector available)
+10. **Gmail** — pull emails into ideas, send recap digests
+11. **Photos** — Google Photos / iCloud Shared Album → auto-create idea from new photos
+12. **Import from other LLM chats** — paste ChatGPT/Claude share link → extract conversation → idea + memory
+13. **Push from phone share sheet** — PWA share target (already partially wired via push-sw)
+
+---
+
+## E. Polish backlog
+
+14. Animated loading "preview of research" — stream partial findings as they come in instead of blank spinner.
+15. Consistent dark-glass for toasts, command palette, dropdowns.
+16. Empty states with one-tap template suggestions.
+
+---
+
+## How I want to proceed
+
+Reply with:
+- **"Ship A + 7"** to do all of section A plus project memory now
+- **"A only"** for the quick wins first
+- **A list of specific numbers** (e.g. "1, 3, 5, 8") to cherry-pick
+- **"Plan C templates"** if you want me to spec the template system in detail first
+
+I won't touch integrations (D) until you tell me which one and confirm the OAuth setup path.

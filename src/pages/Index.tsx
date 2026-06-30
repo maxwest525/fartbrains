@@ -24,8 +24,10 @@ import { useAuth } from "@/hooks/useAuth";
 import { useFolders } from "@/hooks/useFolders";
 import { useReminderNotifier } from "@/hooks/useReminderNotifier";
 import { useAshChat } from "@/hooks/useAshChat";
+import { useCreateIdea } from "@/hooks/useIdeas";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { Plus } from "lucide-react";
 import type { IdeaFilter } from "@/hooks/useIdeas";
 
 
@@ -97,9 +99,28 @@ const Shell = () => {
 
   const { user, signOut } = useAuth();
   const { data: folders = [] } = useFolders();
+  const createIdea = useCreateIdea();
 
   // Polls folders client-side; fires browser + toast notifications when due.
   useReminderNotifier();
+
+  // Quick-add a stub idea in the current scope, then open it for editing.
+  const handleQuickAdd = async () => {
+    const folderId = filter.kind === "folder" ? filter.folderId : null;
+    const folderName = folderId ? folders.find((f) => f.id === folderId)?.name ?? "Idea" : "Idea";
+    try {
+      const created = await createIdea.mutateAsync({
+        title: `New ${folderName} entry`,
+        raw_note: "",
+        source_type: "manual",
+        folder_id: folderId,
+      });
+      const id = (created as { id?: string } | null)?.id;
+      if (id) setSelectedId(id);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Couldn't create idea");
+    }
+  };
 
   const backLabel = (() => {
     switch (filter.kind) {
@@ -408,6 +429,20 @@ const Shell = () => {
           <IdeaDetail ideaId={selectedId} onClose={() => setSelectedId(null)} backLabel={backLabel} onSelectIdea={setSelectedId} />
         )}
       </div>
+
+      {/* Floating "+ Add" — visible in any browse scope (folder, recent, favorites, search).
+          Creates a stub idea in the active folder (or default) and opens it for editing. */}
+      {!showFolders && !showCalendar && !showGraph && !showDetailOnly && filter.kind !== "all" && (
+        <button
+          onClick={handleQuickAdd}
+          disabled={createIdea.isPending}
+          aria-label="Add idea here"
+          className="fixed z-30 right-4 h-14 w-14 rounded-full brand-gradient ring-glow flex items-center justify-center text-white shadow-xl hover:scale-105 active:scale-95 transition disabled:opacity-60"
+          style={{ bottom: "calc(var(--ash-dock-h, 0px) + var(--mobile-tabbar-h, 0px) + env(safe-area-inset-bottom) + 1rem)" }}
+        >
+          <Plus className="h-6 w-6" strokeWidth={2.4} />
+        </button>
+      )}
 
       {/* Mobile bottom tab bar (iOS-style) */}
       {isMobile && (
