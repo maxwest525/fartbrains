@@ -1141,7 +1141,7 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
 
       {/* Clustering / tuning panel */}
       {tuningOpen && (
-        <div className="absolute top-[6.5rem] right-3 z-10 w-[min(320px,calc(100vw-1.5rem))] rounded-2xl bg-black/60 backdrop-blur-xl border border-white/10 p-3 shadow-2xl space-y-3">
+        <div className="absolute top-[6.5rem] right-3 z-10 w-[min(320px,calc(100vw-1.5rem))] rounded-2xl glass-card-clear p-3 shadow-2xl space-y-3">
 
           <div className="flex items-center justify-between">
             <h3 className="text-[13px] font-semibold text-white">Clustering</h3>
