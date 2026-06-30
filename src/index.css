@@ -568,12 +568,12 @@ html:not(.dark) .gemini ::selection {
   .glass-card-clear :where(p, span, li, h1, h2, h3, h4, h5, h6) { color: inherit; }
   .glass-card-clear :where(.text-muted-foreground) { color: rgba(255,255,255,0.66); }
 
-  /* DARK — default content surface. Flat: light wash + hairline only, no shadow. */
+  /* DARK — default content surface. Matches the clear pill: faint wash + hairline. */
   .glass-card {
-    background-color: rgba(255, 255, 255, 0.14);
-    border: 1px solid rgba(255, 255, 255, 0.28);
-    backdrop-filter: blur(28px) saturate(160%);
-    -webkit-backdrop-filter: blur(28px) saturate(160%);
+    background-color: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    backdrop-filter: blur(28px) saturate(150%);
+    -webkit-backdrop-filter: blur(28px) saturate(150%);
     box-shadow: none;
     color: #ffffff;
   }
@@ -581,12 +581,12 @@ html:not(.dark) .gemini ::selection {
   .glass-card :where(.text-muted-foreground, .text-foreground) { color: rgba(255,255,255,0.78); }
   .glass-card svg { color: currentColor; }
 
-  /* STRONG — modal/overlay weight. Denser white fill, brighter hairline, still flat. */
+  /* STRONG — modal/overlay weight. Slightly denser but same flat hairline recipe. */
   .glass-card-strong {
-    background-color: rgba(255, 255, 255, 0.20);
-    border: 1px solid rgba(255, 255, 255, 0.34);
-    backdrop-filter: blur(36px) saturate(170%);
-    -webkit-backdrop-filter: blur(36px) saturate(170%);
+    background-color: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    backdrop-filter: blur(32px) saturate(160%);
+    -webkit-backdrop-filter: blur(32px) saturate(160%);
     box-shadow: none;
     color: #ffffff;
   }
@@ -594,7 +594,7 @@ html:not(.dark) .gemini ::selection {
 
   /* QUIET — nested inset panel inside another glass surface. */
   .glass-card-quiet {
-    background-color: rgba(255, 255, 255, 0.04);
+    background-color: rgba(255, 255, 255, 0.03);
     border: 1px solid rgba(255, 255, 255, 0.10);
     backdrop-filter: blur(20px) saturate(140%);
     -webkit-backdrop-filter: blur(20px) saturate(140%);
@@ -603,16 +603,17 @@ html:not(.dark) .gemini ::selection {
   }
   .glass-card-quiet :where(p, span, li, h1, h2, h3, h4, h5, h6) { color: inherit; }
 
-  /* WHITE — luminous wash for highlight cards. Flat: no inset highlight, no drop shadow. */
+  /* WHITE — same clear recipe, kept as alias so existing usages stay flat. */
   .glass-card-white {
-    background-color: rgba(255, 255, 255, 0.14);
-    border: 1px solid rgba(255, 255, 255, 0.28);
-    backdrop-filter: blur(28px) saturate(160%);
-    -webkit-backdrop-filter: blur(28px) saturate(160%);
+    background-color: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    backdrop-filter: blur(28px) saturate(150%);
+    -webkit-backdrop-filter: blur(28px) saturate(150%);
     box-shadow: none;
     color: #ffffff;
   }
   .glass-card-white :where(p, span, li, h1, h2, h3, h4, h5, h6) { color: inherit; }
+
 
   /* Interactive — hover wash + flat focus outline. Pair with any variant. */
   .glass-card-interactive {
