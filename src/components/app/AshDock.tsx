@@ -118,8 +118,24 @@ export const AshDock = ({ className }: { className?: string }) => {
       setText((prev) => (prev.trim() ? `${prev.trim()} ${detail.trim()}` : detail.trim()));
       requestAnimationFrame(() => textareaRef.current?.focus());
     };
+    const onSeed = (e: Event) => {
+      const detail = (e as CustomEvent<{ seed?: string }>).detail;
+      const seed = detail?.seed?.trim();
+      if (!seed) return;
+      setCollapsed(false);
+      setText(seed);
+      requestAnimationFrame(() => {
+        textareaRef.current?.focus();
+        textareaRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+      });
+      toast.message("Loaded idea into Ash — review and send.");
+    };
     window.addEventListener("idea-vault:dictate", onDictate as EventListener);
-    return () => window.removeEventListener("idea-vault:dictate", onDictate as EventListener);
+    window.addEventListener("idea-vault:chat-with-idea", onSeed as EventListener);
+    return () => {
+      window.removeEventListener("idea-vault:dictate", onDictate as EventListener);
+      window.removeEventListener("idea-vault:chat-with-idea", onSeed as EventListener);
+    };
   }, []);
   const [submitting, setSubmitting] = useState(false);
   const [mode, setMode] = useState<Mode>("auto");
