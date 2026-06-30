@@ -567,23 +567,23 @@ html:not(.dark) .gemini ::selection {
 
   /* DARK — default content surface. Flat: light wash + hairline only, no shadow. */
   .glass-card {
-    background-color: rgba(10, 12, 20, 0.38);
-    border: 1px solid rgba(255, 255, 255, 0.16);
-    backdrop-filter: blur(28px) saturate(150%);
-    -webkit-backdrop-filter: blur(28px) saturate(150%);
+    background-color: rgba(255, 255, 255, 0.14);
+    border: 1px solid rgba(255, 255, 255, 0.28);
+    backdrop-filter: blur(28px) saturate(160%);
+    -webkit-backdrop-filter: blur(28px) saturate(160%);
     box-shadow: none;
     color: #ffffff;
   }
   .glass-card :where(p, span, li, h1, h2, h3, h4, h5, h6, label, button, a, svg) { color: inherit; }
-  .glass-card :where(.text-muted-foreground, .text-foreground) { color: rgba(255,255,255,0.72); }
+  .glass-card :where(.text-muted-foreground, .text-foreground) { color: rgba(255,255,255,0.78); }
   .glass-card svg { color: currentColor; }
 
-  /* STRONG — modal/overlay weight. Slightly denser fill, still flat hairline, no inset highlight. */
+  /* STRONG — modal/overlay weight. Denser white fill, brighter hairline, still flat. */
   .glass-card-strong {
-    background-color: rgba(10, 12, 20, 0.55);
-    border: 1px solid rgba(255, 255, 255, 0.18);
-    backdrop-filter: blur(36px) saturate(160%);
-    -webkit-backdrop-filter: blur(36px) saturate(160%);
+    background-color: rgba(255, 255, 255, 0.20);
+    border: 1px solid rgba(255, 255, 255, 0.34);
+    backdrop-filter: blur(36px) saturate(170%);
+    -webkit-backdrop-filter: blur(36px) saturate(170%);
     box-shadow: none;
     color: #ffffff;
   }
