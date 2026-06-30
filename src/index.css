@@ -461,11 +461,10 @@ html:not(.dark) .gemini ::selection {
     padding: 1.5px;
     background: conic-gradient(
       from var(--rb-angle, 0deg),
-      #ff7a18,
-      #ff2d55,
-      #18d26e,
-      #2d8cff,
-      #ff7a18
+      #ff7a18 0deg 90deg,
+      #ff2d2d 90deg 180deg,
+      #1ed760 180deg 270deg,
+      #2d8cff 270deg 360deg
     );
     background-size: 200% 200%;
     animation: composer-rainbow-spin 9s linear infinite;
