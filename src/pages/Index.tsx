@@ -99,9 +99,28 @@ const Shell = () => {
 
   const { user, signOut } = useAuth();
   const { data: folders = [] } = useFolders();
+  const createIdea = useCreateIdea();
 
   // Polls folders client-side; fires browser + toast notifications when due.
   useReminderNotifier();
+
+  // Quick-add a stub idea in the current scope, then open it for editing.
+  const handleQuickAdd = async () => {
+    const folderId = filter.kind === "folder" ? filter.folderId : null;
+    const folderName = folderId ? folders.find((f) => f.id === folderId)?.name ?? "Idea" : "Idea";
+    try {
+      const created = await createIdea.mutateAsync({
+        title: `New ${folderName} entry`,
+        raw_note: "",
+        source_type: "manual",
+        folder_id: folderId,
+      });
+      const id = (created as { id?: string } | null)?.id;
+      if (id) setSelectedId(id);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Couldn't create idea");
+    }
+  };
 
   const backLabel = (() => {
     switch (filter.kind) {
