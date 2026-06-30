@@ -94,15 +94,15 @@ export const MobileTabBar = ({ filter, view, onFilterChange, onOpenFolders, onOp
       className="fixed bottom-0 inset-x-0 z-30"
       aria-label="Primary"
     >
-      {/* Top hairline gradient */}
-      <div aria-hidden className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/15 to-transparent" />
       <div
-        className="relative glass-card-strong rounded-none"
+        className="relative rounded-none border-0 shadow-none"
         style={{
           paddingBottom: "env(safe-area-inset-bottom)",
+          background: "rgba(10, 10, 14, 0.55)",
+          backdropFilter: "blur(28px) saturate(160%)",
+          WebkitBackdropFilter: "blur(28px) saturate(160%)",
         }}
       >
-
         <div className="flex items-stretch h-[72px]">
           <Tab active={isAll} icon="auto_awesome" label="Capture" onClick={() => onFilterChange({ kind: "all" })} />
           <Tab active={isGraph} icon="hub" label="Graph" onClick={onOpenGraph} />
@@ -111,6 +111,7 @@ export const MobileTabBar = ({ filter, view, onFilterChange, onOpenFolders, onOp
           <Tab active={false} icon="tune" label="Settings" onClick={onOpenSettings} />
         </div>
       </div>
+
     </nav>
 
   );
