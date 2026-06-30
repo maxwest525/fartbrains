@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { Star, Trash2, ExternalLink, Sparkles, ChevronLeft, Wand2, Copy, Check, Loader2, RefreshCw, Bell, Pin, PinOff } from "lucide-react";
+import { Star, Trash2, ExternalLink, Sparkles, ChevronLeft, Wand2, Copy, Check, Loader2, RefreshCw, Bell, Pin, PinOff, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -657,8 +657,32 @@ export const IdeaDetail = ({ ideaId, onClose, backLabel = "Back", onSelectIdea }
                 Combine your note with the AI summary into a single prompt you can paste into ChatGPT, Claude, or Gemini.
               </div>
             )}
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                const seed = [
+                  idea.generated_prompt,
+                  !idea.generated_prompt && idea.ai_summary ? `Context — AI summary:\n${idea.ai_summary}` : null,
+                  !idea.generated_prompt && !idea.ai_summary && idea.extracted_text
+                    ? `Context — extracted text:\n${idea.extracted_text.slice(0, 4000)}`
+                    : null,
+                  idea.raw_note ? `My note: ${idea.raw_note}` : null,
+                ].filter(Boolean).join("\n\n");
+                window.dispatchEvent(
+                  new CustomEvent("idea-vault:chat-with-idea", {
+                    detail: { ideaId: idea.id, seed: seed || `Let's discuss: ${idea.title}` },
+                  }),
+                );
+              }}
+              className="mt-2 inline-flex items-center gap-1.5 text-xs text-primary hover:underline"
+            >
+              <MessageSquare className="h-3.5 w-3.5" /> Chat with this idea in Ash
+            </button>
           </CollapsibleSection>
         )}
+
+
 
         {(editing || idea.ai_summary || idea.raw_note || idea.extracted_text) && (
           <CollapsibleSection
