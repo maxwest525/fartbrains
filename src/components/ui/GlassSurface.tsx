@@ -15,8 +15,24 @@ import { cn } from "@/lib/utils";
  */
 export type GlassVariant = "clear" | "default" | "strong" | "quiet" | "white";
 
+/**
+ * `tone` controls how the CLEAR variant adapts to the backdrop it sits on:
+ *  - "auto":  follows the app theme (dark scenery → white hairline,
+ *             light scenery → dark hairline). Default.
+ *  - "light": force the dark-hairline / dark-text recipe. Use when the
+ *             surface sits over bright imagery, white panels, or a light
+ *             hero in an otherwise dark app.
+ *  - "dark":  force the white-hairline / white-text recipe. Use when the
+ *             surface sits over dark imagery in an otherwise light app.
+ *
+ * `tone` is a no-op for non-clear variants — they are intentionally
+ * single-tone (default/strong/quiet are dark; white is luminous).
+ */
+export type GlassTone = "auto" | "light" | "dark";
+
 export interface GlassSurfaceProps extends HTMLAttributes<HTMLDivElement> {
   variant?: GlassVariant;
+  tone?: GlassTone;
   interactive?: boolean;
   as?: "div" | "section" | "article" | "aside";
 }
@@ -29,13 +45,30 @@ const VARIANT_CLASS: Record<GlassVariant, string> = {
   white: "glass-card-white",
 };
 
+const TONE_CLASS: Record<GlassTone, string> = {
+  auto: "",
+  light: "on-light",
+  dark: "on-dark",
+};
+
 export const GlassSurface = forwardRef<HTMLDivElement, GlassSurfaceProps>(
-  ({ variant = "default", interactive = false, className, as: As = "div", ...rest }, ref) => {
+  (
+    {
+      variant = "default",
+      tone = "auto",
+      interactive = false,
+      className,
+      as: As = "div",
+      ...rest
+    },
+    ref,
+  ) => {
     return (
       <As
         ref={ref as never}
         className={cn(
           VARIANT_CLASS[variant],
+          variant === "clear" && TONE_CLASS[tone],
           interactive && "glass-card-interactive",
           "rounded-2xl",
           className,
