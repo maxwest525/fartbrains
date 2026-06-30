@@ -97,6 +97,18 @@ const Shell = () => {
     };
   }, []);
 
+  // Deep-link: ?idea=<id> opens that idea directly (used by Collab share links).
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const ideaParam = params.get("idea");
+    if (ideaParam) {
+      setSelectedId(ideaParam);
+      if (params.get("collab") === "1") {
+        toast.success("Brainstorm mode", { description: "You're viewing a shared idea." });
+      }
+    }
+  }, []);
+
   const { user, signOut } = useAuth();
   const { data: folders = [] } = useFolders();
   const createIdea = useCreateIdea();
