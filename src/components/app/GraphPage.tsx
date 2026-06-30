@@ -1192,7 +1192,7 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
 
       {/* Connections legend popover */}
       {legendOpen && (
-        <div className="absolute top-[6.5rem] right-3 z-10 w-[min(280px,calc(100vw-1.5rem))] rounded-2xl bg-black/60 backdrop-blur-xl border border-white/10 p-3 shadow-2xl">
+        <div className="absolute top-[6.5rem] right-3 z-10 w-[min(280px,calc(100vw-1.5rem))] rounded-2xl glass-card-clear p-3 shadow-2xl">
           <div className="text-[11px] uppercase tracking-wider text-white/50 mb-2">Connections</div>
           <div className="flex flex-col gap-1 text-[12px] text-white/70">
             {(["tag", "ref", "kw", "folder"] as EdgeKind[]).map((k) => {
