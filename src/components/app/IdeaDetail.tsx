@@ -94,6 +94,7 @@ export const IdeaDetail = ({ ideaId, onClose, backLabel = "Back", onSelectIdea }
   const { data: folders = [] } = useFolders();
   const updateIdea = useUpdateIdea();
   const deleteIdea = useDeleteIdea();
+  const createIdea = useCreateIdea();
   const isMobile = useIsMobile();
   const containerRef = useRef<HTMLDivElement>(null);
 
