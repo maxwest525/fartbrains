@@ -624,15 +624,113 @@ html:not(.dark) .gemini ::selection {
     background-color: rgba(255, 255, 255, 0.10);
     border-color: rgba(255, 255, 255, 0.28);
   }
-  .glass-card-interactive:focus-visible,
-  .glass-card-interactive:focus-within {
-    outline: 1px solid rgba(255, 255, 255, 0.55);
+
+
+  /* ============================================================
+     Adaptive CLEAR — when the clear variant sits over LIGHT scenery
+     (light theme, white hero panels, photo backgrounds with bright
+     subjects) the white-on-white tint disappears and the surface
+     reads as "flat / nothing there". Two ways to opt into the
+     light-aware recipe:
+
+       1. Automatic: any ancestor uses .light (or html lacks .dark)
+          AND prefers-color-scheme is light → flip to dark hairline.
+       2. Manual: add `.on-light` to the same element as
+          `.glass-card-clear` / `.glass-pill` / `.glass-field`
+          to force the light-scenery recipe regardless of theme.
+
+     Likewise `.on-dark` forces the dark-scenery recipe (the default
+     white hairline) when needed inside a light-themed wrapper.
+     ============================================================ */
+
+  /* Manual overrides (highest priority, work everywhere). */
+  .glass-card-clear.on-light,
+  .glass-pill.on-light,
+  .glass-field.on-light {
+    background-color: rgba(15, 18, 28, 0.06);
+    border-color: rgba(15, 18, 28, 0.18);
+    color: rgba(15, 18, 28, 0.92);
+  }
+  .glass-card-clear.on-light :where(.text-muted-foreground),
+  .glass-pill.on-light :where(.text-muted-foreground) {
+    color: rgba(15, 18, 28, 0.62);
+  }
+  .glass-field.on-light::placeholder { color: rgba(15, 18, 28, 0.50); }
+
+  .glass-card-clear.on-light:hover,
+  .glass-pill.on-light:hover,
+  .glass-field.on-light:hover {
+    background-color: rgba(15, 18, 28, 0.09);
+    border-color: rgba(15, 18, 28, 0.24);
+  }
+  .glass-card-clear.on-light:focus-visible,
+  .glass-pill.on-light:focus-visible,
+  .glass-field.on-light:focus-visible,
+  .glass-field.on-light:focus {
+    outline: 1px solid rgba(15, 18, 28, 0.45);
     outline-offset: 0;
-    border-color: rgba(255, 255, 255, 0.32);
+    background-color: rgba(15, 18, 28, 0.10);
+    border-color: rgba(15, 18, 28, 0.28);
+    box-shadow: none;
+  }
+  .glass-card-clear.on-light.glass-card-interactive:hover {
+    background-color: rgba(15, 18, 28, 0.09);
+    border-color: rgba(15, 18, 28, 0.24);
+  }
+  .glass-card-clear.on-light.glass-card-interactive:focus-visible,
+  .glass-card-clear.on-light.glass-card-interactive:focus-within {
+    outline: 1px solid rgba(15, 18, 28, 0.45);
+    border-color: rgba(15, 18, 28, 0.28);
+  }
+
+  .glass-card-clear.on-dark,
+  .glass-pill.on-dark,
+  .glass-field.on-dark {
+    background-color: rgba(255, 255, 255, 0.04);
+    border-color: rgba(255, 255, 255, 0.14);
+    color: #ffffff;
+  }
+
+  /* Automatic light-theme flip — only when the user/app is in light
+     mode AND no manual override is set. Scoped to clear/pill/field
+     because the dark, strong, quiet, and white variants are
+     deliberately one-tone. */
+  html:not(.dark) .glass-card-clear:not(.on-dark),
+  html:not(.dark) .glass-pill:not(.on-dark),
+  html:not(.dark) .glass-field:not(.on-dark) {
+    background-color: rgba(15, 18, 28, 0.05);
+    border-color: rgba(15, 18, 28, 0.16);
+    color: rgba(15, 18, 28, 0.92);
+  }
+  html:not(.dark) .glass-card-clear:not(.on-dark) :where(.text-muted-foreground),
+  html:not(.dark) .glass-pill:not(.on-dark) :where(.text-muted-foreground) {
+    color: rgba(15, 18, 28, 0.60);
+  }
+  html:not(.dark) .glass-field:not(.on-dark)::placeholder {
+    color: rgba(15, 18, 28, 0.48);
+  }
+  html:not(.dark) .glass-card-clear:not(.on-dark):hover,
+  html:not(.dark) .glass-pill:not(.on-dark):hover,
+  html:not(.dark) .glass-field:not(.on-dark):hover {
+    background-color: rgba(15, 18, 28, 0.08);
+    border-color: rgba(15, 18, 28, 0.22);
+  }
+  html:not(.dark) .glass-card-clear:not(.on-dark):focus-visible,
+  html:not(.dark) .glass-pill:not(.on-dark):focus-visible,
+  html:not(.dark) .glass-field:not(.on-dark):focus-visible,
+  html:not(.dark) .glass-field:not(.on-dark):focus {
+    outline: 1px solid rgba(15, 18, 28, 0.45);
+    outline-offset: 0;
+    border-color: rgba(15, 18, 28, 0.28);
     box-shadow: none;
   }
 
-
+  /* Stop currentColor from forcing icons/svg to dark when nested under
+     an on-light surface but the child explicitly wants a tinted accent. */
+  .glass-card-clear.on-light svg,
+  html:not(.dark) .glass-card-clear:not(.on-dark) svg {
+    color: currentColor;
+  }
 }
 
 /* In-app alarm overlay animations */
