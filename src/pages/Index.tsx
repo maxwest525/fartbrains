@@ -430,6 +430,20 @@ const Shell = () => {
         )}
       </div>
 
+      {/* Floating "+ Add" — visible in any browse scope (folder, recent, favorites, search).
+          Creates a stub idea in the active folder (or default) and opens it for editing. */}
+      {!showFolders && !showCalendar && !showGraph && !showDetailOnly && filter.kind !== "all" && (
+        <button
+          onClick={handleQuickAdd}
+          disabled={createIdea.isPending}
+          aria-label="Add idea here"
+          className="fixed z-30 right-4 h-14 w-14 rounded-full brand-gradient ring-glow flex items-center justify-center text-white shadow-xl hover:scale-105 active:scale-95 transition disabled:opacity-60"
+          style={{ bottom: "calc(var(--ash-dock-h, 0px) + var(--mobile-tabbar-h, 0px) + env(safe-area-inset-bottom) + 1rem)" }}
+        >
+          <Plus className="h-6 w-6" strokeWidth={2.4} />
+        </button>
+      )}
+
       {/* Mobile bottom tab bar (iOS-style) */}
       {isMobile && (
         <MobileTabBar
