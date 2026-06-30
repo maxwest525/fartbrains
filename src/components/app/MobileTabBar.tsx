@@ -97,7 +97,7 @@ export const MobileTabBar = ({ filter, view, onFilterChange, onOpenFolders, onOp
       {/* Top hairline gradient */}
       <div aria-hidden className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/15 to-transparent" />
       <div
-        className="relative bg-black/40 backdrop-blur-2xl"
+        className="relative glass-card-clear rounded-none"
         style={{
           paddingBottom: "env(safe-area-inset-bottom)",
         }}
