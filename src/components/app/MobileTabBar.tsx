@@ -91,7 +91,7 @@ export const MobileTabBar = ({ filter, view, onFilterChange, onOpenFolders, onOp
   return (
     <nav
       ref={navRef}
-      className="md:hidden fixed bottom-0 inset-x-0 z-30"
+      className="fixed bottom-0 inset-x-0 z-30"
       aria-label="Primary"
     >
       {/* Top hairline gradient */}
