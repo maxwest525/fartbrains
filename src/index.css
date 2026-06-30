@@ -49,8 +49,8 @@
 
     /* Brand palette — drives .brand-gradient, .composer-rainbow, and the
        aurora tint overlay. Override any of these to reskin the whole app. */
-    --brand-1: 24 100% 55%;   /* orange */
-    --brand-2: 0 85% 58%;     /* red    */
+    --brand-1: 0 85% 58%;     /* red    */
+    --brand-2: 24 100% 55%;   /* orange */
     --brand-3: 142 70% 48%;   /* green  */
     --brand-4: 212 100% 58%;  /* blue   */
     --aurora-tint-strength: 0.0;
