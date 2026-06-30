@@ -428,20 +428,26 @@ html:not(.dark) .gemini ::selection {
      heavy blur + saturation, no inner highlight, no drop shadow.
      The glass is colorless — appears dark only when sat on dark scenes. */
   .glass-field {
-    background-color: rgba(255, 255, 255, 0.06);
+    background-color: rgba(255, 255, 255, 0.05);
     border: 1px solid rgba(255, 255, 255, 0.18);
-    backdrop-filter: blur(32px) saturate(160%);
-    -webkit-backdrop-filter: blur(32px) saturate(160%);
+    backdrop-filter: blur(28px) saturate(150%);
+    -webkit-backdrop-filter: blur(28px) saturate(150%);
     color: #FFFFFF;
     box-shadow: none;
-    transition: background-color 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+    transition: background-color 180ms ease, border-color 180ms ease;
   }
   .glass-field::placeholder { color: rgba(255, 255, 255, 0.55); }
+  .glass-field:hover {
+    background-color: rgba(255, 255, 255, 0.07);
+    border-color: rgba(255, 255, 255, 0.24);
+  }
+  .glass-field:focus,
   .glass-field:focus-visible {
-    outline: none;
-    background-color: rgba(255, 255, 255, 0.10);
+    outline: 1px solid rgba(255, 255, 255, 0.55);
+    outline-offset: 0;
+    background-color: rgba(255, 255, 255, 0.08);
     border-color: rgba(255, 255, 255, 0.30);
-    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.12);
+    box-shadow: none;
   }
   .dark .glass-field { color: #FFFFFF; }
 
@@ -477,26 +483,33 @@ html:not(.dark) .gemini ::selection {
     initial-value: 0deg;
   }
 
-  /* Liquid glass pill — flat, clear, hairline border. */
+  /* Liquid glass pill — flat, clear, hairline border. Matches glass-field. */
   .glass-pill {
-    background-color: rgba(255, 255, 255, 0.06);
+    background-color: rgba(255, 255, 255, 0.05);
     border: 1px solid rgba(255, 255, 255, 0.18);
     color: #FFFFFF;
-    backdrop-filter: blur(32px) saturate(160%);
-    -webkit-backdrop-filter: blur(32px) saturate(160%);
+    backdrop-filter: blur(28px) saturate(150%);
+    -webkit-backdrop-filter: blur(28px) saturate(150%);
     box-shadow: none;
-    transition: background-color 220ms ease, border-color 220ms ease,
-                box-shadow 240ms ease, transform 180ms ease;
+    transition: background-color 200ms ease, border-color 200ms ease, transform 160ms ease;
   }
   .glass-pill:hover {
-    background-color: rgba(255, 255, 255, 0.10);
+    background-color: rgba(255, 255, 255, 0.08);
     border-color: rgba(255, 255, 255, 0.26);
   }
+  .glass-pill:focus,
   .glass-pill:focus-visible {
-    background-color: rgba(255, 255, 255, 0.12);
+    outline: 1px solid rgba(255, 255, 255, 0.55);
+    outline-offset: 0;
+    background-color: rgba(255, 255, 255, 0.10);
     border-color: rgba(255, 255, 255, 0.32);
+    box-shadow: none;
   }
-  .glass-pill:active { transform: scale(0.97); }
+  .glass-pill:active {
+    transform: scale(0.97);
+    background-color: rgba(255, 255, 255, 0.12);
+    border-color: rgba(255, 255, 255, 0.34);
+  }
 
   /* Gemini icon button — naked icon, tints on hover. */
   .gemini-icon {
@@ -540,10 +553,10 @@ html:not(.dark) .gemini ::selection {
      -interactive (hover + focus ring).
      ============================================================ */
 
-  /* CLEAR — pure refraction. No tint, hairline border only. */
+  /* CLEAR — pure refraction. Hairline border, no fill wash, no shadow. */
   .glass-card-clear {
     background-color: rgba(255, 255, 255, 0.04);
-    border: 1px solid rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.14);
     backdrop-filter: blur(28px) saturate(150%);
     -webkit-backdrop-filter: blur(28px) saturate(150%);
     box-shadow: none;
@@ -552,31 +565,31 @@ html:not(.dark) .gemini ::selection {
   .glass-card-clear :where(p, span, li, h1, h2, h3, h4, h5, h6) { color: inherit; }
   .glass-card-clear :where(.text-muted-foreground) { color: rgba(255,255,255,0.66); }
 
-  /* DARK — smoked default. Black wash + white hairline for legibility. */
+  /* DARK — default content surface. Flat: light wash + hairline only, no shadow. */
   .glass-card {
-    background-color: rgba(10, 12, 20, 0.42);
+    background-color: rgba(10, 12, 20, 0.38);
     border: 1px solid rgba(255, 255, 255, 0.16);
-    backdrop-filter: blur(32px) saturate(160%);
-    -webkit-backdrop-filter: blur(32px) saturate(160%);
-    box-shadow: 0 18px 44px -22px rgba(0, 0, 0, 0.55);
+    backdrop-filter: blur(28px) saturate(150%);
+    -webkit-backdrop-filter: blur(28px) saturate(150%);
+    box-shadow: none;
     color: #ffffff;
   }
   .glass-card :where(p, span, li, h1, h2, h3, h4, h5, h6, label, button, a, svg) { color: inherit; }
   .glass-card :where(.text-muted-foreground, .text-foreground) { color: rgba(255,255,255,0.72); }
   .glass-card svg { color: currentColor; }
 
-  /* STRONG — elevated dark for modals & hero. */
+  /* STRONG — modal/overlay weight. Slightly denser fill, still flat hairline, no inset highlight. */
   .glass-card-strong {
-    background-color: rgba(10, 12, 20, 0.58);
-    border: 1px solid rgba(255, 255, 255, 0.20);
-    backdrop-filter: blur(40px) saturate(170%);
-    -webkit-backdrop-filter: blur(40px) saturate(170%);
-    box-shadow: 0 30px 70px -28px rgba(0, 0, 0, 0.7);
+    background-color: rgba(10, 12, 20, 0.55);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    backdrop-filter: blur(36px) saturate(160%);
+    -webkit-backdrop-filter: blur(36px) saturate(160%);
+    box-shadow: none;
     color: #ffffff;
   }
   .glass-card-strong :where(p, span, li, h1, h2, h3, h4, h5, h6) { color: inherit; }
 
-  /* QUIET — inset panel nested inside another glass surface. */
+  /* QUIET — nested inset panel inside another glass surface. */
   .glass-card-quiet {
     background-color: rgba(255, 255, 255, 0.04);
     border: 1px solid rgba(255, 255, 255, 0.10);
@@ -587,33 +600,36 @@ html:not(.dark) .gemini ::selection {
   }
   .glass-card-quiet :where(p, span, li, h1, h2, h3, h4, h5, h6) { color: inherit; }
 
-  /* WHITE — luminous wash for highlight cards. */
+  /* WHITE — luminous wash for highlight cards. Flat: no inset highlight, no drop shadow. */
   .glass-card-white {
-    background-color: rgba(255, 255, 255, 0.16);
-    border: 1px solid rgba(255, 255, 255, 0.32);
-    backdrop-filter: blur(32px) saturate(170%);
-    -webkit-backdrop-filter: blur(32px) saturate(170%);
-    box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.30),
-      0 12px 36px -18px rgba(0, 0, 0, 0.45);
+    background-color: rgba(255, 255, 255, 0.14);
+    border: 1px solid rgba(255, 255, 255, 0.28);
+    backdrop-filter: blur(28px) saturate(160%);
+    -webkit-backdrop-filter: blur(28px) saturate(160%);
+    box-shadow: none;
     color: #ffffff;
   }
   .glass-card-white :where(p, span, li, h1, h2, h3, h4, h5, h6) { color: inherit; }
 
-  /* Interactive — hover wash + focus ring. Pair with any variant. */
+  /* Interactive — hover wash + flat focus outline. Pair with any variant. */
   .glass-card-interactive {
-    transition: background-color 200ms ease, border-color 200ms ease,
-                box-shadow 240ms ease, transform 200ms ease;
+    transition: background-color 200ms ease, border-color 200ms ease, transform 200ms ease;
   }
   .glass-card-interactive:hover {
+    background-color: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.24);
+  }
+  .glass-card-interactive:active {
+    transform: scale(0.985);
     background-color: rgba(255, 255, 255, 0.10);
-    border-color: rgba(255, 255, 255, 0.26);
+    border-color: rgba(255, 255, 255, 0.28);
   }
   .glass-card-interactive:focus-visible,
   .glass-card-interactive:focus-within {
-    outline: none;
-    border-color: rgba(255, 255, 255, 0.36);
-    box-shadow: 0 0 0 3px hsl(var(--ring) / 0.45);
+    outline: 1px solid rgba(255, 255, 255, 0.55);
+    outline-offset: 0;
+    border-color: rgba(255, 255, 255, 0.32);
+    box-shadow: none;
   }
 
 
