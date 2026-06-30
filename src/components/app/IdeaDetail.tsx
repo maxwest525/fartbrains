@@ -338,6 +338,23 @@ export const IdeaDetail = ({ ideaId, onClose, backLabel = "Back", onSelectIdea }
         <div className="flex-1 md:hidden" />
         <div className="flex items-center gap-0 sm:gap-1 shrink-0 pr-1">
           <button
+            onClick={onAddSibling}
+            disabled={createIdea.isPending}
+            className="press h-10 w-10 flex items-center justify-center text-primary disabled:opacity-50"
+            aria-label="Add new idea in this folder"
+            title={idea.folder_id ? `Add to ${folders.find((f) => f.id === idea.folder_id)?.name ?? "folder"}` : "Add new idea"}
+          >
+            {createIdea.isPending ? <Loader2 className="h-[20px] w-[20px] animate-spin" /> : <Plus className="h-[22px] w-[22px]" strokeWidth={2.4} />}
+          </button>
+          <button
+            onClick={onCollab}
+            className="press h-10 w-10 flex items-center justify-center text-primary"
+            aria-label="Copy collab link"
+            title="Brainstorm with a friend — copy link"
+          >
+            <Users className="h-[20px] w-[20px]" />
+          </button>
+          <button
             onClick={() => setReminderOpen(true)}
             className={`press h-10 w-10 flex items-center justify-center ${idea.remind_at ? "text-accent" : "text-primary"}`}
             aria-label="Reminder"
