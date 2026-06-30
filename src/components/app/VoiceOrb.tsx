@@ -465,11 +465,8 @@ export const VoiceOrb = ({ onDictate, onLiveTranscript, speaking = false }: Voic
 
       <div className="relative text-center space-y-1.5">
         <p className="text-[14px] sm:text-[15px] font-medium tracking-tight">{status}</p>
-        {draft === null && (
-          <p className="text-[12px] sm:text-[12.5px] text-[color:var(--g-text-muted)]">
-            {modeCopy[mode].hint}
-          </p>
-        )}
+
+
         {draft !== null && !isRecording && !isTranscribing && (
           <p className="text-[11.5px] text-[color:var(--g-text-muted)]">
             Tap orb to add more — your edits are kept.
