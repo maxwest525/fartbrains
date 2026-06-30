@@ -23,7 +23,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useIdea, useUpdateIdea, useDeleteIdea } from "@/hooks/useIdeas";
+import { useIdea, useUpdateIdea, useDeleteIdea, useCreateIdea } from "@/hooks/useIdeas";
 import { useFolders } from "@/hooks/useFolders";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useSwipeGesture } from "@/hooks/useSwipeGesture";
