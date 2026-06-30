@@ -679,6 +679,10 @@ export const IdeaDetail = ({ ideaId, onClose, backLabel = "Back", onSelectIdea }
             >
               <MessageSquare className="h-3.5 w-3.5" /> Chat with this idea in Ash
             </button>
+          </CollapsibleSection>
+        )}
+
+
 
         {(editing || idea.ai_summary || idea.raw_note || idea.extracted_text) && (
           <CollapsibleSection
