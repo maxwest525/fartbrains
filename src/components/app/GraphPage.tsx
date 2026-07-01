@@ -1019,7 +1019,7 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
                 title="Graph settings"
               >
                 <MaterialIcon name="tune" size={16} />
-                <span className="hidden sm:inline">Settings</span>
+                <span>Settings</span>
                 {filterCount > 0 && (
                   <span className="ml-0.5 h-4 min-w-[16px] px-1 rounded-full bg-violet-500 text-[9px] font-semibold flex items-center justify-center text-white">{filterCount}</span>
                 )}
