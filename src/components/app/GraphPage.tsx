@@ -68,7 +68,7 @@ type Tuning = {
   strictness: number;    // 1..5 — min shared signal before drawing edges
   clusterCount: number;  // 2..10 — forced max number of distinct tag clusters
 };
-const DEFAULT_TUNING: Tuning = { repulsion: 0.55, linkStrength: 0.5, tagGravity: 0.75, strictness: 2, clusterCount: 5 };
+const DEFAULT_TUNING: Tuning = { repulsion: 0.75, linkStrength: 0.5, tagGravity: 0.95, strictness: 2, clusterCount: 8 };
 
 // Tracks whether the graph intro animation has already played this session,
 // so re-entering the Graph view doesn't replay the spin every time.
@@ -701,11 +701,23 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
         ctx.arc(n.x - n.r * 0.3, n.y - n.r * 0.3, Math.max(1, n.r * 0.35), 0, Math.PI * 2);
         ctx.fill();
 
-        if (isHover || match || n.r > 9) {
+        // Always show a short label: primary tag if any, else truncated title
+        const focused = isHover || match || n.r > 9;
+        const short = n.primaryTag ? `#${n.primaryTag}` : n.title.slice(0, focused ? 28 : 16);
+        ctx.textAlign = "center";
+        if (focused) {
           ctx.fillStyle = "rgba(255,255,255,0.95)";
-          ctx.font = `${isHover || match ? 13 : 12}px ui-sans-serif, system-ui`;
-          ctx.textAlign = "center";
+          ctx.font = `13px ui-sans-serif, system-ui`;
           ctx.fillText(n.title.slice(0, 28), n.x, n.y - n.r - 6);
+          if (n.primaryTag) {
+            ctx.fillStyle = "rgba(255,255,255,0.55)";
+            ctx.font = `10px ui-sans-serif, system-ui`;
+            ctx.fillText(`#${n.primaryTag}`, n.x, n.y + n.r + 12);
+          }
+        } else {
+          ctx.fillStyle = "rgba(255,255,255,0.6)";
+          ctx.font = `10px ui-sans-serif, system-ui`;
+          ctx.fillText(short, n.x, n.y - n.r - 5);
         }
         ctx.globalAlpha = 1;
       }
