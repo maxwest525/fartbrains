@@ -68,7 +68,7 @@ type Tuning = {
   strictness: number;    // 1..5 — min shared signal before drawing edges
   clusterCount: number;  // 2..10 — forced max number of distinct tag clusters
 };
-const DEFAULT_TUNING: Tuning = { repulsion: 0.55, linkStrength: 0.5, tagGravity: 0.75, strictness: 2, clusterCount: 5 };
+const DEFAULT_TUNING: Tuning = { repulsion: 0.75, linkStrength: 0.5, tagGravity: 0.95, strictness: 2, clusterCount: 8 };
 
 // Tracks whether the graph intro animation has already played this session,
 // so re-entering the Graph view doesn't replay the spin every time.
