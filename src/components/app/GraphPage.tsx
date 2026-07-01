@@ -105,9 +105,9 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
   const [folderFilter, setFolderFilter] = useState<Set<string>>(new Set());
   const [keywordFilter, setKeywordFilter] = useState<Set<string>>(new Set());
   const [tagFilter, setTagFilter] = useState<Set<string>>(new Set());
-  const [filtersOpen, setFiltersOpen] = useState(false);
-  const [tuningOpen, setTuningOpen] = useState(false);
-  const [legendOpen, setLegendOpen] = useState(false);
+  const [panelOpen, setPanelOpen] = useState(false);
+  const [panelTab, setPanelTab] = useState<"filters" | "clusters" | "legend">("filters");
+
 
   // Hides bottom overlays (legend + zoom) so the cluster gets the full viewport.
   const [overlaysHidden, setOverlaysHidden] = useState<boolean>(() => {
