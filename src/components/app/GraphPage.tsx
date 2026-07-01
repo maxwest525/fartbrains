@@ -1047,99 +1047,144 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
       </div>
 
 
-      {filtersOpen && (
+      {panelOpen && (
         <div className="absolute top-[6.5rem] right-3 z-10 w-[min(360px,calc(100vw-1.5rem))] max-h-[70vh] overflow-y-auto rounded-2xl glass-card-clear p-3 shadow-2xl">
-
-
-
-          <div className="flex items-center justify-between mb-2">
-            <h3 className="text-[13px] font-semibold text-white">Filters</h3>
-            {filterCount > 0 && (
-              <button onClick={clearFilters} className="text-[11px] text-white/60 hover:text-white">Clear all</button>
-            )}
-          </div>
-
-          {topTags.length > 0 && (
-            <div className="mb-3">
-              <div className="text-[11px] uppercase tracking-wider text-white/50 mb-1.5">Tags</div>
-              <div className="flex flex-wrap gap-1.5">
-                {topTags.map(({ tag, count }) => {
-                  const active = tagFilter.has(tag);
-                  return (
-                    <button
-                      key={tag}
-                      onClick={() => toggleTag(tag)}
-                      className={cn(
-                        "px-2.5 h-7 rounded-full text-[11px] border inline-flex items-center gap-1.5 transition-colors",
-                        active
-                          ? "bg-white/15 border-white/30 text-white"
-                          : "bg-white/[0.04] border-white/10 text-white/70 hover:text-white"
-                      )}
-                    >
-                      <span className="h-2 w-2 rounded-full" style={{ background: hashColor(`tag:${tag}`) }} />
-                      #{tag}
-                      <span className="opacity-50">{count}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
-          <div className="mb-3">
-            <div className="text-[11px] uppercase tracking-wider text-white/50 mb-1.5">Folders</div>
-            <div className="flex flex-wrap gap-1.5">
-              <button
-                onClick={() => toggleFolder("__none__")}
-                className={cn(
-                  "px-2.5 h-7 rounded-full text-[11px] border inline-flex items-center gap-1.5 transition-colors",
-                  folderFilter.has("__none__")
-                    ? "bg-white/20 border-white/30 text-white"
-                    : "bg-white/[0.04] border-white/10 text-white/70 hover:text-white"
+          {panelTab === "filters" && (
+            <>
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-[13px] font-semibold text-white">Filters</h3>
+                {filterCount > 0 && (
+                  <button onClick={clearFilters} className="text-[11px] text-white/60 hover:text-white">Clear all</button>
                 )}
-              >
-                <span className="h-2 w-2 rounded-full bg-white/40" />
-                Unfiled
-              </button>
-              {folders.map((f) => {
-                const active = folderFilter.has(f.id);
-                return (
+              </div>
+
+              {topTags.length > 0 && (
+                <div className="mb-3">
+                  <div className="text-[11px] uppercase tracking-wider text-white/50 mb-1.5">Tags</div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {topTags.map(({ tag, count }) => {
+                      const active = tagFilter.has(tag);
+                      return (
+                        <button
+                          key={tag}
+                          onClick={() => toggleTag(tag)}
+                          className={cn(
+                            "px-2.5 h-7 rounded-full text-[11px] border inline-flex items-center gap-1.5 transition-colors",
+                            active
+                              ? "bg-white/15 border-white/30 text-white"
+                              : "bg-white/[0.04] border-white/10 text-white/70 hover:text-white"
+                          )}
+                        >
+                          <span className="h-2 w-2 rounded-full" style={{ background: hashColor(`tag:${tag}`) }} />
+                          #{tag}
+                          <span className="opacity-50">{count}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              <div className="mb-3">
+                <div className="text-[11px] uppercase tracking-wider text-white/50 mb-1.5">Folders</div>
+                <div className="flex flex-wrap gap-1.5">
                   <button
-                    key={f.id}
-                    onClick={() => toggleFolder(f.id)}
+                    onClick={() => toggleFolder("__none__")}
                     className={cn(
                       "px-2.5 h-7 rounded-full text-[11px] border inline-flex items-center gap-1.5 transition-colors",
-                      active
-                        ? "bg-white/15 border-white/30 text-white"
+                      folderFilter.has("__none__")
+                        ? "bg-white/20 border-white/30 text-white"
                         : "bg-white/[0.04] border-white/10 text-white/70 hover:text-white"
                     )}
                   >
-                    <span className="h-2 w-2 rounded-full" style={{ background: folderColor.get(f.id) }} />
-                    {f.name}
+                    <span className="h-2 w-2 rounded-full bg-white/40" />
+                    Unfiled
                   </button>
-                );
-              })}
-            </div>
-          </div>
+                  {folders.map((f) => {
+                    const active = folderFilter.has(f.id);
+                    return (
+                      <button
+                        key={f.id}
+                        onClick={() => toggleFolder(f.id)}
+                        className={cn(
+                          "px-2.5 h-7 rounded-full text-[11px] border inline-flex items-center gap-1.5 transition-colors",
+                          active
+                            ? "bg-white/15 border-white/30 text-white"
+                            : "bg-white/[0.04] border-white/10 text-white/70 hover:text-white"
+                        )}
+                      >
+                        <span className="h-2 w-2 rounded-full" style={{ background: folderColor.get(f.id) }} />
+                        {f.name}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
 
-          {topKeywords.length > 0 && (
+              {topKeywords.length > 0 && (
+                <div>
+                  <div className="text-[11px] uppercase tracking-wider text-white/50 mb-1.5">Keywords</div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {topKeywords.map((k) => {
+                      const active = keywordFilter.has(k);
+                      return (
+                        <button
+                          key={k}
+                          onClick={() => toggleKeyword(k)}
+                          className={cn(
+                            "px-2.5 h-7 rounded-full text-[11px] border transition-colors",
+                            active
+                              ? "bg-violet-500/30 border-violet-400/50 text-white"
+                              : "bg-white/[0.04] border-white/10 text-white/70 hover:text-white"
+                          )}
+                        >
+                          ·{k}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+
+          {panelTab === "clusters" && (
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <h3 className="text-[13px] font-semibold text-white">Clustering</h3>
+                <button
+                  onClick={() => setTuning(DEFAULT_TUNING)}
+                  className="text-[11px] text-white/60 hover:text-white"
+                >
+                  Reset
+                </button>
+              </div>
+              <Slider label="Cluster count" hint="Force this many distinct tag groupings" value={tuning.clusterCount} min={2} max={10} step={1} onChange={(v) => setTuning((t) => ({ ...t, clusterCount: v }))} />
+              <Slider label="Strictness" hint="How much shared signal before two ideas connect" value={tuning.strictness} min={1} max={5} step={1} onChange={(v) => setTuning((t) => ({ ...t, strictness: v }))} />
+              <Slider label="Tag gravity" hint="Pulls ideas toward their primary tag cluster" value={tuning.tagGravity} min={0} max={1} step={0.05} onChange={(v) => setTuning((t) => ({ ...t, tagGravity: v }))} />
+              <Slider label="Link tension" hint="Tighter springs = denser clusters" value={tuning.linkStrength} min={0} max={1} step={0.05} onChange={(v) => setTuning((t) => ({ ...t, linkStrength: v }))} />
+              <Slider label="Repulsion" hint="Spreads nodes apart" value={tuning.repulsion} min={0} max={1} step={0.05} onChange={(v) => setTuning((t) => ({ ...t, repulsion: v }))} />
+            </div>
+          )}
+
+          {panelTab === "legend" && (
             <div>
-              <div className="text-[11px] uppercase tracking-wider text-white/50 mb-1.5">Keywords</div>
-              <div className="flex flex-wrap gap-1.5">
-                {topKeywords.map((k) => {
-                  const active = keywordFilter.has(k);
+              <div className="text-[11px] uppercase tracking-wider text-white/50 mb-2">Connections</div>
+              <div className="flex flex-col gap-1 text-[12px] text-white/70">
+                {(["tag", "ref", "kw", "folder"] as EdgeKind[]).map((k) => {
+                  const on = enabledKinds[k];
                   return (
                     <button
                       key={k}
-                      onClick={() => toggleKeyword(k)}
+                      onClick={() => toggleKind(k)}
                       className={cn(
-                        "px-2.5 h-7 rounded-full text-[11px] border transition-colors",
-                        active
-                          ? "bg-violet-500/30 border-violet-400/50 text-white"
-                          : "bg-white/[0.04] border-white/10 text-white/70 hover:text-white"
+                        "flex items-center gap-2 px-2 py-1.5 rounded-lg transition-colors text-left",
+                        on ? "text-white hover:bg-white/10" : "text-white/35 hover:bg-white/5"
                       )}
                     >
-                      ·{k}
+                      <span className="h-2 w-6 rounded-full" style={{ background: on ? EDGE_STYLE[k].stroke.replace(/0\.\d+/, "0.85") : "rgba(255,255,255,0.1)" }} />
+                      <span className="flex-1">{EDGE_STYLE[k].label}</span>
+                      <MaterialIcon name={on ? "visibility" : "visibility_off"} size={14} />
                     </button>
                   );
                 })}
@@ -1149,82 +1194,6 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
         </div>
       )}
 
-      {/* Clustering / tuning panel */}
-      {tuningOpen && (
-        <div className="absolute top-[6.5rem] right-3 z-10 w-[min(320px,calc(100vw-1.5rem))] rounded-2xl glass-card-clear p-3 shadow-2xl space-y-3">
-
-          <div className="flex items-center justify-between">
-            <h3 className="text-[13px] font-semibold text-white">Clustering</h3>
-            <button
-              onClick={() => setTuning(DEFAULT_TUNING)}
-              className="text-[11px] text-white/60 hover:text-white"
-            >
-              Reset
-            </button>
-          </div>
-          <Slider
-            label="Cluster count"
-            hint="Force this many distinct tag groupings"
-            value={tuning.clusterCount}
-            min={2} max={10} step={1}
-            onChange={(v) => setTuning((t) => ({ ...t, clusterCount: v }))}
-          />
-          <Slider
-            label="Strictness"
-            hint="How much shared signal before two ideas connect"
-            value={tuning.strictness}
-            min={1} max={5} step={1}
-            onChange={(v) => setTuning((t) => ({ ...t, strictness: v }))}
-          />
-          <Slider
-            label="Tag gravity"
-            hint="Pulls ideas toward their primary tag cluster"
-            value={tuning.tagGravity}
-            min={0} max={1} step={0.05}
-            onChange={(v) => setTuning((t) => ({ ...t, tagGravity: v }))}
-          />
-          <Slider
-            label="Link tension"
-            hint="Tighter springs = denser clusters"
-            value={tuning.linkStrength}
-            min={0} max={1} step={0.05}
-            onChange={(v) => setTuning((t) => ({ ...t, linkStrength: v }))}
-          />
-          <Slider
-            label="Repulsion"
-            hint="Spreads nodes apart"
-            value={tuning.repulsion}
-            min={0} max={1} step={0.05}
-            onChange={(v) => setTuning((t) => ({ ...t, repulsion: v }))}
-          />
-        </div>
-      )}
-
-      {/* Connections legend popover */}
-      {legendOpen && (
-        <div className="absolute top-[6.5rem] right-3 z-10 w-[min(280px,calc(100vw-1.5rem))] rounded-2xl glass-card-clear p-3 shadow-2xl">
-          <div className="text-[11px] uppercase tracking-wider text-white/50 mb-2">Connections</div>
-          <div className="flex flex-col gap-1 text-[12px] text-white/70">
-            {(["tag", "ref", "kw", "folder"] as EdgeKind[]).map((k) => {
-              const on = enabledKinds[k];
-              return (
-                <button
-                  key={k}
-                  onClick={() => toggleKind(k)}
-                  className={cn(
-                    "flex items-center gap-2 px-2 py-1.5 rounded-lg transition-colors text-left",
-                    on ? "text-white hover:bg-white/10" : "text-white/35 hover:bg-white/5"
-                  )}
-                >
-                  <span className="h-2 w-6 rounded-full" style={{ background: on ? EDGE_STYLE[k].stroke.replace(/0\.\d+/, "0.85") : "rgba(255,255,255,0.1)" }} />
-                  <span className="flex-1">{EDGE_STYLE[k].label}</span>
-                  <MaterialIcon name={on ? "visibility" : "visibility_off"} size={14} />
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      )}
 
 
 
