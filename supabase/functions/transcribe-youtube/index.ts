@@ -150,7 +150,7 @@ async function downloadAudio(
 async function transcribeWithElevenLabs(bytes: Uint8Array, mime: string, elevenKey: string): Promise<string> {
   const fd = new FormData();
   fd.append("file", new Blob([bytes], { type: mime }), "audio.mp3");
-  fd.append("model_id", "scribe_v1");
+  fd.append("model_id", "scribe_v2");
   // language auto-detect; no diarize needed
   const resp = await fetch("https://api.elevenlabs.io/v1/speech-to-text", {
     method: "POST",
