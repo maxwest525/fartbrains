@@ -105,9 +105,9 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
   const [folderFilter, setFolderFilter] = useState<Set<string>>(new Set());
   const [keywordFilter, setKeywordFilter] = useState<Set<string>>(new Set());
   const [tagFilter, setTagFilter] = useState<Set<string>>(new Set());
-  const [filtersOpen, setFiltersOpen] = useState(false);
-  const [tuningOpen, setTuningOpen] = useState(false);
-  const [legendOpen, setLegendOpen] = useState(false);
+  const [panelOpen, setPanelOpen] = useState(false);
+  const [panelTab, setPanelTab] = useState<"filters" | "clusters" | "legend">("filters");
+
 
   // Hides bottom overlays (legend + zoom) so the cluster gets the full viewport.
   const [overlaysHidden, setOverlaysHidden] = useState<boolean>(() => {
@@ -969,167 +969,222 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
 
         </div>
 
-        {/* Row 2: 8 equal control circles. Back stays as column 1 (disabled placeholder if no handler) so the grid never reflows. */}
-        <div className="grid grid-cols-8 gap-1.5 w-full">
+        {/* Row 2: consolidated controls. Back · Panel (Filters/Clusters/Legend) · Overlays · Zoom · Recenter */}
+        <div className="flex items-center gap-1.5 w-full">
           {(() => {
-            const baseBtn = "h-9 w-full min-w-0 rounded-full backdrop-blur-xl border flex items-center justify-center transition-colors shadow-sm";
+            const baseBtn = "h-9 rounded-full backdrop-blur-xl border flex items-center justify-center transition-colors shadow-sm";
+            const circle = "w-9 shrink-0";
             const idle = "bg-white/15 border-white/25 text-foreground/85 hover:bg-white/25 hover:text-foreground";
             const activeViolet = "bg-violet-400/30 border-violet-300/60 text-foreground";
-            const activeCyan = "bg-cyan-400/30 border-cyan-300/60 text-foreground";
-            const activePink = "bg-pink-400/30 border-pink-300/60 text-foreground";
+            const openPanel = (tab: "filters" | "clusters" | "legend") => {
+              if (panelOpen && panelTab === tab) setPanelOpen(false);
+              else { setPanelTab(tab); setPanelOpen(true); }
+            };
             return (
               <>
                 {onBack ? (
-                  <button onClick={onBack} className={cn(baseBtn, idle)} aria-label="Back" title="Back">
+                  <button onClick={onBack} className={cn(baseBtn, circle, idle)} aria-label="Back" title="Back">
                     <MaterialIcon name="arrow_back" size={18} />
                   </button>
-                ) : (
-                  <span aria-hidden className={cn(baseBtn, "bg-white/5 border-white/10 opacity-40 pointer-events-none")} />
-                )}
-                <button
-                  onClick={() => { setFiltersOpen((v) => !v); setTuningOpen(false); setLegendOpen(false); }}
-                  className={cn(baseBtn, filtersOpen || filterCount ? activeViolet : idle, "relative")}
-                  aria-label="Filters"
-                  title="Filters"
-                >
-                  <MaterialIcon name="tune" size={16} />
-                  {filterCount > 0 && (
-                    <span className="absolute -top-1 -right-1 h-4 min-w-[16px] px-1 rounded-full bg-violet-500 text-[9px] font-semibold flex items-center justify-center text-white">{filterCount}</span>
-                  )}
-                </button>
-                <button
-                  onClick={() => { setTuningOpen((v) => !v); setFiltersOpen(false); setLegendOpen(false); }}
-                  className={cn(baseBtn, tuningOpen ? activeCyan : idle)}
-                  aria-label="Clustering controls"
-                  title="Clustering controls"
-                >
-                  <MaterialIcon name="hub" size={16} />
-                </button>
-                <button
-                  onClick={() => { setLegendOpen((v) => !v); setFiltersOpen(false); setTuningOpen(false); }}
-                  className={cn(baseBtn, legendOpen ? activePink : idle)}
-                  aria-label="Connections legend"
-                  title="Connections legend"
-                >
-                  <MaterialIcon name="share" size={16} />
-                </button>
+                ) : null}
+
+                {/* Combined Panel button with inline tab dots */}
+                <div className={cn(baseBtn, "flex-1 min-w-0 px-1 gap-0.5", panelOpen ? activeViolet : idle)}>
+                  {([
+                    { key: "filters", icon: "tune", label: "Filters", badge: filterCount },
+                    { key: "clusters", icon: "hub", label: "Clusters", badge: 0 },
+                    { key: "legend", icon: "share", label: "Links", badge: 0 },
+                  ] as const).map((t) => {
+                    const active = panelOpen && panelTab === t.key;
+                    return (
+                      <button
+                        key={t.key}
+                        onClick={() => openPanel(t.key)}
+                        className={cn(
+                          "relative flex-1 h-7 rounded-full text-[11px] font-medium inline-flex items-center justify-center gap-1 transition-colors",
+                          active ? "bg-white/25 text-foreground" : "text-foreground/80 hover:bg-white/10"
+                        )}
+                        aria-label={t.label}
+                        title={t.label}
+                      >
+                        <MaterialIcon name={t.icon} size={14} />
+                        <span className="hidden sm:inline">{t.label}</span>
+                        {t.badge > 0 && (
+                          <span className="ml-0.5 h-4 min-w-[16px] px-1 rounded-full bg-violet-500 text-[9px] font-semibold flex items-center justify-center text-white">{t.badge}</span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+
                 <button
                   onClick={toggleOverlays}
-                  className={cn(baseBtn, idle)}
+                  className={cn(baseBtn, circle, idle)}
                   aria-label={overlaysHidden ? "Show overlays" : "Hide overlays"}
                   title={overlaysHidden ? "Show overlays" : "Hide overlays"}
                 >
                   <MaterialIcon name={overlaysHidden ? "visibility" : "visibility_off"} size={16} />
                 </button>
-                <button onClick={() => stepZoom(1)} className={cn(baseBtn, idle)} aria-label="Zoom in" title="Zoom in">
-                  <MaterialIcon name="add" size={18} />
-                </button>
-                <button onClick={() => stepZoom(-1)} className={cn(baseBtn, idle)} aria-label="Zoom out" title="Zoom out">
-                  <MaterialIcon name="remove" size={18} />
-                </button>
-                <button onClick={recenter} className={cn(baseBtn, idle)} aria-label="Recenter view" title="Recenter view">
+
+                {/* Zoom pill */}
+                <div className={cn(baseBtn, idle, "px-0.5 gap-0.5")}>
+                  <button onClick={() => stepZoom(-1)} className="h-8 w-8 rounded-full inline-flex items-center justify-center hover:bg-white/15" aria-label="Zoom out" title="Zoom out">
+                    <MaterialIcon name="remove" size={16} />
+                  </button>
+                  <button onClick={() => stepZoom(1)} className="h-8 w-8 rounded-full inline-flex items-center justify-center hover:bg-white/15" aria-label="Zoom in" title="Zoom in">
+                    <MaterialIcon name="add" size={16} />
+                  </button>
+                </div>
+
+                <button onClick={recenter} className={cn(baseBtn, circle, idle)} aria-label="Recenter view" title="Recenter view">
                   <MaterialIcon name="my_location" size={16} />
                 </button>
               </>
             );
           })()}
         </div>
+
       </div>
 
 
-      {filtersOpen && (
+      {panelOpen && (
         <div className="absolute top-[6.5rem] right-3 z-10 w-[min(360px,calc(100vw-1.5rem))] max-h-[70vh] overflow-y-auto rounded-2xl glass-card-clear p-3 shadow-2xl">
-
-
-
-          <div className="flex items-center justify-between mb-2">
-            <h3 className="text-[13px] font-semibold text-white">Filters</h3>
-            {filterCount > 0 && (
-              <button onClick={clearFilters} className="text-[11px] text-white/60 hover:text-white">Clear all</button>
-            )}
-          </div>
-
-          {topTags.length > 0 && (
-            <div className="mb-3">
-              <div className="text-[11px] uppercase tracking-wider text-white/50 mb-1.5">Tags</div>
-              <div className="flex flex-wrap gap-1.5">
-                {topTags.map(({ tag, count }) => {
-                  const active = tagFilter.has(tag);
-                  return (
-                    <button
-                      key={tag}
-                      onClick={() => toggleTag(tag)}
-                      className={cn(
-                        "px-2.5 h-7 rounded-full text-[11px] border inline-flex items-center gap-1.5 transition-colors",
-                        active
-                          ? "bg-white/15 border-white/30 text-white"
-                          : "bg-white/[0.04] border-white/10 text-white/70 hover:text-white"
-                      )}
-                    >
-                      <span className="h-2 w-2 rounded-full" style={{ background: hashColor(`tag:${tag}`) }} />
-                      #{tag}
-                      <span className="opacity-50">{count}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
-          <div className="mb-3">
-            <div className="text-[11px] uppercase tracking-wider text-white/50 mb-1.5">Folders</div>
-            <div className="flex flex-wrap gap-1.5">
-              <button
-                onClick={() => toggleFolder("__none__")}
-                className={cn(
-                  "px-2.5 h-7 rounded-full text-[11px] border inline-flex items-center gap-1.5 transition-colors",
-                  folderFilter.has("__none__")
-                    ? "bg-white/20 border-white/30 text-white"
-                    : "bg-white/[0.04] border-white/10 text-white/70 hover:text-white"
+          {panelTab === "filters" && (
+            <>
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-[13px] font-semibold text-white">Filters</h3>
+                {filterCount > 0 && (
+                  <button onClick={clearFilters} className="text-[11px] text-white/60 hover:text-white">Clear all</button>
                 )}
-              >
-                <span className="h-2 w-2 rounded-full bg-white/40" />
-                Unfiled
-              </button>
-              {folders.map((f) => {
-                const active = folderFilter.has(f.id);
-                return (
+              </div>
+
+              {topTags.length > 0 && (
+                <div className="mb-3">
+                  <div className="text-[11px] uppercase tracking-wider text-white/50 mb-1.5">Tags</div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {topTags.map(({ tag, count }) => {
+                      const active = tagFilter.has(tag);
+                      return (
+                        <button
+                          key={tag}
+                          onClick={() => toggleTag(tag)}
+                          className={cn(
+                            "px-2.5 h-7 rounded-full text-[11px] border inline-flex items-center gap-1.5 transition-colors",
+                            active
+                              ? "bg-white/15 border-white/30 text-white"
+                              : "bg-white/[0.04] border-white/10 text-white/70 hover:text-white"
+                          )}
+                        >
+                          <span className="h-2 w-2 rounded-full" style={{ background: hashColor(`tag:${tag}`) }} />
+                          #{tag}
+                          <span className="opacity-50">{count}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              <div className="mb-3">
+                <div className="text-[11px] uppercase tracking-wider text-white/50 mb-1.5">Folders</div>
+                <div className="flex flex-wrap gap-1.5">
                   <button
-                    key={f.id}
-                    onClick={() => toggleFolder(f.id)}
+                    onClick={() => toggleFolder("__none__")}
                     className={cn(
                       "px-2.5 h-7 rounded-full text-[11px] border inline-flex items-center gap-1.5 transition-colors",
-                      active
-                        ? "bg-white/15 border-white/30 text-white"
+                      folderFilter.has("__none__")
+                        ? "bg-white/20 border-white/30 text-white"
                         : "bg-white/[0.04] border-white/10 text-white/70 hover:text-white"
                     )}
                   >
-                    <span className="h-2 w-2 rounded-full" style={{ background: folderColor.get(f.id) }} />
-                    {f.name}
+                    <span className="h-2 w-2 rounded-full bg-white/40" />
+                    Unfiled
                   </button>
-                );
-              })}
-            </div>
-          </div>
+                  {folders.map((f) => {
+                    const active = folderFilter.has(f.id);
+                    return (
+                      <button
+                        key={f.id}
+                        onClick={() => toggleFolder(f.id)}
+                        className={cn(
+                          "px-2.5 h-7 rounded-full text-[11px] border inline-flex items-center gap-1.5 transition-colors",
+                          active
+                            ? "bg-white/15 border-white/30 text-white"
+                            : "bg-white/[0.04] border-white/10 text-white/70 hover:text-white"
+                        )}
+                      >
+                        <span className="h-2 w-2 rounded-full" style={{ background: folderColor.get(f.id) }} />
+                        {f.name}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
 
-          {topKeywords.length > 0 && (
+              {topKeywords.length > 0 && (
+                <div>
+                  <div className="text-[11px] uppercase tracking-wider text-white/50 mb-1.5">Keywords</div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {topKeywords.map((k) => {
+                      const active = keywordFilter.has(k);
+                      return (
+                        <button
+                          key={k}
+                          onClick={() => toggleKeyword(k)}
+                          className={cn(
+                            "px-2.5 h-7 rounded-full text-[11px] border transition-colors",
+                            active
+                              ? "bg-violet-500/30 border-violet-400/50 text-white"
+                              : "bg-white/[0.04] border-white/10 text-white/70 hover:text-white"
+                          )}
+                        >
+                          ·{k}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+
+          {panelTab === "clusters" && (
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <h3 className="text-[13px] font-semibold text-white">Clustering</h3>
+                <button
+                  onClick={() => setTuning(DEFAULT_TUNING)}
+                  className="text-[11px] text-white/60 hover:text-white"
+                >
+                  Reset
+                </button>
+              </div>
+              <Slider label="Cluster count" hint="Force this many distinct tag groupings" value={tuning.clusterCount} min={2} max={10} step={1} onChange={(v) => setTuning((t) => ({ ...t, clusterCount: v }))} />
+              <Slider label="Strictness" hint="How much shared signal before two ideas connect" value={tuning.strictness} min={1} max={5} step={1} onChange={(v) => setTuning((t) => ({ ...t, strictness: v }))} />
+              <Slider label="Tag gravity" hint="Pulls ideas toward their primary tag cluster" value={tuning.tagGravity} min={0} max={1} step={0.05} onChange={(v) => setTuning((t) => ({ ...t, tagGravity: v }))} />
+              <Slider label="Link tension" hint="Tighter springs = denser clusters" value={tuning.linkStrength} min={0} max={1} step={0.05} onChange={(v) => setTuning((t) => ({ ...t, linkStrength: v }))} />
+              <Slider label="Repulsion" hint="Spreads nodes apart" value={tuning.repulsion} min={0} max={1} step={0.05} onChange={(v) => setTuning((t) => ({ ...t, repulsion: v }))} />
+            </div>
+          )}
+
+          {panelTab === "legend" && (
             <div>
-              <div className="text-[11px] uppercase tracking-wider text-white/50 mb-1.5">Keywords</div>
-              <div className="flex flex-wrap gap-1.5">
-                {topKeywords.map((k) => {
-                  const active = keywordFilter.has(k);
+              <div className="text-[11px] uppercase tracking-wider text-white/50 mb-2">Connections</div>
+              <div className="flex flex-col gap-1 text-[12px] text-white/70">
+                {(["tag", "ref", "kw", "folder"] as EdgeKind[]).map((k) => {
+                  const on = enabledKinds[k];
                   return (
                     <button
                       key={k}
-                      onClick={() => toggleKeyword(k)}
+                      onClick={() => toggleKind(k)}
                       className={cn(
-                        "px-2.5 h-7 rounded-full text-[11px] border transition-colors",
-                        active
-                          ? "bg-violet-500/30 border-violet-400/50 text-white"
-                          : "bg-white/[0.04] border-white/10 text-white/70 hover:text-white"
+                        "flex items-center gap-2 px-2 py-1.5 rounded-lg transition-colors text-left",
+                        on ? "text-white hover:bg-white/10" : "text-white/35 hover:bg-white/5"
                       )}
                     >
-                      ·{k}
+                      <span className="h-2 w-6 rounded-full" style={{ background: on ? EDGE_STYLE[k].stroke.replace(/0\.\d+/, "0.85") : "rgba(255,255,255,0.1)" }} />
+                      <span className="flex-1">{EDGE_STYLE[k].label}</span>
+                      <MaterialIcon name={on ? "visibility" : "visibility_off"} size={14} />
                     </button>
                   );
                 })}
@@ -1139,82 +1194,6 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
         </div>
       )}
 
-      {/* Clustering / tuning panel */}
-      {tuningOpen && (
-        <div className="absolute top-[6.5rem] right-3 z-10 w-[min(320px,calc(100vw-1.5rem))] rounded-2xl glass-card-clear p-3 shadow-2xl space-y-3">
-
-          <div className="flex items-center justify-between">
-            <h3 className="text-[13px] font-semibold text-white">Clustering</h3>
-            <button
-              onClick={() => setTuning(DEFAULT_TUNING)}
-              className="text-[11px] text-white/60 hover:text-white"
-            >
-              Reset
-            </button>
-          </div>
-          <Slider
-            label="Cluster count"
-            hint="Force this many distinct tag groupings"
-            value={tuning.clusterCount}
-            min={2} max={10} step={1}
-            onChange={(v) => setTuning((t) => ({ ...t, clusterCount: v }))}
-          />
-          <Slider
-            label="Strictness"
-            hint="How much shared signal before two ideas connect"
-            value={tuning.strictness}
-            min={1} max={5} step={1}
-            onChange={(v) => setTuning((t) => ({ ...t, strictness: v }))}
-          />
-          <Slider
-            label="Tag gravity"
-            hint="Pulls ideas toward their primary tag cluster"
-            value={tuning.tagGravity}
-            min={0} max={1} step={0.05}
-            onChange={(v) => setTuning((t) => ({ ...t, tagGravity: v }))}
-          />
-          <Slider
-            label="Link tension"
-            hint="Tighter springs = denser clusters"
-            value={tuning.linkStrength}
-            min={0} max={1} step={0.05}
-            onChange={(v) => setTuning((t) => ({ ...t, linkStrength: v }))}
-          />
-          <Slider
-            label="Repulsion"
-            hint="Spreads nodes apart"
-            value={tuning.repulsion}
-            min={0} max={1} step={0.05}
-            onChange={(v) => setTuning((t) => ({ ...t, repulsion: v }))}
-          />
-        </div>
-      )}
-
-      {/* Connections legend popover */}
-      {legendOpen && (
-        <div className="absolute top-[6.5rem] right-3 z-10 w-[min(280px,calc(100vw-1.5rem))] rounded-2xl glass-card-clear p-3 shadow-2xl">
-          <div className="text-[11px] uppercase tracking-wider text-white/50 mb-2">Connections</div>
-          <div className="flex flex-col gap-1 text-[12px] text-white/70">
-            {(["tag", "ref", "kw", "folder"] as EdgeKind[]).map((k) => {
-              const on = enabledKinds[k];
-              return (
-                <button
-                  key={k}
-                  onClick={() => toggleKind(k)}
-                  className={cn(
-                    "flex items-center gap-2 px-2 py-1.5 rounded-lg transition-colors text-left",
-                    on ? "text-white hover:bg-white/10" : "text-white/35 hover:bg-white/5"
-                  )}
-                >
-                  <span className="h-2 w-6 rounded-full" style={{ background: on ? EDGE_STYLE[k].stroke.replace(/0\.\d+/, "0.85") : "rgba(255,255,255,0.1)" }} />
-                  <span className="flex-1">{EDGE_STYLE[k].label}</span>
-                  <MaterialIcon name={on ? "visibility" : "visibility_off"} size={14} />
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      )}
 
 
 
