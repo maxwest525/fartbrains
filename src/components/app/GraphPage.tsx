@@ -1032,7 +1032,7 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
 
 
       {panelOpen && (
-        <div className="absolute top-[6.5rem] right-3 z-10 w-[min(360px,calc(100vw-1.5rem))] max-h-[70vh] overflow-y-auto rounded-2xl glass-card-clear p-3 shadow-2xl">
+        <div className="absolute top-[3.5rem] left-1/2 -translate-x-1/2 z-10 w-[min(360px,calc(100vw-1.5rem))] max-h-[72vh] overflow-y-auto rounded-2xl glass-card-clear p-3 shadow-2xl">
           {/* View controls */}
           <div className="flex items-center gap-1.5 mb-3">
             <button onClick={() => stepZoom(-1)} className="h-8 w-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white/85" aria-label="Zoom out" title="Zoom out">
