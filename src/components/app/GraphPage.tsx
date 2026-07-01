@@ -414,6 +414,22 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
       .map(([t]) => t);
   }, [ready, ideasQuery.data]);
 
+  // Panel search — narrows the chips shown in the Filters tab.
+  const panelQuery = search.trim().toLowerCase().replace(/^#/, "");
+  const visibleTags = useMemo(
+    () => (panelQuery ? topTags.filter(({ tag }) => tag.includes(panelQuery)) : topTags),
+    [topTags, panelQuery],
+  );
+  const visibleKeywords = useMemo(
+    () => (panelQuery ? topKeywords.filter((k) => k.includes(panelQuery)) : topKeywords),
+    [topKeywords, panelQuery],
+  );
+  const visibleFolders = useMemo(
+    () => (panelQuery ? folders.filter((f) => f.name.toLowerCase().includes(panelQuery)) : folders),
+    [folders, panelQuery],
+  );
+
+
   // Compute visible set based on filters
   useEffect(() => {
     const vis = new Set<string>();
@@ -948,7 +964,7 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
               {onBack ? (
                 <button onClick={onBack} className={cn(baseBtn, idle)} aria-label="Back" title="Back">
                   <MaterialIcon name="arrow_back" size={16} />
-                  <span>Back</span>
+                  <span className="hidden sm:inline">Back</span>
                 </button>
               ) : null}
 
@@ -983,7 +999,7 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
                 title="Graph settings"
               >
                 <MaterialIcon name="tune" size={16} />
-                <span>Settings</span>
+                <span className="hidden sm:inline">Settings</span>
                 {filterCount > 0 && (
                   <span className="ml-0.5 h-4 min-w-[16px] px-1 rounded-full bg-violet-500 text-[9px] font-semibold flex items-center justify-center text-white">{filterCount}</span>
                 )}
@@ -1047,11 +1063,12 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
                 )}
               </div>
 
-              {topTags.length > 0 && (
+              {visibleTags.length > 0 && (
                 <div className="mb-3">
                   <div className="text-[11px] uppercase tracking-wider text-white/50 mb-1.5">Tags</div>
                   <div className="flex flex-wrap gap-1.5">
-                    {topTags.map(({ tag, count }) => {
+                    {visibleTags.map(({ tag, count }) => {
+
                       const active = tagFilter.has(tag);
                       return (
                         <button
@@ -1089,7 +1106,7 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
                     <span className="h-2 w-2 rounded-full bg-white/40" />
                     Unfiled
                   </button>
-                  {folders.map((f) => {
+                  {visibleFolders.map((f) => {
                     const active = folderFilter.has(f.id);
                     return (
                       <button
@@ -1110,11 +1127,12 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
                 </div>
               </div>
 
-              {topKeywords.length > 0 && (
+              {visibleKeywords.length > 0 && (
                 <div>
                   <div className="text-[11px] uppercase tracking-wider text-white/50 mb-1.5">Keywords</div>
                   <div className="flex flex-wrap gap-1.5">
-                    {topKeywords.map((k) => {
+                    {visibleKeywords.map((k) => {
+
                       const active = keywordFilter.has(k);
                       return (
                         <button
