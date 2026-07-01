@@ -937,70 +937,62 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
       className="relative w-full flex-1 min-h-0 overflow-hidden"
       style={{ paddingBottom: "var(--mobile-tabbar-h, 0px)" }}
     >
-      {/* Top toolbar */}
-      <div className="absolute top-3 left-3 right-3 z-10 flex flex-col gap-2">
-
-        {/* Row 1: search */}
-        <div className="flex items-center gap-2">
-          <form
-            onSubmit={(e) => { e.preventDefault(); focusOnMatch(); }}
-            className="flex-1 min-w-0 relative"
-          >
-            <MaterialIcon name="search" size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-foreground/60 pointer-events-none" />
-            <input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search ideas or #tags…"
-              aria-label="Search ideas or tags"
-              className="w-full h-9 rounded-full bg-white/15 backdrop-blur-xl border border-white/25 pl-10 pr-10 text-[13px] leading-none text-foreground placeholder:text-foreground/55 outline-none focus:border-white/50 focus:bg-white/20 shadow-sm transition-colors"
-            />
-            {search && (
-              <button
-                type="button"
-                onClick={() => setSearch("")}
-                className="absolute right-1.5 top-1/2 -translate-y-1/2 h-6 w-6 rounded-full flex items-center justify-center text-foreground/60 hover:text-foreground"
-                aria-label="Clear search"
-                title="Clear search"
-              >
-                <MaterialIcon name="close" size={14} />
-              </button>
-            )}
-          </form>
-
-        </div>
-
-        {/* Row 2: Back · Settings (opens panel with Filters / Clusters / Links + zoom/recenter/overlays) */}
-        <div className="flex items-center justify-between gap-2 w-full">
-          {(() => {
-            const baseBtn = "h-9 w-9 rounded-full backdrop-blur-xl border flex items-center justify-center transition-colors shadow-sm";
-            const idle = "bg-white/15 border-white/25 text-foreground/85 hover:bg-white/25 hover:text-foreground";
-            const activeViolet = "bg-violet-400/30 border-violet-300/60 text-foreground";
-            return (
-              <>
-                {onBack ? (
-                  <button onClick={onBack} className={cn(baseBtn, idle)} aria-label="Back" title="Back">
-                    <MaterialIcon name="arrow_back" size={18} />
-                  </button>
-                ) : <span />}
-
-                <button
-                  onClick={() => setPanelOpen((v) => !v)}
-                  className={cn(baseBtn, panelOpen ? activeViolet : idle, "relative")}
-                  aria-label="Graph settings"
-                  title="Graph settings"
-                >
-                  <MaterialIcon name="tune" size={18} />
-                  {filterCount > 0 && (
-                    <span className="absolute -top-1 -right-1 h-4 min-w-[16px] px-1 rounded-full bg-violet-500 text-[9px] font-semibold flex items-center justify-center text-white">{filterCount}</span>
-                  )}
+      {/* Top toolbar — single row: Back · Search · Settings */}
+      <div className="absolute top-3 left-3 right-3 z-10">
+        {(() => {
+          const baseBtn = "h-9 rounded-full backdrop-blur-xl border flex items-center justify-center gap-1.5 px-3 transition-colors shadow-sm text-[12px] font-medium";
+          const idle = "bg-white/15 border-white/25 text-foreground/85 hover:bg-white/25 hover:text-foreground";
+          const activeViolet = "bg-violet-400/30 border-violet-300/60 text-foreground";
+          return (
+            <div className="flex items-center gap-2">
+              {onBack ? (
+                <button onClick={onBack} className={cn(baseBtn, idle)} aria-label="Back" title="Back">
+                  <MaterialIcon name="arrow_back" size={16} />
+                  <span>Back</span>
                 </button>
-              </>
-            );
-          })()}
-        </div>
+              ) : null}
 
+              <form
+                onSubmit={(e) => { e.preventDefault(); focusOnMatch(); }}
+                className="flex-1 min-w-0 relative"
+              >
+                <MaterialIcon name="search" size={16} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-foreground/60 pointer-events-none" />
+                <input
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Search…"
+                  aria-label="Search ideas or tags"
+                  className="w-full h-9 rounded-full bg-white/15 backdrop-blur-xl border border-white/25 pl-8 pr-8 text-[12px] leading-none text-foreground placeholder:text-foreground/55 outline-none focus:border-white/50 focus:bg-white/20 shadow-sm transition-colors"
+                />
+                {search && (
+                  <button
+                    type="button"
+                    onClick={() => setSearch("")}
+                    className="absolute right-1.5 top-1/2 -translate-y-1/2 h-6 w-6 rounded-full flex items-center justify-center text-foreground/60 hover:text-foreground"
+                    aria-label="Clear search"
+                  >
+                    <MaterialIcon name="close" size={12} />
+                  </button>
+                )}
+              </form>
 
+              <button
+                onClick={() => setPanelOpen((v) => !v)}
+                className={cn(baseBtn, panelOpen ? activeViolet : idle, "relative")}
+                aria-label="Graph settings"
+                title="Graph settings"
+              >
+                <MaterialIcon name="tune" size={16} />
+                <span>Settings</span>
+                {filterCount > 0 && (
+                  <span className="ml-0.5 h-4 min-w-[16px] px-1 rounded-full bg-violet-500 text-[9px] font-semibold flex items-center justify-center text-white">{filterCount}</span>
+                )}
+              </button>
+            </div>
+          );
+        })()}
       </div>
+
 
 
       {panelOpen && (
