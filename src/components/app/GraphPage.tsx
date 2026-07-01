@@ -1264,8 +1264,60 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
         </div>
       )}
 
-
-
+      {/* Node info panel — appears when a node is tapped */}
+      {selectedId && (() => {
+        const idea = (ideasQuery.data ?? []).find((i: any) => i.id === selectedId) as any;
+        const node = nodesRef.current.find((n) => n.id === selectedId);
+        if (!idea || !node) return null;
+        const summary: string = (idea.ai_summary || idea.raw_note || idea.extracted_text || "").toString().trim();
+        const excerpt = summary ? summary.slice(0, 220) + (summary.length > 220 ? "…" : "") : "No summary yet — open the idea to add details.";
+        const cluster = node.primaryTag;
+        return (
+          <div className="absolute left-1/2 -translate-x-1/2 bottom-[calc(var(--mobile-tabbar-h,0px)+12px)] z-20 w-[min(400px,calc(100vw-1.5rem))] rounded-2xl glass-card-strong p-3 shadow-2xl">
+            <div className="flex items-start gap-2">
+              <span className="mt-1.5 h-2.5 w-2.5 rounded-full shrink-0" style={{ background: node.color }} />
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-1.5 text-[11px] text-white/60">
+                  {cluster ? <span className="inline-flex items-center gap-1"><span className="h-1.5 w-1.5 rounded-full" style={{ background: hashColor(`tag:${cluster}`) }} />#{cluster} cluster</span> : <span>Unclustered</span>}
+                  {node.degree > 0 && <span className="opacity-60">· {node.degree} links</span>}
+                </div>
+                <div className="text-[14px] font-semibold text-white leading-snug mt-0.5 truncate">{idea.title || "Untitled"}</div>
+                {idea.tags && idea.tags.length > 0 && (
+                  <div className="flex flex-wrap gap-1 mt-1.5">
+                    {idea.tags.slice(0, 6).map((t: string) => (
+                      <span key={t} className="text-[10px] px-1.5 h-5 rounded-full bg-white/10 text-white/75 inline-flex items-center">#{t}</span>
+                    ))}
+                  </div>
+                )}
+                <div className="text-[12px] text-white/75 mt-2 leading-relaxed">{excerpt}</div>
+                <div className="flex items-center gap-2 mt-3">
+                  <button
+                    onClick={() => { onOpenIdea(selectedId); setSelectedId(null); }}
+                    className="h-8 px-3 rounded-full bg-violet-500/80 hover:bg-violet-500 text-white text-[12px] font-medium inline-flex items-center gap-1"
+                  >
+                    <MaterialIcon name="open_in_new" size={14} /> Open idea
+                  </button>
+                  {cluster && (
+                    <button
+                      onClick={() => { setTagFilter(new Set([cluster])); }}
+                      className="h-8 px-3 rounded-full bg-white/10 hover:bg-white/20 text-white/85 text-[12px] font-medium inline-flex items-center gap-1"
+                    >
+                      <MaterialIcon name="filter_center_focus" size={14} /> Isolate cluster
+                    </button>
+                  )}
+                  <button
+                    onClick={() => setSelectedId(null)}
+                    className="ml-auto h-8 w-8 rounded-full bg-white/10 hover:bg-white/20 text-white/70 inline-flex items-center justify-center"
+                    aria-label="Close"
+                  >
+                    <MaterialIcon name="close" size={14} />
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Background glow */}
       <div aria-hidden className="absolute inset-0 pointer-events-none">
