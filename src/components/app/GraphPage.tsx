@@ -1106,7 +1106,7 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
                     <span className="h-2 w-2 rounded-full bg-white/40" />
                     Unfiled
                   </button>
-                  {folders.map((f) => {
+                  {visibleFolders.map((f) => {
                     const active = folderFilter.has(f.id);
                     return (
                       <button
