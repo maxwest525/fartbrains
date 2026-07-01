@@ -1264,7 +1264,27 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
         </div>
       )}
 
+      {/* Isolation reset pill */}
+      {tagFilter.size > 0 && (
+        <div className="absolute left-1/2 -translate-x-1/2 top-[calc(env(safe-area-inset-top,0px)+72px)] z-20">
+          <button
+            onClick={() => setTagFilter(new Set())}
+            className="h-9 px-3.5 rounded-full glass-card-strong text-white/90 text-[12px] font-medium inline-flex items-center gap-2 shadow-lg hover:bg-white/15 transition-colors"
+            title="Clear cluster isolation"
+          >
+            <MaterialIcon name="close_fullscreen" size={14} />
+            <span>
+              Isolated: {[...tagFilter].slice(0, 2).map((t) => `#${t}`).join(", ")}
+              {tagFilter.size > 2 ? ` +${tagFilter.size - 2}` : ""}
+            </span>
+            <span className="opacity-70">· Show all</span>
+            <MaterialIcon name="close" size={14} />
+          </button>
+        </div>
+      )}
+
       {/* Node info panel — appears when a node is tapped */}
+
       {selectedId && (() => {
         const idea = (ideasQuery.data ?? []).find((i: any) => i.id === selectedId) as any;
         const node = nodesRef.current.find((n) => n.id === selectedId);
@@ -1297,14 +1317,18 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
                   >
                     <MaterialIcon name="open_in_new" size={14} /> Open idea
                   </button>
-                  {cluster && (
-                    <button
-                      onClick={() => { setTagFilter(new Set([cluster])); }}
-                      className="h-8 px-3 rounded-full bg-white/10 hover:bg-white/20 text-white/85 text-[12px] font-medium inline-flex items-center gap-1"
-                    >
-                      <MaterialIcon name="filter_center_focus" size={14} /> Isolate cluster
-                    </button>
-                  )}
+                  {cluster && (() => {
+                    const isolatedHere = tagFilter.size === 1 && tagFilter.has(cluster);
+                    return (
+                      <button
+                        onClick={() => setTagFilter(isolatedHere ? new Set() : new Set([cluster]))}
+                        className="h-8 px-3 rounded-full bg-white/10 hover:bg-white/20 text-white/85 text-[12px] font-medium inline-flex items-center gap-1"
+                      >
+                        <MaterialIcon name={isolatedHere ? "close_fullscreen" : "filter_center_focus"} size={14} />
+                        {isolatedHere ? "Show all" : "Isolate cluster"}
+                      </button>
+                    );
+                  })()}
                   <button
                     onClick={() => setSelectedId(null)}
                     className="ml-auto h-8 w-8 rounded-full bg-white/10 hover:bg-white/20 text-white/70 inline-flex items-center justify-center"
