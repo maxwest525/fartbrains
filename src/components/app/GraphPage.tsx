@@ -1063,11 +1063,12 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
                 )}
               </div>
 
-              {topTags.length > 0 && (
+              {visibleTags.length > 0 && (
                 <div className="mb-3">
                   <div className="text-[11px] uppercase tracking-wider text-white/50 mb-1.5">Tags</div>
                   <div className="flex flex-wrap gap-1.5">
-                    {topTags.map(({ tag, count }) => {
+                    {visibleTags.map(({ tag, count }) => {
+
                       const active = tagFilter.has(tag);
                       return (
                         <button
