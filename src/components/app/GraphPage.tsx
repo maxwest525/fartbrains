@@ -1191,6 +1191,19 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
               <Slider label="Tag gravity" hint="Pulls ideas toward their primary tag cluster" value={tuning.tagGravity} min={0} max={1} step={0.05} onChange={(v) => setTuning((t) => ({ ...t, tagGravity: v }))} />
               <Slider label="Link tension" hint="Tighter springs = denser clusters" value={tuning.linkStrength} min={0} max={1} step={0.05} onChange={(v) => setTuning((t) => ({ ...t, linkStrength: v }))} />
               <Slider label="Repulsion" hint="Spreads nodes apart" value={tuning.repulsion} min={0} max={1} step={0.05} onChange={(v) => setTuning((t) => ({ ...t, repulsion: v }))} />
+              <Slider label="Label size" hint="Text size under each node" value={tuning.labelSize} min={9} max={16} step={1} onChange={(v) => setTuning((t) => ({ ...t, labelSize: v }))} />
+              <label className="flex items-center justify-between gap-2 pt-1">
+                <div>
+                  <div className="text-[12px] text-white/85 font-medium">Always-on labels</div>
+                  <div className="text-[10.5px] text-white/45">Show a label under every node</div>
+                </div>
+                <input
+                  type="checkbox"
+                  checked={tuning.labelsAlwaysOn}
+                  onChange={(e) => setTuning((t) => ({ ...t, labelsAlwaysOn: e.target.checked }))}
+                  className="h-4 w-4 accent-violet-400"
+                />
+              </label>
             </div>
           )}
 
