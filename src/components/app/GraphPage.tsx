@@ -67,8 +67,10 @@ type Tuning = {
   tagGravity: number;    // 0..1 — how hard tags pull their cluster together
   strictness: number;    // 1..5 — min shared signal before drawing edges
   clusterCount: number;  // 2..10 — forced max number of distinct tag clusters
+  labelsAlwaysOn: boolean; // show label under every node
+  labelSize: number;     // 9..16 px
 };
-const DEFAULT_TUNING: Tuning = { repulsion: 0.75, linkStrength: 0.5, tagGravity: 0.95, strictness: 2, clusterCount: 8 };
+const DEFAULT_TUNING: Tuning = { repulsion: 0.75, linkStrength: 0.5, tagGravity: 0.95, strictness: 2, clusterCount: 8, labelsAlwaysOn: true, labelSize: 11 };
 
 // Tracks whether the graph intro animation has already played this session,
 // so re-entering the Graph view doesn't replay the spin every time.
@@ -107,6 +109,8 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
   const [tagFilter, setTagFilter] = useState<Set<string>>(new Set());
   const [panelOpen, setPanelOpen] = useState(false);
   const [panelTab, setPanelTab] = useState<"filters" | "clusters" | "legend">("filters");
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+
 
 
   // Hides bottom overlays (legend + zoom) so the cluster gets the full viewport.
@@ -701,25 +705,29 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
         ctx.arc(n.x - n.r * 0.3, n.y - n.r * 0.3, Math.max(1, n.r * 0.35), 0, Math.PI * 2);
         ctx.fill();
 
-        // Always show a short label: primary tag if any, else truncated title
+        // Label density from tuning
         const focused = isHover || match || n.r > 9;
+        const showLabel = tun.labelsAlwaysOn || focused;
         const short = n.primaryTag ? `#${n.primaryTag}` : n.title.slice(0, focused ? 28 : 16);
         ctx.textAlign = "center";
-        if (focused) {
-          ctx.fillStyle = "rgba(255,255,255,0.95)";
-          ctx.font = `13px ui-sans-serif, system-ui`;
-          ctx.fillText(n.title.slice(0, 28), n.x, n.y - n.r - 6);
-          if (n.primaryTag) {
-            ctx.fillStyle = "rgba(255,255,255,0.55)";
-            ctx.font = `10px ui-sans-serif, system-ui`;
-            ctx.fillText(`#${n.primaryTag}`, n.x, n.y + n.r + 12);
+        if (showLabel) {
+          if (focused) {
+            ctx.fillStyle = "rgba(255,255,255,0.95)";
+            ctx.font = `${tun.labelSize + 2}px ui-sans-serif, system-ui`;
+            ctx.fillText(n.title.slice(0, 28), n.x, n.y - n.r - 6);
+            if (n.primaryTag) {
+              ctx.fillStyle = "rgba(255,255,255,0.55)";
+              ctx.font = `${Math.max(9, tun.labelSize - 1)}px ui-sans-serif, system-ui`;
+              ctx.fillText(`#${n.primaryTag}`, n.x, n.y + n.r + 12);
+            }
+          } else {
+            ctx.fillStyle = "rgba(255,255,255,0.6)";
+            ctx.font = `${tun.labelSize}px ui-sans-serif, system-ui`;
+            ctx.fillText(short, n.x, n.y - n.r - 5);
           }
-        } else {
-          ctx.fillStyle = "rgba(255,255,255,0.6)";
-          ctx.font = `10px ui-sans-serif, system-ui`;
-          ctx.fillText(short, n.x, n.y - n.r - 5);
         }
         ctx.globalAlpha = 1;
+
       }
       ctx.restore();
 
@@ -868,7 +876,7 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
       const drag = draggingRef.current;
       const { x: cx, y: cy } = rectXY(ev);
       const movedFar = Math.abs(cx - drag.px) > 4 || Math.abs(cy - drag.py) > 4;
-      if (drag.id && !movedFar && pointersRef.current.size <= 1) onOpenIdea(drag.id);
+      if (drag.id && !movedFar && pointersRef.current.size <= 1) setSelectedId(drag.id);
       draggingRef.current = { id: null, px: 0, py: 0, panning: false };
       pointersRef.current.delete(ev.pointerId);
       if (pointersRef.current.size < 2) pinchRef.current = null;
@@ -976,7 +984,7 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
               {onBack ? (
                 <button onClick={onBack} className={cn(baseBtn, idle)} aria-label="Back" title="Back">
                   <MaterialIcon name="arrow_back" size={16} />
-                  <span className="hidden sm:inline">Back</span>
+                  <span>Back</span>
                 </button>
               ) : null}
 
@@ -1011,7 +1019,7 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
                 title="Graph settings"
               >
                 <MaterialIcon name="tune" size={16} />
-                <span className="hidden sm:inline">Settings</span>
+                <span>Settings</span>
                 {filterCount > 0 && (
                   <span className="ml-0.5 h-4 min-w-[16px] px-1 rounded-full bg-violet-500 text-[9px] font-semibold flex items-center justify-center text-white">{filterCount}</span>
                 )}
@@ -1024,7 +1032,7 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
 
 
       {panelOpen && (
-        <div className="absolute top-[6.5rem] right-3 z-10 w-[min(360px,calc(100vw-1.5rem))] max-h-[70vh] overflow-y-auto rounded-2xl glass-card-clear p-3 shadow-2xl">
+        <div className="absolute top-[3.5rem] left-1/2 -translate-x-1/2 z-10 w-[min(360px,calc(100vw-1.5rem))] max-h-[72vh] overflow-y-auto rounded-2xl glass-card-clear p-3 shadow-2xl">
           {/* View controls */}
           <div className="flex items-center gap-1.5 mb-3">
             <button onClick={() => stepZoom(-1)} className="h-8 w-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white/85" aria-label="Zoom out" title="Zoom out">
@@ -1183,38 +1191,133 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
               <Slider label="Tag gravity" hint="Pulls ideas toward their primary tag cluster" value={tuning.tagGravity} min={0} max={1} step={0.05} onChange={(v) => setTuning((t) => ({ ...t, tagGravity: v }))} />
               <Slider label="Link tension" hint="Tighter springs = denser clusters" value={tuning.linkStrength} min={0} max={1} step={0.05} onChange={(v) => setTuning((t) => ({ ...t, linkStrength: v }))} />
               <Slider label="Repulsion" hint="Spreads nodes apart" value={tuning.repulsion} min={0} max={1} step={0.05} onChange={(v) => setTuning((t) => ({ ...t, repulsion: v }))} />
+              <Slider label="Label size" hint="Text size under each node" value={tuning.labelSize} min={9} max={16} step={1} onChange={(v) => setTuning((t) => ({ ...t, labelSize: v }))} />
+              <label className="flex items-center justify-between gap-2 pt-1">
+                <div>
+                  <div className="text-[12px] text-white/85 font-medium">Always-on labels</div>
+                  <div className="text-[10.5px] text-white/45">Show a label under every node</div>
+                </div>
+                <input
+                  type="checkbox"
+                  checked={tuning.labelsAlwaysOn}
+                  onChange={(e) => setTuning((t) => ({ ...t, labelsAlwaysOn: e.target.checked }))}
+                  className="h-4 w-4 accent-violet-400"
+                />
+              </label>
             </div>
           )}
 
           {panelTab === "legend" && (
-            <div>
-              <div className="text-[11px] uppercase tracking-wider text-white/50 mb-2">Connections</div>
-              <div className="flex flex-col gap-1 text-[12px] text-white/70">
-                {(["tag", "ref", "kw", "folder"] as EdgeKind[]).map((k) => {
-                  const on = enabledKinds[k];
-                  return (
-                    <button
-                      key={k}
-                      onClick={() => toggleKind(k)}
-                      className={cn(
-                        "flex items-center gap-2 px-2 py-1.5 rounded-lg transition-colors text-left",
-                        on ? "text-white hover:bg-white/10" : "text-white/35 hover:bg-white/5"
-                      )}
-                    >
-                      <span className="h-2 w-6 rounded-full" style={{ background: on ? EDGE_STYLE[k].stroke.replace(/0\.\d+/, "0.85") : "rgba(255,255,255,0.1)" }} />
-                      <span className="flex-1">{EDGE_STYLE[k].label}</span>
-                      <MaterialIcon name={on ? "visibility" : "visibility_off"} size={14} />
-                    </button>
-                  );
-                })}
+            <div className="space-y-4">
+              <div>
+                <div className="text-[11px] uppercase tracking-wider text-white/50 mb-2">Cluster groups</div>
+                <div className="flex flex-col gap-1">
+                  {[...tagAnchorsRef.current.keys()].length === 0 && (
+                    <div className="text-[12px] text-white/50">No clusters yet — add tags to your ideas.</div>
+                  )}
+                  {[...tagAnchorsRef.current.keys()].map((tag) => {
+                    const count = nodesRef.current.filter((n) => n.primaryTag === tag).length;
+                    const active = tagFilter.has(tag);
+                    return (
+                      <button
+                        key={tag}
+                        onClick={() => toggleTag(tag)}
+                        className={cn(
+                          "flex items-center gap-2 px-2 py-1.5 rounded-lg text-left transition-colors",
+                          active ? "bg-white/15 text-white" : "text-white/75 hover:bg-white/10"
+                        )}
+                        title={active ? "Showing this cluster only — tap to clear" : "Isolate this cluster"}
+                      >
+                        <span className="h-2.5 w-2.5 rounded-full" style={{ background: hashColor(`tag:${tag}`) }} />
+                        <span className="flex-1 text-[12px] font-medium">#{tag}</span>
+                        <span className="text-[10.5px] text-white/50 tabular-nums">{count}</span>
+                        <MaterialIcon name={active ? "center_focus_strong" : "filter_center_focus"} size={14} />
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+              <div>
+                <div className="text-[11px] uppercase tracking-wider text-white/50 mb-2">Connections</div>
+                <div className="flex flex-col gap-1 text-[12px] text-white/70">
+                  {(["tag", "ref", "kw", "folder"] as EdgeKind[]).map((k) => {
+                    const on = enabledKinds[k];
+                    return (
+                      <button
+                        key={k}
+                        onClick={() => toggleKind(k)}
+                        className={cn(
+                          "flex items-center gap-2 px-2 py-1.5 rounded-lg transition-colors text-left",
+                          on ? "text-white hover:bg-white/10" : "text-white/35 hover:bg-white/5"
+                        )}
+                      >
+                        <span className="h-2 w-6 rounded-full" style={{ background: on ? EDGE_STYLE[k].stroke.replace(/0\.\d+/, "0.85") : "rgba(255,255,255,0.1)" }} />
+                        <span className="flex-1">{EDGE_STYLE[k].label}</span>
+                        <MaterialIcon name={on ? "visibility" : "visibility_off"} size={14} />
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
             </div>
           )}
         </div>
       )}
 
-
-
+      {/* Node info panel — appears when a node is tapped */}
+      {selectedId && (() => {
+        const idea = (ideasQuery.data ?? []).find((i: any) => i.id === selectedId) as any;
+        const node = nodesRef.current.find((n) => n.id === selectedId);
+        if (!idea || !node) return null;
+        const summary: string = (idea.ai_summary || idea.raw_note || idea.extracted_text || "").toString().trim();
+        const excerpt = summary ? summary.slice(0, 220) + (summary.length > 220 ? "…" : "") : "No summary yet — open the idea to add details.";
+        const cluster = node.primaryTag;
+        return (
+          <div className="absolute left-1/2 -translate-x-1/2 bottom-[calc(var(--mobile-tabbar-h,0px)+12px)] z-20 w-[min(400px,calc(100vw-1.5rem))] rounded-2xl glass-card-strong p-3 shadow-2xl">
+            <div className="flex items-start gap-2">
+              <span className="mt-1.5 h-2.5 w-2.5 rounded-full shrink-0" style={{ background: node.color }} />
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-1.5 text-[11px] text-white/60">
+                  {cluster ? <span className="inline-flex items-center gap-1"><span className="h-1.5 w-1.5 rounded-full" style={{ background: hashColor(`tag:${cluster}`) }} />#{cluster} cluster</span> : <span>Unclustered</span>}
+                  {node.degree > 0 && <span className="opacity-60">· {node.degree} links</span>}
+                </div>
+                <div className="text-[14px] font-semibold text-white leading-snug mt-0.5 truncate">{idea.title || "Untitled"}</div>
+                {idea.tags && idea.tags.length > 0 && (
+                  <div className="flex flex-wrap gap-1 mt-1.5">
+                    {idea.tags.slice(0, 6).map((t: string) => (
+                      <span key={t} className="text-[10px] px-1.5 h-5 rounded-full bg-white/10 text-white/75 inline-flex items-center">#{t}</span>
+                    ))}
+                  </div>
+                )}
+                <div className="text-[12px] text-white/75 mt-2 leading-relaxed">{excerpt}</div>
+                <div className="flex items-center gap-2 mt-3">
+                  <button
+                    onClick={() => { onOpenIdea(selectedId); setSelectedId(null); }}
+                    className="h-8 px-3 rounded-full bg-violet-500/80 hover:bg-violet-500 text-white text-[12px] font-medium inline-flex items-center gap-1"
+                  >
+                    <MaterialIcon name="open_in_new" size={14} /> Open idea
+                  </button>
+                  {cluster && (
+                    <button
+                      onClick={() => { setTagFilter(new Set([cluster])); }}
+                      className="h-8 px-3 rounded-full bg-white/10 hover:bg-white/20 text-white/85 text-[12px] font-medium inline-flex items-center gap-1"
+                    >
+                      <MaterialIcon name="filter_center_focus" size={14} /> Isolate cluster
+                    </button>
+                  )}
+                  <button
+                    onClick={() => setSelectedId(null)}
+                    className="ml-auto h-8 w-8 rounded-full bg-white/10 hover:bg-white/20 text-white/70 inline-flex items-center justify-center"
+                    aria-label="Close"
+                  >
+                    <MaterialIcon name="close" size={14} />
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Background glow */}
       <div aria-hidden className="absolute inset-0 pointer-events-none">
