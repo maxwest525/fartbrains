@@ -1297,14 +1297,18 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
                   >
                     <MaterialIcon name="open_in_new" size={14} /> Open idea
                   </button>
-                  {cluster && (
-                    <button
-                      onClick={() => { setTagFilter(new Set([cluster])); }}
-                      className="h-8 px-3 rounded-full bg-white/10 hover:bg-white/20 text-white/85 text-[12px] font-medium inline-flex items-center gap-1"
-                    >
-                      <MaterialIcon name="filter_center_focus" size={14} /> Isolate cluster
-                    </button>
-                  )}
+                  {cluster && (() => {
+                    const isolatedHere = tagFilter.size === 1 && tagFilter.has(cluster);
+                    return (
+                      <button
+                        onClick={() => setTagFilter(isolatedHere ? new Set() : new Set([cluster]))}
+                        className="h-8 px-3 rounded-full bg-white/10 hover:bg-white/20 text-white/85 text-[12px] font-medium inline-flex items-center gap-1"
+                      >
+                        <MaterialIcon name={isolatedHere ? "close_fullscreen" : "filter_center_focus"} size={14} />
+                        {isolatedHere ? "Show all" : "Isolate cluster"}
+                      </button>
+                    );
+                  })()}
                   <button
                     onClick={() => setSelectedId(null)}
                     className="ml-auto h-8 w-8 rounded-full bg-white/10 hover:bg-white/20 text-white/70 inline-flex items-center justify-center"
