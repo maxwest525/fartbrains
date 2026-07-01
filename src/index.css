@@ -827,3 +827,30 @@ html:not(.dark) .gemini ::selection {
 }
 
 
+
+/* ============================================================
+   Phone-widget frame on desktop
+   The whole app is designed as a mobile experience. On wider
+   viewports we clamp #root to a phone-sized frame centered on the
+   aurora backdrop. A transform on #root turns it into a containing
+   block for the app's `position: fixed` elements (bottom tab bar,
+   AshDock, floating "+"), so they anchor to the frame — not the
+   full desktop viewport.
+   ============================================================ */
+@media (min-width: 768px) {
+  #root {
+    position: relative;
+    width: 430px;
+    max-width: 100vw;
+    height: 100dvh;
+    margin: 0 auto;
+    overflow: hidden;
+    border-radius: 28px;
+    box-shadow:
+      0 30px 80px -20px rgba(0, 0, 0, 0.6),
+      0 0 0 1px rgba(255, 255, 255, 0.08);
+    /* Establishes a containing block for fixed descendants */
+    transform: translateZ(0);
+    isolation: isolate;
+  }
+}
