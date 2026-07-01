@@ -1127,11 +1127,12 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
                 </div>
               </div>
 
-              {topKeywords.length > 0 && (
+              {visibleKeywords.length > 0 && (
                 <div>
                   <div className="text-[11px] uppercase tracking-wider text-white/50 mb-1.5">Keywords</div>
                   <div className="flex flex-wrap gap-1.5">
-                    {topKeywords.map((k) => {
+                    {visibleKeywords.map((k) => {
+
                       const active = keywordFilter.has(k);
                       return (
                         <button
