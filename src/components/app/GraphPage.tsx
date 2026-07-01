@@ -876,7 +876,7 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
       const drag = draggingRef.current;
       const { x: cx, y: cy } = rectXY(ev);
       const movedFar = Math.abs(cx - drag.px) > 4 || Math.abs(cy - drag.py) > 4;
-      if (drag.id && !movedFar && pointersRef.current.size <= 1) onOpenIdea(drag.id);
+      if (drag.id && !movedFar && pointersRef.current.size <= 1) setSelectedId(drag.id);
       draggingRef.current = { id: null, px: 0, py: 0, panning: false };
       pointersRef.current.delete(ev.pointerId);
       if (pointersRef.current.size < 2) pinchRef.current = null;
