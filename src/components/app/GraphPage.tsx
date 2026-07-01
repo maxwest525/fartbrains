@@ -1208,26 +1208,56 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
           )}
 
           {panelTab === "legend" && (
-            <div>
-              <div className="text-[11px] uppercase tracking-wider text-white/50 mb-2">Connections</div>
-              <div className="flex flex-col gap-1 text-[12px] text-white/70">
-                {(["tag", "ref", "kw", "folder"] as EdgeKind[]).map((k) => {
-                  const on = enabledKinds[k];
-                  return (
-                    <button
-                      key={k}
-                      onClick={() => toggleKind(k)}
-                      className={cn(
-                        "flex items-center gap-2 px-2 py-1.5 rounded-lg transition-colors text-left",
-                        on ? "text-white hover:bg-white/10" : "text-white/35 hover:bg-white/5"
-                      )}
-                    >
-                      <span className="h-2 w-6 rounded-full" style={{ background: on ? EDGE_STYLE[k].stroke.replace(/0\.\d+/, "0.85") : "rgba(255,255,255,0.1)" }} />
-                      <span className="flex-1">{EDGE_STYLE[k].label}</span>
-                      <MaterialIcon name={on ? "visibility" : "visibility_off"} size={14} />
-                    </button>
-                  );
-                })}
+            <div className="space-y-4">
+              <div>
+                <div className="text-[11px] uppercase tracking-wider text-white/50 mb-2">Cluster groups</div>
+                <div className="flex flex-col gap-1">
+                  {[...tagAnchorsRef.current.keys()].length === 0 && (
+                    <div className="text-[12px] text-white/50">No clusters yet — add tags to your ideas.</div>
+                  )}
+                  {[...tagAnchorsRef.current.keys()].map((tag) => {
+                    const count = nodesRef.current.filter((n) => n.primaryTag === tag).length;
+                    const active = tagFilter.has(tag);
+                    return (
+                      <button
+                        key={tag}
+                        onClick={() => toggleTag(tag)}
+                        className={cn(
+                          "flex items-center gap-2 px-2 py-1.5 rounded-lg text-left transition-colors",
+                          active ? "bg-white/15 text-white" : "text-white/75 hover:bg-white/10"
+                        )}
+                        title={active ? "Showing this cluster only — tap to clear" : "Isolate this cluster"}
+                      >
+                        <span className="h-2.5 w-2.5 rounded-full" style={{ background: hashColor(`tag:${tag}`) }} />
+                        <span className="flex-1 text-[12px] font-medium">#{tag}</span>
+                        <span className="text-[10.5px] text-white/50 tabular-nums">{count}</span>
+                        <MaterialIcon name={active ? "center_focus_strong" : "filter_center_focus"} size={14} />
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+              <div>
+                <div className="text-[11px] uppercase tracking-wider text-white/50 mb-2">Connections</div>
+                <div className="flex flex-col gap-1 text-[12px] text-white/70">
+                  {(["tag", "ref", "kw", "folder"] as EdgeKind[]).map((k) => {
+                    const on = enabledKinds[k];
+                    return (
+                      <button
+                        key={k}
+                        onClick={() => toggleKind(k)}
+                        className={cn(
+                          "flex items-center gap-2 px-2 py-1.5 rounded-lg transition-colors text-left",
+                          on ? "text-white hover:bg-white/10" : "text-white/35 hover:bg-white/5"
+                        )}
+                      >
+                        <span className="h-2 w-6 rounded-full" style={{ background: on ? EDGE_STYLE[k].stroke.replace(/0\.\d+/, "0.85") : "rgba(255,255,255,0.1)" }} />
+                        <span className="flex-1">{EDGE_STYLE[k].label}</span>
+                        <MaterialIcon name={on ? "visibility" : "visibility_off"} size={14} />
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
             </div>
           )}
