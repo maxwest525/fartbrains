@@ -852,6 +852,17 @@ html:not(.dark) .gemini ::selection {
     /* Establishes a containing block for fixed descendants */
     transform: translateZ(0);
     isolation: isolate;
+    transform-origin: 50% 100%;
+    opacity: 1;
+    visibility: visible;
+    transition:
+      width 420ms cubic-bezier(0.22, 1, 0.36, 1),
+      height 420ms cubic-bezier(0.22, 1, 0.36, 1),
+      border-radius 420ms cubic-bezier(0.22, 1, 0.36, 1),
+      box-shadow 420ms ease,
+      transform 320ms cubic-bezier(0.22, 1, 0.36, 1),
+      opacity 260ms ease,
+      visibility 0s linear 0s;
   }
 }
 
@@ -860,7 +871,14 @@ html:not(.dark) .gemini ::selection {
 @media (min-width: 768px) {
   html.desktop-closed #root,
   html.desktop-minimized #root {
-    display: none;
+    opacity: 0;
+    transform: translateZ(0) scale(0.92) translateY(24px);
+    visibility: hidden;
+    pointer-events: none;
+    transition:
+      transform 260ms cubic-bezier(0.4, 0, 1, 1),
+      opacity 200ms ease,
+      visibility 0s linear 260ms;
   }
   html.desktop-expanded #root {
     width: 100vw;
@@ -869,3 +887,4 @@ html:not(.dark) .gemini ::selection {
     box-shadow: none;
   }
 }
+

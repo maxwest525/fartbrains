@@ -59,7 +59,7 @@ export const DesktopWindowControls = () => {
     return (
       <button
         onClick={() => setMode("open")}
-        className="fixed z-[100] left-1/2 -translate-x-1/2 bottom-6 px-4 h-10 rounded-md bg-black/70 backdrop-blur-xl text-white text-sm font-medium shadow-2xl border border-white/15 hover:bg-black/80 transition"
+        className="fixed z-[100] left-1/2 -translate-x-1/2 bottom-6 px-4 h-10 rounded-md bg-black/70 backdrop-blur-xl text-white text-sm font-medium shadow-2xl border border-white/15 hover:bg-black/80 transition animate-fade-in"
         aria-label="Reopen widget"
       >
         Open IdeaVault
@@ -69,7 +69,7 @@ export const DesktopWindowControls = () => {
 
   if (mode === "minimized") {
     return (
-      <div className="fixed z-[100] left-1/2 -translate-x-1/2 bottom-6 flex items-center h-10 rounded-md bg-black/70 backdrop-blur-xl text-white shadow-2xl border border-white/15 overflow-hidden">
+      <div className="fixed z-[100] left-1/2 -translate-x-1/2 bottom-6 flex items-center h-10 rounded-md bg-black/70 backdrop-blur-xl text-white shadow-2xl border border-white/15 overflow-hidden animate-fade-in">
         <span className="text-sm font-medium tracking-tight px-4">IdeaVault</span>
         <WinBtn title="Restore" onClick={() => setMode("open")}>
           <Square className="h-3 w-3" strokeWidth={2} />
@@ -83,7 +83,7 @@ export const DesktopWindowControls = () => {
 
   return (
     <div
-      className="fixed z-[100] flex items-center top-0 h-8 bg-black/60 backdrop-blur-xl border-b border-white/10 rounded-b-md overflow-hidden shadow-lg"
+      className="fixed z-[100] flex items-center top-0 h-8 bg-black/60 backdrop-blur-xl border-b border-white/10 rounded-b-md overflow-hidden shadow-lg animate-fade-in"
       style={{
         left: expanded ? "0px" : "max(0px, calc(50vw - 215px))",
       }}
