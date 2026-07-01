@@ -396,7 +396,7 @@ const Shell = () => {
 
             <div ref={composeRef} className="w-full px-3 sm:px-6 lg:px-10 pt-6 sm:pt-10 pb-4 flex-1 min-h-0 flex flex-col items-center gap-5 sm:gap-6 max-w-3xl mx-auto">
 
-              <UrlQuickCapture onCreated={(id) => setSelectedId(id)} />
+              
 
               <VoiceOrb
                 speaking={speaking}
