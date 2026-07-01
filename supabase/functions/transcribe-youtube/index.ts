@@ -5,7 +5,7 @@
  *   1) Try captions via Apify actor `starvibe/youtube-video-transcript` (fast, cheap).
  *   2) If no captions, download the audio via Apify actor
  *      `epicscrapers/youtube-audio-downloader` and transcribe it with
- *      ElevenLabs Scribe (`scribe_v1`).
+ *      ElevenLabs Scribe (`scribe_v2`).
  *
  * Required secrets:
  *   - APIFY_API_TOKEN
@@ -150,7 +150,7 @@ async function downloadAudio(
 async function transcribeWithElevenLabs(bytes: Uint8Array, mime: string, elevenKey: string): Promise<string> {
   const fd = new FormData();
   fd.append("file", new Blob([bytes], { type: mime }), "audio.mp3");
-  fd.append("model_id", "scribe_v1");
+  fd.append("model_id", "scribe_v2");
   // language auto-detect; no diarize needed
   const resp = await fetch("https://api.elevenlabs.io/v1/speech-to-text", {
     method: "POST",
