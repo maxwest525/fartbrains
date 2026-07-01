@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/hooks/useTheme";
 import { IdeaCreatedFx } from "@/components/app/IdeaCreatedFx";
+import { DesktopWindowControls } from "@/components/app/DesktopWindowControls";
 import Index from "./pages/Index.tsx";
 import Auth from "./pages/Auth.tsx";
 
@@ -21,6 +22,7 @@ const App = () => (
         <Toaster />
         <Sonner />
         <IdeaCreatedFx />
+        <DesktopWindowControls />
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<Index />} />
