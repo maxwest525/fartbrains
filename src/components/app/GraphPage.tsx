@@ -1005,7 +1005,48 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
 
       {panelOpen && (
         <div className="absolute top-[6.5rem] right-3 z-10 w-[min(360px,calc(100vw-1.5rem))] max-h-[70vh] overflow-y-auto rounded-2xl glass-card-clear p-3 shadow-2xl">
+          {/* View controls */}
+          <div className="flex items-center gap-1.5 mb-3">
+            <button onClick={() => stepZoom(-1)} className="h-8 w-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white/85" aria-label="Zoom out" title="Zoom out">
+              <MaterialIcon name="remove" size={16} />
+            </button>
+            <button onClick={() => stepZoom(1)} className="h-8 w-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white/85" aria-label="Zoom in" title="Zoom in">
+              <MaterialIcon name="add" size={16} />
+            </button>
+            <button onClick={recenter} className="h-8 w-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white/85" aria-label="Recenter" title="Recenter">
+              <MaterialIcon name="my_location" size={16} />
+            </button>
+            <button onClick={toggleOverlays} className="h-8 w-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white/85 ml-auto" aria-label={overlaysHidden ? "Show overlays" : "Hide overlays"} title={overlaysHidden ? "Show overlays" : "Hide overlays"}>
+              <MaterialIcon name={overlaysHidden ? "visibility" : "visibility_off"} size={16} />
+            </button>
+          </div>
+
+          {/* Tab switcher */}
+          <div className="flex items-center gap-1 p-1 rounded-full bg-white/5 mb-3">
+            {([
+              { key: "filters", icon: "tune", label: "Filters" },
+              { key: "clusters", icon: "hub", label: "Clusters" },
+              { key: "legend", icon: "share", label: "Links" },
+            ] as const).map((t) => {
+              const active = panelTab === t.key;
+              return (
+                <button
+                  key={t.key}
+                  onClick={() => setPanelTab(t.key)}
+                  className={cn(
+                    "flex-1 h-8 rounded-full text-[11px] font-medium inline-flex items-center justify-center gap-1 transition-colors",
+                    active ? "bg-white/25 text-white" : "text-white/70 hover:bg-white/10"
+                  )}
+                >
+                  <MaterialIcon name={t.icon} size={14} />
+                  {t.label}
+                </button>
+              );
+            })}
+          </div>
+
           {panelTab === "filters" && (
+
             <>
               <div className="flex items-center justify-between mb-2">
                 <h3 className="text-[13px] font-semibold text-white">Filters</h3>
