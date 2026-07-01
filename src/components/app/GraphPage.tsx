@@ -1293,10 +1293,10 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
         const excerpt = summary ? summary.slice(0, 220) + (summary.length > 220 ? "…" : "") : "No summary yet — open the idea to add details.";
         const cluster = node.primaryTag;
         return (
-          <div className="absolute left-1/2 -translate-x-1/2 bottom-[calc(var(--mobile-tabbar-h,0px)+12px)] z-20 w-[min(400px,calc(100vw-1.5rem))] rounded-2xl glass-card-strong p-3 shadow-2xl">
-            <div className="flex items-start gap-2">
+          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-20 w-[min(400px,calc(100vw-1.5rem))] max-h-[min(70vh,520px)] rounded-2xl glass-card-strong p-3 shadow-2xl flex flex-col">
+            <div className="flex items-start gap-2 min-h-0 flex-1">
               <span className="mt-1.5 h-2.5 w-2.5 rounded-full shrink-0" style={{ background: node.color }} />
-              <div className="min-w-0 flex-1">
+              <div className="min-w-0 flex-1 flex flex-col min-h-0">
                 <div className="flex items-center gap-1.5 text-[11px] text-white/60">
                   {cluster ? <span className="inline-flex items-center gap-1"><span className="h-1.5 w-1.5 rounded-full" style={{ background: hashColor(`tag:${cluster}`) }} />#{cluster} cluster</span> : <span>Unclustered</span>}
                   {node.degree > 0 && <span className="opacity-60">· {node.degree} links</span>}
@@ -1309,8 +1309,8 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
                     ))}
                   </div>
                 )}
-                <div className="text-[12px] text-white/75 mt-2 leading-relaxed">{excerpt}</div>
-                <div className="flex items-center gap-2 mt-3">
+                <div className="text-[12px] text-white/75 mt-2 leading-relaxed overflow-y-auto pr-1 min-h-0 flex-1">{excerpt}</div>
+                <div className="flex items-center gap-2 mt-3 shrink-0">
                   <button
                     onClick={() => { onOpenIdea(selectedId); setSelectedId(null); }}
                     className="h-8 px-3 rounded-full bg-violet-500/80 hover:bg-violet-500 text-white text-[12px] font-medium inline-flex items-center gap-1"
@@ -1340,6 +1340,7 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
               </div>
             </div>
           </div>
+
         );
       })()}
 
