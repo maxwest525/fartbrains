@@ -414,6 +414,22 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
       .map(([t]) => t);
   }, [ready, ideasQuery.data]);
 
+  // Panel search — narrows the chips shown in the Filters tab.
+  const panelQuery = search.trim().toLowerCase().replace(/^#/, "");
+  const visibleTags = useMemo(
+    () => (panelQuery ? topTags.filter(({ tag }) => tag.includes(panelQuery)) : topTags),
+    [topTags, panelQuery],
+  );
+  const visibleKeywords = useMemo(
+    () => (panelQuery ? topKeywords.filter((k) => k.includes(panelQuery)) : topKeywords),
+    [topKeywords, panelQuery],
+  );
+  const visibleFolders = useMemo(
+    () => (panelQuery ? folders.filter((f) => f.name.toLowerCase().includes(panelQuery)) : folders),
+    [folders, panelQuery],
+  );
+
+
   // Compute visible set based on filters
   useEffect(() => {
     const vis = new Set<string>();
