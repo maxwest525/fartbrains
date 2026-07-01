@@ -5,7 +5,7 @@
  *   1) Try captions via Apify actor `starvibe/youtube-video-transcript` (fast, cheap).
  *   2) If no captions, download the audio via Apify actor
  *      `epicscrapers/youtube-audio-downloader` and transcribe it with
- *      ElevenLabs Scribe (`scribe_v1`).
+ *      ElevenLabs Scribe (`scribe_v2`).
  *
  * Required secrets:
  *   - APIFY_API_TOKEN
