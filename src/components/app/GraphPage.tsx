@@ -984,7 +984,7 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
               {onBack ? (
                 <button onClick={onBack} className={cn(baseBtn, idle)} aria-label="Back" title="Back">
                   <MaterialIcon name="arrow_back" size={16} />
-                  <span className="hidden sm:inline">Back</span>
+                  <span>Back</span>
                 </button>
               ) : null}
 
