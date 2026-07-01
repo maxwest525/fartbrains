@@ -969,80 +969,36 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
 
         </div>
 
-        {/* Row 2: consolidated controls. Back · Panel (Filters/Clusters/Legend) · Overlays · Zoom · Recenter */}
-        <div className="flex items-center gap-1.5 w-full">
+        {/* Row 2: Back · Settings (opens panel with Filters / Clusters / Links + zoom/recenter/overlays) */}
+        <div className="flex items-center justify-between gap-2 w-full">
           {(() => {
-            const baseBtn = "h-9 rounded-full backdrop-blur-xl border flex items-center justify-center transition-colors shadow-sm";
-            const circle = "w-9 shrink-0";
+            const baseBtn = "h-9 w-9 rounded-full backdrop-blur-xl border flex items-center justify-center transition-colors shadow-sm";
             const idle = "bg-white/15 border-white/25 text-foreground/85 hover:bg-white/25 hover:text-foreground";
             const activeViolet = "bg-violet-400/30 border-violet-300/60 text-foreground";
-            const openPanel = (tab: "filters" | "clusters" | "legend") => {
-              if (panelOpen && panelTab === tab) setPanelOpen(false);
-              else { setPanelTab(tab); setPanelOpen(true); }
-            };
             return (
               <>
                 {onBack ? (
-                  <button onClick={onBack} className={cn(baseBtn, circle, idle)} aria-label="Back" title="Back">
+                  <button onClick={onBack} className={cn(baseBtn, idle)} aria-label="Back" title="Back">
                     <MaterialIcon name="arrow_back" size={18} />
                   </button>
-                ) : null}
-
-                {/* Combined Panel button with inline tab dots */}
-                <div className={cn(baseBtn, "flex-1 min-w-0 px-1 gap-0.5", panelOpen ? activeViolet : idle)}>
-                  {([
-                    { key: "filters", icon: "tune", label: "Filters", badge: filterCount },
-                    { key: "clusters", icon: "hub", label: "Clusters", badge: 0 },
-                    { key: "legend", icon: "share", label: "Links", badge: 0 },
-                  ] as const).map((t) => {
-                    const active = panelOpen && panelTab === t.key;
-                    return (
-                      <button
-                        key={t.key}
-                        onClick={() => openPanel(t.key)}
-                        className={cn(
-                          "relative flex-1 h-7 rounded-full text-[11px] font-medium inline-flex items-center justify-center gap-1 transition-colors",
-                          active ? "bg-white/25 text-foreground" : "text-foreground/80 hover:bg-white/10"
-                        )}
-                        aria-label={t.label}
-                        title={t.label}
-                      >
-                        <MaterialIcon name={t.icon} size={14} />
-                        <span className="hidden sm:inline">{t.label}</span>
-                        {t.badge > 0 && (
-                          <span className="ml-0.5 h-4 min-w-[16px] px-1 rounded-full bg-violet-500 text-[9px] font-semibold flex items-center justify-center text-white">{t.badge}</span>
-                        )}
-                      </button>
-                    );
-                  })}
-                </div>
+                ) : <span />}
 
                 <button
-                  onClick={toggleOverlays}
-                  className={cn(baseBtn, circle, idle)}
-                  aria-label={overlaysHidden ? "Show overlays" : "Hide overlays"}
-                  title={overlaysHidden ? "Show overlays" : "Hide overlays"}
+                  onClick={() => setPanelOpen((v) => !v)}
+                  className={cn(baseBtn, panelOpen ? activeViolet : idle, "relative")}
+                  aria-label="Graph settings"
+                  title="Graph settings"
                 >
-                  <MaterialIcon name={overlaysHidden ? "visibility" : "visibility_off"} size={16} />
-                </button>
-
-                {/* Zoom pill */}
-                <div className={cn(baseBtn, idle, "px-0.5 gap-0.5")}>
-                  <button onClick={() => stepZoom(-1)} className="h-8 w-8 rounded-full inline-flex items-center justify-center hover:bg-white/15" aria-label="Zoom out" title="Zoom out">
-                    <MaterialIcon name="remove" size={16} />
-                  </button>
-                  <button onClick={() => stepZoom(1)} className="h-8 w-8 rounded-full inline-flex items-center justify-center hover:bg-white/15" aria-label="Zoom in" title="Zoom in">
-                    <MaterialIcon name="add" size={16} />
-                  </button>
-                </div>
-
-                <button onClick={recenter} className={cn(baseBtn, circle, idle)} aria-label="Recenter view" title="Recenter view">
-                  <MaterialIcon name="my_location" size={16} />
+                  <MaterialIcon name="tune" size={18} />
+                  {filterCount > 0 && (
+                    <span className="absolute -top-1 -right-1 h-4 min-w-[16px] px-1 rounded-full bg-violet-500 text-[9px] font-semibold flex items-center justify-center text-white">{filterCount}</span>
+                  )}
                 </button>
               </>
             );
           })()}
         </div>
+
 
       </div>
 
