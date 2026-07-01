@@ -849,8 +849,9 @@ html:not(.dark) .gemini ::selection {
     box-shadow:
       0 30px 80px -20px rgba(0, 0, 0, 0.6),
       0 0 0 1px rgba(255, 255, 255, 0.08);
-    /* Establishes a containing block for fixed descendants */
-    transform: translateZ(0);
+    /* Establishes a containing block for fixed descendants; also
+       applies the drag offset from <DesktopWindowControls />. */
+    transform: translate3d(var(--dw-x, 0px), var(--dw-y, 0px), 0);
     isolation: isolate;
     transform-origin: 50% 100%;
     opacity: 1;
@@ -860,10 +861,15 @@ html:not(.dark) .gemini ::selection {
       height 420ms cubic-bezier(0.22, 1, 0.36, 1),
       border-radius 420ms cubic-bezier(0.22, 1, 0.36, 1),
       box-shadow 420ms ease,
-      transform 320ms cubic-bezier(0.22, 1, 0.36, 1),
+      transform 260ms cubic-bezier(0.22, 1, 0.36, 1),
       opacity 260ms ease,
       visibility 0s linear 0s;
   }
+  /* No transition while actively dragging — feels 1:1 with the cursor. */
+  html.desktop-dragging #root {
+    transition: none;
+  }
+
 }
 
 /* Desktop window controls — close / minimize / expand states.
