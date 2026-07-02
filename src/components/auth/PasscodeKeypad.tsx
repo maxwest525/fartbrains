@@ -12,20 +12,21 @@ import {
 
 type Props = {
   onUnlocked: () => void;
+  /** Force setup or unlock UI. Defaults to inferring from `hasPasscode()`. */
+  mode?: "setup" | "unlock";
 };
 
 /**
- * Apple-style 6-digit passcode lock.
+ * Apple-style 4-digit passcode.
  *
- * First run: prompts the user to create a passcode (enter twice).
- * Subsequent runs: prompts to enter the existing passcode.
- * Wrong attempt: dots shake red + buzz; after 5 fails locks for 30s.
+ * setup: prompts to create a passcode (enter twice).
+ * unlock: prompts to enter the existing passcode.
+ * Wrong attempt: dots shake + buzz; after 5 fails locks for 30s.
  */
-export const PasscodeKeypad = ({ onUnlocked }: Props) => {
-  const [setupMode] = useState(!hasPasscode());
-  const [phase, setPhase] = useState<"enter" | "confirm">(
-    setupMode ? "enter" : "enter",
-  );
+export const PasscodeKeypad = ({ onUnlocked, mode }: Props) => {
+  const setupMode = mode ? mode === "setup" : !hasPasscode();
+  const [phase, setPhase] = useState<"enter" | "confirm">("enter");
+
   const [firstCode, setFirstCode] = useState<string>("");
   const [code, setCode] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
