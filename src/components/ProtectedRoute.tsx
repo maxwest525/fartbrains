@@ -1,76 +1,45 @@
-import { useEffect, useRef, useState } from "react";
-import { Navigate } from "react-router-dom";
+import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
-import { supabase } from "@/integrations/supabase/client";
 import { PasscodeKeypad } from "@/components/auth/PasscodeKeypad";
-import { isUnlocked } from "@/lib/passcode";
+import { SplashScreen } from "@/components/auth/SplashScreen";
+import { AuthScreen } from "@/components/auth/AuthScreen";
+import { PasscodeSetupPrompt } from "@/components/auth/PasscodeSetupPrompt";
+import {
+  hasPasscode,
+  hasOptedOut,
+  setOptedOut,
+  isUnlocked,
+} from "@/lib/passcode";
 
-
-
-// Single-user app: anyone who opens the URL is silently signed in as the
-// owner — but only after they unlock the local Apple-style passcode gate.
-// The passcode never leaves the device.
-const AUTO_EMAIL = "admin@trumoveinc.com";
-const AUTO_PASSWORD = "Ligma525!";
+const SPLASH_KEY = "iv.splash.shown.v1";
 
 export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, loading } = useAuth();
-  const [signingIn, setSigningIn] = useState(false);
-  const attemptedRef = useRef(false);
-  const [failed, setFailed] = useState(false);
 
-  // Passcode gate. Re-checked on mount; once unlocked it stays unlocked for
-  // the session.
+  // Splash only on first mount per tab session.
+  const [splashDone, setSplashDone] = useState<boolean>(
+    () => sessionStorage.getItem(SPLASH_KEY) === "1"
+  );
+
   const [unlocked, setUnlocked] = useState<boolean>(() => isUnlocked());
+  const [wantsSetup, setWantsSetup] = useState(false);
+  // Local re-render triggers for passcode state changes.
+  const [passcodeVer, setPasscodeVer] = useState(0);
 
-  useEffect(() => {
-    if (!unlocked) return;
-    if (loading || user || attemptedRef.current) return;
-    attemptedRef.current = true;
-    setSigningIn(true);
-    (async () => {
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email: AUTO_EMAIL,
-        password: AUTO_PASSWORD,
-      });
-      if (signInError) {
-        const { error: signUpError } = await supabase.auth.signUp({
-          email: AUTO_EMAIL,
-          password: AUTO_PASSWORD,
-          options: { emailRedirectTo: `${window.location.origin}/` },
-        });
-        if (signUpError) setFailed(true);
-      }
-      setSigningIn(false);
-    })();
-  }, [loading, user, unlocked]);
-
-  // Gate stays first — show keypad before doing anything cloud-related.
-  if (!unlocked) {
+  // 1) Splash
+  if (!splashDone) {
     return (
-      <main className="relative min-h-dvh w-full flex items-center justify-center overflow-hidden text-foreground animate-fade-in">
-        {/* Inherit global aurora body background; add vignette for legibility */}
-        <div
-          aria-hidden
-          className="absolute inset-0 pointer-events-none animate-fade-in"
-          style={{ background: "radial-gradient(900px 600px at 50% 45%, rgba(0,0,0,0) 0%, rgba(0,0,0,0.10) 70%, rgba(0,0,0,0.22) 100%)" }}
-        />
-        <div className="relative z-10 w-full max-w-md mx-6 px-6 py-10 animate-fade-in">
-          <PasscodeKeypad onUnlocked={() => setUnlocked(true)} />
-        </div>
-      </main>
+      <SplashScreen
+        onDone={() => {
+          sessionStorage.setItem(SPLASH_KEY, "1");
+          setSplashDone(true);
+        }}
+      />
     );
   }
 
-  if (!loading && !user && failed) {
-    return (
-      <div className="flex min-h-dvh items-center justify-center text-muted-foreground animate-fade-in">
-        Sign-in failed. Refresh to retry.
-      </div>
-    );
-  }
-
-  if (loading || signingIn || !user) {
+  // 2) Loading auth
+  if (loading) {
     return (
       <div className="flex min-h-dvh items-center justify-center text-muted-foreground animate-fade-in">
         Loading…
@@ -78,6 +47,59 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     );
   }
 
+  // 3) Not signed in — magic link auth
+  if (!user) {
+    return <AuthScreen />;
+  }
+
+  // 4) Signed in, passcode set, not unlocked → unlock keypad
+  if (hasPasscode() && !unlocked) {
+    return (
+      <main className="relative min-h-dvh w-full flex items-center justify-center overflow-hidden text-foreground animate-fade-in">
+        <div
+          aria-hidden
+          className="absolute inset-0 pointer-events-none"
+          style={{ background: "radial-gradient(900px 600px at 50% 45%, rgba(0,0,0,0) 0%, rgba(0,0,0,0.10) 70%, rgba(0,0,0,0.22) 100%)" }}
+        />
+        <div className="relative z-10 w-full max-w-md mx-6 px-6 py-10 animate-fade-in">
+          <PasscodeKeypad mode="unlock" onUnlocked={() => setUnlocked(true)} />
+        </div>
+      </main>
+    );
+  }
+
+  // 5) Signed in, no passcode, hasn't opted out → prompt
+  if (!hasPasscode() && !hasOptedOut() && !wantsSetup) {
+    return (
+      <PasscodeSetupPrompt
+        onSetup={() => setWantsSetup(true)}
+        onSkip={() => { setOptedOut(); setPasscodeVer((v) => v + 1); }}
+      />
+    );
+  }
+
+  // 5b) Setup flow — pick a passcode
+  if (wantsSetup && !hasPasscode()) {
+    return (
+      <main className="relative min-h-dvh w-full flex items-center justify-center overflow-hidden text-foreground animate-fade-in">
+        <div
+          aria-hidden
+          className="absolute inset-0 pointer-events-none"
+          style={{ background: "radial-gradient(900px 600px at 50% 45%, rgba(0,0,0,0) 0%, rgba(0,0,0,0.10) 70%, rgba(0,0,0,0.22) 100%)" }}
+        />
+        <div className="relative z-10 w-full max-w-md mx-6 px-6 py-10 animate-fade-in">
+          <PasscodeKeypad
+            mode="setup"
+            onUnlocked={() => {
+              setWantsSetup(false);
+              setUnlocked(true);
+              setPasscodeVer((v) => v + 1);
+            }}
+          />
+        </div>
+      </main>
+    );
+  }
 
   return <>{children}</>;
 };
