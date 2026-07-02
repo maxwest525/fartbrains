@@ -424,7 +424,7 @@ export const AshDock = ({ className }: { className?: string }) => {
           <div id="ash-dock-body">
           {/* Input */}
 
-          <div className="px-3.5 pt-3 pb-2">
+          <div className="px-4 pt-4 pb-3">
             <textarea
               ref={textareaRef}
               value={text}
@@ -436,8 +436,11 @@ export const AshDock = ({ className }: { className?: string }) => {
                 }
               }}
               placeholder={isRecording ? `Listening… ${fmtSeconds(voice.seconds)}` : "Capture an idea, paste a link, drop a transcript…"}
-              rows={1}
-              className="w-full resize-none bg-transparent text-[15px] leading-6 placeholder:text-muted-foreground/70 focus:outline-none max-h-12 overflow-y-auto"
+              rows={3}
+              className="w-full resize-none bg-transparent text-[17px] leading-7 placeholder:text-muted-foreground/70 focus:outline-none min-h-[96px] max-h-[220px] overflow-y-auto"
+            />
+          </div>
+
             />
           </div>
 
