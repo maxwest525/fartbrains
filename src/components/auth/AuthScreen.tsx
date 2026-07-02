@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Mail, Loader2, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
+import logo from "@/assets/fartbrains-logo.png";
 
 export const AuthScreen = () => {
   const [email, setEmail] = useState("");
@@ -40,9 +41,7 @@ export const AuthScreen = () => {
       <div className="relative z-10 w-full max-w-sm mx-6">
         <div className="glass-card-strong rounded-3xl p-7 text-white">
           <div className="flex flex-col items-center gap-3 mb-6">
-            <div className="relative h-14 w-14 rounded-2xl brand-gradient ring-glow flex items-center justify-center">
-              <span className="font-display text-[22px] font-bold text-white drop-shadow">IV</span>
-            </div>
+            <img src={logo} alt="FartBrains" className="w-40 h-auto drop-shadow-[0_0_30px_rgba(96,165,250,0.3)]" />
             <div className="text-center">
               <h1 className="font-display text-[22px] font-semibold tracking-tight">
                 {sent ? "Check your inbox" : "Sign in or sign up"}
