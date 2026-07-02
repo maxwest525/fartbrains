@@ -439,6 +439,7 @@ export const AshDock = ({ className }: { className?: string }) => {
               rows={3}
               className="w-full resize-none bg-transparent text-[17px] leading-7 placeholder:text-muted-foreground/70 focus:outline-none min-h-[96px] max-h-[220px] overflow-y-auto"
             />
+            />
           </div>
 
             />
