@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Mail, Loader2, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
+import { isEmailAllowed } from "@/lib/allowlist";
 import logo from "@/assets/fartbrains-logo.png";
 
 export const AuthScreen = () => {
@@ -15,11 +16,19 @@ export const AuthScreen = () => {
 
   const send = async () => {
     if (!isValid || sending) return;
+    const trimmed = email.trim();
+    if (!isEmailAllowed(trimmed)) {
+      toast.error("This email isn't allowed to sign in.");
+      return;
+    }
     setSending(true);
     try {
       const { error } = await supabase.auth.signInWithOtp({
-        email: email.trim(),
-        options: { emailRedirectTo: `${window.location.origin}/` },
+        email: trimmed,
+        options: {
+          emailRedirectTo: `${window.location.origin}/`,
+          shouldCreateUser: false,
+        },
       });
       if (error) throw error;
       setSent(true);

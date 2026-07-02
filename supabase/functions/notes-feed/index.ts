@@ -24,6 +24,19 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: cors });
 
+  // AuthZ: require the shared NOTES_FEED_TOKEN (single-tenant desktop poller).
+  const expected = Deno.env.get("NOTES_FEED_TOKEN") ?? "";
+  const provided =
+    req.headers.get("x-notes-feed-token") ??
+    (req.headers.get("authorization") ?? "").replace(/^Bearer\s+/i, "").trim();
+  if (!expected || provided !== expected) {
+    return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      status: 401,
+      headers: { ...cors, "content-type": "application/json" },
+    });
+  }
+
+
   const url = new URL(req.url);
   const since = url.searchParams.get("since");
   const limit = Math.min(Number(url.searchParams.get("limit") ?? "100"), 500);

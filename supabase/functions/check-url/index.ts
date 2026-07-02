@@ -1,3 +1,5 @@
+import { requireUser } from "../_shared/user-auth.ts";
+import { assertPublicUrl, safeFetch } from "../_shared/ssrf.ts";
 // Lightweight URL reachability check. Returns whether the URL responds with a
 // successful status, plus the final status code and (if redirected) the final
 // URL. Designed for live "is this link reachable?" feedback in the compose form.
@@ -46,6 +48,9 @@ async function timedFetch(url: string, init: RequestInit): Promise<Response> {
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
+  const _auth = await requireUser(req, corsHeaders);
+  if ("response" in _auth) return _auth.response;
+
   let body: { url?: string };
   try {
     body = await req.json();
@@ -63,37 +68,38 @@ Deno.serve(async (req) => {
 
   let target: URL;
   try {
-    target = new URL(raw.includes("://") ? raw : `https://${raw}`);
-  } catch {
-    return json({ ok: false, status: null, finalUrl: null, redirected: false, reason: "invalid_url", message: "Not a valid URL" });
-  }
-  if (!["http:", "https:"].includes(target.protocol)) {
+    target = await assertPublicUrl(raw.includes("://") ? raw : `https://${raw}`);
+  } catch (e) {
     return json({
       ok: false,
       status: null,
-      finalUrl: target.toString(),
+      finalUrl: null,
       redirected: false,
-      reason: "unsupported_scheme",
-      message: "Only http(s) URLs are supported",
+      reason: "invalid_url",
+      message: e instanceof Error ? e.message : "Not a valid URL",
     });
   }
 
-  const tryFetch = async (method: "HEAD" | "GET") =>
-    timedFetch(target.toString(), {
-      method,
-      redirect: "follow",
-      headers: {
-        "User-Agent": UA,
-        Accept: "*/*",
-        // Range so a GET fallback doesn't pull the whole page
-        ...(method === "GET" ? { Range: "bytes=0-1024" } : {}),
-      },
-    });
+  const tryFetch = async (method: "HEAD" | "GET") => {
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), TIMEOUT_MS);
+    try {
+      return await safeFetch(target.toString(), {
+        method,
+        signal: ctrl.signal,
+        headers: {
+          "User-Agent": UA,
+          Accept: "*/*",
+          ...(method === "GET" ? { Range: "bytes=0-1024" } : {}),
+        },
+      });
+    } finally {
+      clearTimeout(t);
+    }
+  };
 
   try {
     let resp = await tryFetch("HEAD");
-    // Many sites (incl. Instagram, Cloudflare-protected pages) return 4xx for HEAD.
-    // Retry with a ranged GET so we don't false-flag them as broken.
     if (resp.status === 405 || resp.status === 403 || resp.status === 400 || resp.status === 501) {
       resp = await tryFetch("GET");
     }

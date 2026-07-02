@@ -1,3 +1,5 @@
+import { requireUser } from "../_shared/user-auth.ts";
+import { assertPublicUrl, safeFetch } from "../_shared/ssrf.ts";
 /**
  * Extract readable text + title from an arbitrary web page.
  *
@@ -142,6 +144,9 @@ async function firecrawlFallback(url: string): Promise<
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
+  const _auth = await requireUser(req, corsHeaders);
+  if ("response" in _auth) return _auth.response;
+
   try {
     const { url } = await req.json();
     if (!url || typeof url !== "string") {
@@ -150,12 +155,9 @@ Deno.serve(async (req) => {
 
     let target: URL;
     try {
-      target = new URL(url);
-    } catch {
-      return jsonErr("Invalid URL", 400);
-    }
-    if (!["http:", "https:"].includes(target.protocol)) {
-      return jsonErr("Only http(s) URLs supported", 400);
+      target = await assertPublicUrl(url);
+    } catch (e) {
+      return jsonErr(e instanceof Error ? e.message : "Invalid URL", 400);
     }
 
     let title: string | null = null;
@@ -163,14 +165,13 @@ Deno.serve(async (req) => {
     let text = "";
 
     try {
-      const resp = await fetch(target.toString(), {
+      const resp = await safeFetch(target.toString(), {
         headers: {
           "User-Agent":
             "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
           Accept: "text/html,application/xhtml+xml",
           "Accept-Language": "en-US,en;q=0.9",
         },
-        redirect: "follow",
       });
 
       if (resp.ok) {
