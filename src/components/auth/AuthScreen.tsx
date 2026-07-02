@@ -43,10 +43,10 @@ export const AuthScreen = () => {
           <div className="flex flex-col items-center gap-3 mb-6">
             <img src={logo} alt="FartBrains" className="w-40 h-auto drop-shadow-[0_0_30px_rgba(96,165,250,0.3)]" />
             <div className="text-center">
-              <h1 className="font-display text-[22px] font-semibold tracking-tight">
+              <h1 className="font-display text-[22px] font-semibold tracking-tight text-[#f8fafc]">
                 {sent ? "Check your inbox" : "Sign in or sign up"}
               </h1>
-              <p className="mt-1 text-[13px] text-white/60">
+              <p className="mt-1 text-[13px] text-[#f8fafc]/90">
                 {sent
                   ? `We sent a magic link to ${email.trim()}. Tap it to continue.`
                   : "We'll email you a magic link. No password needed."}
