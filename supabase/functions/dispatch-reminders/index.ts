@@ -142,6 +142,19 @@ Deno.serve(async (req) => {
     return new Response("ok", { headers: corsHeaders });
   }
 
+  // AuthZ: only pg_cron (and manual admin invocations) may trigger this.
+  const expected = Deno.env.get("CRON_SECRET") ?? "";
+  const provided = (req.headers.get("authorization") ?? "")
+    .replace(/^Bearer\s+/i, "")
+    .trim();
+  if (!expected || provided !== expected) {
+    return new Response(JSON.stringify({ ok: true }), {
+      status: 200,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
+
   const startedAt = new Date().toISOString();
   const nowIso = new Date().toISOString();
 
