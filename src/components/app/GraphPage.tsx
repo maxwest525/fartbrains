@@ -610,19 +610,8 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
       if (q) for (const n of nodes) if (n.title.toLowerCase().includes(q) || n.tags.some((t) => t.includes(q))) matchSet.add(n.id);
       const hasQuery = matchSet.size > 0;
 
-      // tag cluster halos (subtle background bubble per tag)
-      anchors.forEach((pos, tag) => {
-        ctx.beginPath();
-        ctx.fillStyle = hashColor(`tag:${tag}`);
-        ctx.globalAlpha = 0.05;
-        ctx.arc(pos.x, pos.y, 110, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.globalAlpha = 1;
-        ctx.fillStyle = "rgba(255,255,255,0.55)";
-        ctx.font = "11px ui-sans-serif, system-ui";
-        ctx.textAlign = "center";
-        ctx.fillText(`#${tag}`, pos.x, pos.y - 118);
-      });
+      // Cluster halos and floating #tag labels removed — clusters emerge
+      // organically from node colors + gravity (Obsidian-style).
 
       // edges
       const labeledEdges: { e: GraphEdge; ax: number; ay: number; bx: number; by: number; active: boolean }[] = [];
