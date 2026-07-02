@@ -1,3 +1,4 @@
+import { requireUser } from "../_shared/user-auth.ts";
 /**
  * Firecrawl-powered URL scrape. Returns clean markdown + an AI summary the
  * caller can append to an idea. Use this when you have a specific URL (vs.
@@ -12,6 +13,9 @@ const corsHeaders = {
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+
+  const _auth = await requireUser(req, corsHeaders);
+  if ("response" in _auth) return _auth.response;
 
   try {
     const { url } = await req.json();

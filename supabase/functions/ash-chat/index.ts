@@ -1,3 +1,4 @@
+import { requireUser } from "../_shared/user-auth.ts";
 // Streaming chat endpoint for the /home Ash prompt bar.
 // Uses Lovable AI Gateway (Gemini) and streams SSE deltas back to the client.
 
@@ -15,6 +16,9 @@ const SYSTEM_PROMPT = `You are Ash — the user's personal command-center assist
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+
+  const _auth = await requireUser(req, corsHeaders);
+  if ("response" in _auth) return _auth.response;
 
   try {
     const { messages } = await req.json();

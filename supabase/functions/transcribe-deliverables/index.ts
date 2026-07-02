@@ -1,3 +1,4 @@
+import { requireUser } from "../_shared/user-auth.ts";
 /**
  * Transcribes a short audio clip and extracts typed deliverables in one shot.
  *
@@ -31,6 +32,9 @@ const json = (body: unknown, status = 200) =>
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+
+  const _auth = await requireUser(req, corsHeaders);
+  if ("response" in _auth) return _auth.response;
 
   try {
     const { audioBase64, mimeType, allowedTypes, projectName, existingItems } =

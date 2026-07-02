@@ -1,3 +1,4 @@
+import { requireUser } from "../_shared/user-auth.ts";
 // Lightweight URL reachability check. Returns whether the URL responds with a
 // successful status, plus the final status code and (if redirected) the final
 // URL. Designed for live "is this link reachable?" feedback in the compose form.
@@ -45,6 +46,9 @@ async function timedFetch(url: string, init: RequestInit): Promise<Response> {
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+
+  const _auth = await requireUser(req, corsHeaders);
+  if ("response" in _auth) return _auth.response;
 
   let body: { url?: string };
   try {
