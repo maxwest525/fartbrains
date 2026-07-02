@@ -1,4 +1,5 @@
 import { requireUser } from "../_shared/user-auth.ts";
+import { assertPublicUrl, safeFetch } from "../_shared/ssrf.ts";
 /**
  * Extract readable text + title from an arbitrary web page.
  *
