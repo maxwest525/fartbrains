@@ -1,18 +1,16 @@
 // Local Apple-style passcode gate. The passcode never leaves this device.
-// We store a salted SHA-256 hash in localStorage; on unlock we re-hash the
-// entered digits and compare. Cloud auth (auto sign-in as the owner account)
-// only runs AFTER the local gate is unlocked.
+// Stores a salted SHA-256 hash in localStorage; unlock re-hashes and compares.
 
 const HASH_KEY = "iv.passcode.hash.v1";
 const SALT_KEY = "iv.passcode.salt.v1";
 const UNLOCK_KEY = "iv.passcode.unlocked.v1";
+const OPTOUT_KEY = "iv.passcode.optout.v1";
 const FAIL_COUNT_KEY = "iv.passcode.fails.v1";
 const LOCKOUT_UNTIL_KEY = "iv.passcode.lockout.v1";
 
 export const PASSCODE_LENGTH = 4;
-export const MAX_ATTEMPTS = Number.POSITIVE_INFINITY;
-export const LOCKOUT_MS = 0;
-export const DEFAULT_PASSCODE = "5259";
+export const MAX_ATTEMPTS = 5;
+export const LOCKOUT_MS = 30_000;
 
 const toHex = (buf: ArrayBuffer) =>
   Array.from(new Uint8Array(buf))
@@ -37,8 +35,19 @@ function getOrCreateSalt(): string {
 }
 
 export function hasPasscode(): boolean {
-  // Fixed passcode — always present, never setup flow.
-  return true;
+  return !!localStorage.getItem(HASH_KEY);
+}
+
+export function hasOptedOut(): boolean {
+  return localStorage.getItem(OPTOUT_KEY) === "1";
+}
+
+export function setOptedOut() {
+  localStorage.setItem(OPTOUT_KEY, "1");
+}
+
+export function clearOptOut() {
+  localStorage.removeItem(OPTOUT_KEY);
 }
 
 export function isUnlocked(): boolean {
@@ -59,18 +68,32 @@ export async function setPasscode(code: string): Promise<void> {
   const salt = getOrCreateSalt();
   const hash = await sha256(salt + code);
   localStorage.setItem(HASH_KEY, hash);
+  clearOptOut();
   markUnlocked();
 }
 
 export async function verifyPasscode(code: string): Promise<boolean> {
-  // Fixed passcode — no lockout, no failure tracking.
-  const ok = code === DEFAULT_PASSCODE;
-  if (ok) markUnlocked();
+  const stored = localStorage.getItem(HASH_KEY);
+  if (!stored) return false;
+  const salt = getOrCreateSalt();
+  const hash = await sha256(salt + code);
+  const ok = hash === stored;
+  if (ok) {
+    markUnlocked();
+  } else {
+    const fails = Number(localStorage.getItem(FAIL_COUNT_KEY) ?? "0") + 1;
+    localStorage.setItem(FAIL_COUNT_KEY, String(fails));
+    if (fails >= MAX_ATTEMPTS) {
+      localStorage.setItem(LOCKOUT_UNTIL_KEY, String(Date.now() + LOCKOUT_MS));
+      localStorage.setItem(FAIL_COUNT_KEY, "0");
+    }
+  }
   return ok;
 }
 
 export function lockoutRemainingMs(): number {
-  return 0;
+  const until = Number(localStorage.getItem(LOCKOUT_UNTIL_KEY) ?? "0");
+  return Math.max(0, until - Date.now());
 }
 
 export function clearPasscode() {
@@ -78,5 +101,6 @@ export function clearPasscode() {
   localStorage.removeItem(SALT_KEY);
   localStorage.removeItem(FAIL_COUNT_KEY);
   localStorage.removeItem(LOCKOUT_UNTIL_KEY);
+  localStorage.removeItem(OPTOUT_KEY);
   sessionStorage.removeItem(UNLOCK_KEY);
 }

@@ -1,7 +1,5 @@
-import { Navigate } from "react-router-dom";
+import { AuthScreen } from "@/components/auth/AuthScreen";
 
-// Auth page is disabled — the Apple-style passcode keypad in ProtectedRoute
-// is the only gate, and it auto-signs in the owner account.
-const Auth = () => <Navigate to="/" replace />;
+const Auth = () => <AuthScreen />;
 
 export default Auth;
