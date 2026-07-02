@@ -390,7 +390,7 @@ export const AshDock = ({ className }: { className?: string }) => {
         className={cn(
           "fixed z-30 w-[min(48rem,calc(100vw-1rem))]",
           sideClass,
-          "bottom-[calc(var(--mobile-tabbar-h,4rem)+env(safe-area-inset-bottom)+0.75rem)] md:bottom-4",
+          "bottom-[calc(var(--mobile-tabbar-h,72px)+env(safe-area-inset-bottom)+1rem)] md:bottom-4",
           className,
         )}
       >
