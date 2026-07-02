@@ -129,9 +129,10 @@ export const PasscodeKeypad = ({ onUnlocked, mode }: Props) => {
 
   const subtitle = setupMode
     ? phase === "enter"
-      ? "Choose a 6-digit code"
-      : "Enter the same 6 digits again"
+      ? "Choose a 4-digit code"
+      : "Enter the same 4 digits again"
     : "Enter the passcode to unlock";
+
 
   return (
     <div className="flex flex-col items-center gap-7 select-none">
