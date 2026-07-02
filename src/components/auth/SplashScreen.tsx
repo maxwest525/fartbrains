@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
+import logo from "@/assets/fartbrains-logo.png";
 
 type Props = { onDone: () => void; duration?: number };
 
@@ -24,14 +25,12 @@ export const SplashScreen = ({ onDone, duration = 1500 }: Props) => {
         className="absolute inset-0 pointer-events-none"
         style={{ background: "radial-gradient(900px 600px at 50% 45%, rgba(0,0,0,0) 0%, rgba(0,0,0,0.15) 70%, rgba(0,0,0,0.30) 100%)" }}
       />
-      <div className="relative z-10 flex flex-col items-center gap-5 animate-fade-in">
-        <div className="relative h-24 w-24 rounded-[28px] brand-gradient ring-glow flex items-center justify-center shadow-2xl">
-          <span className="font-display text-[42px] font-bold text-white drop-shadow">IV</span>
-          <span aria-hidden className="absolute inset-0 rounded-[28px] bg-gradient-to-b from-white/25 to-transparent pointer-events-none" />
-        </div>
-        <div className="font-display text-[26px] font-semibold tracking-tight text-white/95">
-          Idea<span className="brand-gradient-text">Vault</span>
-        </div>
+      <div className="relative z-10 flex flex-col items-center gap-4 animate-fade-in">
+        <img
+          src={logo}
+          alt="FartBrains"
+          className="w-[min(78vw,420px)] h-auto drop-shadow-[0_0_40px_rgba(96,165,250,0.35)]"
+        />
       </div>
     </main>
   );
