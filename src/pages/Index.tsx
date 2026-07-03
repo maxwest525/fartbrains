@@ -304,7 +304,7 @@ const Shell = () => {
 
 
             {/* Desktop nav — Gemini 2026 fluid pills */}
-            <nav className="hidden md:flex items-center gap-1.5 ml-auto">
+            <nav className="hidden [html.desktop-expanded_&]:flex items-center gap-1.5 ml-auto">
               {navItems.map(({ label, icon, active, onClick }) => (
                 <button
                   key={label}
