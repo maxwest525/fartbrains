@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { Sparkles, Loader2, AlertTriangle, Inbox, Folder as FolderIcon, CheckCircle2, XCircle, ArrowRight, Plus, FileText, X, Wand2, Copy, Instagram, Music2, Youtube, Link2, Globe } from "lucide-react";
+import { Sparkles, Loader2, AlertTriangle, Inbox, Folder as FolderIcon, CheckCircle2, XCircle, ArrowRight, Plus, FileText, X, Wand2, Copy, Instagram, Music2, Youtube, Link2, Globe, Send } from "lucide-react";
+import { ensureMarkFolderId } from "@/lib/amosFolderSync";
 import { cn } from "@/lib/utils";
 import { useDuplicateUrl } from "@/hooks/useDuplicateUrl";
 import { useUrlCheck } from "@/hooks/useUrlCheck";
