@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/hooks/useTheme";
 import { IdeaCreatedFx } from "@/components/app/IdeaCreatedFx";
 import { DesktopWindowControls } from "@/components/app/DesktopWindowControls";
+import { InstallAppPrompt } from "@/components/app/InstallAppPrompt";
 import Index from "./pages/Index.tsx";
 import Auth from "./pages/Auth.tsx";
 
@@ -23,6 +24,7 @@ const App = () => (
         <Sonner />
         <IdeaCreatedFx />
         <DesktopWindowControls />
+        <InstallAppPrompt />
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<Index />} />
