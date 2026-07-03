@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { Sparkles, Loader2, AlertTriangle, Inbox, Folder as FolderIcon, CheckCircle2, XCircle, ArrowRight, Plus, FileText, X, Wand2, Copy, Instagram, Music2, Youtube, Link2, Globe } from "lucide-react";
+import { Sparkles, Loader2, AlertTriangle, Inbox, Folder as FolderIcon, CheckCircle2, XCircle, ArrowRight, Plus, FileText, X, Wand2, Copy, Instagram, Music2, Youtube, Link2, Globe, Send } from "lucide-react";
+import { ensureMarkFolderId } from "@/lib/amosFolderSync";
 import { cn } from "@/lib/utils";
 import { useDuplicateUrl } from "@/hooks/useDuplicateUrl";
 import { useUrlCheck } from "@/hooks/useUrlCheck";
@@ -117,6 +118,7 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
   const [folder, setFolder] = useState<string>(defaultFolderId ?? NO_FOLDER);
   const [saving, setSaving] = useState(false);
   const [generating, setGenerating] = useState(false);
+  const [sendingToMark, setSendingToMark] = useState(false);
 
   // URL preview step: after extraction, hold the readable text + suggested title
   // so the user can review (and tweak the title) before committing to save.
@@ -255,7 +257,7 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
    * URL flow is now two-step (extract → preview → save).
    */
   const handleGenerateAndSave = async (
-    overrides?: { url?: string; note?: string }
+    overrides?: { url?: string; note?: string; folderIdOverride?: string | null }
   ) => {
     if (generating || saving) return;
 
@@ -295,7 +297,7 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
         source_type: "transcript",
         extracted_text: extractedText || null,
         ai_summary: summary.trim() || null,
-        folder_id: folderOrNull(folder),
+        folder_id: overrides?.folderIdOverride !== undefined ? overrides.folderIdOverride : folderOrNull(folder),
         tags: [],
       });
 
@@ -319,7 +321,7 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
    * Step 2 (URL only): commit the previewed extraction. Summarize + save.
    * `editedText` lets the user trim or tweak the extracted text before saving.
    */
-  const handleSavePreview = async () => {
+  const handleSavePreview = async (opts?: { folderIdOverride?: string | null }) => {
     if (!preview || generating || saving) return;
     setGenerating(true);
     try {
@@ -360,7 +362,7 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
         },
         extracted_text: preview.text || null,
         ai_summary: summary.trim() || null,
-        folder_id: folderOrNull(folder),
+        folder_id: opts?.folderIdOverride !== undefined ? opts.folderIdOverride : folderOrNull(folder),
         tags: [],
       });
 
@@ -470,7 +472,7 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
   };
 
   /** Direct save for manual note or list captures. */
-  const handleSave = async () => {
+  const handleSave = async (opts?: { folderIdOverride?: string | null }) => {
     if (saving) return;
 
     if (source === "note" && !note.trim() && !title.trim())
@@ -496,7 +498,7 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
         raw_note: isList ? listBody : (note.trim() || null),
         source_url: null,
         source_type: "manual",
-        folder_id: folderOrNull(folder),
+        folder_id: opts?.folderIdOverride !== undefined ? opts.folderIdOverride : folderOrNull(folder),
         tags: isList ? ["list"] : [],
       });
 
@@ -506,6 +508,33 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
       setSaving(false);
     }
   };
+
+  /**
+   * Send-to-Mark: save the current draft directly into the "Mark" folder,
+   * which triggers the AMOS Idea Inbox mirror. Works for the URL preview,
+   * note, list, and transcript flows.
+   */
+  const handleSendToMark = async () => {
+    if (sendingToMark || saving || generating || extracting) return;
+    setSendingToMark(true);
+    try {
+      const markId = await ensureMarkFolderId();
+      if (!markId) {
+        toast.error("Couldn't find or create the Mark folder");
+        return;
+      }
+      if (preview) {
+        await handleSavePreview({ folderIdOverride: markId });
+      } else if (usesAiPreview) {
+        await handleGenerateAndSave({ folderIdOverride: markId });
+      } else {
+        await handleSave({ folderIdOverride: markId });
+      }
+    } finally {
+      setSendingToMark(false);
+    }
+  };
+
 
   const handleCreateProject = async ({ name, rawNote }: { name: string; rawNote: string }) => {
     if (saving) return;
@@ -1055,7 +1084,7 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
             </Button>
             <Button
               type="button"
-              onClick={handleSavePreview}
+              onClick={() => handleSavePreview()}
               disabled={generating || saving || preview.text.trim().length < 20}
               className="h-11 rounded-xl flex-[2] text-[15px] font-semibold"
             >
@@ -1069,6 +1098,23 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
               )}
             </Button>
           </div>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleSendToMark}
+            disabled={generating || saving || sendingToMark || preview.text.trim().length < 20}
+            className="w-full h-11 rounded-xl text-[14px] font-semibold border-primary/40 bg-primary/5 text-primary hover:bg-primary/10 hover:text-primary"
+            title="Save into the Mark folder — also mirrors this idea to AMOS Idea Inbox"
+          >
+            {sendingToMark ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <>
+                <Send className="h-4 w-4 mr-1.5" />
+                Send to Mark
+              </>
+            )}
+          </Button>
         </div>
       )}
 
@@ -1108,7 +1154,7 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
 
       {!preview && (
         <Button
-          onClick={usesAiPreview ? () => handleGenerateAndSave() : handleSave}
+          onClick={() => (usesAiPreview ? handleGenerateAndSave() : handleSave())}
           disabled={saving || generating || extracting || createIdea.isPending}
           className="w-full h-12 rounded-xl text-[16px] font-semibold"
         >
@@ -1124,6 +1170,26 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
                   : source === "list"
                     ? "Save list"
                     : "Save idea"}
+            </>
+          )}
+        </Button>
+      )}
+
+      {!preview && !needsUrl && (
+        <Button
+          type="button"
+          variant="outline"
+          onClick={handleSendToMark}
+          disabled={saving || generating || extracting || sendingToMark || createIdea.isPending}
+          className="w-full h-11 rounded-xl text-[14px] font-semibold border-primary/40 bg-primary/5 text-primary hover:bg-primary/10 hover:text-primary"
+          title="Save into the Mark folder — also mirrors this idea to AMOS Idea Inbox"
+        >
+          {sendingToMark ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <>
+              <Send className="h-4 w-4 mr-1.5" />
+              Send to Mark
             </>
           )}
         </Button>
