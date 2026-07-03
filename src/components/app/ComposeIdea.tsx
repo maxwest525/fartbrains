@@ -257,7 +257,7 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
    * URL flow is now two-step (extract → preview → save).
    */
   const handleGenerateAndSave = async (
-    overrides?: { url?: string; note?: string }
+    overrides?: { url?: string; note?: string; folderIdOverride?: string | null }
   ) => {
     if (generating || saving) return;
 
