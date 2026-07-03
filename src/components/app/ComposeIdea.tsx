@@ -362,7 +362,7 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
         },
         extracted_text: preview.text || null,
         ai_summary: summary.trim() || null,
-        folder_id: folderOrNull(folder),
+        folder_id: opts?.folderIdOverride !== undefined ? opts.folderIdOverride : folderOrNull(folder),
         tags: [],
       });
 
