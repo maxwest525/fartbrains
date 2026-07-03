@@ -498,7 +498,7 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
         raw_note: isList ? listBody : (note.trim() || null),
         source_url: null,
         source_type: "manual",
-        folder_id: folderOrNull(folder),
+        folder_id: opts?.folderIdOverride !== undefined ? opts.folderIdOverride : folderOrNull(folder),
         tags: isList ? ["list"] : [],
       });
 
