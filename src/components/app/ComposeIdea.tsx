@@ -1057,7 +1057,7 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
             </Button>
             <Button
               type="button"
-              onClick={handleSavePreview}
+              onClick={() => handleSavePreview()}
               disabled={generating || saving || preview.text.trim().length < 20}
               className="h-11 rounded-xl flex-[2] text-[15px] font-semibold"
             >
