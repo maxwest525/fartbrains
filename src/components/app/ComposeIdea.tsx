@@ -321,7 +321,7 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
    * Step 2 (URL only): commit the previewed extraction. Summarize + save.
    * `editedText` lets the user trim or tweak the extracted text before saving.
    */
-  const handleSavePreview = async () => {
+  const handleSavePreview = async (opts?: { folderIdOverride?: string | null }) => {
     if (!preview || generating || saving) return;
     setGenerating(true);
     try {
