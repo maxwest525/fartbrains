@@ -226,16 +226,10 @@ export function useCreateIdea() {
         window.dispatchEvent(new CustomEvent("idea:created"));
       }
       toast.success("Idea saved", { description: "Captured to your vault." });
-      const row = data as { id?: string; title?: string; raw_note?: string | null; ai_summary?: string | null; extracted_text?: string | null; source_url?: string | null; tags?: string[] } | null;
+      const row = data as { id?: string; folder_id?: string | null; title?: string; raw_note?: string | null; ai_summary?: string | null; extracted_text?: string | null; source_url?: string | null; tags?: string[] } | null;
       if (row?.id) {
-        // Mirror to AMOS Idea Inbox (fire-and-forget; never blocks or errors).
-        syncIdeaToAmos({
-          title: row.title,
-          raw_note: row.raw_note,
-          ai_summary: row.ai_summary,
-          extracted_text: row.extracted_text,
-          source_url: row.source_url,
-        });
+        // Folder-driven AMOS sync: only fires if this idea landed in "Mark".
+        maybeSyncIdeaToAmosByFolder(row.id, row.folder_id ?? null);
         // Kick off background reference extraction (fire-and-forget).
         triggerExtractReferences(row.id);
         // Auto-tag from content if no tags were set explicitly.
