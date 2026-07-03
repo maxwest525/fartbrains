@@ -297,7 +297,7 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
         source_type: "transcript",
         extracted_text: extractedText || null,
         ai_summary: summary.trim() || null,
-        folder_id: folderOrNull(folder),
+        folder_id: overrides?.folderIdOverride !== undefined ? overrides.folderIdOverride : folderOrNull(folder),
         tags: [],
       });
 
