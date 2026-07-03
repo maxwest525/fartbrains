@@ -1174,6 +1174,26 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
           )}
         </Button>
       )}
+
+      {!preview && !needsUrl && (
+        <Button
+          type="button"
+          variant="outline"
+          onClick={handleSendToMark}
+          disabled={saving || generating || extracting || sendingToMark || createIdea.isPending}
+          className="w-full h-11 rounded-xl text-[14px] font-semibold border-primary/40 bg-primary/5 text-primary hover:bg-primary/10 hover:text-primary"
+          title="Save into the Mark folder — also mirrors this idea to AMOS Idea Inbox"
+        >
+          {sendingToMark ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <>
+              <Send className="h-4 w-4 mr-1.5" />
+              Send to Mark
+            </>
+          )}
+        </Button>
+      )}
       </div>
     </div>
   );
