@@ -1153,46 +1153,45 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
       {!preview && folderChips}
 
       {!preview && (
-        <Button
-          onClick={() => (usesAiPreview ? handleGenerateAndSave() : handleSave())}
-          disabled={saving || generating || extracting || createIdea.isPending}
-          className="w-full h-12 rounded-xl text-[16px] font-semibold"
-        >
-          {saving || generating || extracting ? (
-            <Loader2 className="h-5 w-5 animate-spin" />
-          ) : (
-            <>
-              <Sparkles className="h-4 w-4 mr-1.5" />
-              {needsUrl
-                ? "Extract preview"
-                : isTranscript
-                  ? "Save & summarize"
-                  : source === "list"
-                    ? "Save list"
-                    : "Save idea"}
-            </>
-          )}
-        </Button>
-      )}
-
-      {!preview && !needsUrl && (
-        <Button
-          type="button"
-          variant="outline"
-          onClick={handleSendToMark}
-          disabled={saving || generating || extracting || sendingToMark || createIdea.isPending}
-          className="w-full h-11 rounded-xl text-[14px] font-semibold border-primary/40 bg-primary/5 text-primary hover:bg-primary/10 hover:text-primary"
-          title="Save into the Mark folder — also mirrors this idea to AMOS Idea Inbox"
-        >
-          {sendingToMark ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            <>
-              <Send className="h-4 w-4 mr-1.5" />
-              Send to Mark
-            </>
-          )}
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            onClick={() => (usesAiPreview ? handleGenerateAndSave() : handleSave())}
+            disabled={saving || generating || extracting || createIdea.isPending}
+            className="flex-[2] h-12 rounded-xl text-[16px] font-semibold"
+          >
+            {saving || generating || extracting ? (
+              <Loader2 className="h-5 w-5 animate-spin" />
+            ) : (
+              <>
+                <Sparkles className="h-4 w-4 mr-1.5" />
+                {needsUrl
+                  ? "Extract preview"
+                  : isTranscript
+                    ? "Save & summarize"
+                    : source === "list"
+                      ? "Save list"
+                      : "Save idea"}
+              </>
+            )}
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleSendToMark}
+            disabled={saving || generating || extracting || sendingToMark || createIdea.isPending}
+            className="flex-1 h-12 rounded-xl text-[14px] font-semibold border-primary/40 bg-primary/5 text-primary hover:bg-primary/10 hover:text-primary"
+            title="Save into the Mark folder — also mirrors this idea to AMOS Idea Inbox"
+          >
+            {sendingToMark ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <>
+                <Send className="h-4 w-4 mr-1.5" />
+                Mark
+              </>
+            )}
+          </Button>
+        </div>
       )}
       </div>
     </div>
