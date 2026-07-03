@@ -1,0 +1,1 @@
+ALTER TABLE public.ideas ADD COLUMN IF NOT EXISTS synced_to_amos boolean NOT NULL DEFAULT false;
