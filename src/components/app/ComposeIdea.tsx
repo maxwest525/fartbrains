@@ -509,6 +509,33 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
     }
   };
 
+  /**
+   * Send-to-Mark: save the current draft directly into the "Mark" folder,
+   * which triggers the AMOS Idea Inbox mirror. Works for the URL preview,
+   * note, list, and transcript flows.
+   */
+  const handleSendToMark = async () => {
+    if (sendingToMark || saving || generating || extracting) return;
+    setSendingToMark(true);
+    try {
+      const markId = await ensureMarkFolderId();
+      if (!markId) {
+        toast.error("Couldn't find or create the Mark folder");
+        return;
+      }
+      if (preview) {
+        await handleSavePreview({ folderIdOverride: markId });
+      } else if (usesAiPreview) {
+        await handleGenerateAndSave({ folderIdOverride: markId });
+      } else {
+        await handleSave({ folderIdOverride: markId });
+      }
+    } finally {
+      setSendingToMark(false);
+    }
+  };
+
+
   const handleCreateProject = async ({ name, rawNote }: { name: string; rawNote: string }) => {
     if (saving) return;
     setSaving(true);
