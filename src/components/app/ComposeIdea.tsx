@@ -118,6 +118,7 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
   const [folder, setFolder] = useState<string>(defaultFolderId ?? NO_FOLDER);
   const [saving, setSaving] = useState(false);
   const [generating, setGenerating] = useState(false);
+  const [sendingToMark, setSendingToMark] = useState(false);
 
   // URL preview step: after extraction, hold the readable text + suggested title
   // so the user can review (and tweak the title) before committing to save.
