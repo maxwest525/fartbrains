@@ -285,6 +285,11 @@ export function useUpdateIdea() {
       qc.invalidateQueries({ queryKey: ["idea", vars.id] });
       qc.invalidateQueries({ queryKey: ["folder-counts"] });
       qc.invalidateQueries({ queryKey: ["folder-previews"] });
+      // If this update moved the idea into a folder, check whether it's "Mark"
+      // and mirror to AMOS (fire-and-forget, dedupes via synced_to_amos).
+      if ("folder_id" in vars.patch) {
+        maybeSyncIdeaToAmosByFolder(vars.id, vars.patch.folder_id ?? null);
+      }
     },
     onError: (e: Error) => toast.error(e.message),
   });
