@@ -269,7 +269,7 @@ const Shell = () => {
           <div className="px-3 sm:px-5 lg:px-8 py-1.5 lg:py-2.5 flex items-center gap-2 sm:gap-3 lg:gap-4">
 
             {/* Brand — desktop only */}
-            <div className="hidden md:flex items-center gap-2.5 shrink-0 pr-2 lg:pr-4">
+            <div className="hidden [html.desktop-expanded_&]:flex items-center gap-2.5 shrink-0 pr-2 lg:pr-4">
               <div className="relative h-9 w-9 rounded-xl brand-gradient ring-glow flex items-center justify-center">
                 <span className="font-display text-[15px] font-bold text-white drop-shadow">IV</span>
                 <span aria-hidden className="absolute inset-0 rounded-xl bg-gradient-to-b from-white/25 to-transparent pointer-events-none" />
@@ -304,7 +304,7 @@ const Shell = () => {
 
 
             {/* Desktop nav — Gemini 2026 fluid pills */}
-            <nav className="hidden md:flex items-center gap-1.5 ml-auto">
+            <nav className="hidden [html.desktop-expanded_&]:flex items-center gap-1.5 ml-auto">
               {navItems.map(({ label, icon, active, onClick }) => (
                 <button
                   key={label}
