@@ -12,7 +12,7 @@ import { syncIdeaToAmos } from "./syncIdeaToAmos";
 const MARK_FOLDER_NAME = "Mark";
 let cachedMarkFolderId: string | null = null;
 
-async function getOrCreateMarkFolderId(): Promise<string | null> {
+export async function ensureMarkFolderId(): Promise<string | null> {
   if (cachedMarkFolderId) return cachedMarkFolderId;
   try {
     const { data: userData } = await supabase.auth.getUser();
@@ -38,6 +38,10 @@ async function getOrCreateMarkFolderId(): Promise<string | null> {
   } catch {
     return null;
   }
+}
+
+async function getOrCreateMarkFolderId(): Promise<string | null> {
+  return ensureMarkFolderId();
 }
 
 /**
