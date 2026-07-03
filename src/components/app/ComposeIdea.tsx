@@ -472,7 +472,7 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
   };
 
   /** Direct save for manual note or list captures. */
-  const handleSave = async () => {
+  const handleSave = async (opts?: { folderIdOverride?: string | null }) => {
     if (saving) return;
 
     if (source === "note" && !note.trim() && !title.trim())
