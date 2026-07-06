@@ -47,11 +47,10 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     );
   }
 
-  // 3) Auth gate temporarily disabled — magic link screen removed.
-  // Re-enable by restoring: if (!user) return <AuthScreen />;
-  // if (!user) {
-  //   return <AuthScreen />;
-  // }
+  // 3) Auth gate: existing sessions pass through, only signed-out browsers see magic link.
+  if (!user) {
+    return <AuthScreen />;
+  }
 
   // 4) Signed in, passcode set, not unlocked → unlock keypad
   if (hasPasscode() && !unlocked) {
