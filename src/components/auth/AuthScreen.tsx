@@ -2,20 +2,24 @@ import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Mail, Loader2, CheckCircle2 } from "lucide-react";
+import { Mail, Loader2, CheckCircle2, KeyRound } from "lucide-react";
 import { toast } from "sonner";
 import { isEmailAllowed } from "@/lib/allowlist";
 import logo from "@/assets/fartbrains-logo.png";
 
+type Mode = "password" | "magic";
+
 export const AuthScreen = () => {
+  const [mode, setMode] = useState<Mode>("password");
   const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
 
-  const isValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
+  const isValidEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
 
-  const send = async () => {
-    if (!isValid || sending) return;
+  const sendMagic = async () => {
+    if (!isValidEmail || sending) return;
     const trimmed = email.trim();
     if (!isEmailAllowed(trimmed)) {
       toast.error("This email isn't allowed to sign in.");
@@ -40,6 +44,47 @@ export const AuthScreen = () => {
     }
   };
 
+  const signInPassword = async () => {
+    if (!isValidEmail || !password || sending) return;
+    const trimmed = email.trim();
+    if (!isEmailAllowed(trimmed)) {
+      toast.error("This email isn't allowed to sign in.");
+      return;
+    }
+    setSending(true);
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email: trimmed,
+        password,
+      });
+      if (error) throw error;
+      toast.success("Signed in");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Couldn't sign in");
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const setPasswordForAccount = async () => {
+    // One-time helper: after signing in with magic link, call this to set a password
+    // so you don't need magic link again. Exposed via the "Set a password" button below.
+    if (!password || password.length < 6) {
+      toast.error("Password must be at least 6 characters");
+      return;
+    }
+    setSending(true);
+    try {
+      const { error } = await supabase.auth.updateUser({ password });
+      if (error) throw error;
+      toast.success("Password set — use it to sign in next time");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Couldn't set password");
+    } finally {
+      setSending(false);
+    }
+  };
+
   return (
     <main className="relative min-h-dvh w-full flex items-center justify-center overflow-hidden text-foreground animate-fade-in">
       <div
@@ -53,12 +98,14 @@ export const AuthScreen = () => {
             <img src={logo} alt="FartBrains" className="w-40 h-auto drop-shadow-[0_0_30px_rgba(96,165,250,0.3)]" />
             <div className="text-center">
               <h1 className="font-display text-[22px] font-semibold tracking-tight text-[#f8fafc]">
-                {sent ? "Check your inbox" : "Sign in or sign up"}
+                {sent ? "Check your inbox" : "Sign in"}
               </h1>
               <p className="mt-1 text-[13px] text-[#f8fafc]/90">
                 {sent
                   ? `We sent a magic link to ${email.trim()}. Tap it to continue.`
-                  : "We'll email you a magic link. No password needed."}
+                  : mode === "password"
+                    ? "Sign in with your password."
+                    : "We'll email you a magic link."}
               </p>
             </div>
           </div>
@@ -68,25 +115,17 @@ export const AuthScreen = () => {
               <div className="flex items-center justify-center h-14 rounded-2xl bg-white/[0.06] border border-white/10 text-emerald-300">
                 <CheckCircle2 className="h-6 w-6" />
               </div>
-              <Button
-                variant="ghost"
-                onClick={() => { setSent(false); }}
-                className="text-white/70 hover:text-white"
-              >
+              <Button variant="ghost" onClick={() => setSent(false)} className="text-white/70 hover:text-white">
                 Use a different email
               </Button>
-              <Button
-                onClick={send}
-                disabled={sending}
-                className="brand-gradient text-white"
-              >
+              <Button onClick={sendMagic} disabled={sending} className="brand-gradient text-white">
                 {sending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Mail className="h-4 w-4 mr-2" />}
                 Resend link
               </Button>
             </div>
           ) : (
             <form
-              onSubmit={(e) => { e.preventDefault(); send(); }}
+              onSubmit={(e) => { e.preventDefault(); mode === "password" ? signInPassword() : sendMagic(); }}
               className="flex flex-col gap-3"
             >
               <Input
@@ -99,20 +138,47 @@ export const AuthScreen = () => {
                 onChange={(e) => setEmail(e.target.value)}
                 className="h-14 rounded-2xl text-[16px] px-4"
               />
+              {mode === "password" && (
+                <Input
+                  type="password"
+                  autoComplete="current-password"
+                  placeholder="Password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="h-14 rounded-2xl text-[16px] px-4"
+                />
+              )}
               <Button
                 type="submit"
-                disabled={!isValid || sending}
+                disabled={!isValidEmail || sending || (mode === "password" && !password)}
                 className="h-14 rounded-2xl brand-gradient text-white text-[15px] font-semibold"
               >
                 {sending ? (
-                  <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Sending…</>
+                  <><Loader2 className="h-4 w-4 animate-spin mr-2" /> {mode === "password" ? "Signing in…" : "Sending…"}</>
+                ) : mode === "password" ? (
+                  <><KeyRound className="h-4 w-4 mr-2" /> Sign in</>
                 ) : (
                   <><Mail className="h-4 w-4 mr-2" /> Send magic link</>
                 )}
               </Button>
-              <p className="text-[11.5px] text-white/45 text-center mt-1">
-                By continuing you agree to be contacted at this email.
-              </p>
+
+              <button
+                type="button"
+                onClick={() => setMode(mode === "password" ? "magic" : "password")}
+                className="text-[12px] text-white/60 hover:text-white/90 mt-1"
+              >
+                {mode === "password" ? "Use magic link instead" : "Use password instead"}
+              </button>
+
+              {mode === "password" && (
+                <button
+                  type="button"
+                  onClick={setPasswordForAccount}
+                  className="text-[11px] text-white/40 hover:text-white/70"
+                >
+                  (Already signed in? Tap to save this as your password)
+                </button>
+              )}
             </form>
           )}
         </div>
