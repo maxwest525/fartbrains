@@ -164,18 +164,28 @@ export const AuthScreen = () => {
                 className="h-14 rounded-2xl brand-gradient text-white text-[15px] font-semibold"
               >
                 {sending ? (
-                  <><Loader2 className="h-4 w-4 animate-spin mr-2" /> {mode === "password" ? "Signing in…" : "Sending…"}</>
+                  <><Loader2 className="h-4 w-4 animate-spin mr-2" /> {mode === "password" ? (isSignUp ? "Creating…" : "Signing in…") : "Sending…"}</>
                 ) : mode === "password" ? (
-                  <><KeyRound className="h-4 w-4 mr-2" /> Sign in</>
+                  <><KeyRound className="h-4 w-4 mr-2" /> {isSignUp ? "Create account" : "Sign in"}</>
                 ) : (
                   <><Mail className="h-4 w-4 mr-2" /> Send magic link</>
                 )}
               </Button>
 
+              {mode === "password" && (
+                <button
+                  type="button"
+                  onClick={() => setIsSignUp((v) => !v)}
+                  className="text-[12px] text-white/70 hover:text-white mt-1"
+                >
+                  {isSignUp ? "Already have an account? Sign in" : "New here? Create an account"}
+                </button>
+              )}
+
               <button
                 type="button"
                 onClick={() => setMode(mode === "password" ? "magic" : "password")}
-                className="text-[12px] text-white/60 hover:text-white/90 mt-1"
+                className="text-[12px] text-white/60 hover:text-white/90"
               >
                 {mode === "password" ? "Use magic link instead" : "Use password instead"}
               </button>
