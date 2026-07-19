@@ -11,6 +11,7 @@ type Mode = "password" | "magic";
 
 export const AuthScreen = () => {
   const [mode, setMode] = useState<Mode>("password");
+  const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [sending, setSending] = useState(false);
@@ -31,7 +32,6 @@ export const AuthScreen = () => {
         email: trimmed,
         options: {
           emailRedirectTo: `${window.location.origin}/`,
-          shouldCreateUser: false,
         },
       });
       if (error) throw error;
@@ -53,12 +53,22 @@ export const AuthScreen = () => {
     }
     setSending(true);
     try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email: trimmed,
-        password,
-      });
-      if (error) throw error;
-      toast.success("Signed in");
+      if (isSignUp) {
+        const { error } = await supabase.auth.signUp({
+          email: trimmed,
+          password,
+          options: { emailRedirectTo: `${window.location.origin}/` },
+        });
+        if (error) throw error;
+        toast.success("Account created", { description: "Check your inbox to confirm your email." });
+      } else {
+        const { error } = await supabase.auth.signInWithPassword({
+          email: trimmed,
+          password,
+        });
+        if (error) throw error;
+        toast.success("Signed in");
+      }
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Couldn't sign in");
     } finally {
@@ -98,13 +108,13 @@ export const AuthScreen = () => {
             <img src={logo} alt="FartBrains" className="w-40 h-auto drop-shadow-[0_0_30px_rgba(96,165,250,0.3)]" />
             <div className="text-center">
               <h1 className="font-display text-[22px] font-semibold tracking-tight text-[#f8fafc]">
-                {sent ? "Check your inbox" : "Sign in"}
+                {sent ? "Check your inbox" : isSignUp ? "Create your account" : "Sign in"}
               </h1>
               <p className="mt-1 text-[13px] text-[#f8fafc]/90">
                 {sent
                   ? `We sent a magic link to ${email.trim()}. Tap it to continue.`
                   : mode === "password"
-                    ? "Sign in with your password."
+                    ? (isSignUp ? "Sign up with email and password." : "Sign in with your password.")
                     : "We'll email you a magic link."}
               </p>
             </div>
@@ -154,18 +164,28 @@ export const AuthScreen = () => {
                 className="h-14 rounded-2xl brand-gradient text-white text-[15px] font-semibold"
               >
                 {sending ? (
-                  <><Loader2 className="h-4 w-4 animate-spin mr-2" /> {mode === "password" ? "Signing in…" : "Sending…"}</>
+                  <><Loader2 className="h-4 w-4 animate-spin mr-2" /> {mode === "password" ? (isSignUp ? "Creating…" : "Signing in…") : "Sending…"}</>
                 ) : mode === "password" ? (
-                  <><KeyRound className="h-4 w-4 mr-2" /> Sign in</>
+                  <><KeyRound className="h-4 w-4 mr-2" /> {isSignUp ? "Create account" : "Sign in"}</>
                 ) : (
                   <><Mail className="h-4 w-4 mr-2" /> Send magic link</>
                 )}
               </Button>
 
+              {mode === "password" && (
+                <button
+                  type="button"
+                  onClick={() => setIsSignUp((v) => !v)}
+                  className="text-[12px] text-white/70 hover:text-white mt-1"
+                >
+                  {isSignUp ? "Already have an account? Sign in" : "New here? Create an account"}
+                </button>
+              )}
+
               <button
                 type="button"
                 onClick={() => setMode(mode === "password" ? "magic" : "password")}
-                className="text-[12px] text-white/60 hover:text-white/90 mt-1"
+                className="text-[12px] text-white/60 hover:text-white/90"
               >
                 {mode === "password" ? "Use magic link instead" : "Use password instead"}
               </button>

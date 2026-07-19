@@ -1,7 +1,6 @@
-// Single-user allowlist. Only this email can sign in.
-export const ALLOWED_EMAILS = ["admin@trumoveinc.com"];
+// Public signup enabled — allow any email.
+export const ALLOWED_EMAILS: string[] = [];
 
-export function isEmailAllowed(email: string | null | undefined): boolean {
-  if (!email) return false;
-  return ALLOWED_EMAILS.map((e) => e.toLowerCase()).includes(email.toLowerCase());
+export function isEmailAllowed(_email: string | null | undefined): boolean {
+  return true;
 }
