@@ -108,13 +108,13 @@ export const AuthScreen = () => {
             <img src={logo} alt="FartBrains" className="w-40 h-auto drop-shadow-[0_0_30px_rgba(96,165,250,0.3)]" />
             <div className="text-center">
               <h1 className="font-display text-[22px] font-semibold tracking-tight text-[#f8fafc]">
-                {sent ? "Check your inbox" : "Sign in"}
+                {sent ? "Check your inbox" : isSignUp ? "Create your account" : "Sign in"}
               </h1>
               <p className="mt-1 text-[13px] text-[#f8fafc]/90">
                 {sent
                   ? `We sent a magic link to ${email.trim()}. Tap it to continue.`
                   : mode === "password"
-                    ? "Sign in with your password."
+                    ? (isSignUp ? "Sign up with email and password." : "Sign in with your password.")
                     : "We'll email you a magic link."}
               </p>
             </div>
