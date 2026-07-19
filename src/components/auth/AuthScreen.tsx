@@ -32,7 +32,6 @@ export const AuthScreen = () => {
         email: trimmed,
         options: {
           emailRedirectTo: `${window.location.origin}/`,
-          shouldCreateUser: false,
         },
       });
       if (error) throw error;
