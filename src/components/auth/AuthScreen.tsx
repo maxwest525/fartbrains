@@ -11,6 +11,7 @@ type Mode = "password" | "magic";
 
 export const AuthScreen = () => {
   const [mode, setMode] = useState<Mode>("password");
+  const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [sending, setSending] = useState(false);
