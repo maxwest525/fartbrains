@@ -53,12 +53,22 @@ export const AuthScreen = () => {
     }
     setSending(true);
     try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email: trimmed,
-        password,
-      });
-      if (error) throw error;
-      toast.success("Signed in");
+      if (isSignUp) {
+        const { error } = await supabase.auth.signUp({
+          email: trimmed,
+          password,
+          options: { emailRedirectTo: `${window.location.origin}/` },
+        });
+        if (error) throw error;
+        toast.success("Account created", { description: "Check your inbox to confirm your email." });
+      } else {
+        const { error } = await supabase.auth.signInWithPassword({
+          email: trimmed,
+          password,
+        });
+        if (error) throw error;
+        toast.success("Signed in");
+      }
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Couldn't sign in");
     } finally {
