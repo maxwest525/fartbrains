@@ -213,6 +213,17 @@ export const AuthScreen = () => {
                 {mode === "password" ? "Use magic link instead" : "Use password instead"}
               </button>
 
+              {mode === "password" && !isSignUp && (
+                <button
+                  type="button"
+                  onClick={sendPasswordReset}
+                  disabled={!isValidEmail || sending}
+                  className="text-[12px] text-white/70 hover:text-white disabled:opacity-40"
+                >
+                  Forgot your password?
+                </button>
+              )}
+
               {mode === "password" && (
                 <button
                   type="button"
