@@ -12,6 +12,7 @@ import Auth from "./pages/Auth.tsx";
 
 import Unsubscribe from "./pages/Unsubscribe.tsx";
 import PromptRules from "./pages/PromptRules.tsx";
+import Profile from "./pages/Profile.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
