@@ -105,7 +105,7 @@ export function UrlQuickCapture({ onCreated }: { onCreated: (id: string) => void
                 summary,
                 extractedText: extracted,
                 sourceUrl: detectedUrl,
-                sourceLabel: "Web page",
+                sourceLabel,
               },
             });
             if (!gErr && gen?.prompt) {
