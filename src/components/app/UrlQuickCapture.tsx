@@ -41,16 +41,46 @@ export function UrlQuickCapture({ onCreated }: { onCreated: (id: string) => void
         // Anything in the input besides the URL becomes the user's "angle/note".
         const note = text.replace(detectedUrl, "").trim();
 
-        setStage("Extracting page…");
-        const { data: scraped, error: scErr } = await supabase.functions.invoke("scrape-url", {
-          body: { url: detectedUrl },
-        });
-        if (scErr) throw new Error(scErr.message);
-        if (scraped?.error) throw new Error(scraped.error);
+        let host = "";
+        try { host = new URL(detectedUrl).hostname.toLowerCase(); } catch { /* ignore */ }
+        const isInstagram = /(^|\.)instagram\.com$/.test(host);
+        const isYouTube = /(^|\.)(youtube\.com|youtu\.be)$/.test(host);
 
-        const extracted: string = scraped?.markdown ?? "";
-        const summary: string = scraped?.summary ?? "";
-        const pageTitle: string = scraped?.title ?? detectedUrl;
+        let extracted = "";
+        let summary = "";
+        let pageTitle = detectedUrl;
+        let sourceLabel = "Web page";
+        let sourceKind: "webpage" | "instagram" | "youtube" = "webpage";
+
+        if (isInstagram) {
+          setStage("Transcribing reel…");
+          const { data, error } = await supabase.functions.invoke("transcribe-instagram", { body: { url: detectedUrl } });
+          if (error) throw new Error(error.message);
+          if (data?.error) throw new Error(data.error);
+          extracted = [data?.caption, data?.transcript].filter(Boolean).join("\n\n");
+          pageTitle = data?.title || data?.author || "Instagram reel";
+          sourceLabel = "Instagram";
+          sourceKind = "instagram";
+        } else if (isYouTube) {
+          setStage("Transcribing video…");
+          const { data, error } = await supabase.functions.invoke("transcribe-youtube", { body: { url: detectedUrl } });
+          if (error) throw new Error(error.message);
+          if (data?.error) throw new Error(data.error);
+          extracted = data?.transcript ?? data?.text ?? "";
+          pageTitle = data?.title || "YouTube video";
+          sourceLabel = "YouTube";
+          sourceKind = "youtube";
+        } else {
+          setStage("Extracting page…");
+          const { data: scraped, error: scErr } = await supabase.functions.invoke("scrape-url", {
+            body: { url: detectedUrl },
+          });
+          if (scErr) throw new Error(scErr.message);
+          if (scraped?.error) throw new Error(scraped.error);
+          extracted = scraped?.markdown ?? "";
+          summary = scraped?.summary ?? "";
+          pageTitle = scraped?.title ?? detectedUrl;
+        }
 
         setStage("Saving idea…");
         const created = await createIdea.mutateAsync({
@@ -58,8 +88,8 @@ export function UrlQuickCapture({ onCreated }: { onCreated: (id: string) => void
           raw_note: note || null,
           source_url: detectedUrl,
           source_type: "webpage",
-          source_label: "Web page",
-          source_meta: { kind: "webpage" },
+          source_label: sourceLabel,
+          source_meta: { kind: sourceKind },
           extracted_text: extracted || null,
           ai_summary: summary || null,
         });
