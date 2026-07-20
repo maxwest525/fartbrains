@@ -1,4 +1,4 @@
-import { LogOut, Mail, Sparkles, Bell, BellOff, Loader2, ShieldCheck, ChevronRight, CheckCircle2, AlertTriangle, XCircle, HelpCircle, Send, Palette } from "lucide-react";
+import { LogOut, Mail, Sparkles, Bell, BellOff, Loader2, ShieldCheck, ChevronRight, CheckCircle2, AlertTriangle, XCircle, HelpCircle, Send, Palette, UserCircle2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useState } from "react";
 import {
