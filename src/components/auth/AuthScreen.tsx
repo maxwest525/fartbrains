@@ -95,6 +95,29 @@ export const AuthScreen = () => {
     }
   };
 
+  const sendPasswordReset = async () => {
+    if (!isValidEmail || sending) return;
+    const trimmed = email.trim();
+    if (!isEmailAllowed(trimmed)) {
+      toast.error("This email isn't allowed to sign in.");
+      return;
+    }
+    setSending(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(trimmed, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+      if (error) throw error;
+      toast.success("Password reset email sent", {
+        description: `Check ${trimmed} for a link to set a new password.`,
+      });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Couldn't send reset email");
+    } finally {
+      setSending(false);
+    }
+  };
+
   return (
     <main className="relative min-h-dvh w-full flex items-center justify-center overflow-hidden text-foreground animate-fade-in">
       <div
@@ -189,6 +212,17 @@ export const AuthScreen = () => {
               >
                 {mode === "password" ? "Use magic link instead" : "Use password instead"}
               </button>
+
+              {mode === "password" && !isSignUp && (
+                <button
+                  type="button"
+                  onClick={sendPasswordReset}
+                  disabled={!isValidEmail || sending}
+                  className="text-[12px] text-white/70 hover:text-white disabled:opacity-40"
+                >
+                  Forgot your password?
+                </button>
+              )}
 
               {mode === "password" && (
                 <button
