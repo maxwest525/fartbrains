@@ -324,7 +324,7 @@ export const AuthScreen = () => {
 
           {sent ? (
             <div className="flex flex-col gap-4">
-              <div className="flex items-center justify-center h-14 rounded-2xl bg-white/[0.06] border border-white/10 text-emerald-300">
+              <div className="flex items-center justify-center h-12 rounded-2xl bg-white/[0.06] border border-white/10 text-emerald-300">
                 <CheckCircle2 className="h-6 w-6" />
               </div>
               <Button variant="ghost" onClick={() => setSent(false)} className="text-white/70 hover:text-white">
@@ -356,7 +356,7 @@ export const AuthScreen = () => {
               )}
 
               {showRememberedPill ? (
-                <div className="flex items-center justify-between gap-2 h-14 px-4 rounded-2xl bg-white/[0.06] border border-white/10">
+                <div className="flex items-center justify-between gap-2 h-12 px-4 rounded-2xl bg-white/[0.06] border border-white/10">
                   <div className="flex flex-col min-w-0">
                     <span className="text-[10.5px] uppercase tracking-wider text-white/50">Continuing as</span>
                     <span className="text-[14px] font-medium text-white truncate">{rememberedIdentifier}</span>
@@ -379,7 +379,7 @@ export const AuthScreen = () => {
                   placeholder="you@example.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="h-14 rounded-2xl text-[16px] px-4"
+                  className="h-12 rounded-2xl text-[16px] px-4"
                 />
               ) : (
                 <div className="flex flex-col gap-1">
@@ -392,7 +392,7 @@ export const AuthScreen = () => {
                     value={phone}
                     onChange={(e) => setPhone(formatPhoneInput(e.target.value))}
                     aria-invalid={phone.length > 0 && !isValidPhone}
-                    className={`h-14 rounded-2xl text-[16px] px-4 ${
+                    className={`h-12 rounded-2xl text-[16px] px-4 ${
                       phone.length > 0 && !isValidPhone ? "border-destructive/70" : ""
                     }`}
                   />
@@ -469,7 +469,7 @@ export const AuthScreen = () => {
                   placeholder="Password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="h-14 rounded-2xl text-[16px] px-4"
+                  className="h-12 rounded-2xl text-[16px] px-4"
                 />
               )}
 
@@ -484,7 +484,7 @@ export const AuthScreen = () => {
                   maxLength={6}
                   value={otp}
                   onChange={(e) => setOtp(e.target.value.replace(/\D/g, ""))}
-                  className="h-14 rounded-2xl text-[16px] px-4 tracking-widest text-center"
+                  className="h-12 rounded-2xl text-[16px] px-4 tracking-widest text-center"
                 />
               )}
 
@@ -497,7 +497,7 @@ export const AuthScreen = () => {
                     (mode === "password" && !password) ||
                     (kind === "phone" && mode === "magic" && otpSent && otp.length < 4)
                   }
-                  className="h-14 rounded-2xl brand-gradient text-white text-[15px] font-semibold"
+                  className="h-12 rounded-2xl brand-gradient text-white text-[15px] font-semibold"
                 >
                   {sending ? (
                     <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Working…</>
