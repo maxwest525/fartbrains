@@ -4,6 +4,7 @@ import { PasscodeKeypad } from "@/components/auth/PasscodeKeypad";
 import { SplashScreen } from "@/components/auth/SplashScreen";
 import { AuthScreen } from "@/components/auth/AuthScreen";
 import { PasscodeSetupPrompt } from "@/components/auth/PasscodeSetupPrompt";
+import { WelcomeBackScreen } from "@/components/auth/WelcomeBackScreen";
 import {
   hasPasscode,
   hasOptedOut,
@@ -12,6 +13,7 @@ import {
 } from "@/lib/passcode";
 
 const SPLASH_KEY = "iv.splash.shown.v1";
+const WELCOME_PENDING_KEY = "iv.welcome.pending.v1";
 
 export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, loading } = useAuth();
