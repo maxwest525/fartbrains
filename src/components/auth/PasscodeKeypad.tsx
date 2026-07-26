@@ -44,8 +44,8 @@ export const PasscodeKeypad = ({ onUnlocked, mode }: Props) => {
   const [error, setError] = useState<string | null>(null);
   const [shake, setShake] = useState(false);
   const [lockoutLeft, setLockoutLeft] = useState(0);
-
-  // Tick the lockout countdown.
+  const [showForgot, setShowForgot] = useState(false);
+  const [resetting, setResetting] = useState(false);
   useEffect(() => {
     const id = setInterval(() => setLockoutLeft(lockoutRemainingMs()), 500);
     setLockoutLeft(lockoutRemainingMs());
