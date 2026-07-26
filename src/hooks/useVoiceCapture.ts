@@ -32,6 +32,7 @@ export const useVoiceCapture = ({ maxSeconds = 120 }: Options = {}) => {
     }
     streamRef.current?.getTracks().forEach((t) => t.stop());
     streamRef.current = null;
+    setStream(null);
     recorderRef.current = null;
     chunksRef.current = [];
     setSeconds(0);
