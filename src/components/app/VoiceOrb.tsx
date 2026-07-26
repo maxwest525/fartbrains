@@ -11,13 +11,6 @@ import { useLiveTranscript } from "@/hooks/useLiveTranscript";
 
 const FOLDER_KEY = "ash-dock-folder-v1";
 
-const titleFromText = (s: string) => {
-  const clean = s.trim().replace(/\s+/g, " ");
-  if (!clean) return "Untitled";
-  const first = clean.split(/(?<=[.!?])\s/)[0] ?? clean;
-  return first.length > 80 ? first.slice(0, 77) + "…" : first;
-};
-
 const fmtSeconds = (s: number) => {
   const m = Math.floor(s / 60);
   const r = s % 60;
@@ -33,9 +26,8 @@ type VoiceOrbProps = {
 export const VoiceOrb = ({ speaking = false }: VoiceOrbProps) => {
   const voice = useVoiceCapture({ maxSeconds: 180 });
   const live = useLiveTranscript();
-  const createIdea = useCreateIdea();
   const [submitting, setSubmitting] = useState(false);
-  const [folderId, setFolderId] = useState<string | null>(null);
+  const [, setFolderId] = useState<string | null>(null);
 
   // Mic permission status — surfaced as a small chip so users know why a tap
   // does nothing when the browser has blocked the mic.
