@@ -14,7 +14,6 @@ import { usePushSubscription } from "@/hooks/usePushSubscription";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { ThemeToggle, useTheme } from "@/hooks/useTheme";
-import { SetPinCard } from "./SetPinCard";
 
 type Props = {
   open: boolean;
@@ -203,9 +202,6 @@ export const SettingsSheet = ({ open, onOpenChange }: Props) => {
             </div>
             <ThemeToggle />
           </div>
-
-          {/* Sign-in PIN — replaces the old "save this PIN" affordance on the auth screen */}
-          {user && <SetPinCard />}
 
 
 
