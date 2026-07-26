@@ -235,8 +235,8 @@ export const VoiceOrb = ({ onDictate, onLiveTranscript, speaking = false }: Voic
           return;
         }
 
-        // Voice Prompt: no transcription — upload the audio clip and save
-        // the idea directly with the audio attached.
+        // Voice Prompt: upload the audio clip AND transcribe it so the note
+        // has searchable text alongside the recording.
         if (mode === "record") {
           setSubmitting(true);
           try {
@@ -255,16 +255,33 @@ export const VoiceOrb = ({ onDictate, onLiveTranscript, speaking = false }: Voic
             if (upErr) throw upErr;
             const { data: pub } = supabase.storage.from("idea-audio").getPublicUrl(path);
             const seconds = voice.seconds;
+
+            // Transcribe in parallel so the saved note is searchable. If it
+            // fails, we still save the audio — transcript is best-effort.
+            let transcript = "";
+            try {
+              const audioBase64 = await blobToBase64(blob);
+              const { data: tr, error: trErr } = await supabase.functions.invoke("transcribe-deliverables", {
+                body: { audioBase64, mimeType, allowedTypes: ["other"] },
+              });
+              if (trErr) throw new Error(trErr.message);
+              if (tr?.error) throw new Error(tr.error);
+              transcript = typeof tr?.transcript === "string" ? tr.transcript.trim() : "";
+            } catch (e) {
+              console.warn("Voice prompt transcription failed:", e);
+            }
+
             await createIdea.mutateAsync({
-              title: `Voice prompt · ${fmtSeconds(seconds)}`,
-              raw_note: null,
+              title: transcript ? titleFromText(transcript).slice(0, 200) : `Voice prompt · ${fmtSeconds(seconds)}`,
+              raw_note: transcript || null,
+              extracted_text: transcript || null,
               source_type: "audio",
               source_url: pub.publicUrl,
               source_label: "Voice prompt",
               source_meta: { audio: { url: pub.publicUrl, mimeType, durationSeconds: seconds } },
               folder_id: folderId,
             });
-            toast.success("Voice prompt saved");
+            toast.success(transcript ? "Voice prompt saved with transcript" : "Voice prompt saved");
           } catch (e) {
             toast.error(e instanceof Error ? e.message : "Save failed");
           } finally {
@@ -272,6 +289,7 @@ export const VoiceOrb = ({ onDictate, onLiveTranscript, speaking = false }: Voic
           }
           return;
         }
+
 
         // Dictate: transcribe, then open a preview editor before anything
         // gets saved or sent to the composer.
