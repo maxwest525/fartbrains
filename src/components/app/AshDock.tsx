@@ -160,6 +160,8 @@ export const AshDock = ({ className }: { className?: string }) => {
   const [voiceWorkspaceOpen, setVoiceWorkspaceOpen] = useState(false);
 
   useEffect(() => {
+    setVoiceWorkspaceOpen(document.body.dataset.voiceWorkspaceOpen === "true");
+
     const onVoiceWorkspace = (event: Event) => {
       const open = (event as CustomEvent<boolean>).detail;
       setVoiceWorkspaceOpen(open === true);
