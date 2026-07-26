@@ -204,6 +204,8 @@ export const VoiceOrb = ({ onDictate, onLiveTranscript, speaking = false }: Voic
       try {
         await voice.start();
         setMicPerm("granted");
+        // Kick off live browser-side partial transcription in dictate mode.
+        if (mode === "dictate" && live.supported) live.start();
       } catch (e) {
         const msg = e instanceof Error ? e.message : "Couldn't start the mic.";
         const denied = /denied|NotAllowed/i.test(msg);
