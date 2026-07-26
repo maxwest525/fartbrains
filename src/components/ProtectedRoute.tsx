@@ -28,6 +28,16 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   // Local re-render triggers for passcode state changes.
   const [passcodeVer, setPasscodeVer] = useState(0);
 
+  // One-time welcome shown to freshly signed-up accounts. The flag is set on
+  // signUp success in AuthScreen and cleared after the user dismisses it.
+  const [welcomePending, setWelcomePending] = useState<boolean>(
+    () => localStorage.getItem(WELCOME_PENDING_KEY) === "1"
+  );
+  const dismissWelcome = () => {
+    try { localStorage.removeItem(WELCOME_PENDING_KEY); } catch { /* ignore */ }
+    setWelcomePending(false);
+  };
+
   // 1) Splash
   if (!splashDone) {
     return (
