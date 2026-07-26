@@ -12,7 +12,7 @@ const LAST_PHONE_KEY = "iv.auth.lastPhone.v1";
 const LAST_IDENTIFIER_KIND_KEY = "iv.auth.lastKind.v1"; // "email" | "phone"
 const WELCOME_PENDING_KEY = "iv.welcome.pending.v1";
 
-type Mode = "password" | "magic";
+type Mode = "pin" | "password" | "magic";
 type Kind = "email" | "phone";
 
 /** Normalize free-form phone input to E.164 (best-effort). */
