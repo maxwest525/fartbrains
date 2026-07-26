@@ -278,7 +278,30 @@ export const AuthScreen = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sending, identifierValid]);
 
-  const backspacePin = () => setPassword((p) => p.slice(0, -1));
+  const backspacePin = useCallback(() => setPassword((p) => p.slice(0, -1)), []);
+
+  // Keyboard support for the PIN keypad: digits type, Backspace deletes, Escape clears.
+  useEffect(() => {
+    if (mode !== "pin" || otpSent) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      const t = e.target as HTMLElement | null;
+      const tag = t?.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || t?.isContentEditable) return;
+      if (/^[0-9]$/.test(e.key)) {
+        e.preventDefault();
+        pressPin(e.key);
+      } else if (e.key === "Backspace") {
+        e.preventDefault();
+        backspacePin();
+      } else if (e.key === "Escape") {
+        e.preventDefault();
+        setPassword("");
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [mode, otpSent, pressPin, backspacePin]);
 
   const onSubmit = (e: React.FormEvent) => {
     e.preventDefault();
