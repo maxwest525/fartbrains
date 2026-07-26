@@ -168,8 +168,9 @@ export const AuthScreen = () => {
     }
   };
 
-  const signInPassword = async () => {
-    if (!identifierValid || !password || sending) return;
+  const signInPassword = async (overridePassword?: string) => {
+    const pw = overridePassword ?? password;
+    if (!identifierValid || !pw || sending) return;
     setSending(true);
     try {
       if (kind === "email") {
