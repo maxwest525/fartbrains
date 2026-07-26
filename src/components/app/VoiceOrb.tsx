@@ -13,6 +13,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { LiveWaveform } from "@/components/app/LiveWaveform";
+import { useLiveTranscript } from "@/hooks/useLiveTranscript";
 
 const FOLDER_KEY = "ash-dock-folder-v1";
 const DRAFT_KEY = "voice-orb-draft-v1";
