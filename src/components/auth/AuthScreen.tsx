@@ -261,13 +261,35 @@ export const AuthScreen = () => {
   const currentIdentifier = kind === "email" ? email : phone;
   const showRememberedPill = rememberedIdentifier && currentIdentifier === rememberedIdentifier;
 
+  /** Supabase requires ≥6 char passwords; derive a deterministic value from the 4-digit PIN. */
+  const pinToPassword = (pin: string) => `${pin}-fbpin`;
+
+  const pressPin = useCallback((d: string) => {
+    if (sending) return;
+    setPassword((prev) => {
+      if (prev.length >= PIN_LENGTH) return prev;
+      const next = prev + d;
+      if (next.length === PIN_LENGTH && identifierValid) {
+        setTimeout(() => { signInPassword(pinToPassword(next)); }, 80);
+      }
+      return next;
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sending, identifierValid]);
+
+  const backspacePin = () => setPassword((p) => p.slice(0, -1));
+
   const onSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (kind === "phone" && mode === "magic") {
       if (otpSent) verifyPhoneOtp(); else sendMagic();
       return;
     }
-    (mode === "password" || mode === "pin") ? signInPassword() : sendMagic();
+    if (mode === "pin") {
+      signInPassword(pinToPassword(password));
+      return;
+    }
+    (mode === "password") ? signInPassword() : sendMagic();
   };
 
   return (
