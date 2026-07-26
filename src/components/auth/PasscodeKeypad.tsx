@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useState } from "react";
-import { Delete, Lock } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Delete, Lock, ScanFace } from "lucide-react";
 import { cn } from "@/lib/utils";
 import logo from "@/assets/fartbrains-logo.png";
 import { supabase } from "@/integrations/supabase/client";
@@ -21,7 +21,15 @@ import {
   verifyPasscode,
   lockoutRemainingMs,
   clearPasscode,
+  markUnlocked,
 } from "@/lib/passcode";
+import {
+  isBiometricSupported,
+  hasBiometric,
+  enrollBiometric,
+  verifyBiometric,
+  clearBiometric,
+} from "@/lib/biometric";
 
 type Props = {
   onUnlocked: () => void;
@@ -48,12 +56,57 @@ export const PasscodeKeypad = ({ onUnlocked, mode }: Props) => {
   const [showForgot, setShowForgot] = useState(false);
   const [resetting, setResetting] = useState(false);
 
+  const bioSupported = isBiometricSupported();
+  const [bioEnrolled, setBioEnrolled] = useState<boolean>(() => hasBiometric());
+  const [bioBusy, setBioBusy] = useState(false);
+  const autoBioRef = useRef(false);
+
   // Tick the lockout countdown.
   useEffect(() => {
     const id = setInterval(() => setLockoutLeft(lockoutRemainingMs()), 500);
     setLockoutLeft(lockoutRemainingMs());
     return () => clearInterval(id);
   }, []);
+
+  const tryBiometric = useCallback(async () => {
+    if (bioBusy || lockoutLeft > 0) return;
+    setBioBusy(true);
+    try {
+      const ok = await verifyBiometric();
+      if (ok) {
+        markUnlocked();
+        onUnlocked();
+      }
+    } catch {
+      /* user cancelled */
+    } finally {
+      setBioBusy(false);
+    }
+  }, [bioBusy, lockoutLeft, onUnlocked]);
+
+  // Auto-prompt Face ID once on unlock mount when enrolled.
+  useEffect(() => {
+    if (setupMode || autoBioRef.current) return;
+    if (!bioSupported || !bioEnrolled) return;
+    autoBioRef.current = true;
+    void tryBiometric();
+  }, [setupMode, bioSupported, bioEnrolled, tryBiometric]);
+
+  const enableBiometric = async () => {
+    if (bioBusy) return;
+    setBioBusy(true);
+    try {
+      const ok = await enrollBiometric();
+      if (ok) {
+        setBioEnrolled(true);
+        toast.success("Face ID enabled");
+      }
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Couldn't enable Face ID");
+    } finally {
+      setBioBusy(false);
+    }
+  };
 
   const failShake = useCallback((msg: string) => {
     setError(msg);
@@ -230,13 +283,36 @@ export const PasscodeKeypad = ({ onUnlocked, mode }: Props) => {
           Keep it memorable — there's no recovery yet.
         </p>
       ) : (
-        <button
-          type="button"
-          onClick={() => setShowForgot(true)}
-          className="text-[12px] text-white/55 hover:text-white/80 underline-offset-4 hover:underline"
-        >
-          Forgot PIN?
-        </button>
+        <div className="flex flex-col items-center gap-3">
+          {bioSupported && bioEnrolled && (
+            <button
+              type="button"
+              onClick={tryBiometric}
+              disabled={bioBusy || lockoutLeft > 0}
+              className="flex items-center gap-2 px-4 h-10 rounded-full border border-white/15 bg-white/[0.06] text-white/90 text-[13px] hover:bg-white/[0.10] transition disabled:opacity-40"
+            >
+              <ScanFace className="h-4 w-4" />
+              {bioBusy ? "Waiting…" : "Use Face ID"}
+            </button>
+          )}
+          {bioSupported && !bioEnrolled && (
+            <button
+              type="button"
+              onClick={enableBiometric}
+              disabled={bioBusy}
+              className="text-[12px] text-white/60 hover:text-white/90 underline-offset-4 hover:underline"
+            >
+              Enable Face ID
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={() => setShowForgot(true)}
+            className="text-[12px] text-white/55 hover:text-white/80 underline-offset-4 hover:underline"
+          >
+            Forgot PIN?
+          </button>
+        </div>
       )}
 
       <AlertDialog open={showForgot} onOpenChange={setShowForgot}>
@@ -259,6 +335,7 @@ export const PasscodeKeypad = ({ onUnlocked, mode }: Props) => {
                 setResetting(true);
                 try {
                   clearPasscode();
+                  clearBiometric();
                   await supabase.auth.signOut();
                   toast.success("PIN cleared — sign back in to set a new one");
                   // Full reload so ProtectedRoute re-evaluates from a clean slate.
