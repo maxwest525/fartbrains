@@ -3,20 +3,13 @@ import { Mic, Square, Loader2, ShieldAlert, ShieldCheck, ShieldQuestion } from "
 
 import { cn } from "@/lib/utils";
 import { useVoiceCapture, blobToBase64 } from "@/hooks/useVoiceCapture";
-import { useCreateIdea } from "@/hooks/useIdeas";
+
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { LiveWaveform } from "@/components/app/LiveWaveform";
 import { useLiveTranscript } from "@/hooks/useLiveTranscript";
 
 const FOLDER_KEY = "ash-dock-folder-v1";
-
-const titleFromText = (s: string) => {
-  const clean = s.trim().replace(/\s+/g, " ");
-  if (!clean) return "Untitled";
-  const first = clean.split(/(?<=[.!?])\s/)[0] ?? clean;
-  return first.length > 80 ? first.slice(0, 77) + "…" : first;
-};
 
 const fmtSeconds = (s: number) => {
   const m = Math.floor(s / 60);
@@ -33,9 +26,8 @@ type VoiceOrbProps = {
 export const VoiceOrb = ({ speaking = false }: VoiceOrbProps) => {
   const voice = useVoiceCapture({ maxSeconds: 180 });
   const live = useLiveTranscript();
-  const createIdea = useCreateIdea();
   const [submitting, setSubmitting] = useState(false);
-  const [folderId, setFolderId] = useState<string | null>(null);
+  const [, setFolderId] = useState<string | null>(null);
 
   // Mic permission status — surfaced as a small chip so users know why a tap
   // does nothing when the browser has blocked the mic.
@@ -67,16 +59,13 @@ export const VoiceOrb = ({ speaking = false }: VoiceOrbProps) => {
   const isRecording = voice.state === "recording";
   const isTranscribing = voice.state === "requesting" || voice.state === "processing";
   const isBusy = isTranscribing || submitting;
-  const voiceWorkspaceOpen = isRecording || isTranscribing;
 
+  // Do NOT collapse the Ash composer while recording — the transcript is
+  // routed into it, so the user needs to see it. Keep dock at normal size.
   useEffect(() => {
-    document.body.dataset.voiceWorkspaceOpen = voiceWorkspaceOpen ? "true" : "false";
-    window.dispatchEvent(new CustomEvent("idea-vault:voice-workspace", { detail: voiceWorkspaceOpen }));
-    return () => {
-      document.body.dataset.voiceWorkspaceOpen = "false";
-      window.dispatchEvent(new CustomEvent("idea-vault:voice-workspace", { detail: false }));
-    };
-  }, [voiceWorkspaceOpen]);
+    document.body.dataset.voiceWorkspaceOpen = "false";
+    window.dispatchEvent(new CustomEvent("idea-vault:voice-workspace", { detail: false }));
+  }, []);
 
   const onTap = async () => {
     // Idle → start recording. Handled outside the try/finally below so we
@@ -118,42 +107,23 @@ export const VoiceOrb = ({ speaking = false }: VoiceOrbProps) => {
         }
 
         setSubmitting(true);
-        const { data: userData } = await supabase.auth.getUser();
-        const uid = userData.user?.id;
-        if (!uid) throw new Error("Sign in to save voice prompts");
-        const ext = mimeType.includes("mp4") ? "mp4"
-          : mimeType.includes("webm") ? "webm"
-          : mimeType.includes("mpeg") ? "mp3"
-          : mimeType.includes("wav") ? "wav"
-          : "webm";
-        const path = `${uid}/${Date.now()}.${ext}`;
-        const { error: upErr } = await supabase.storage
-          .from("idea-audio")
-          .upload(path, blob, { contentType: mimeType, upsert: false });
-        if (upErr) throw upErr;
-        const { data: pub } = supabase.storage.from("idea-audio").getPublicUrl(path);
-        const seconds = voice.seconds;
-
-        let transcript = "";
         const audioBase64 = await blobToBase64(blob);
         const { data: tr, error: trErr } = await supabase.functions.invoke("transcribe-deliverables", {
           body: { audioBase64, mimeType, allowedTypes: ["other"] },
         });
         if (trErr) throw new Error(trErr.message);
         if (tr?.error) throw new Error(tr.error);
-        transcript = typeof tr?.transcript === "string" ? tr.transcript.trim() : "";
+        const transcript = typeof tr?.transcript === "string" ? tr.transcript.trim() : "";
 
-        await createIdea.mutateAsync({
-          title: transcript ? titleFromText(transcript).slice(0, 200) : `Voice prompt · ${fmtSeconds(seconds)}`,
-          raw_note: transcript || null,
-          extracted_text: transcript || null,
-          source_type: "audio",
-          source_url: pub.publicUrl,
-          source_label: "Voice prompt",
-          source_meta: { audio: { url: pub.publicUrl, mimeType, durationSeconds: seconds } },
-          folder_id: folderId,
-        });
-        toast.success(transcript ? "Voice prompt saved with transcript" : "Voice prompt saved");
+        if (!transcript) {
+          toast.message("Nothing heard — try again.");
+          return;
+        }
+
+        // Route the transcript into the Ash composer instead of auto-saving.
+        // AshDock listens for this event and appends into its textarea.
+        window.dispatchEvent(new CustomEvent("idea-vault:dictate", { detail: transcript }));
+        toast.success("Added to composer");
         return;
       }
     } catch (e) {
@@ -168,10 +138,10 @@ export const VoiceOrb = ({ speaking = false }: VoiceOrbProps) => {
   const status = isRecording
     ? `Listening · ${fmtSeconds(voice.seconds)}`
     : isTranscribing
-      ? "Saving…"
+      ? "Transcribing…"
       : speaking
         ? "Ash is speaking…"
-        : "Tap for voice prompt";
+        : "Tap to dictate into Ash";
 
   const permMeta = micPerm === "granted"
     ? { Icon: ShieldCheck, label: "Mic ready", tone: "text-emerald-300 bg-emerald-400/10 border-emerald-400/30" }
