@@ -195,94 +195,33 @@ export const VoiceOrb = ({ onDictate, onLiveTranscript, speaking = false }: Voic
   };
 
   const onTap = async () => {
-    try {
-      if (voice.state === "idle") {
-        // Don't pre-block on a cached "denied" — the user may have just
-        // re-enabled the mic in browser/OS settings. Let getUserMedia decide.
-        try {
-          await voice.start();
-          setMicPerm("granted");
-        } catch (e) {
-          const msg = e instanceof Error ? e.message : "Couldn't start the mic.";
-          const denied = /denied|NotAllowed/i.test(msg);
-          if (denied) {
-            setMicPerm("denied");
-            const isIOS = /iP(hone|ad|od)/.test(navigator.userAgent);
-            toast.error(
-              isIOS
-                ? "Mic blocked. Open Settings → Safari → Microphone and allow it for this site, then reload."
-                : "Mic blocked. Click the lock icon in the address bar → allow Microphone, then reload."
-            );
-          } else {
-            toast.error(msg);
-          }
+    // Idle → start recording. Handled outside the try/finally below so we
+    // don't accidentally reset the "recording" state via finishProcessing().
+    if (voice.state === "idle") {
+      try {
+        await voice.start();
+        setMicPerm("granted");
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : "Couldn't start the mic.";
+        const denied = /denied|NotAllowed/i.test(msg);
+        if (denied) {
+          setMicPerm("denied");
+          const isIOS = /iP(hone|ad|od)/.test(navigator.userAgent);
+          toast.error(
+            isIOS
+              ? "Mic blocked. Open Settings → Safari → Microphone and allow it for this site, then reload."
+              : "Mic blocked. Click the lock icon in the address bar → allow Microphone, then reload."
+          );
+        } else {
+          toast.error(msg);
         }
-        return;
       }
+      return;
+    }
+
+    try {
       if (voice.state === "recording") {
-        const { blob, mimeType } = await voice.stop();
-        if (blob.size < 800) {
-          toast.error("Too short — hold a bit longer.");
-          voice.finishProcessing();
-          return;
-        }
-
-        // Voice Prompt: no transcription — upload the audio clip and save
-        // the idea directly with the audio attached.
-        if (mode === "record") {
-          setSubmitting(true);
-          try {
-            const { data: userData } = await supabase.auth.getUser();
-            const uid = userData.user?.id;
-            if (!uid) throw new Error("Sign in to save voice prompts");
-            const ext = mimeType.includes("mp4") ? "mp4"
-              : mimeType.includes("webm") ? "webm"
-              : mimeType.includes("mpeg") ? "mp3"
-              : mimeType.includes("wav") ? "wav"
-              : "webm";
-            const path = `${uid}/${Date.now()}.${ext}`;
-            const { error: upErr } = await supabase.storage
-              .from("idea-audio")
-              .upload(path, blob, { contentType: mimeType, upsert: false });
-            if (upErr) throw upErr;
-            const { data: pub } = supabase.storage.from("idea-audio").getPublicUrl(path);
-            const seconds = voice.seconds;
-            await createIdea.mutateAsync({
-              title: `Voice prompt · ${fmtSeconds(seconds)}`,
-              raw_note: null,
-              source_type: "audio",
-              source_url: pub.publicUrl,
-              source_label: "Voice prompt",
-              source_meta: { audio: { url: pub.publicUrl, mimeType, durationSeconds: seconds } },
-              folder_id: folderId,
-            });
-            toast.success("Voice prompt saved");
-          } catch (e) {
-            toast.error(e instanceof Error ? e.message : "Save failed");
-          } finally {
-            setSubmitting(false);
-          }
-          return;
-        }
-
-        // Dictate: transcribe, then open a preview editor before anything
-        // gets saved or sent to the composer.
-        const audioBase64 = await blobToBase64(blob);
-        const { data, error } = await supabase.functions.invoke("transcribe-deliverables", {
-          body: { audioBase64, mimeType, allowedTypes: ["other"] },
-        });
-        if (error) throw new Error(error.message);
-        if (data?.error) throw new Error(data.error);
-        const transcript: string = typeof data?.transcript === "string" ? data.transcript : "";
-        if (!transcript.trim()) {
-          toast.message("Nothing heard — try again.");
-          return;
-        }
-
-        // Append to any existing draft so re-recording adds rather than replaces.
-        const next = draft && draft.trim() ? `${draft.trim()}\n\n${transcript.trim()}` : transcript.trim();
-        updateDraft(next);
-        return;
+...
       }
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Voice capture failed");
