@@ -82,14 +82,14 @@ export const SetPinCard = () => {
           ))}
         </div>
 
-        <div className="grid grid-cols-3 gap-2">
+        <div className="grid grid-cols-3 gap-4">
           {[1,2,3,4,5,6,7,8,9].map((n) => (
             <button
               key={n}
               type="button"
               onClick={() => press(String(n))}
               disabled={saving}
-              className="h-11 w-11 rounded-full bg-secondary hover:bg-secondary/80 active:scale-95 text-[18px] font-light transition disabled:opacity-40"
+              className="h-16 w-16 rounded-full bg-secondary hover:bg-secondary/80 active:scale-95 text-[22px] font-light transition disabled:opacity-40"
             >
               {n}
             </button>
@@ -98,7 +98,7 @@ export const SetPinCard = () => {
             type="button"
             onClick={() => setPin("")}
             disabled={saving || !pin}
-            className="h-11 w-11 rounded-full text-[11px] text-muted-foreground hover:bg-secondary/60 active:scale-95 transition disabled:opacity-30"
+            className="h-16 w-16 rounded-full text-xs text-muted-foreground hover:bg-secondary/60 active:scale-95 transition disabled:opacity-30"
           >
             Clear
           </button>
@@ -106,7 +106,7 @@ export const SetPinCard = () => {
             type="button"
             onClick={() => press("0")}
             disabled={saving}
-            className="h-11 w-11 rounded-full bg-secondary hover:bg-secondary/80 active:scale-95 text-[18px] font-light transition disabled:opacity-40"
+            className="h-16 w-16 rounded-full bg-secondary hover:bg-secondary/80 active:scale-95 text-[22px] font-light transition disabled:opacity-40"
           >
             0
           </button>
@@ -115,9 +115,9 @@ export const SetPinCard = () => {
             onClick={back}
             disabled={saving || !pin}
             aria-label="Backspace"
-            className="h-11 w-11 rounded-full flex items-center justify-center hover:bg-secondary/60 active:scale-95 transition disabled:opacity-30"
+            className="h-16 w-16 rounded-full flex items-center justify-center hover:bg-secondary/60 active:scale-95 transition disabled:opacity-30"
           >
-            <Delete className="h-4 w-4" />
+            <Delete className="h-5 w-5" />
           </button>
         </div>
 
