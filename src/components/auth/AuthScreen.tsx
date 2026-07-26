@@ -377,11 +377,25 @@ export const AuthScreen = () => {
                 </div>
               )}
 
-              {/* Password field: email/password or phone/password sign-in */}
+              {/* PIN entry: 6-digit numeric, treated as the account password. */}
+              {mode === "pin" && !otpSent && (
+                <Input
+                  type="password"
+                  inputMode="numeric"
+                  autoComplete={isSignUp ? "new-password" : "current-password"}
+                  placeholder="6-digit PIN"
+                  maxLength={6}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                  className="h-14 rounded-2xl text-[20px] px-4 tracking-[0.5em] text-center"
+                />
+              )}
+
+              {/* Full password entry */}
               {mode === "password" && !otpSent && (
                 <Input
                   type="password"
-                  autoComplete="current-password"
+                  autoComplete={isSignUp ? "new-password" : "current-password"}
                   placeholder="Password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
