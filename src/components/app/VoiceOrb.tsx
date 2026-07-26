@@ -146,10 +146,10 @@ export const VoiceOrb = ({ speaking = false }: VoiceOrbProps) => {
   const status = isRecording
     ? `Listening · ${fmtSeconds(voice.seconds)}`
     : isTranscribing
-      ? "Saving…"
+      ? "Transcribing…"
       : speaking
         ? "Ash is speaking…"
-        : "Tap for voice prompt";
+        : "Tap to dictate into Ash";
 
   const permMeta = micPerm === "granted"
     ? { Icon: ShieldCheck, label: "Mic ready", tone: "text-emerald-300 bg-emerald-400/10 border-emerald-400/30" }
