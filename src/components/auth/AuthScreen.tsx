@@ -216,6 +216,7 @@ export const AuthScreen = () => {
                   className="h-14 rounded-2xl text-[16px] px-4"
                 />
               )}
+              {mode === "password" && (
                 <Input
                   type="password"
                   autoComplete="current-password"
