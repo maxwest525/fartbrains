@@ -13,6 +13,7 @@ const PIN_LENGTH = 4;
 const LAST_EMAIL_KEY = "iv.auth.lastEmail.v1";
 const LAST_PHONE_KEY = "iv.auth.lastPhone.v1";
 const LAST_IDENTIFIER_KIND_KEY = "iv.auth.lastKind.v1"; // "email" | "phone"
+const LAST_MODE_KEY = "iv.auth.lastMode.v1"; // "pin" | "password" | "magic"
 const WELCOME_PENDING_KEY = "iv.welcome.pending.v1";
 
 type Mode = "pin" | "password" | "magic";
