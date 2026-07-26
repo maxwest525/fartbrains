@@ -412,7 +412,13 @@ export const AshDock = ({ className }: { className?: string }) => {
       >
 
         <div className="gemini gemini-ring rounded-2xl glass-card-clear shadow-2xl shadow-black/40 transition-all">
-          {isDockCollapsed ? (
+          {voiceWorkspaceOpen ? (
+            <div
+              id="ash-dock-body"
+              className="h-2 rounded-2xl"
+              aria-label="Voice review dock minimized"
+            />
+          ) : isDockCollapsed ? (
             <div id="ash-dock-body" className="flex items-center gap-1.5 px-2.5 pb-2 pt-0.5">
               <button
                 type="button"
