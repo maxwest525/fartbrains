@@ -64,6 +64,11 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     return <AuthScreen />;
   }
 
+  // 3b) Brand-new account? Show the cheeky welcome once.
+  if (welcomePending) {
+    return <WelcomeBackScreen onDone={dismissWelcome} />;
+  }
+
   // 4) Signed in, passcode set, not unlocked → unlock keypad
   if (hasPasscode() && !unlocked) {
     return (
