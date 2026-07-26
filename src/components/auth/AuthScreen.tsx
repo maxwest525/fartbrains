@@ -263,7 +263,7 @@ export const AuthScreen = () => {
       if (otpSent) verifyPhoneOtp(); else sendMagic();
       return;
     }
-    mode === "password" ? signInPassword() : sendMagic();
+    (mode === "password" || mode === "pin") ? signInPassword() : sendMagic();
   };
 
   return (
