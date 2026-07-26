@@ -335,6 +335,7 @@ export const PasscodeKeypad = ({ onUnlocked, mode }: Props) => {
                 setResetting(true);
                 try {
                   clearPasscode();
+                  clearBiometric();
                   await supabase.auth.signOut();
                   toast.success("PIN cleared — sign back in to set a new one");
                   // Full reload so ProtectedRoute re-evaluates from a clean slate.
