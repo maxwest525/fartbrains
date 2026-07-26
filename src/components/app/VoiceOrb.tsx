@@ -67,16 +67,13 @@ export const VoiceOrb = ({ speaking = false }: VoiceOrbProps) => {
   const isRecording = voice.state === "recording";
   const isTranscribing = voice.state === "requesting" || voice.state === "processing";
   const isBusy = isTranscribing || submitting;
-  const voiceWorkspaceOpen = isRecording || isTranscribing;
 
+  // Do NOT collapse the Ash composer while recording — the transcript is
+  // routed into it, so the user needs to see it. Keep dock at normal size.
   useEffect(() => {
-    document.body.dataset.voiceWorkspaceOpen = voiceWorkspaceOpen ? "true" : "false";
-    window.dispatchEvent(new CustomEvent("idea-vault:voice-workspace", { detail: voiceWorkspaceOpen }));
-    return () => {
-      document.body.dataset.voiceWorkspaceOpen = "false";
-      window.dispatchEvent(new CustomEvent("idea-vault:voice-workspace", { detail: false }));
-    };
-  }, [voiceWorkspaceOpen]);
+    document.body.dataset.voiceWorkspaceOpen = "false";
+    window.dispatchEvent(new CustomEvent("idea-vault:voice-workspace", { detail: false }));
+  }, []);
 
   const onTap = async () => {
     // Idle → start recording. Handled outside the try/finally below so we
