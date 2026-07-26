@@ -336,7 +336,7 @@ export const AuthScreen = () => {
               </Button>
             </div>
           ) : (
-            <form onSubmit={onSubmit} className="flex flex-col gap-3">
+            <form onSubmit={onSubmit} className="flex flex-col gap-2">
               {/* Email / Phone toggle */}
               {!otpSent && (
                 <div className="flex gap-1 p-1 rounded-2xl bg-white/[0.04] border border-white/10">
