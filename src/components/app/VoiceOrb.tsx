@@ -195,30 +195,31 @@ export const VoiceOrb = ({ onDictate, onLiveTranscript, speaking = false }: Voic
   };
 
   const onTap = async () => {
-    try {
-      if (voice.state === "idle") {
-        // Don't pre-block on a cached "denied" — the user may have just
-        // re-enabled the mic in browser/OS settings. Let getUserMedia decide.
-        try {
-          await voice.start();
-          setMicPerm("granted");
-        } catch (e) {
-          const msg = e instanceof Error ? e.message : "Couldn't start the mic.";
-          const denied = /denied|NotAllowed/i.test(msg);
-          if (denied) {
-            setMicPerm("denied");
-            const isIOS = /iP(hone|ad|od)/.test(navigator.userAgent);
-            toast.error(
-              isIOS
-                ? "Mic blocked. Open Settings → Safari → Microphone and allow it for this site, then reload."
-                : "Mic blocked. Click the lock icon in the address bar → allow Microphone, then reload."
-            );
-          } else {
-            toast.error(msg);
-          }
+    // Idle → start recording. Handled outside the try/finally below so we
+    // don't accidentally reset the "recording" state via finishProcessing().
+    if (voice.state === "idle") {
+      try {
+        await voice.start();
+        setMicPerm("granted");
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : "Couldn't start the mic.";
+        const denied = /denied|NotAllowed/i.test(msg);
+        if (denied) {
+          setMicPerm("denied");
+          const isIOS = /iP(hone|ad|od)/.test(navigator.userAgent);
+          toast.error(
+            isIOS
+              ? "Mic blocked. Open Settings → Safari → Microphone and allow it for this site, then reload."
+              : "Mic blocked. Click the lock icon in the address bar → allow Microphone, then reload."
+          );
+        } else {
+          toast.error(msg);
         }
-        return;
       }
+      return;
+    }
+
+    try {
       if (voice.state === "recording") {
         const { blob, mimeType } = await voice.stop();
         if (blob.size < 800) {
