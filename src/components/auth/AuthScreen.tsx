@@ -345,7 +345,7 @@ export const AuthScreen = () => {
                       key={k}
                       type="button"
                       onClick={() => { setKind(k); setOtpSent(false); setOtp(""); }}
-                      className={`flex-1 h-9 rounded-xl text-[13px] font-medium transition ${
+                      className={`flex-1 h-8 rounded-xl text-[12.5px] font-medium transition ${
                         kind === k ? "bg-white/[0.10] text-white" : "text-white/60 hover:text-white/90"
                       }`}
                     >
