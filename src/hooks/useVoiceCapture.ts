@@ -16,6 +16,7 @@ export const useVoiceCapture = ({ maxSeconds = 120 }: Options = {}) => {
   const [state, setState] = useState<VoiceState>("idle");
   const [seconds, setSeconds] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const [stream, setStream] = useState<MediaStream | null>(null);
 
   const recorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
