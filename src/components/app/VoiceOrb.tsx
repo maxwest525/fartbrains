@@ -13,6 +13,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { LiveWaveform } from "@/components/app/LiveWaveform";
+import { useLiveTranscript } from "@/hooks/useLiveTranscript";
 
 const FOLDER_KEY = "ash-dock-folder-v1";
 const DRAFT_KEY = "voice-orb-draft-v1";
@@ -57,6 +58,7 @@ type VoiceOrbProps = {
 
 export const VoiceOrb = ({ onDictate, onLiveTranscript, speaking = false }: VoiceOrbProps) => {
   const voice = useVoiceCapture({ maxSeconds: 180 });
+  const live = useLiveTranscript();
   const createIdea = useCreateIdea();
   const [submitting, setSubmitting] = useState(false);
   const [folderId, setFolderId] = useState<string | null>(null);
@@ -202,6 +204,8 @@ export const VoiceOrb = ({ onDictate, onLiveTranscript, speaking = false }: Voic
       try {
         await voice.start();
         setMicPerm("granted");
+        // Kick off live browser-side partial transcription in dictate mode.
+        if (mode === "dictate" && live.supported) live.start();
       } catch (e) {
         const msg = e instanceof Error ? e.message : "Couldn't start the mic.";
         const denied = /denied|NotAllowed/i.test(msg);
@@ -222,10 +226,12 @@ export const VoiceOrb = ({ onDictate, onLiveTranscript, speaking = false }: Voic
 
     try {
       if (voice.state === "recording") {
+        live.stop();
         const { blob, mimeType } = await voice.stop();
         if (blob.size < 800) {
           toast.error("Too short — hold a bit longer.");
           voice.finishProcessing();
+          live.reset();
           return;
         }
 
@@ -290,6 +296,7 @@ export const VoiceOrb = ({ onDictate, onLiveTranscript, speaking = false }: Voic
       toast.error(e instanceof Error ? e.message : "Voice capture failed");
     } finally {
       voice.finishProcessing();
+      live.reset();
     }
   };
 
@@ -512,6 +519,21 @@ export const VoiceOrb = ({ onDictate, onLiveTranscript, speaking = false }: Voic
           <span className="text-[12.5px] tabular-nums font-medium text-white/85 shrink-0">
             {fmtSeconds(voice.seconds)}
           </span>
+        </div>
+      )}
+
+      {/* Live partial transcript — updates in real time while recording.
+          Server transcription remains authoritative on stop. */}
+      {mode === "dictate" && (isRecording || isTranscribing) && live.supported && (
+        <div
+          aria-live="polite"
+          className="w-full max-w-md min-h-[3.25rem] max-h-40 overflow-y-auto px-4 py-2.5 rounded-2xl bg-white/[0.04] border border-white/10 backdrop-blur-md text-[13.5px] leading-relaxed text-white/90"
+        >
+          {live.finalText && <span>{live.finalText} </span>}
+          {live.interim && <span className="text-white/55 italic">{live.interim}</span>}
+          {!live.finalText && !live.interim && (
+            <span className="text-white/40 italic">Listening for speech…</span>
+          )}
         </div>
       )}
 
