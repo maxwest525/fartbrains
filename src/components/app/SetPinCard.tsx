@@ -131,6 +131,7 @@ export const SetPinCard = () => {
           Save PIN
         </button>
       </div>
+      )}
     </div>
   );
 };
