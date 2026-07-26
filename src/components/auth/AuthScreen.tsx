@@ -1,11 +1,14 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Mail, Loader2, CheckCircle2, KeyRound } from "lucide-react";
+import { Mail, Loader2, CheckCircle2, KeyRound, X } from "lucide-react";
 import { toast } from "sonner";
 import { isEmailAllowed } from "@/lib/allowlist";
 import logo from "@/assets/fartbrains-logo.png";
+
+const LAST_EMAIL_KEY = "iv.auth.lastEmail.v1";
+const WELCOME_PENDING_KEY = "iv.welcome.pending.v1";
 
 type Mode = "password" | "magic";
 
@@ -16,6 +19,25 @@ export const AuthScreen = () => {
   const [password, setPassword] = useState("");
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
+
+  // Prefill last-used email so returning users can jump straight to password/PIN.
+  const [rememberedEmail, setRememberedEmail] = useState<string | null>(null);
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem(LAST_EMAIL_KEY);
+      if (stored) {
+        setEmail(stored);
+        setRememberedEmail(stored);
+      }
+    } catch { /* ignore */ }
+  }, []);
+
+  const forgetEmail = () => {
+    try { localStorage.removeItem(LAST_EMAIL_KEY); } catch { /* ignore */ }
+    setRememberedEmail(null);
+    setEmail("");
+    setPassword("");
+  };
 
   const isValidEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
 
