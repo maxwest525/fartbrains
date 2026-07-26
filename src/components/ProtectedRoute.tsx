@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 import { PasscodeKeypad } from "@/components/auth/PasscodeKeypad";
 import { SplashScreen } from "@/components/auth/SplashScreen";
 import { AuthScreen } from "@/components/auth/AuthScreen";
