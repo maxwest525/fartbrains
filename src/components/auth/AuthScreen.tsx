@@ -352,16 +352,26 @@ export const AuthScreen = () => {
                   className="h-14 rounded-2xl text-[16px] px-4"
                 />
               ) : (
-                <Input
-                  type="tel"
-                  inputMode="tel"
-                  autoComplete="tel"
-                  autoFocus
-                  placeholder="+1 555 123 4567"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  className="h-14 rounded-2xl text-[16px] px-4"
-                />
+                <div className="flex flex-col gap-1">
+                  <Input
+                    type="tel"
+                    inputMode="tel"
+                    autoComplete="tel"
+                    autoFocus
+                    placeholder="(555) 123-4567"
+                    value={phone}
+                    onChange={(e) => setPhone(formatPhoneInput(e.target.value))}
+                    aria-invalid={phone.length > 0 && !isValidPhone}
+                    className={`h-14 rounded-2xl text-[16px] px-4 ${
+                      phone.length > 0 && !isValidPhone ? "border-destructive/70" : ""
+                    }`}
+                  />
+                  {phone.length > 0 && !isValidPhone && (
+                    <p role="alert" className="text-[11px] text-destructive/90 px-1">
+                      Enter a valid phone number (e.g. (555) 123-4567 or +44 20 7946 0958).
+                    </p>
+                  )}
+                </div>
               )}
 
               {/* Password field: email/password or phone/password sign-in */}
