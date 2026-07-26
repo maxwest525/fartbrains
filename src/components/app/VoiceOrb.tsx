@@ -488,6 +488,34 @@ export const VoiceOrb = ({ onDictate, onLiveTranscript, speaking = false }: Voic
         )}
       </div>
 
+      {/* Live recording indicator: waveform + timer. Visible during recording
+          so the user gets immediate feedback that audio is being captured. */}
+      {(isRecording || isTranscribing) && (
+        <div
+          role="status"
+          aria-live="polite"
+          aria-label={isRecording ? `Recording, ${fmtSeconds(voice.seconds)}` : "Transcribing"}
+          className="w-full max-w-xs flex items-center gap-3 px-4 py-2.5 rounded-full bg-white/[0.04] border border-white/10 backdrop-blur-md shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]"
+        >
+          <span
+            className={cn(
+              "h-2 w-2 rounded-full shrink-0",
+              isRecording ? "bg-[color:var(--g-red)] animate-pulse" : "bg-white/40",
+            )}
+          />
+          <LiveWaveform
+            stream={voice.stream}
+            active={isRecording}
+            className="flex-1 h-9"
+          />
+          <span className="text-[12.5px] tabular-nums font-medium text-white/85 shrink-0">
+            {fmtSeconds(voice.seconds)}
+          </span>
+        </div>
+      )}
+
+
+
 
       {/* 3-mode segmented selector */}
       <div
