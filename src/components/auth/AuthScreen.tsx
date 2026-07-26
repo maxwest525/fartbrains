@@ -599,11 +599,9 @@ export const AuthScreen = () => {
                       </button>
                     )}
                     <span className="text-white/25">·</span>
-                    {mode !== "magic" && (
-                      <button type="button" onClick={() => setMode("magic")} className="hover:text-white">
-                        {kind === "phone" ? "Text code" : "Magic link"}
-                      </button>
-                    )}
+                    <button type="button" onClick={() => setMode("magic")} className="hover:text-white">
+                      {kind === "phone" ? "Text code" : "Magic link"}
+                    </button>
                   </div>
 
                   <button
