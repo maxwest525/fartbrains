@@ -85,6 +85,7 @@ export const AuthScreen = () => {
       if (lastKind === "email" || lastKind === "phone") setKind(lastKind);
       // If the user last logged in with phone, default to OTP mode (SMS).
       if (lastKind === "phone") setMode("magic");
+      // Otherwise keep PIN as the default.
     } catch { /* ignore */ }
   }, []);
 
