@@ -115,42 +115,23 @@ export const VoiceOrb = ({ speaking = false }: VoiceOrbProps) => {
         }
 
         setSubmitting(true);
-        const { data: userData } = await supabase.auth.getUser();
-        const uid = userData.user?.id;
-        if (!uid) throw new Error("Sign in to save voice prompts");
-        const ext = mimeType.includes("mp4") ? "mp4"
-          : mimeType.includes("webm") ? "webm"
-          : mimeType.includes("mpeg") ? "mp3"
-          : mimeType.includes("wav") ? "wav"
-          : "webm";
-        const path = `${uid}/${Date.now()}.${ext}`;
-        const { error: upErr } = await supabase.storage
-          .from("idea-audio")
-          .upload(path, blob, { contentType: mimeType, upsert: false });
-        if (upErr) throw upErr;
-        const { data: pub } = supabase.storage.from("idea-audio").getPublicUrl(path);
-        const seconds = voice.seconds;
-
-        let transcript = "";
         const audioBase64 = await blobToBase64(blob);
         const { data: tr, error: trErr } = await supabase.functions.invoke("transcribe-deliverables", {
           body: { audioBase64, mimeType, allowedTypes: ["other"] },
         });
         if (trErr) throw new Error(trErr.message);
         if (tr?.error) throw new Error(tr.error);
-        transcript = typeof tr?.transcript === "string" ? tr.transcript.trim() : "";
+        const transcript = typeof tr?.transcript === "string" ? tr.transcript.trim() : "";
 
-        await createIdea.mutateAsync({
-          title: transcript ? titleFromText(transcript).slice(0, 200) : `Voice prompt · ${fmtSeconds(seconds)}`,
-          raw_note: transcript || null,
-          extracted_text: transcript || null,
-          source_type: "audio",
-          source_url: pub.publicUrl,
-          source_label: "Voice prompt",
-          source_meta: { audio: { url: pub.publicUrl, mimeType, durationSeconds: seconds } },
-          folder_id: folderId,
-        });
-        toast.success(transcript ? "Voice prompt saved with transcript" : "Voice prompt saved");
+        if (!transcript) {
+          toast.message("Nothing heard — try again.");
+          return;
+        }
+
+        // Route the transcript into the Ash composer instead of auto-saving.
+        // AshDock listens for this event and appends into its textarea.
+        window.dispatchEvent(new CustomEvent("idea-vault:dictate", { detail: transcript }));
+        toast.success("Added to composer");
         return;
       }
     } catch (e) {
