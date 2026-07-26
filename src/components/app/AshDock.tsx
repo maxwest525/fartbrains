@@ -157,13 +157,28 @@ export const AshDock = ({ className }: { className?: string }) => {
   const [collapsed, setCollapsed] = useState<boolean>(() => {
     try { return localStorage.getItem(COLLAPSED_KEY) === "1"; } catch { return false; }
   });
+  const [voiceWorkspaceOpen, setVoiceWorkspaceOpen] = useState(false);
+
+  useEffect(() => {
+    setVoiceWorkspaceOpen(document.body.dataset.voiceWorkspaceOpen === "true");
+
+    const onVoiceWorkspace = (event: Event) => {
+      const open = (event as CustomEvent<boolean>).detail;
+      setVoiceWorkspaceOpen(open === true);
+    };
+
+    window.addEventListener("idea-vault:voice-workspace", onVoiceWorkspace as EventListener);
+    return () => {
+      window.removeEventListener("idea-vault:voice-workspace", onVoiceWorkspace as EventListener);
+    };
+  }, []);
 
   useEffect(() => {
     try { localStorage.setItem(SIDE_KEY, side); } catch { /* ignore */ }
   }, [side]);
   useEffect(() => {
     try { localStorage.setItem(COLLAPSED_KEY, collapsed ? "1" : "0"); } catch { /* ignore */ }
-  }, [collapsed]);
+  }, [collapsed, voiceWorkspaceOpen]);
 
   // Publish dock height as a CSS var so pages can pad around it.
   useEffect(() => {
@@ -382,6 +397,7 @@ export const AshDock = ({ className }: { className?: string }) => {
     side === "left"  ? "left-2 right-auto translate-x-0" :
     side === "right" ? "right-2 left-auto translate-x-0" :
                        "left-1/2 -translate-x-1/2";
+  const isDockCollapsed = collapsed || voiceWorkspaceOpen;
 
   return (
     <>
@@ -396,7 +412,13 @@ export const AshDock = ({ className }: { className?: string }) => {
       >
 
         <div className="gemini gemini-ring rounded-2xl glass-card-clear shadow-2xl shadow-black/40 transition-all">
-          {collapsed ? (
+          {voiceWorkspaceOpen ? (
+            <div
+              id="ash-dock-body"
+              className="h-2 rounded-2xl"
+              aria-label="Voice review dock minimized"
+            />
+          ) : isDockCollapsed ? (
             <div id="ash-dock-body" className="flex items-center gap-1.5 px-2.5 pb-2 pt-0.5">
               <button
                 type="button"
@@ -414,10 +436,12 @@ export const AshDock = ({ className }: { className?: string }) => {
               </button>
               <button
                 type="button"
-                onClick={() => setCollapsed(false)}
+                onClick={() => {
+                  if (!voiceWorkspaceOpen) setCollapsed(false);
+                }}
                 className="flex-1 h-9 text-left px-2 text-[12.5px] text-muted-foreground hover:text-foreground truncate"
               >
-                Tap to capture…
+                {voiceWorkspaceOpen ? "Voice review open…" : "Tap to capture…"}
               </button>
             </div>
           ) : (
@@ -550,7 +574,7 @@ export const AshDock = ({ className }: { className?: string }) => {
 
 
         {/* Chips */}
-        <div className="mt-2 flex flex-wrap items-center justify-center gap-1.5 px-1">
+        {!isDockCollapsed && chips.length > 0 && <div className="mt-2 flex flex-wrap items-center justify-center gap-1.5 px-1">
           {chips.map((c) => (
             <button
               key={c.id}
@@ -567,7 +591,7 @@ export const AshDock = ({ className }: { className?: string }) => {
               />
             </button>
           ))}
-        </div>
+        </div>}
       </div>
 
       {/* Chip editor */}

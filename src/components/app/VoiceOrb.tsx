@@ -161,6 +161,16 @@ export const VoiceOrb = ({ onDictate, onLiveTranscript, speaking = false }: Voic
   const isRecording = voice.state === "recording";
   const isTranscribing = voice.state === "requesting" || voice.state === "processing";
   const isBusy = isTranscribing || submitting;
+  const voiceWorkspaceOpen = isRecording || isTranscribing || draft !== null;
+
+  useEffect(() => {
+    document.body.dataset.voiceWorkspaceOpen = voiceWorkspaceOpen ? "true" : "false";
+    window.dispatchEvent(new CustomEvent("idea-vault:voice-workspace", { detail: voiceWorkspaceOpen }));
+    return () => {
+      document.body.dataset.voiceWorkspaceOpen = "false";
+      window.dispatchEvent(new CustomEvent("idea-vault:voice-workspace", { detail: false }));
+    };
+  }, [voiceWorkspaceOpen]);
 
   // History helpers — coalesce edits within 600ms into a single undo step.
   const pushHistory = useCallback((prev: string) => {
@@ -737,6 +747,13 @@ export const VoiceOrb = ({ onDictate, onLiveTranscript, speaking = false }: Voic
             </div>
           </div>
         </div>
+      )}
+
+      {voiceWorkspaceOpen && (
+        <div
+          aria-hidden="true"
+          className="shrink-0 h-[calc(var(--ash-dock-h,0px)+var(--mobile-tabbar-h,72px)+env(safe-area-inset-bottom)+1.5rem)]"
+        />
       )}
 
     </div>
