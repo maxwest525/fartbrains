@@ -424,6 +424,7 @@ export const AuthScreen = () => {
                   sending ||
                   !identifierValid ||
                   (mode === "password" && !password) ||
+                  (mode === "pin" && password.length !== 6) ||
                   (kind === "phone" && mode === "magic" && otpSent && otp.length < 4)
                 }
                 className="h-14 rounded-2xl brand-gradient text-white text-[15px] font-semibold"
@@ -432,6 +433,8 @@ export const AuthScreen = () => {
                   <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Working…</>
                 ) : kind === "phone" && mode === "magic" && otpSent ? (
                   <><KeyRound className="h-4 w-4 mr-2" /> Verify code</>
+                ) : mode === "pin" ? (
+                  <><KeyRound className="h-4 w-4 mr-2" /> {isSignUp ? "Create PIN" : "Unlock"}</>
                 ) : mode === "password" ? (
                   <><KeyRound className="h-4 w-4 mr-2" /> {isSignUp ? "Create account" : "Sign in"}</>
                 ) : kind === "phone" ? (
@@ -451,7 +454,7 @@ export const AuthScreen = () => {
                 </button>
               )}
 
-              {mode === "password" && (
+              {(mode === "password" || mode === "pin") && (
                 <button
                   type="button"
                   onClick={() => setIsSignUp((v) => !v)}
@@ -462,35 +465,55 @@ export const AuthScreen = () => {
               )}
 
               {!otpSent && (
-                <button
-                  type="button"
-                  onClick={() => setMode(mode === "password" ? "magic" : "password")}
-                  className="text-[12px] text-white/60 hover:text-white/90"
-                >
-                  {mode === "password"
-                    ? (kind === "phone" ? "Text me a code instead" : "Use magic link instead")
-                    : "Use password instead"}
-                </button>
+                <div className="flex flex-col items-center gap-1.5 pt-1">
+                  {mode !== "pin" && (
+                    <button
+                      type="button"
+                      onClick={() => { setMode("pin"); setPassword(""); }}
+                      className="text-[12px] text-white/70 hover:text-white"
+                    >
+                      Use PIN instead
+                    </button>
+                  )}
+                  {mode !== "password" && (
+                    <button
+                      type="button"
+                      onClick={() => { setMode("password"); setPassword(""); }}
+                      className="text-[12px] text-white/60 hover:text-white/90"
+                    >
+                      Use password instead
+                    </button>
+                  )}
+                  {mode !== "magic" && (
+                    <button
+                      type="button"
+                      onClick={() => setMode("magic")}
+                      className="text-[12px] text-white/60 hover:text-white/90"
+                    >
+                      {kind === "phone" ? "Text me a code instead" : "Use magic link instead"}
+                    </button>
+                  )}
+                </div>
               )}
 
-              {mode === "password" && !isSignUp && kind === "email" && (
+              {(mode === "password" || mode === "pin") && !isSignUp && kind === "email" && (
                 <button
                   type="button"
                   onClick={sendPasswordReset}
                   disabled={!isValidEmail || sending}
                   className="text-[12px] text-white/70 hover:text-white disabled:opacity-40"
                 >
-                  Forgot your password?
+                  {mode === "pin" ? "Forgot your PIN?" : "Forgot your password?"}
                 </button>
               )}
 
-              {mode === "password" && (
+              {(mode === "password" || mode === "pin") && (
                 <button
                   type="button"
                   onClick={setPasswordForAccount}
                   className="text-[11px] text-white/40 hover:text-white/70"
                 >
-                  (Already signed in? Tap to save this as your password)
+                  (Already signed in? Tap to save this {mode === "pin" ? "PIN" : "password"})
                 </button>
               )}
             </form>
