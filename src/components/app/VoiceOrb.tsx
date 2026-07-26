@@ -522,6 +522,21 @@ export const VoiceOrb = ({ onDictate, onLiveTranscript, speaking = false }: Voic
         </div>
       )}
 
+      {/* Live partial transcript — updates in real time while recording.
+          Server transcription remains authoritative on stop. */}
+      {mode === "dictate" && (isRecording || isTranscribing) && live.supported && (
+        <div
+          aria-live="polite"
+          className="w-full max-w-md min-h-[3.25rem] max-h-40 overflow-y-auto px-4 py-2.5 rounded-2xl bg-white/[0.04] border border-white/10 backdrop-blur-md text-[13.5px] leading-relaxed text-white/90"
+        >
+          {live.finalText && <span>{live.finalText} </span>}
+          {live.interim && <span className="text-white/55 italic">{live.interim}</span>}
+          {!live.finalText && !live.interim && (
+            <span className="text-white/40 italic">Listening for speech…</span>
+          )}
+        </div>
+      )}
+
 
 
 
