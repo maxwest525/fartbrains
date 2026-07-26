@@ -13,6 +13,7 @@ const PIN_LENGTH = 4;
 const LAST_EMAIL_KEY = "iv.auth.lastEmail.v1";
 const LAST_PHONE_KEY = "iv.auth.lastPhone.v1";
 const LAST_IDENTIFIER_KIND_KEY = "iv.auth.lastKind.v1"; // "email" | "phone"
+const LAST_MODE_KEY = "iv.auth.lastMode.v1"; // "pin" | "password" | "magic"
 const WELCOME_PENDING_KEY = "iv.welcome.pending.v1";
 
 type Mode = "pin" | "password" | "magic";
@@ -86,11 +87,18 @@ export const AuthScreen = () => {
       if (lastEmail) { setEmail(lastEmail); setRememberedEmail(lastEmail); }
       if (lastPhone) { setPhone(lastPhone); setRememberedPhone(lastPhone); }
       if (lastKind === "email" || lastKind === "phone") setKind(lastKind);
-      // If the user last logged in with phone, default to OTP mode (SMS).
-      if (lastKind === "phone") setMode("magic");
-      // Otherwise keep PIN as the default.
+      // Restore last-used sign-in mode; default to PIN keypad.
+      const lastMode = localStorage.getItem(LAST_MODE_KEY) as Mode | null;
+      if (lastMode === "pin" || lastMode === "password" || lastMode === "magic") {
+        setMode(lastMode);
+      }
     } catch { /* ignore */ }
   }, []);
+
+  // Persist mode selection so returning users land on their preferred keypad/method.
+  useEffect(() => {
+    try { localStorage.setItem(LAST_MODE_KEY, mode); } catch { /* ignore */ }
+  }, [mode]);
 
   const forgetIdentifier = () => {
     try {
