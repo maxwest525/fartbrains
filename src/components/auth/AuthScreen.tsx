@@ -300,15 +300,15 @@ export const AuthScreen = () => {
         className="absolute inset-0 pointer-events-none"
         style={{ background: "radial-gradient(900px 600px at 50% 45%, rgba(0,0,0,0) 0%, rgba(0,0,0,0.15) 70%, rgba(0,0,0,0.30) 100%)" }}
       />
-      <div className="relative z-10 w-full max-w-sm mx-6">
-        <div className="glass-card-strong rounded-3xl p-7 text-white">
-          <div className="flex flex-col items-center gap-3 mb-6">
-            <img src={logo} alt="FartBrains" className="w-40 h-auto drop-shadow-[0_0_30px_rgba(96,165,250,0.3)]" />
+      <div className="relative z-10 w-full max-w-sm mx-4 my-3">
+        <div className="glass-card-strong rounded-3xl px-5 py-4 text-white">
+          <div className="flex flex-col items-center gap-1.5 mb-3">
+            <img src={logo} alt="FartBrains" className="w-24 h-auto drop-shadow-[0_0_30px_rgba(96,165,250,0.3)]" />
             <div className="text-center">
-              <h1 className="font-display text-[22px] font-semibold tracking-tight text-[#f8fafc]">
+              <h1 className="font-display text-[18px] font-semibold tracking-tight text-[#f8fafc]">
                 {sent ? "Check your inbox" : otpSent ? "Enter the code" : isSignUp ? "Create your account" : "Sign in"}
               </h1>
-              <p className="mt-1 text-[13px] text-[#f8fafc]/90">
+              <p className="mt-0.5 text-[12px] text-[#f8fafc]/90">
                 {sent
                   ? `We sent a magic link to ${email.trim()}. Tap it to continue.`
                   : otpSent
