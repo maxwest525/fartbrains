@@ -26,17 +26,11 @@ export const SetPinCard = () => {
   const [pin, setPin] = useState("");
   const [saving, setSaving] = useState(false);
 
-  const press = (d: string) => {
-    if (saving) return;
-    setPin((p) => (p.length >= PIN_LENGTH ? p : p + d));
-  };
-  const back = () => setPin((p) => p.slice(0, -1));
-
-  const save = async () => {
-    if (pin.length !== PIN_LENGTH) return;
+  const save = async (value: string) => {
+    if (value.length !== PIN_LENGTH) return;
     setSaving(true);
     try {
-      const { error } = await supabase.auth.updateUser({ password: pinToPassword(pin) });
+      const { error } = await supabase.auth.updateUser({ password: pinToPassword(value) });
       if (error) throw error;
       toast.success("PIN saved. Use it next sign in.");
       setPin("");
@@ -46,6 +40,20 @@ export const SetPinCard = () => {
       setSaving(false);
     }
   };
+
+  const press = (d: string) => {
+    if (saving) return;
+    setPin((p) => {
+      if (p.length >= PIN_LENGTH) return p;
+      const next = p + d;
+      if (next.length === PIN_LENGTH) {
+        // Auto-submit once the 4th digit lands.
+        setTimeout(() => { void save(next); }, 80);
+      }
+      return next;
+    });
+  };
+  const back = () => setPin((p) => p.slice(0, -1));
 
   return (
     <div className="mt-5 rounded-2xl bg-card border border-border/60 px-4 py-4">
@@ -123,7 +131,7 @@ export const SetPinCard = () => {
 
         <button
           type="button"
-          onClick={save}
+          onClick={() => void save(pin)}
           disabled={saving || pin.length !== PIN_LENGTH}
           className="w-full h-10 rounded-full bg-primary text-primary-foreground text-sm font-medium flex items-center justify-center gap-2 disabled:opacity-40 active:scale-[0.99] transition"
         >
