@@ -164,8 +164,10 @@ export const VoiceOrb = ({ onDictate, onLiveTranscript, speaking = false }: Voic
   const voiceWorkspaceOpen = isRecording || isTranscribing || draft !== null;
 
   useEffect(() => {
+    document.body.dataset.voiceWorkspaceOpen = voiceWorkspaceOpen ? "true" : "false";
     window.dispatchEvent(new CustomEvent("idea-vault:voice-workspace", { detail: voiceWorkspaceOpen }));
     return () => {
+      document.body.dataset.voiceWorkspaceOpen = "false";
       window.dispatchEvent(new CustomEvent("idea-vault:voice-workspace", { detail: false }));
     };
   }, [voiceWorkspaceOpen]);
