@@ -313,7 +313,7 @@ export const AuthScreen = () => {
                   : otpSent
                     ? `We texted a 6-digit code to ${normalizedPhone}.`
                     : mode === "pin"
-                      ? (isSignUp ? "Pick a 6-digit PIN to secure your account." : "Enter your 6-digit PIN.")
+                      ? (isSignUp ? "Pick a 4-digit PIN to secure your account." : "Enter your 4-digit PIN.")
                       : mode === "password"
                         ? (isSignUp ? "Sign up with a password." : "Sign in with your password.")
                         : kind === "email" ? "We'll email you a magic link." : "We'll text you a one-time code."}
