@@ -283,13 +283,36 @@ export const PasscodeKeypad = ({ onUnlocked, mode }: Props) => {
           Keep it memorable — there's no recovery yet.
         </p>
       ) : (
-        <button
-          type="button"
-          onClick={() => setShowForgot(true)}
-          className="text-[12px] text-white/55 hover:text-white/80 underline-offset-4 hover:underline"
-        >
-          Forgot PIN?
-        </button>
+        <div className="flex flex-col items-center gap-3">
+          {bioSupported && bioEnrolled && (
+            <button
+              type="button"
+              onClick={tryBiometric}
+              disabled={bioBusy || lockoutLeft > 0}
+              className="flex items-center gap-2 px-4 h-10 rounded-full border border-white/15 bg-white/[0.06] text-white/90 text-[13px] hover:bg-white/[0.10] transition disabled:opacity-40"
+            >
+              <ScanFace className="h-4 w-4" />
+              {bioBusy ? "Waiting…" : "Use Face ID"}
+            </button>
+          )}
+          {bioSupported && !bioEnrolled && (
+            <button
+              type="button"
+              onClick={enableBiometric}
+              disabled={bioBusy}
+              className="text-[12px] text-white/60 hover:text-white/90 underline-offset-4 hover:underline"
+            >
+              Enable Face ID
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={() => setShowForgot(true)}
+            className="text-[12px] text-white/55 hover:text-white/80 underline-offset-4 hover:underline"
+          >
+            Forgot PIN?
+          </button>
+        </div>
       )}
 
       <AlertDialog open={showForgot} onOpenChange={setShowForgot}>
