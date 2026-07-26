@@ -1,11 +1,14 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Mail, Loader2, CheckCircle2, KeyRound } from "lucide-react";
+import { Mail, Loader2, CheckCircle2, KeyRound, X } from "lucide-react";
 import { toast } from "sonner";
 import { isEmailAllowed } from "@/lib/allowlist";
 import logo from "@/assets/fartbrains-logo.png";
+
+const LAST_EMAIL_KEY = "iv.auth.lastEmail.v1";
+const WELCOME_PENDING_KEY = "iv.welcome.pending.v1";
 
 type Mode = "password" | "magic";
 
@@ -16,6 +19,25 @@ export const AuthScreen = () => {
   const [password, setPassword] = useState("");
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
+
+  // Prefill last-used email so returning users can jump straight to password/PIN.
+  const [rememberedEmail, setRememberedEmail] = useState<string | null>(null);
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem(LAST_EMAIL_KEY);
+      if (stored) {
+        setEmail(stored);
+        setRememberedEmail(stored);
+      }
+    } catch { /* ignore */ }
+  }, []);
+
+  const forgetEmail = () => {
+    try { localStorage.removeItem(LAST_EMAIL_KEY); } catch { /* ignore */ }
+    setRememberedEmail(null);
+    setEmail("");
+    setPassword("");
+  };
 
   const isValidEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
 
@@ -35,6 +57,7 @@ export const AuthScreen = () => {
         },
       });
       if (error) throw error;
+      try { localStorage.setItem(LAST_EMAIL_KEY, trimmed); } catch { /* ignore */ }
       setSent(true);
       toast.success("Magic link sent", { description: "Check your inbox to sign in." });
     } catch (e) {
@@ -60,6 +83,10 @@ export const AuthScreen = () => {
           options: { emailRedirectTo: `${window.location.origin}/` },
         });
         if (error) throw error;
+        try {
+          localStorage.setItem(LAST_EMAIL_KEY, trimmed);
+          localStorage.setItem(WELCOME_PENDING_KEY, "1");
+        } catch { /* ignore */ }
         toast.success("Account created", { description: "Check your inbox to confirm your email." });
       } else {
         const { error } = await supabase.auth.signInWithPassword({
@@ -67,6 +94,7 @@ export const AuthScreen = () => {
           password,
         });
         if (error) throw error;
+        try { localStorage.setItem(LAST_EMAIL_KEY, trimmed); } catch { /* ignore */ }
         toast.success("Signed in");
       }
     } catch (e) {
@@ -161,16 +189,33 @@ export const AuthScreen = () => {
               onSubmit={(e) => { e.preventDefault(); mode === "password" ? signInPassword() : sendMagic(); }}
               className="flex flex-col gap-3"
             >
-              <Input
-                type="email"
-                inputMode="email"
-                autoComplete="email"
-                autoFocus
-                placeholder="you@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="h-14 rounded-2xl text-[16px] px-4"
-              />
+              {rememberedEmail && email === rememberedEmail ? (
+                <div className="flex items-center justify-between gap-2 h-14 px-4 rounded-2xl bg-white/[0.06] border border-white/10">
+                  <div className="flex flex-col min-w-0">
+                    <span className="text-[10.5px] uppercase tracking-wider text-white/50">Continuing as</span>
+                    <span className="text-[14px] font-medium text-white truncate">{rememberedEmail}</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={forgetEmail}
+                    aria-label="Use a different email"
+                    className="shrink-0 h-8 w-8 rounded-full flex items-center justify-center text-white/60 hover:text-white hover:bg-white/[0.08]"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              ) : (
+                <Input
+                  type="email"
+                  inputMode="email"
+                  autoComplete="email"
+                  autoFocus
+                  placeholder="you@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="h-14 rounded-2xl text-[16px] px-4"
+                />
+              )}
               {mode === "password" && (
                 <Input
                   type="password"

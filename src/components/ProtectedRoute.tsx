@@ -4,6 +4,7 @@ import { PasscodeKeypad } from "@/components/auth/PasscodeKeypad";
 import { SplashScreen } from "@/components/auth/SplashScreen";
 import { AuthScreen } from "@/components/auth/AuthScreen";
 import { PasscodeSetupPrompt } from "@/components/auth/PasscodeSetupPrompt";
+import { WelcomeBackScreen } from "@/components/auth/WelcomeBackScreen";
 import {
   hasPasscode,
   hasOptedOut,
@@ -12,6 +13,7 @@ import {
 } from "@/lib/passcode";
 
 const SPLASH_KEY = "iv.splash.shown.v1";
+const WELCOME_PENDING_KEY = "iv.welcome.pending.v1";
 
 export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, loading } = useAuth();
@@ -25,6 +27,16 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const [wantsSetup, setWantsSetup] = useState(false);
   // Local re-render triggers for passcode state changes.
   const [passcodeVer, setPasscodeVer] = useState(0);
+
+  // One-time welcome shown to freshly signed-up accounts. The flag is set on
+  // signUp success in AuthScreen and cleared after the user dismisses it.
+  const [welcomePending, setWelcomePending] = useState<boolean>(
+    () => localStorage.getItem(WELCOME_PENDING_KEY) === "1"
+  );
+  const dismissWelcome = () => {
+    try { localStorage.removeItem(WELCOME_PENDING_KEY); } catch { /* ignore */ }
+    setWelcomePending(false);
+  };
 
   // 1) Splash
   if (!splashDone) {
@@ -50,6 +62,11 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   // 3) Auth gate: existing sessions pass through, only signed-out browsers see magic link.
   if (!user) {
     return <AuthScreen />;
+  }
+
+  // 3b) Brand-new account? Show the cheeky welcome once.
+  if (welcomePending) {
+    return <WelcomeBackScreen onDone={dismissWelcome} />;
   }
 
   // 4) Signed in, passcode set, not unlocked → unlock keypad
