@@ -1,11 +1,14 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Mail, Loader2, CheckCircle2, KeyRound, X, Phone } from "lucide-react";
+import { Mail, Loader2, CheckCircle2, KeyRound, X, Phone, Delete } from "lucide-react";
 import { toast } from "sonner";
 import { isEmailAllowed } from "@/lib/allowlist";
+import { cn } from "@/lib/utils";
 import logo from "@/assets/fartbrains-logo.png";
+
+const PIN_LENGTH = 4;
 
 const LAST_EMAIL_KEY = "iv.auth.lastEmail.v1";
 const LAST_PHONE_KEY = "iv.auth.lastPhone.v1";
@@ -165,8 +168,9 @@ export const AuthScreen = () => {
     }
   };
 
-  const signInPassword = async () => {
-    if (!identifierValid || !password || sending) return;
+  const signInPassword = async (overridePassword?: string) => {
+    const pw = overridePassword ?? password;
+    if (!identifierValid || !pw || sending) return;
     setSending(true);
     try {
       if (kind === "email") {
@@ -178,7 +182,7 @@ export const AuthScreen = () => {
         if (isSignUp) {
           const { error } = await supabase.auth.signUp({
             email: trimmed,
-            password,
+            password: pw,
             options: { emailRedirectTo: `${window.location.origin}/` },
           });
           if (error) throw error;
@@ -186,21 +190,21 @@ export const AuthScreen = () => {
           rememberSuccess();
           toast.success("Account created", { description: "Check your inbox to confirm your email." });
         } else {
-          const { error } = await supabase.auth.signInWithPassword({ email: trimmed, password });
+          const { error } = await supabase.auth.signInWithPassword({ email: trimmed, password: pw });
           if (error) throw error;
           rememberSuccess();
           toast.success("Signed in");
         }
       } else {
         if (isSignUp) {
-          const { error } = await supabase.auth.signUp({ phone: normalizedPhone, password });
+          const { error } = await supabase.auth.signUp({ phone: normalizedPhone, password: pw });
           if (error) throw error;
           try { localStorage.setItem(WELCOME_PENDING_KEY, "1"); } catch { /* ignore */ }
           rememberSuccess();
           toast.success("Account created", { description: "We texted a code to confirm your number." });
           setOtpSent(true);
         } else {
-          const { error } = await supabase.auth.signInWithPassword({ phone: normalizedPhone, password });
+          const { error } = await supabase.auth.signInWithPassword({ phone: normalizedPhone, password: pw });
           if (error) throw error;
           rememberSuccess();
           toast.success("Signed in");
@@ -208,6 +212,7 @@ export const AuthScreen = () => {
       }
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Couldn't sign in");
+      if (mode === "pin") setPassword("");
     } finally {
       setSending(false);
     }
@@ -257,13 +262,35 @@ export const AuthScreen = () => {
   const currentIdentifier = kind === "email" ? email : phone;
   const showRememberedPill = rememberedIdentifier && currentIdentifier === rememberedIdentifier;
 
+  /** Supabase requires ≥6 char passwords; derive a deterministic value from the 4-digit PIN. */
+  const pinToPassword = (pin: string) => `${pin}-fbpin`;
+
+  const pressPin = useCallback((d: string) => {
+    if (sending) return;
+    setPassword((prev) => {
+      if (prev.length >= PIN_LENGTH) return prev;
+      const next = prev + d;
+      if (next.length === PIN_LENGTH && identifierValid) {
+        setTimeout(() => { signInPassword(pinToPassword(next)); }, 80);
+      }
+      return next;
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sending, identifierValid]);
+
+  const backspacePin = () => setPassword((p) => p.slice(0, -1));
+
   const onSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (kind === "phone" && mode === "magic") {
       if (otpSent) verifyPhoneOtp(); else sendMagic();
       return;
     }
-    (mode === "password" || mode === "pin") ? signInPassword() : sendMagic();
+    if (mode === "pin") {
+      signInPassword(pinToPassword(password));
+      return;
+    }
+    (mode === "password") ? signInPassword() : sendMagic();
   };
 
   return (
@@ -287,7 +314,7 @@ export const AuthScreen = () => {
                   : otpSent
                     ? `We texted a 6-digit code to ${normalizedPhone}.`
                     : mode === "pin"
-                      ? (isSignUp ? "Pick a 6-digit PIN to secure your account." : "Enter your 6-digit PIN.")
+                      ? (isSignUp ? "Pick a 4-digit PIN to secure your account." : "Enter your 4-digit PIN.")
                       : mode === "password"
                         ? (isSignUp ? "Sign up with a password." : "Sign in with your password.")
                         : kind === "email" ? "We'll email you a magic link." : "We'll text you a one-time code."}
@@ -377,18 +404,61 @@ export const AuthScreen = () => {
                 </div>
               )}
 
-              {/* PIN entry: 6-digit numeric, treated as the account password. */}
+              {/* PIN entry: 4-digit keypad, derived into a ≥6 char password server-side. */}
               {mode === "pin" && !otpSent && (
-                <Input
-                  type="password"
-                  inputMode="numeric"
-                  autoComplete={isSignUp ? "new-password" : "current-password"}
-                  placeholder="6-digit PIN"
-                  maxLength={6}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value.replace(/\D/g, "").slice(0, 6))}
-                  className="h-14 rounded-2xl text-[20px] px-4 tracking-[0.5em] text-center"
-                />
+                <div className="flex flex-col items-center gap-4 py-2">
+                  {/* Dots */}
+                  <div className="flex items-center gap-4">
+                    {Array.from({ length: PIN_LENGTH }).map((_, i) => (
+                      <span
+                        key={i}
+                        className={cn(
+                          "h-3.5 w-3.5 rounded-full border transition-all duration-150",
+                          i < password.length
+                            ? "bg-white border-white scale-110"
+                            : "border-white/40 bg-transparent",
+                        )}
+                      />
+                    ))}
+                  </div>
+                  {/* Keypad */}
+                  <div className="grid grid-cols-3 gap-3">
+                    {[1,2,3,4,5,6,7,8,9].map((n) => (
+                      <button
+                        key={n}
+                        type="button"
+                        onClick={() => pressPin(String(n))}
+                        disabled={sending || !identifierValid}
+                        className="h-16 w-16 rounded-full bg-white/[0.08] hover:bg-white/[0.14] active:bg-white/[0.20] border border-white/15 backdrop-blur-xl text-[26px] font-light text-white transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
+                      >
+                        {n}
+                      </button>
+                    ))}
+                    <div className="h-16 w-16" />
+                    <button
+                      type="button"
+                      onClick={() => pressPin("0")}
+                      disabled={sending || !identifierValid}
+                      className="h-16 w-16 rounded-full bg-white/[0.08] hover:bg-white/[0.14] active:bg-white/[0.20] border border-white/15 backdrop-blur-xl text-[26px] font-light text-white transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                      0
+                    </button>
+                    <button
+                      type="button"
+                      onClick={backspacePin}
+                      disabled={sending || password.length === 0}
+                      aria-label="Backspace"
+                      className="h-16 w-16 rounded-full flex items-center justify-center text-white/90 hover:bg-white/10 active:bg-white/15 active:scale-95 transition disabled:opacity-30"
+                    >
+                      <Delete className="h-5 w-5" />
+                    </button>
+                  </div>
+                  {!identifierValid && (
+                    <p className="text-[11.5px] text-white/50 text-center">
+                      Enter your {kind === "email" ? "email" : "phone number"} above to use the keypad.
+                    </p>
+                  )}
+                </div>
               )}
 
               {/* Full password entry */}
@@ -418,31 +488,35 @@ export const AuthScreen = () => {
                 />
               )}
 
-              <Button
-                type="submit"
-                disabled={
-                  sending ||
-                  !identifierValid ||
-                  (mode === "password" && !password) ||
-                  (mode === "pin" && password.length !== 6) ||
-                  (kind === "phone" && mode === "magic" && otpSent && otp.length < 4)
-                }
-                className="h-14 rounded-2xl brand-gradient text-white text-[15px] font-semibold"
-              >
-                {sending ? (
-                  <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Working…</>
-                ) : kind === "phone" && mode === "magic" && otpSent ? (
-                  <><KeyRound className="h-4 w-4 mr-2" /> Verify code</>
-                ) : mode === "pin" ? (
-                  <><KeyRound className="h-4 w-4 mr-2" /> {isSignUp ? "Create PIN" : "Unlock"}</>
-                ) : mode === "password" ? (
-                  <><KeyRound className="h-4 w-4 mr-2" /> {isSignUp ? "Create account" : "Sign in"}</>
-                ) : kind === "phone" ? (
-                  <><Phone className="h-4 w-4 mr-2" /> Text me a code</>
-                ) : (
-                  <><Mail className="h-4 w-4 mr-2" /> Send magic link</>
-                )}
-              </Button>
+              {mode !== "pin" && (
+                <Button
+                  type="submit"
+                  disabled={
+                    sending ||
+                    !identifierValid ||
+                    (mode === "password" && !password) ||
+                    (kind === "phone" && mode === "magic" && otpSent && otp.length < 4)
+                  }
+                  className="h-14 rounded-2xl brand-gradient text-white text-[15px] font-semibold"
+                >
+                  {sending ? (
+                    <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Working…</>
+                  ) : kind === "phone" && mode === "magic" && otpSent ? (
+                    <><KeyRound className="h-4 w-4 mr-2" /> Verify code</>
+                  ) : mode === "password" ? (
+                    <><KeyRound className="h-4 w-4 mr-2" /> {isSignUp ? "Create account" : "Sign in"}</>
+                  ) : kind === "phone" ? (
+                    <><Phone className="h-4 w-4 mr-2" /> Text me a code</>
+                  ) : (
+                    <><Mail className="h-4 w-4 mr-2" /> Send magic link</>
+                  )}
+                </Button>
+              )}
+              {mode === "pin" && sending && (
+                <div className="flex items-center justify-center h-10 text-white/70 text-[13px]">
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" /> Working…
+                </div>
+              )}
 
               {kind === "phone" && mode === "magic" && otpSent && (
                 <button
