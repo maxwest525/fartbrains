@@ -59,10 +59,8 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     );
   }
 
-  // 3) Auth gate: existing sessions pass through, only signed-out browsers see magic link.
-  if (!user) {
-    return <AuthScreen />;
-  }
+  // 3) Auth gate disabled — PIN-only. Existing sessions still hydrate normally.
+  // (AuthScreen kept in the codebase in case we re-enable email/phone later.)
 
   // 3b) Brand-new account? Show the cheeky welcome once.
   if (welcomePending) {
