@@ -131,7 +131,7 @@ export const SetPinCard = () => {
 
         <button
           type="button"
-          onClick={save}
+          onClick={() => void save(pin)}
           disabled={saving || pin.length !== PIN_LENGTH}
           className="w-full h-10 rounded-full bg-primary text-primary-foreground text-sm font-medium flex items-center justify-center gap-2 disabled:opacity-40 active:scale-[0.99] transition"
         >
