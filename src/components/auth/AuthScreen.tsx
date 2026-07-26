@@ -87,18 +87,9 @@ export const AuthScreen = () => {
       if (lastEmail) { setEmail(lastEmail); setRememberedEmail(lastEmail); }
       if (lastPhone) { setPhone(lastPhone); setRememberedPhone(lastPhone); }
       if (lastKind === "email" || lastKind === "phone") setKind(lastKind);
-      // Restore last-used sign-in mode; default to PIN keypad.
-      const lastMode = localStorage.getItem(LAST_MODE_KEY) as Mode | null;
-      if (lastMode === "pin" || lastMode === "password" || lastMode === "magic") {
-        setMode(lastMode);
-      }
+      // Always default to PIN keypad on load.
     } catch { /* ignore */ }
   }, []);
-
-  // Persist mode selection so returning users land on their preferred keypad/method.
-  useEffect(() => {
-    try { localStorage.setItem(LAST_MODE_KEY, mode); } catch { /* ignore */ }
-  }, [mode]);
 
   const forgetIdentifier = () => {
     try {
