@@ -28,6 +28,38 @@ const normalizePhone = (raw: string): string => {
 
 const isValidE164 = (v: string) => /^\+[1-9]\d{7,14}$/.test(v);
 
+/** Pretty-format phone input as the user types. Supports US (default) and intl (+..). */
+const formatPhoneInput = (raw: string): string => {
+  const trimmed = raw.trimStart();
+  if (!trimmed) return "";
+  // International: keep leading + and group digits in 3s after country code.
+  if (trimmed.startsWith("+")) {
+    const digits = trimmed.slice(1).replace(/\D/g, "").slice(0, 15);
+    if (!digits) return "+";
+    // US-style pretty print for +1 XXX XXX XXXX
+    if (digits.startsWith("1") && digits.length > 1) {
+      const rest = digits.slice(1);
+      const a = rest.slice(0, 3);
+      const b = rest.slice(3, 6);
+      const c = rest.slice(6, 10);
+      return `+1${a ? " " + a : ""}${b ? " " + b : ""}${c ? " " + c : ""}`;
+    }
+    // Generic: "+CC XXX XXX XXXX..."
+    const cc = digits.slice(0, Math.min(3, Math.max(1, digits.length - 7)));
+    const rest = digits.slice(cc.length);
+    const groups = rest.match(/.{1,3}/g)?.join(" ") ?? "";
+    return `+${cc}${groups ? " " + groups : ""}`;
+  }
+  // Domestic US: (XXX) XXX-XXXX
+  const digits = trimmed.replace(/\D/g, "").slice(0, 10);
+  const a = digits.slice(0, 3);
+  const b = digits.slice(3, 6);
+  const c = digits.slice(6, 10);
+  if (digits.length <= 3) return a ? `(${a}` + (digits.length === 3 ? ") " : "") : "";
+  if (digits.length <= 6) return `(${a}) ${b}`;
+  return `(${a}) ${b}-${c}`;
+};
+
 export const AuthScreen = () => {
   const [kind, setKind] = useState<Kind>("email");
   const [mode, setMode] = useState<Mode>("password");
@@ -320,16 +352,26 @@ export const AuthScreen = () => {
                   className="h-14 rounded-2xl text-[16px] px-4"
                 />
               ) : (
-                <Input
-                  type="tel"
-                  inputMode="tel"
-                  autoComplete="tel"
-                  autoFocus
-                  placeholder="+1 555 123 4567"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  className="h-14 rounded-2xl text-[16px] px-4"
-                />
+                <div className="flex flex-col gap-1">
+                  <Input
+                    type="tel"
+                    inputMode="tel"
+                    autoComplete="tel"
+                    autoFocus
+                    placeholder="(555) 123-4567"
+                    value={phone}
+                    onChange={(e) => setPhone(formatPhoneInput(e.target.value))}
+                    aria-invalid={phone.length > 0 && !isValidPhone}
+                    className={`h-14 rounded-2xl text-[16px] px-4 ${
+                      phone.length > 0 && !isValidPhone ? "border-destructive/70" : ""
+                    }`}
+                  />
+                  {phone.length > 0 && !isValidPhone && (
+                    <p role="alert" className="text-[11px] text-destructive/90 px-1">
+                      Enter a valid phone number (e.g. (555) 123-4567 or +44 20 7946 0958).
+                    </p>
+                  )}
+                </div>
               )}
 
               {/* Password field: email/password or phone/password sign-in */}
