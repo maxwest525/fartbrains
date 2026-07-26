@@ -146,7 +146,7 @@ export const useVoiceCapture = ({ maxSeconds = 120 }: Options = {}) => {
     setState("idle");
   }, []);
 
-  return { state, seconds, error, start, stop, cancel, finishProcessing };
+  return { state, seconds, error, stream, start, stop, cancel, finishProcessing };
 };
 
 /** Convert an audio Blob to base64 (no data: prefix). */
