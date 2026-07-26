@@ -38,6 +38,22 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     try { localStorage.removeItem(WELCOME_PENDING_KEY); } catch { /* ignore */ }
     setWelcomePending(false);
   };
+  // Auto-establish an anonymous Supabase session when no user is signed in.
+  // Edge functions (transcription, scraping, deep research) require a valid
+  // JWT via requireUser(); without this, PIN-only mode would 401.
+  useEffect(() => {
+    if (loading) return;
+    if (user) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const { data } = await supabase.auth.getSession();
+        if (cancelled || data.session) return;
+        await supabase.auth.signInAnonymously();
+      } catch { /* ignore — surfaces later if a call needs auth */ }
+    })();
+    return () => { cancelled = true; };
+  }, [user, loading]);
 
   // 1) Splash
   if (!splashDone) {
