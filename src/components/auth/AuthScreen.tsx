@@ -403,18 +403,61 @@ export const AuthScreen = () => {
                 </div>
               )}
 
-              {/* PIN entry: 6-digit numeric, treated as the account password. */}
+              {/* PIN entry: 4-digit keypad, derived into a ≥6 char password server-side. */}
               {mode === "pin" && !otpSent && (
-                <Input
-                  type="password"
-                  inputMode="numeric"
-                  autoComplete={isSignUp ? "new-password" : "current-password"}
-                  placeholder="6-digit PIN"
-                  maxLength={6}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value.replace(/\D/g, "").slice(0, 6))}
-                  className="h-14 rounded-2xl text-[20px] px-4 tracking-[0.5em] text-center"
-                />
+                <div className="flex flex-col items-center gap-4 py-2">
+                  {/* Dots */}
+                  <div className="flex items-center gap-4">
+                    {Array.from({ length: PIN_LENGTH }).map((_, i) => (
+                      <span
+                        key={i}
+                        className={cn(
+                          "h-3.5 w-3.5 rounded-full border transition-all duration-150",
+                          i < password.length
+                            ? "bg-white border-white scale-110"
+                            : "border-white/40 bg-transparent",
+                        )}
+                      />
+                    ))}
+                  </div>
+                  {/* Keypad */}
+                  <div className="grid grid-cols-3 gap-3">
+                    {[1,2,3,4,5,6,7,8,9].map((n) => (
+                      <button
+                        key={n}
+                        type="button"
+                        onClick={() => pressPin(String(n))}
+                        disabled={sending || !identifierValid}
+                        className="h-16 w-16 rounded-full bg-white/[0.08] hover:bg-white/[0.14] active:bg-white/[0.20] border border-white/15 backdrop-blur-xl text-[26px] font-light text-white transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
+                      >
+                        {n}
+                      </button>
+                    ))}
+                    <div className="h-16 w-16" />
+                    <button
+                      type="button"
+                      onClick={() => pressPin("0")}
+                      disabled={sending || !identifierValid}
+                      className="h-16 w-16 rounded-full bg-white/[0.08] hover:bg-white/[0.14] active:bg-white/[0.20] border border-white/15 backdrop-blur-xl text-[26px] font-light text-white transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                      0
+                    </button>
+                    <button
+                      type="button"
+                      onClick={backspacePin}
+                      disabled={sending || password.length === 0}
+                      aria-label="Backspace"
+                      className="h-16 w-16 rounded-full flex items-center justify-center text-white/90 hover:bg-white/10 active:bg-white/15 active:scale-95 transition disabled:opacity-30"
+                    >
+                      <Delete className="h-5 w-5" />
+                    </button>
+                  </div>
+                  {!identifierValid && (
+                    <p className="text-[11.5px] text-white/50 text-center">
+                      Enter your {kind === "email" ? "email" : "phone number"} above to use the keypad.
+                    </p>
+                  )}
+                </div>
               )}
 
               {/* Full password entry */}
