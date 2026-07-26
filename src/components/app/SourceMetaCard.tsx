@@ -111,13 +111,23 @@ export const SourceMetaCard = ({ idea }: Props) => {
       </div>
 
       {meta.audio?.url && (
-        <div className="px-3 sm:px-4 pb-3 sm:pb-4">
+        <div className="px-3 sm:px-4 pb-3 sm:pb-4 space-y-2">
           <audio
             controls
             preload="metadata"
             src={meta.audio.url}
             className="w-full h-10"
           />
+          {idea.extracted_text?.trim() && (
+            <div className="rounded-xl bg-white/[0.04] border border-white/10 px-3 py-2">
+              <div className="text-[11px] uppercase tracking-wider text-white/50 mb-1">
+                Transcript
+              </div>
+              <p className="whitespace-pre-wrap text-[13px] leading-relaxed text-white/85 max-h-56 overflow-y-auto">
+                {idea.extracted_text}
+              </p>
+            </div>
+          )}
         </div>
       )}
     </div>
