@@ -182,7 +182,7 @@ export const AuthScreen = () => {
         if (isSignUp) {
           const { error } = await supabase.auth.signUp({
             email: trimmed,
-            password,
+            password: pw,
             options: { emailRedirectTo: `${window.location.origin}/` },
           });
           if (error) throw error;
@@ -190,21 +190,21 @@ export const AuthScreen = () => {
           rememberSuccess();
           toast.success("Account created", { description: "Check your inbox to confirm your email." });
         } else {
-          const { error } = await supabase.auth.signInWithPassword({ email: trimmed, password });
+          const { error } = await supabase.auth.signInWithPassword({ email: trimmed, password: pw });
           if (error) throw error;
           rememberSuccess();
           toast.success("Signed in");
         }
       } else {
         if (isSignUp) {
-          const { error } = await supabase.auth.signUp({ phone: normalizedPhone, password });
+          const { error } = await supabase.auth.signUp({ phone: normalizedPhone, password: pw });
           if (error) throw error;
           try { localStorage.setItem(WELCOME_PENDING_KEY, "1"); } catch { /* ignore */ }
           rememberSuccess();
           toast.success("Account created", { description: "We texted a code to confirm your number." });
           setOtpSent(true);
         } else {
-          const { error } = await supabase.auth.signInWithPassword({ phone: normalizedPhone, password });
+          const { error } = await supabase.auth.signInWithPassword({ phone: normalizedPhone, password: pw });
           if (error) throw error;
           rememberSuccess();
           toast.success("Signed in");
