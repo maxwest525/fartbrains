@@ -484,11 +484,6 @@ export const AuthScreen = () => {
                       <Delete className="h-5 w-5" />
                     </button>
                   </div>
-                  {!identifierValid && (
-                    <p className="text-[11.5px] text-white/50 text-center">
-                      Enter your {kind === "email" ? "email" : "phone number"} above to use the keypad.
-                    </p>
-                  )}
                 </div>
               )}
 
