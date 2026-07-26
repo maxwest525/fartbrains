@@ -58,6 +58,7 @@ type VoiceOrbProps = {
 
 export const VoiceOrb = ({ onDictate, onLiveTranscript, speaking = false }: VoiceOrbProps) => {
   const voice = useVoiceCapture({ maxSeconds: 180 });
+  const live = useLiveTranscript();
   const createIdea = useCreateIdea();
   const [submitting, setSubmitting] = useState(false);
   const [folderId, setFolderId] = useState<string | null>(null);
