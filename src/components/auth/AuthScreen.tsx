@@ -487,31 +487,35 @@ export const AuthScreen = () => {
                 />
               )}
 
-              <Button
-                type="submit"
-                disabled={
-                  sending ||
-                  !identifierValid ||
-                  (mode === "password" && !password) ||
-                  (mode === "pin" && password.length !== 6) ||
-                  (kind === "phone" && mode === "magic" && otpSent && otp.length < 4)
-                }
-                className="h-14 rounded-2xl brand-gradient text-white text-[15px] font-semibold"
-              >
-                {sending ? (
-                  <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Working…</>
-                ) : kind === "phone" && mode === "magic" && otpSent ? (
-                  <><KeyRound className="h-4 w-4 mr-2" /> Verify code</>
-                ) : mode === "pin" ? (
-                  <><KeyRound className="h-4 w-4 mr-2" /> {isSignUp ? "Create PIN" : "Unlock"}</>
-                ) : mode === "password" ? (
-                  <><KeyRound className="h-4 w-4 mr-2" /> {isSignUp ? "Create account" : "Sign in"}</>
-                ) : kind === "phone" ? (
-                  <><Phone className="h-4 w-4 mr-2" /> Text me a code</>
-                ) : (
-                  <><Mail className="h-4 w-4 mr-2" /> Send magic link</>
-                )}
-              </Button>
+              {mode !== "pin" && (
+                <Button
+                  type="submit"
+                  disabled={
+                    sending ||
+                    !identifierValid ||
+                    (mode === "password" && !password) ||
+                    (kind === "phone" && mode === "magic" && otpSent && otp.length < 4)
+                  }
+                  className="h-14 rounded-2xl brand-gradient text-white text-[15px] font-semibold"
+                >
+                  {sending ? (
+                    <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Working…</>
+                  ) : kind === "phone" && mode === "magic" && otpSent ? (
+                    <><KeyRound className="h-4 w-4 mr-2" /> Verify code</>
+                  ) : mode === "password" ? (
+                    <><KeyRound className="h-4 w-4 mr-2" /> {isSignUp ? "Create account" : "Sign in"}</>
+                  ) : kind === "phone" ? (
+                    <><Phone className="h-4 w-4 mr-2" /> Text me a code</>
+                  ) : (
+                    <><Mail className="h-4 w-4 mr-2" /> Send magic link</>
+                  )}
+                </Button>
+              )}
+              {mode === "pin" && sending && (
+                <div className="flex items-center justify-center h-10 text-white/70 text-[13px]">
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" /> Working…
+                </div>
+              )}
 
               {kind === "phone" && mode === "magic" && otpSent && (
                 <button
