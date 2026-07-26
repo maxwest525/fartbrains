@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Delete, Lock } from "lucide-react";
 import { cn } from "@/lib/utils";
+import logo from "@/assets/fartbrains-logo.png";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
@@ -150,9 +151,17 @@ export const PasscodeKeypad = ({ onUnlocked, mode }: Props) => {
 
   return (
     <div className="flex flex-col items-center gap-7 select-none">
-      <div className="flex items-center justify-center text-white/90">
-        <Lock className="h-8 w-8" strokeWidth={1.8} />
-      </div>
+      {setupMode ? (
+        <div className="flex items-center justify-center text-white/90">
+          <Lock className="h-8 w-8" strokeWidth={1.8} />
+        </div>
+      ) : (
+        <img
+          src={logo}
+          alt="FartBrains"
+          className="w-20 h-auto opacity-90 drop-shadow-[0_0_18px_rgba(96,165,250,0.25)]"
+        />
+      )}
 
 
       <div className="text-center">
