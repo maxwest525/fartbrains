@@ -223,17 +223,61 @@ export const PasscodeKeypad = ({ onUnlocked, mode }: Props) => {
       ) : (
         <button
           type="button"
-          onClick={() => {
-            if (confirm("Reset passcode? You'll create a new one.")) {
-              clearPasscode();
-              window.location.reload();
-            }
-          }}
+          onClick={() => setShowForgot(true)}
           className="text-[12px] text-white/55 hover:text-white/80 underline-offset-4 hover:underline"
         >
-          Forgot passcode?
+          Forgot PIN?
         </button>
       )}
+
+      <AlertDialog open={showForgot} onOpenChange={setShowForgot}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Of course you did.</AlertDialogTitle>
+            <AlertDialogDescription>
+              Your PIN is stored on this device, so there's nothing to "email"
+              you. To reset it, we'll sign you out and take you back to the
+              login screen. Sign in again with your email or phone, and you'll
+              be prompted to create a new PIN.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={resetting}>Never mind</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={resetting}
+              onClick={async (e) => {
+                e.preventDefault();
+                setResetting(true);
+                try {
+                  clearPasscode();
+                  await supabase.auth.signOut();
+                  toast.success("PIN cleared — sign back in to set a new one");
+                  // Full reload so ProtectedRoute re-evaluates from a clean slate.
+                  window.location.replace("/");
+                } catch (err) {
+                  toast.error(err instanceof Error ? err.message : "Couldn't reset PIN");
+                  setResetting(false);
+                }
+              }}
+            >
+              {resetting ? "Signing out…" : "Sign out & reset PIN"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <style>{`
+        @keyframes shake {
+          0%, 100% { transform: translateX(0); }
+          20% { transform: translateX(-8px); }
+          40% { transform: translateX(8px); }
+          60% { transform: translateX(-6px); }
+          80% { transform: translateX(6px); }
+        }
+      `}</style>
+    </div>
+  );
+};
 
       <style>{`
         @keyframes shake {
