@@ -1,11 +1,14 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Mail, Loader2, CheckCircle2, KeyRound, X, Phone } from "lucide-react";
+import { Mail, Loader2, CheckCircle2, KeyRound, X, Phone, Delete } from "lucide-react";
 import { toast } from "sonner";
 import { isEmailAllowed } from "@/lib/allowlist";
+import { cn } from "@/lib/utils";
 import logo from "@/assets/fartbrains-logo.png";
+
+const PIN_LENGTH = 4;
 
 const LAST_EMAIL_KEY = "iv.auth.lastEmail.v1";
 const LAST_PHONE_KEY = "iv.auth.lastPhone.v1";
