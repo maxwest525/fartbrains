@@ -189,17 +189,33 @@ export const AuthScreen = () => {
               onSubmit={(e) => { e.preventDefault(); mode === "password" ? signInPassword() : sendMagic(); }}
               className="flex flex-col gap-3"
             >
-              <Input
-                type="email"
-                inputMode="email"
-                autoComplete="email"
-                autoFocus
-                placeholder="you@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="h-14 rounded-2xl text-[16px] px-4"
-              />
-              {mode === "password" && (
+              {rememberedEmail && email === rememberedEmail ? (
+                <div className="flex items-center justify-between gap-2 h-14 px-4 rounded-2xl bg-white/[0.06] border border-white/10">
+                  <div className="flex flex-col min-w-0">
+                    <span className="text-[10.5px] uppercase tracking-wider text-white/50">Continuing as</span>
+                    <span className="text-[14px] font-medium text-white truncate">{rememberedEmail}</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={forgetEmail}
+                    aria-label="Use a different email"
+                    className="shrink-0 h-8 w-8 rounded-full flex items-center justify-center text-white/60 hover:text-white hover:bg-white/[0.08]"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              ) : (
+                <Input
+                  type="email"
+                  inputMode="email"
+                  autoComplete="email"
+                  autoFocus
+                  placeholder="you@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="h-14 rounded-2xl text-[16px] px-4"
+                />
+              )}
                 <Input
                   type="password"
                   autoComplete="current-password"
