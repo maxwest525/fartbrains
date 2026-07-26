@@ -87,11 +87,18 @@ export const AuthScreen = () => {
       if (lastEmail) { setEmail(lastEmail); setRememberedEmail(lastEmail); }
       if (lastPhone) { setPhone(lastPhone); setRememberedPhone(lastPhone); }
       if (lastKind === "email" || lastKind === "phone") setKind(lastKind);
-      // If the user last logged in with phone, default to OTP mode (SMS).
-      if (lastKind === "phone") setMode("magic");
-      // Otherwise keep PIN as the default.
+      // Restore last-used sign-in mode; default to PIN keypad.
+      const lastMode = localStorage.getItem(LAST_MODE_KEY) as Mode | null;
+      if (lastMode === "pin" || lastMode === "password" || lastMode === "magic") {
+        setMode(lastMode);
+      }
     } catch { /* ignore */ }
   }, []);
+
+  // Persist mode selection so returning users land on their preferred keypad/method.
+  useEffect(() => {
+    try { localStorage.setItem(LAST_MODE_KEY, mode); } catch { /* ignore */ }
+  }, [mode]);
 
   const forgetIdentifier = () => {
     try {
