@@ -55,8 +55,8 @@ export const useVoiceCapture = ({ maxSeconds = 120 }: Options = {}) => {
       const mimeType =
         candidates.find((m) => MediaRecorder.isTypeSupported(m)) ?? "";
       const recorder = mimeType
-        ? new MediaRecorder(stream, { mimeType })
-        : new MediaRecorder(stream);
+        ? new MediaRecorder(micStream, { mimeType })
+        : new MediaRecorder(micStream);
 
       chunksRef.current = [];
       recorder.ondataavailable = (e) => {
