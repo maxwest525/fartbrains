@@ -46,8 +46,9 @@ export const useVoiceCapture = ({ maxSeconds = 120 }: Options = {}) => {
     setError(null);
     setState("requesting");
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      streamRef.current = stream;
+      const micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      streamRef.current = micStream;
+      setStream(micStream);
 
       // Pick the best mime the browser supports. Safari prefers mp4.
       const candidates = ["audio/webm;codecs=opus", "audio/webm", "audio/mp4", "audio/ogg"];
