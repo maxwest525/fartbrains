@@ -1,10 +1,12 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { KeyRound, Loader2, Delete, Check } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 const PIN_LENGTH = 4;
+const PIN_ENABLED_KEY = "fb-pin-save-enabled";
 const pinToPassword = (pin: string) => `${pin}-fbpin`;
 
 /**
@@ -12,6 +14,15 @@ const pinToPassword = (pin: string) => `${pin}-fbpin`;
  * Moved out of the AuthScreen so the auth keypad stays focused on sign-in.
  */
 export const SetPinCard = () => {
+  const [enabled, setEnabled] = useState<boolean>(() => {
+    if (typeof window === "undefined") return true;
+    return window.localStorage.getItem(PIN_ENABLED_KEY) !== "0";
+  });
+  useEffect(() => {
+    window.localStorage.setItem(PIN_ENABLED_KEY, enabled ? "1" : "0");
+    if (!enabled) setPin("");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [enabled]);
   const [pin, setPin] = useState("");
   const [saving, setSaving] = useState(false);
 
@@ -45,11 +56,19 @@ export const SetPinCard = () => {
         <div className="flex-1 min-w-0">
           <p className="text-sm font-medium">Sign-in PIN</p>
           <p className="text-[11px] text-muted-foreground mt-0.5">
-            Set a 4-digit PIN so you can sign in with the keypad.
+            {enabled
+              ? "Set a 4-digit PIN so you can sign in with the keypad."
+              : "PIN sign-in is off. Turn on to set a 4-digit PIN."}
           </p>
         </div>
+        <Switch
+          checked={enabled}
+          onCheckedChange={setEnabled}
+          aria-label="Enable PIN sign-in"
+        />
       </div>
 
+      {enabled && (
       <div className="mt-4 flex flex-col items-center gap-3">
         <div className="flex items-center gap-3">
           {Array.from({ length: PIN_LENGTH }).map((_, i) => (
@@ -112,6 +131,7 @@ export const SetPinCard = () => {
           Save PIN
         </button>
       </div>
+      )}
     </div>
   );
 };
