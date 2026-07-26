@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useState } from "react";
-import { Delete, Lock } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Delete, Lock, ScanFace } from "lucide-react";
 import { cn } from "@/lib/utils";
 import logo from "@/assets/fartbrains-logo.png";
 import { supabase } from "@/integrations/supabase/client";
@@ -21,7 +21,15 @@ import {
   verifyPasscode,
   lockoutRemainingMs,
   clearPasscode,
+  markUnlocked,
 } from "@/lib/passcode";
+import {
+  isBiometricSupported,
+  hasBiometric,
+  enrollBiometric,
+  verifyBiometric,
+  clearBiometric,
+} from "@/lib/biometric";
 
 type Props = {
   onUnlocked: () => void;
