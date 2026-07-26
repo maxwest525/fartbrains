@@ -226,10 +226,12 @@ export const VoiceOrb = ({ onDictate, onLiveTranscript, speaking = false }: Voic
 
     try {
       if (voice.state === "recording") {
+        live.stop();
         const { blob, mimeType } = await voice.stop();
         if (blob.size < 800) {
           toast.error("Too short — hold a bit longer.");
           voice.finishProcessing();
+          live.reset();
           return;
         }
 
