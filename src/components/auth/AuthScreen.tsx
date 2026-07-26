@@ -62,7 +62,7 @@ const formatPhoneInput = (raw: string): string => {
 
 export const AuthScreen = () => {
   const [kind, setKind] = useState<Kind>("email");
-  const [mode, setMode] = useState<Mode>("password");
+  const [mode, setMode] = useState<Mode>("pin");
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
