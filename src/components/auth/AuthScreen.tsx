@@ -57,6 +57,7 @@ export const AuthScreen = () => {
         },
       });
       if (error) throw error;
+      try { localStorage.setItem(LAST_EMAIL_KEY, trimmed); } catch { /* ignore */ }
       setSent(true);
       toast.success("Magic link sent", { description: "Check your inbox to sign in." });
     } catch (e) {
