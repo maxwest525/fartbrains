@@ -16,6 +16,7 @@ export const useVoiceCapture = ({ maxSeconds = 120 }: Options = {}) => {
   const [state, setState] = useState<VoiceState>("idle");
   const [seconds, setSeconds] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const [stream, setStream] = useState<MediaStream | null>(null);
 
   const recorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
@@ -31,6 +32,7 @@ export const useVoiceCapture = ({ maxSeconds = 120 }: Options = {}) => {
     }
     streamRef.current?.getTracks().forEach((t) => t.stop());
     streamRef.current = null;
+    setStream(null);
     recorderRef.current = null;
     chunksRef.current = [];
     setSeconds(0);
@@ -44,16 +46,17 @@ export const useVoiceCapture = ({ maxSeconds = 120 }: Options = {}) => {
     setError(null);
     setState("requesting");
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      streamRef.current = stream;
+      const micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      streamRef.current = micStream;
+      setStream(micStream);
 
       // Pick the best mime the browser supports. Safari prefers mp4.
       const candidates = ["audio/webm;codecs=opus", "audio/webm", "audio/mp4", "audio/ogg"];
       const mimeType =
         candidates.find((m) => MediaRecorder.isTypeSupported(m)) ?? "";
       const recorder = mimeType
-        ? new MediaRecorder(stream, { mimeType })
-        : new MediaRecorder(stream);
+        ? new MediaRecorder(micStream, { mimeType })
+        : new MediaRecorder(micStream);
 
       chunksRef.current = [];
       recorder.ondataavailable = (e) => {
@@ -143,7 +146,7 @@ export const useVoiceCapture = ({ maxSeconds = 120 }: Options = {}) => {
     setState("idle");
   }, []);
 
-  return { state, seconds, error, start, stop, cancel, finishProcessing };
+  return { state, seconds, error, stream, start, stop, cancel, finishProcessing };
 };
 
 /** Convert an audio Blob to base64 (no data: prefix). */
