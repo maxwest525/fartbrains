@@ -296,6 +296,7 @@ export const VoiceOrb = ({ onDictate, onLiveTranscript, speaking = false }: Voic
       toast.error(e instanceof Error ? e.message : "Voice capture failed");
     } finally {
       voice.finishProcessing();
+      live.reset();
     }
   };
 
