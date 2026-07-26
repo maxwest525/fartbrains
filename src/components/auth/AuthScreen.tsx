@@ -406,7 +406,7 @@ export const AuthScreen = () => {
 
               {/* PIN entry: 4-digit keypad, derived into a ≥6 char password server-side. */}
               {mode === "pin" && !otpSent && (
-                <div className="flex flex-col items-center gap-4 py-2">
+                <div className="flex flex-col items-center gap-2 py-0">
                   {/* Dots */}
                   <div className="flex items-center gap-4">
                     {Array.from({ length: PIN_LENGTH }).map((_, i) => (
@@ -422,24 +422,24 @@ export const AuthScreen = () => {
                     ))}
                   </div>
                   {/* Keypad */}
-                  <div className="grid grid-cols-3 gap-3">
+                  <div className="grid grid-cols-3 gap-2">
                     {[1,2,3,4,5,6,7,8,9].map((n) => (
                       <button
                         key={n}
                         type="button"
                         onClick={() => pressPin(String(n))}
                         disabled={sending || !identifierValid}
-                        className="h-16 w-16 rounded-full bg-white/[0.08] hover:bg-white/[0.14] active:bg-white/[0.20] border border-white/15 backdrop-blur-xl text-[26px] font-light text-white transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
+                        className="h-12 w-12 rounded-full bg-white/[0.08] hover:bg-white/[0.14] active:bg-white/[0.20] border border-white/15 backdrop-blur-xl text-[20px] font-light text-white transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
                       >
                         {n}
                       </button>
                     ))}
-                    <div className="h-16 w-16" />
+                    <div className="h-12 w-12" />
                     <button
                       type="button"
                       onClick={() => pressPin("0")}
                       disabled={sending || !identifierValid}
-                      className="h-16 w-16 rounded-full bg-white/[0.08] hover:bg-white/[0.14] active:bg-white/[0.20] border border-white/15 backdrop-blur-xl text-[26px] font-light text-white transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
+                      className="h-12 w-12 rounded-full bg-white/[0.08] hover:bg-white/[0.14] active:bg-white/[0.20] border border-white/15 backdrop-blur-xl text-[20px] font-light text-white transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
                     >
                       0
                     </button>
@@ -448,7 +448,7 @@ export const AuthScreen = () => {
                       onClick={backspacePin}
                       disabled={sending || password.length === 0}
                       aria-label="Backspace"
-                      className="h-16 w-16 rounded-full flex items-center justify-center text-white/90 hover:bg-white/10 active:bg-white/15 active:scale-95 transition disabled:opacity-30"
+                      className="h-12 w-12 rounded-full flex items-center justify-center text-white/90 hover:bg-white/10 active:bg-white/15 active:scale-95 transition disabled:opacity-30"
                     >
                       <Delete className="h-5 w-5" />
                     </button>
