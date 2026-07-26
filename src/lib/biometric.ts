@@ -3,13 +3,13 @@
 
 const CRED_KEY = "iv.biometric.credId.v1";
 
-const b64uToBytes = (s: string): Uint8Array => {
+const b64uToBytes = (s: string): ArrayBuffer => {
   const pad = s.length % 4 === 0 ? "" : "=".repeat(4 - (s.length % 4));
   const b64 = (s + pad).replace(/-/g, "+").replace(/_/g, "/");
   const bin = atob(b64);
   const out = new Uint8Array(bin.length);
   for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
-  return out;
+  return out.buffer;
 };
 
 const bytesToB64u = (buf: ArrayBuffer): string => {
