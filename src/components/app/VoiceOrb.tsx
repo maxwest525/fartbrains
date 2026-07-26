@@ -3,7 +3,7 @@ import { Mic, Square, Loader2, ShieldAlert, ShieldCheck, ShieldQuestion } from "
 
 import { cn } from "@/lib/utils";
 import { useVoiceCapture, blobToBase64 } from "@/hooks/useVoiceCapture";
-import { useCreateIdea } from "@/hooks/useIdeas";
+
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { LiveWaveform } from "@/components/app/LiveWaveform";
