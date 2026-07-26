@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Delete, Lock, ScanFace } from "lucide-react";
 import { cn } from "@/lib/utils";
 import logo from "@/assets/fartbrains-logo.png";
-import { supabase } from "@/integrations/supabase/client";
+
 import { toast } from "sonner";
 import {
   AlertDialog,
@@ -320,10 +320,8 @@ export const PasscodeKeypad = ({ onUnlocked, mode }: Props) => {
           <AlertDialogHeader>
             <AlertDialogTitle>Of course you did.</AlertDialogTitle>
             <AlertDialogDescription>
-              Your PIN is stored on this device, so there's nothing to "email"
-              you. To reset it, we'll sign you out and take you back to the
-              login screen. Sign in again with your email or phone, and you'll
-              be prompted to create a new PIN.
+              Your PIN is stored on this device. We'll clear it (and Face ID)
+              and take you back to set a new one.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -336,9 +334,7 @@ export const PasscodeKeypad = ({ onUnlocked, mode }: Props) => {
                 try {
                   clearPasscode();
                   clearBiometric();
-                  await supabase.auth.signOut();
-                  toast.success("PIN cleared — sign back in to set a new one");
-                  // Full reload so ProtectedRoute re-evaluates from a clean slate.
+                  toast.success("PIN cleared — pick a new one");
                   window.location.replace("/");
                 } catch (err) {
                   toast.error(err instanceof Error ? err.message : "Couldn't reset PIN");
@@ -346,7 +342,7 @@ export const PasscodeKeypad = ({ onUnlocked, mode }: Props) => {
                 }
               }}
             >
-              {resetting ? "Signing out…" : "Sign out & reset PIN"}
+              {resetting ? "Resetting…" : "Reset PIN"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
