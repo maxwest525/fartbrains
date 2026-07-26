@@ -212,6 +212,7 @@ export const AuthScreen = () => {
       }
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Couldn't sign in");
+      if (mode === "pin") setPassword("");
     } finally {
       setSending(false);
     }
