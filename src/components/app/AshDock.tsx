@@ -351,12 +351,10 @@ export const AshDock = ({ className }: { className?: string }) => {
           toast.message("Nothing heard — try again.");
           return;
         }
-        await createIdea.mutateAsync({
-          title: titleFromText(transcript),
-          raw_note: transcript,
-          source_type: "audio",
-          folder_id: folderId,
-        });
+        setCollapsed(false);
+        setText((prev) => (prev.trim() ? `${prev.trim()} ${transcript.trim()}` : transcript.trim()));
+        requestAnimationFrame(() => textareaRef.current?.focus());
+        toast.success("Added voice text to composer");
       }
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Voice capture failed");

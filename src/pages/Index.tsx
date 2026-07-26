@@ -1,10 +1,9 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { Search, X, Inbox, Folder, Star, Clock, CalendarDays, Settings as SettingsIcon, LogOut } from "lucide-react";
 import { MaterialIcon } from "@/components/ui/MaterialIcon";
 import { Input } from "@/components/ui/input";
 import { IdeaList } from "@/components/app/IdeaList";
 import { IdeaDetail } from "@/components/app/IdeaDetail";
-import { AshChatPanel, type AshChatHandle } from "@/components/app/home/AshChatPanel";
 import { VoiceOrb } from "@/components/app/VoiceOrb";
 import { UrlCaptureScreen } from "@/components/app/UrlCaptureScreen";
 import { ComposeIdea } from "@/components/app/ComposeIdea";
@@ -23,7 +22,6 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { useAuth } from "@/hooks/useAuth";
 import { useFolders } from "@/hooks/useFolders";
 import { useReminderNotifier } from "@/hooks/useReminderNotifier";
-import { useAshChat } from "@/hooks/useAshChat";
 import { useCreateIdea } from "@/hooks/useIdeas";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -50,45 +48,6 @@ const Shell = () => {
     | null
   >(null);
   const isMobile = useIsMobile();
-  const [liveMode, setLiveMode] = useState(false);
-  const [speaking, setSpeaking] = useState(false);
-  const chatRef = useRef<AshChatHandle>(null);
-  const composeRef = useRef<HTMLDivElement>(null);
-
-  // Live chat: stream replies via useAshChat and speak the assistant's reply.
-  const liveChat = useAshChat();
-  const liveSpokenIdxRef = useRef<number>(-1);
-  const wasStreamingRef = useRef(false);
-
-  // When a streamed reply finishes, speak it.
-  useEffect(() => {
-    if (!liveMode) return;
-    const justFinished = wasStreamingRef.current && !liveChat.streaming;
-    wasStreamingRef.current = liveChat.streaming;
-    if (!justFinished) return;
-    const lastIdx = liveChat.messages.length - 1;
-    const last = liveChat.messages[lastIdx];
-    if (!last || last.role !== "assistant" || !last.content.trim()) return;
-    if (liveSpokenIdxRef.current === lastIdx) return;
-    liveSpokenIdxRef.current = lastIdx;
-    try {
-      const synth = window.speechSynthesis;
-      if (!synth) return;
-      synth.cancel();
-      const utter = new SpeechSynthesisUtterance(last.content);
-      utter.rate = 1.0;
-      utter.pitch = 1.0;
-      utter.onstart = () => setSpeaking(true);
-      utter.onend = () => setSpeaking(false);
-      utter.onerror = () => setSpeaking(false);
-      synth.speak(utter);
-    } catch { /* ignore */ }
-  }, [liveChat.messages, liveChat.streaming, liveMode]);
-
-  // Surface chat errors.
-  useEffect(() => {
-    if (liveChat.error) toast.error(liveChat.error);
-  }, [liveChat.error]);
 
   // Stop any speech when leaving the capture view or unmounting.
   useEffect(() => {
@@ -394,20 +353,11 @@ const Shell = () => {
             style={{ paddingBottom: "calc(var(--ash-dock-h, 0px) + env(safe-area-inset-bottom) + (var(--mobile-tabbar-h, 0px)) + 1.25rem)" }}
           >
 
-            <div ref={composeRef} className="w-full px-3 sm:px-6 lg:px-10 pt-6 sm:pt-10 pb-4 flex-1 min-h-0 flex flex-col items-center gap-5 sm:gap-6 max-w-3xl mx-auto">
+            <div className="w-full px-3 sm:px-6 lg:px-10 pt-6 sm:pt-10 pb-4 flex-1 min-h-0 flex flex-col items-center gap-5 sm:gap-6 max-w-3xl mx-auto">
 
               
 
-              <VoiceOrb
-                speaking={speaking}
-                onLiveTranscript={(text) => {
-                  setLiveMode(true);
-                  void liveChat.send(text);
-                }}
-                onDictate={(text) => {
-                  window.dispatchEvent(new CustomEvent("idea-vault:dictate", { detail: text }));
-                }}
-              />
+              <VoiceOrb />
             </div>
 
 
