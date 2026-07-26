@@ -83,6 +83,10 @@ export const AuthScreen = () => {
           options: { emailRedirectTo: `${window.location.origin}/` },
         });
         if (error) throw error;
+        try {
+          localStorage.setItem(LAST_EMAIL_KEY, trimmed);
+          localStorage.setItem(WELCOME_PENDING_KEY, "1");
+        } catch { /* ignore */ }
         toast.success("Account created", { description: "Check your inbox to confirm your email." });
       } else {
         const { error } = await supabase.auth.signInWithPassword({
@@ -90,6 +94,7 @@ export const AuthScreen = () => {
           password,
         });
         if (error) throw error;
+        try { localStorage.setItem(LAST_EMAIL_KEY, trimmed); } catch { /* ignore */ }
         toast.success("Signed in");
       }
     } catch (e) {
