@@ -541,9 +541,17 @@ export const VoiceOrb = ({ onDictate, onLiveTranscript, speaking = false }: Voic
       )}
 
       {/* Live partial transcript — updates in real time while recording.
-          Server transcription remains authoritative on stop. */}
+          Server transcription remains authoritative on stop.
+          Auto-scrolls into view so the bottom composer (AshDock) never covers it. */}
       {mode === "dictate" && (isRecording || isTranscribing) && live.supported && (
         <div
+          ref={(el) => {
+            if (el) {
+              requestAnimationFrame(() =>
+                el.scrollIntoView({ behavior: "smooth", block: "center" })
+              );
+            }
+          }}
           aria-live="polite"
           className="w-full max-w-md min-h-[3.25rem] max-h-40 overflow-y-auto px-4 py-2.5 rounded-2xl bg-white/[0.04] border border-white/10 backdrop-blur-md text-[13.5px] leading-relaxed text-white/90"
         >
