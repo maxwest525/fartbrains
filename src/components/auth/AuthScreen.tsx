@@ -434,7 +434,15 @@ export const AuthScreen = () => {
                         {n}
                       </button>
                     ))}
-                    <div className="h-12 w-12" />
+                    <button
+                      type="button"
+                      onClick={() => setPassword("")}
+                      disabled={sending || password.length === 0}
+                      aria-label="Clear PIN"
+                      className="h-12 w-12 rounded-full flex items-center justify-center text-[12px] font-medium text-white/80 hover:bg-white/10 active:bg-white/15 active:scale-95 transition disabled:opacity-30"
+                    >
+                      Clear
+                    </button>
                     <button
                       type="button"
                       onClick={() => pressPin("0")}
