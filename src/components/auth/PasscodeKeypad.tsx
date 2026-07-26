@@ -56,12 +56,57 @@ export const PasscodeKeypad = ({ onUnlocked, mode }: Props) => {
   const [showForgot, setShowForgot] = useState(false);
   const [resetting, setResetting] = useState(false);
 
+  const bioSupported = isBiometricSupported();
+  const [bioEnrolled, setBioEnrolled] = useState<boolean>(() => hasBiometric());
+  const [bioBusy, setBioBusy] = useState(false);
+  const autoBioRef = useRef(false);
+
   // Tick the lockout countdown.
   useEffect(() => {
     const id = setInterval(() => setLockoutLeft(lockoutRemainingMs()), 500);
     setLockoutLeft(lockoutRemainingMs());
     return () => clearInterval(id);
   }, []);
+
+  const tryBiometric = useCallback(async () => {
+    if (bioBusy || lockoutLeft > 0) return;
+    setBioBusy(true);
+    try {
+      const ok = await verifyBiometric();
+      if (ok) {
+        markUnlocked();
+        onUnlocked();
+      }
+    } catch {
+      /* user cancelled */
+    } finally {
+      setBioBusy(false);
+    }
+  }, [bioBusy, lockoutLeft, onUnlocked]);
+
+  // Auto-prompt Face ID once on unlock mount when enrolled.
+  useEffect(() => {
+    if (setupMode || autoBioRef.current) return;
+    if (!bioSupported || !bioEnrolled) return;
+    autoBioRef.current = true;
+    void tryBiometric();
+  }, [setupMode, bioSupported, bioEnrolled, tryBiometric]);
+
+  const enableBiometric = async () => {
+    if (bioBusy) return;
+    setBioBusy(true);
+    try {
+      const ok = await enrollBiometric();
+      if (ok) {
+        setBioEnrolled(true);
+        toast.success("Face ID enabled");
+      }
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Couldn't enable Face ID");
+    } finally {
+      setBioBusy(false);
+    }
+  };
 
   const failShake = useCallback((msg: string) => {
     setError(msg);
