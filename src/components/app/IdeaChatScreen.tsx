@@ -53,6 +53,17 @@ export const IdeaChatScreen = ({ idea, onClose }: Props) => {
 
   const suggestions = useMemo(() => buildSuggestions(idea), [idea]);
 
+  const threadLabel = useMemo(() => {
+    const firstUser = messages.find((m) => m.role === "user");
+    if (!firstUser) return { title: "New conversation", when: "" };
+    const title = firstUser.content.trim().replace(/\s+/g, " ").slice(0, 60);
+    const when = firstUser.created_at ? formatRelative(firstUser.created_at) : "";
+    return {
+      title: title + (firstUser.content.length > 60 ? "…" : ""),
+      when,
+    };
+  }, [messages]);
+
   // Load history
   useEffect(() => {
     let cancelled = false;
