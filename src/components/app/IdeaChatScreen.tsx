@@ -306,7 +306,7 @@ export const IdeaChatScreen = ({ idea, onClose }: Props) => {
       {/* Composer (only when opened) */}
       {composerOpen && (
         <div className="safe-bottom border-t border-white/10 bg-background/70 backdrop-blur-xl px-3 pt-2.5 pb-3 anim-slide-in">
-          <div className="flex items-end gap-2 rounded-2xl bg-white/5 border border-white/10 px-3 py-2">
+          <div className="flex items-end gap-2 rounded-2xl bg-white/5 border border-white/10 px-3 py-2.5">
             <button
               onClick={() => setComposerOpen(false)}
               className="press h-9 w-9 flex items-center justify-center text-muted-foreground shrink-0"
