@@ -273,7 +273,7 @@ export const IdeaChatScreen = ({ idea, onClose }: Props) => {
       {/* Body */}
       <div
         ref={scrollRef}
-        className={`flex-1 min-h-0 ${isEmpty ? "overflow-hidden flex flex-col" : "overflow-y-auto"} px-4 ${isEmpty ? "pt-3 pb-3" : "pt-4 pb-28"}`}
+        className={`flex-1 min-h-0 ${isEmpty ? "overflow-hidden flex flex-col" : "overflow-y-auto"} px-3 sm:px-4 ${isEmpty ? "pt-3 pb-3" : "pt-2 sm:pt-4 pb-24 sm:pb-28"}`}
       >
         {loading ? (
           <div className="flex items-center justify-center py-12 text-muted-foreground text-sm">
@@ -311,15 +311,15 @@ export const IdeaChatScreen = ({ idea, onClose }: Props) => {
             </div>
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-2 sm:space-y-4">
             {messages.map((m, i) => (
               <div key={m.id ?? i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
                 {m.role === "user" ? (
-                  <div className="max-w-[85%] rounded-2xl rounded-br-sm bg-primary text-primary-foreground px-3.5 py-2 text-[15px] whitespace-pre-wrap break-words">
+                  <div className="max-w-[85%] rounded-2xl rounded-br-sm bg-primary text-primary-foreground px-3 py-1.5 sm:px-3.5 sm:py-2 text-[14px] sm:text-[15px] leading-snug sm:leading-normal whitespace-pre-wrap break-words">
                     {m.content}
                   </div>
                 ) : (
-                  <div className="max-w-[92%] text-foreground text-[15px] leading-relaxed prose prose-sm prose-invert prose-p:my-2 prose-ul:my-2 prose-li:my-0 max-w-none">
+                  <div className="max-w-[94%] text-foreground text-[14px] sm:text-[15px] leading-snug sm:leading-relaxed prose prose-sm prose-invert prose-p:my-1 sm:prose-p:my-2 prose-ul:my-1 sm:prose-ul:my-2 prose-li:my-0 max-w-none">
                     <ReactMarkdown remarkPlugins={[remarkGfm]}>{m.content || "…"}</ReactMarkdown>
                   </div>
                 )}
@@ -334,6 +334,7 @@ export const IdeaChatScreen = ({ idea, onClose }: Props) => {
             )}
           </div>
         )}
+
       </div>
 
       {/* Floating "Continue" button — only when there is history and composer closed */}
