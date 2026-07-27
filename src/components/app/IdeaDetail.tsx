@@ -839,7 +839,7 @@ export const IdeaDetail = ({ ideaId, onClose, backLabel = "Back", onSelectIdea }
                 className="text-xs leading-relaxed"
               />
             ) : (
-              <div className="rounded-xl glass-card-quiet p-4 text-xs whitespace-pre-wrap">
+              <div className="rounded-2xl bg-white/[0.05] border border-white/12 p-5 text-[13px] leading-relaxed text-foreground/90 whitespace-pre-wrap">
                 {idea.extracted_text}
               </div>
             )}
