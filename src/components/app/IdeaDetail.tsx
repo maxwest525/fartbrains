@@ -637,7 +637,7 @@ export const IdeaDetail = ({ ideaId, onClose, backLabel = "Back", onSelectIdea }
                   className={isProject ? "font-mono text-xs" : undefined}
                 />
               ) : isChecklist ? (
-                <div className="rounded-xl glass-card-quiet p-4 text-sm prose prose-sm dark:prose-invert max-w-none prose-ul:my-0 prose-li:my-0.5">
+                <div className="rounded-2xl bg-white/[0.05] border border-white/12 p-5 text-[15px] leading-relaxed text-foreground prose prose-sm dark:prose-invert max-w-none prose-ul:my-0 prose-li:my-1">
                   <ReactMarkdown
                     remarkPlugins={[remarkGfm]}
                     components={{
