@@ -421,7 +421,7 @@ const Shell = () => {
         />
       )}
 
-      {!showFolders && !showCalendar && !showGraph && !showDetailOnly && <AshDock />}
+      {view === "ideas" && !showFolders && !showCalendar && !showGraph && selectedId === null && <AshDock />}
 
       <SettingsSheet open={settingsOpen} onOpenChange={setSettingsOpen} />
       <AlarmOverlay />
