@@ -60,8 +60,11 @@ export const IdeaChatScreen = ({ idea, onClose }: Props) => {
   const [sending, setSending] = useState(false);
   const [loading, setLoading] = useState(true);
   const [composerOpen, setComposerOpen] = useState(false);
+  const [errorText, setErrorText] = useState<string | null>(null);
+  const [lastPrompt, setLastPrompt] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+
 
   const suggestions = useMemo(() => buildSuggestions(idea), [idea]);
 
