@@ -6,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import type { Idea } from "@/hooks/useIdeas";
 
-type ChatMsg = { id?: string; role: "user" | "assistant"; content: string };
+type ChatMsg = { id?: string; role: "user" | "assistant"; content: string; created_at?: string };
 
 type Props = {
   idea: Idea;
@@ -42,6 +42,20 @@ const buildSuggestions = (idea: Idea): string[] => {
   ];
 };
 
+const formatRelative = (iso: string): string => {
+  const then = new Date(iso).getTime();
+  if (!Number.isFinite(then)) return "";
+  const diffMs = Date.now() - then;
+  const mins = Math.round(diffMs / 60000);
+  if (mins < 1) return "just now";
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.round(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  const days = Math.round(hrs / 24);
+  if (days < 7) return `${days}d ago`;
+  return new Date(iso).toLocaleDateString(undefined, { month: "short", day: "numeric" });
+};
+
 export const IdeaChatScreen = ({ idea, onClose }: Props) => {
   const [messages, setMessages] = useState<ChatMsg[]>([]);
   const [input, setInput] = useState("");
@@ -53,13 +67,24 @@ export const IdeaChatScreen = ({ idea, onClose }: Props) => {
 
   const suggestions = useMemo(() => buildSuggestions(idea), [idea]);
 
+  const threadLabel = useMemo(() => {
+    const firstUser = messages.find((m) => m.role === "user");
+    if (!firstUser) return { title: "New conversation", when: "" };
+    const title = firstUser.content.trim().replace(/\s+/g, " ").slice(0, 60);
+    const when = firstUser.created_at ? formatRelative(firstUser.created_at) : "";
+    return {
+      title: title + (firstUser.content.length > 60 ? "…" : ""),
+      when,
+    };
+  }, [messages]);
+
   // Load history
   useEffect(() => {
     let cancelled = false;
     (async () => {
       const { data, error } = await supabase
         .from("idea_chats")
-        .select("id, role, content")
+        .select("id, role, content, created_at")
         .eq("idea_id", idea.id)
         .order("created_at", { ascending: true });
       if (cancelled) return;
@@ -69,7 +94,12 @@ export const IdeaChatScreen = ({ idea, onClose }: Props) => {
         setMessages(
           (data ?? [])
             .filter((r) => r.role === "user" || r.role === "assistant")
-            .map((r) => ({ id: r.id, role: r.role as "user" | "assistant", content: r.content })),
+            .map((r) => ({
+              id: r.id,
+              role: r.role as "user" | "assistant",
+              content: r.content,
+              created_at: r.created_at,
+            })),
         );
       }
       setLoading(false);
@@ -219,10 +249,18 @@ export const IdeaChatScreen = ({ idea, onClose }: Props) => {
           <span className="font-normal">Idea</span>
         </button>
         <div className="flex-1 min-w-0 text-center px-2">
-          <div className="text-xs uppercase tracking-wider text-muted-foreground/70 flex items-center justify-center gap-1">
-            <Sparkles className="h-3 w-3 text-accent" /> Chat with this idea
+          <div className="text-[10.5px] uppercase tracking-[0.14em] text-muted-foreground/70 flex items-center justify-center gap-1">
+            <Sparkles className="h-3 w-3 text-accent" />
+            <span className="truncate max-w-[70%]">{idea.title || "Untitled idea"}</span>
           </div>
-          <div className="text-sm font-medium truncate">{idea.title || "Untitled"}</div>
+          <div className="text-[13.5px] font-medium truncate leading-tight mt-0.5">
+            {threadLabel.title}
+          </div>
+          {threadLabel.when && (
+            <div className="text-[10.5px] text-muted-foreground/60 leading-tight">
+              Started {threadLabel.when}
+            </div>
+          )}
         </div>
         <button
           onClick={clearHistory}
