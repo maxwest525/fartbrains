@@ -138,6 +138,8 @@ export const IdeaChatScreen = ({ idea, onClose }: Props) => {
     const trimmed = text.trim();
     if (!trimmed || sending) return;
     setInput("");
+    setErrorText(null);
+    setLastPrompt(trimmed);
     const nextUser: ChatMsg = { role: "user", content: trimmed };
     const history = [...messages, nextUser];
     setMessages(history);
@@ -163,9 +165,15 @@ export const IdeaChatScreen = ({ idea, onClose }: Props) => {
       });
       if (!res.ok || !res.body) {
         const errText = await res.text().catch(() => "");
-        if (res.status === 429) toast.error("Rate limit — try again in a moment.");
-        else if (res.status === 402) toast.error("AI credits exhausted.");
-        else toast.error("Chat failed");
+        const msg =
+          res.status === 429
+            ? "Rate limit — try again in a moment."
+            : res.status === 402
+            ? "AI credits exhausted."
+            : res.status === 401
+            ? "You need to be signed in to chat."
+            : "Asher couldn't respond. Check your connection and try again.";
+        setErrorText(msg);
         console.error("ash-chat error", res.status, errText);
         setSending(false);
         return;
@@ -203,14 +211,34 @@ export const IdeaChatScreen = ({ idea, onClose }: Props) => {
           }
         }
       }
-      if (acc.trim()) void persist("assistant", acc);
+      if (acc.trim()) {
+        void persist("assistant", acc);
+      } else {
+        // Stream ended with no content — surface a soft error.
+        setMessages((prev) => prev.filter((m, i) => !(i === prev.length - 1 && m.role === "assistant" && !m.content)));
+        setErrorText("Asher didn't return a response. Try again.");
+      }
     } catch (e) {
       console.error(e);
-      toast.error("Chat failed");
+      setErrorText("Network error — your message wasn't sent. Try again.");
     } finally {
       setSending(false);
     }
   };
+
+  const retryLast = () => {
+    if (!lastPrompt || sending) return;
+    // Remove the trailing failed user message so we don't duplicate it.
+    setMessages((prev) => {
+      const copy = [...prev];
+      if (copy.length && copy[copy.length - 1].role === "user" && copy[copy.length - 1].content === lastPrompt) {
+        copy.pop();
+      }
+      return copy;
+    });
+    void sendText(lastPrompt);
+  };
+
 
   const clearHistory = async () => {
     if (!confirm("Clear this idea's chat history?")) return;
