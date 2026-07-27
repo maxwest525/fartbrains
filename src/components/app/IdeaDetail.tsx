@@ -715,19 +715,7 @@ export const IdeaDetail = ({ ideaId, onClose, backLabel = "Back", onSelectIdea }
               type="button"
               onClick={(e) => {
                 e.stopPropagation();
-                const seed = [
-                  idea.generated_prompt,
-                  !idea.generated_prompt && idea.ai_summary ? `Context — AI summary:\n${idea.ai_summary}` : null,
-                  !idea.generated_prompt && !idea.ai_summary && idea.extracted_text
-                    ? `Context — extracted text:\n${idea.extracted_text.slice(0, 4000)}`
-                    : null,
-                  idea.raw_note ? `My note: ${idea.raw_note}` : null,
-                ].filter(Boolean).join("\n\n");
-                window.dispatchEvent(
-                  new CustomEvent("idea-vault:chat-with-idea", {
-                    detail: { ideaId: idea.id, seed: seed || `Let's discuss: ${idea.title}` },
-                  }),
-                );
+                setChatOpen(true);
               }}
               className="mt-2 inline-flex items-center gap-1.5 text-xs text-primary hover:underline"
             >
