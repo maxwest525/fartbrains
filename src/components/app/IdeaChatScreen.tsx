@@ -241,21 +241,21 @@ export const IdeaChatScreen = ({ idea, onClose }: Props) => {
             <Loader2 className="h-4 w-4 animate-spin mr-2" /> Loading…
           </div>
         ) : isEmpty ? (
-          <div className="max-w-md mx-auto flex flex-col items-center text-center pt-6 pb-24">
+          <div className="max-w-md mx-auto flex flex-col items-center text-center pt-4 pb-8">
             <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-primary/30 to-accent/20 border border-white/15 flex items-center justify-center mb-4 shadow-lg shadow-primary/10">
               <Sparkles className="h-6 w-6 text-accent" />
             </div>
             <h2 className="text-xl font-semibold tracking-tight">Think this through with Ash</h2>
-            <p className="text-sm text-muted-foreground mt-1.5 px-4">
+            <p className="text-sm text-muted-foreground mt-2 px-4 leading-relaxed">
               Pick a starting point below, or start your own thread when you're ready.
             </p>
 
-            <div className="w-full mt-6 space-y-2">
+            <div className="w-full mt-6 space-y-2.5">
               {suggestions.map((s) => (
                 <button
                   key={s}
                   onClick={() => handleSuggestion(s)}
-                  className="press w-full text-left text-[14.5px] leading-snug px-4 py-3 rounded-2xl border border-white/10 bg-white/[0.04] hover:bg-white/[0.08] transition-colors"
+                  className="press w-full text-left text-[14.5px] leading-relaxed px-4 py-3.5 rounded-2xl border border-white/10 bg-white/[0.04] hover:bg-white/[0.08] transition-colors"
                 >
                   {s}
                 </button>
@@ -263,7 +263,7 @@ export const IdeaChatScreen = ({ idea, onClose }: Props) => {
             </div>
           </div>
         ) : (
-          <div className="space-y-3 pb-24">
+          <div className="space-y-4">
             {messages.map((m, i) => (
               <div key={m.id ?? i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
                 {m.role === "user" ? (
