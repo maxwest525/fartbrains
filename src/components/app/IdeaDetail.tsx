@@ -877,6 +877,7 @@ export const IdeaDetail = ({ ideaId, onClose, backLabel = "Back", onSelectIdea }
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      {chatOpen && <IdeaChatScreen idea={idea} onClose={() => setChatOpen(false)} />}
     </div>
   );
 };
