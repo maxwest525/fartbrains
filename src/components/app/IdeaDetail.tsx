@@ -709,7 +709,7 @@ export const IdeaDetail = ({ ideaId, onClose, backLabel = "Back", onSelectIdea }
           >
             {generating && <ThinkingPanel active className="mb-2" />}
             {idea.generated_prompt ? (
-              <div className="rounded-xl glass-card-quiet p-4 text-sm whitespace-pre-wrap font-mono leading-relaxed select-text">
+              <div className="rounded-2xl bg-white/[0.05] border border-white/12 p-5 text-[14px] text-foreground whitespace-pre-wrap font-mono leading-relaxed select-text">
                 {idea.generated_prompt}
               </div>
             ) : (
