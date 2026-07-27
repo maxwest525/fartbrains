@@ -39,6 +39,7 @@ import { SourceMetaCard } from "./SourceMetaCard";
 import { RelatedIdeas } from "./RelatedIdeas";
 import { IdeaReferences } from "./IdeaReferences";
 import { CollapsibleSection } from "./CollapsibleSection";
+import { IdeaChatScreen } from "./IdeaChatScreen";
 
 const NO_FOLDER = "__none__";
 
