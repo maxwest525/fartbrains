@@ -1,7 +1,7 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { ChevronLeft, Send, Loader2, Trash2, Sparkles } from "lucide-react";
+import { ChevronLeft, Send, Loader2, Trash2, Sparkles, MessageCirclePlus, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import type { Idea } from "@/hooks/useIdeas";
@@ -30,13 +30,28 @@ const buildSystemContext = (idea: Idea): string => {
   return parts.filter(Boolean).join("\n");
 };
 
+const buildSuggestions = (idea: Idea): string[] => {
+  const t = idea.title || "this idea";
+  return [
+    `Sharpen the core insight behind "${t}" in one paragraph.`,
+    `What are the 3 biggest risks or blind spots here?`,
+    `Give me 5 concrete next actions I can take this week.`,
+    `Who is the ideal audience, and how would I reach them?`,
+    `Rewrite this as a punchy one-line pitch.`,
+    `What existing products or ideas is this most similar to?`,
+  ];
+};
+
 export const IdeaChatScreen = ({ idea, onClose }: Props) => {
   const [messages, setMessages] = useState<ChatMsg[]>([]);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [composerOpen, setComposerOpen] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+
+  const suggestions = useMemo(() => buildSuggestions(idea), [idea]);
 
   // Load history
   useEffect(() => {
@@ -69,12 +84,12 @@ export const IdeaChatScreen = ({ idea, onClose }: Props) => {
     const el = scrollRef.current;
     if (!el) return;
     el.scrollTop = el.scrollHeight;
-  }, [messages, sending]);
+  }, [messages, sending, composerOpen]);
 
-  // Autofocus
+  // Autofocus composer when opened
   useEffect(() => {
-    if (!loading) inputRef.current?.focus();
-  }, [loading]);
+    if (composerOpen) inputRef.current?.focus();
+  }, [composerOpen]);
 
   const persist = async (role: "user" | "assistant", content: string) => {
     const { data: auth } = await supabase.auth.getUser();
@@ -88,15 +103,15 @@ export const IdeaChatScreen = ({ idea, onClose }: Props) => {
     });
   };
 
-  const send = async () => {
-    const text = input.trim();
-    if (!text || sending) return;
+  const sendText = async (text: string) => {
+    const trimmed = text.trim();
+    if (!trimmed || sending) return;
     setInput("");
-    const nextUser: ChatMsg = { role: "user", content: text };
+    const nextUser: ChatMsg = { role: "user", content: trimmed };
     const history = [...messages, nextUser];
     setMessages(history);
     setSending(true);
-    void persist("user", text);
+    void persist("user", trimmed);
 
     try {
       const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ash-chat`;
@@ -180,9 +195,16 @@ export const IdeaChatScreen = ({ idea, onClose }: Props) => {
   const onKey = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
-      send();
+      sendText(input);
     }
   };
+
+  const handleSuggestion = (s: string) => {
+    setComposerOpen(false);
+    void sendText(s);
+  };
+
+  const isEmpty = !loading && messages.length === 0;
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-background/80 backdrop-blur-2xl anim-slide-in">
@@ -212,63 +234,106 @@ export const IdeaChatScreen = ({ idea, onClose }: Props) => {
         </button>
       </div>
 
-      {/* Messages */}
-      <div ref={scrollRef} className="flex-1 overflow-y-auto px-3 py-4 space-y-3">
+      {/* Body */}
+      <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-6">
         {loading ? (
           <div className="flex items-center justify-center py-16 text-muted-foreground text-sm">
             <Loader2 className="h-4 w-4 animate-spin mr-2" /> Loading…
           </div>
-        ) : messages.length === 0 ? (
-          <div className="text-center text-sm text-muted-foreground/80 py-12 px-6">
-            <Sparkles className="h-5 w-5 mx-auto mb-2 text-accent" />
-            Ask Ash anything about this idea — flesh it out, brainstorm, or plan next steps. Your conversation stays saved here.
+        ) : isEmpty ? (
+          <div className="max-w-md mx-auto flex flex-col items-center text-center pt-6 pb-24">
+            <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-primary/30 to-accent/20 border border-white/15 flex items-center justify-center mb-4 shadow-lg shadow-primary/10">
+              <Sparkles className="h-6 w-6 text-accent" />
+            </div>
+            <h2 className="text-xl font-semibold tracking-tight">Think this through with Ash</h2>
+            <p className="text-sm text-muted-foreground mt-1.5 px-4">
+              Pick a starting point below, or start your own thread when you're ready.
+            </p>
+
+            <div className="w-full mt-6 space-y-2">
+              {suggestions.map((s) => (
+                <button
+                  key={s}
+                  onClick={() => handleSuggestion(s)}
+                  className="press w-full text-left text-[14.5px] leading-snug px-4 py-3 rounded-2xl border border-white/10 bg-white/[0.04] hover:bg-white/[0.08] transition-colors"
+                >
+                  {s}
+                </button>
+              ))}
+            </div>
           </div>
         ) : (
-          messages.map((m, i) => (
-            <div key={m.id ?? i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
-              {m.role === "user" ? (
-                <div className="max-w-[85%] rounded-2xl rounded-br-sm bg-primary text-primary-foreground px-3.5 py-2 text-[15px] whitespace-pre-wrap break-words">
-                  {m.content}
+          <div className="space-y-3 pb-24">
+            {messages.map((m, i) => (
+              <div key={m.id ?? i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
+                {m.role === "user" ? (
+                  <div className="max-w-[85%] rounded-2xl rounded-br-sm bg-primary text-primary-foreground px-3.5 py-2 text-[15px] whitespace-pre-wrap break-words">
+                    {m.content}
+                  </div>
+                ) : (
+                  <div className="max-w-[92%] text-foreground text-[15px] leading-relaxed prose prose-sm prose-invert prose-p:my-2 prose-ul:my-2 prose-li:my-0 max-w-none">
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>{m.content || "…"}</ReactMarkdown>
+                  </div>
+                )}
+              </div>
+            ))}
+            {sending && messages[messages.length - 1]?.role === "user" && (
+              <div className="flex justify-start">
+                <div className="text-muted-foreground text-sm inline-flex items-center gap-2">
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" /> Thinking…
                 </div>
-              ) : (
-                <div className="max-w-[92%] text-foreground text-[15px] leading-relaxed prose prose-sm prose-invert prose-p:my-2 prose-ul:my-2 prose-li:my-0 max-w-none">
-                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{m.content || "…"}</ReactMarkdown>
-                </div>
-              )}
-            </div>
-          ))
-        )}
-        {sending && messages[messages.length - 1]?.role === "user" && (
-          <div className="flex justify-start">
-            <div className="text-muted-foreground text-sm inline-flex items-center gap-2">
-              <Loader2 className="h-3.5 w-3.5 animate-spin" /> Thinking…
-            </div>
+              </div>
+            )}
           </div>
         )}
       </div>
 
-      {/* Composer */}
-      <div className="safe-bottom border-t border-white/10 bg-background/40 backdrop-blur-xl px-3 py-2">
-        <div className="flex items-end gap-2 rounded-2xl bg-white/5 border border-white/10 px-3 py-2">
-          <textarea
-            ref={inputRef}
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={onKey}
-            placeholder="Ask about this idea…"
-            rows={1}
-            className="flex-1 bg-transparent outline-none resize-none text-[15px] leading-snug max-h-40 py-1"
-          />
-          <button
-            onClick={send}
-            disabled={!input.trim() || sending}
-            className="press h-9 w-9 rounded-full brand-gradient flex items-center justify-center text-white disabled:opacity-40 shrink-0"
-            aria-label="Send"
-          >
-            {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-          </button>
+      {/* Floating "Ask your own" button (when composer is hidden) */}
+      {!composerOpen && !loading && (
+        <div className="safe-bottom absolute bottom-0 left-0 right-0 px-4 pb-4 pointer-events-none">
+          <div className="flex justify-center pointer-events-auto">
+            <button
+              onClick={() => setComposerOpen(true)}
+              className="press inline-flex items-center gap-2 h-12 px-5 rounded-full brand-gradient text-white shadow-xl shadow-primary/30 text-[15px] font-medium"
+            >
+              <MessageCirclePlus className="h-[18px] w-[18px]" />
+              {isEmpty ? "Ask your own question" : "Continue the conversation"}
+            </button>
+          </div>
         </div>
-      </div>
+      )}
+
+      {/* Composer (only when opened) */}
+      {composerOpen && (
+        <div className="safe-bottom border-t border-white/10 bg-background/60 backdrop-blur-xl px-3 py-2 anim-slide-in">
+          <div className="flex items-end gap-2 rounded-2xl bg-white/5 border border-white/10 px-3 py-2">
+            <button
+              onClick={() => setComposerOpen(false)}
+              className="press h-9 w-9 flex items-center justify-center text-muted-foreground shrink-0"
+              aria-label="Close composer"
+            >
+              <X className="h-4 w-4" />
+            </button>
+            <textarea
+              ref={inputRef}
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={onKey}
+              placeholder="Ask about this idea…"
+              rows={1}
+              className="flex-1 bg-transparent outline-none resize-none text-[15px] leading-snug max-h-40 py-1"
+            />
+            <button
+              onClick={() => sendText(input)}
+              disabled={!input.trim() || sending}
+              className="press h-9 w-9 rounded-full brand-gradient flex items-center justify-center text-white disabled:opacity-40 shrink-0"
+              aria-label="Send"
+            >
+              {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
