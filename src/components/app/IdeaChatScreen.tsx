@@ -249,10 +249,18 @@ export const IdeaChatScreen = ({ idea, onClose }: Props) => {
           <span className="font-normal">Idea</span>
         </button>
         <div className="flex-1 min-w-0 text-center px-2">
-          <div className="text-xs uppercase tracking-wider text-muted-foreground/70 flex items-center justify-center gap-1">
-            <Sparkles className="h-3 w-3 text-accent" /> Chat with this idea
+          <div className="text-[10.5px] uppercase tracking-[0.14em] text-muted-foreground/70 flex items-center justify-center gap-1">
+            <Sparkles className="h-3 w-3 text-accent" />
+            <span className="truncate max-w-[70%]">{idea.title || "Untitled idea"}</span>
           </div>
-          <div className="text-sm font-medium truncate">{idea.title || "Untitled"}</div>
+          <div className="text-[13.5px] font-medium truncate leading-tight mt-0.5">
+            {threadLabel.title}
+          </div>
+          {threadLabel.when && (
+            <div className="text-[10.5px] text-muted-foreground/60 leading-tight">
+              Started {threadLabel.when}
+            </div>
+          )}
         </div>
         <button
           onClick={clearHistory}
