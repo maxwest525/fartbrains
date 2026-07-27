@@ -427,18 +427,6 @@ export const IdeaDetail = ({ ideaId, onClose, backLabel = "Back", onSelectIdea }
 
         <SourceMetaCard idea={idea} />
 
-        {!editing && (
-          <button
-            type="button"
-            onClick={() => setChatOpen(true)}
-            className="press w-full flex items-center justify-center gap-2 h-12 rounded-2xl bg-primary/15 hover:bg-primary/20 border border-primary/30 text-primary font-semibold text-[15px] transition"
-          >
-            <MessageSquare className="h-[18px] w-[18px]" />
-            Brainstorm with Asher
-          </button>
-        )}
-
-        <div className="h-px bg-white/10" aria-hidden />
 
 
 
