@@ -59,7 +59,7 @@ export const IdeaChatScreen = ({ idea, onClose }: Props) => {
     (async () => {
       const { data, error } = await supabase
         .from("idea_chats")
-        .select("id, role, content")
+        .select("id, role, content, created_at")
         .eq("idea_id", idea.id)
         .order("created_at", { ascending: true });
       if (cancelled) return;
@@ -69,7 +69,12 @@ export const IdeaChatScreen = ({ idea, onClose }: Props) => {
         setMessages(
           (data ?? [])
             .filter((r) => r.role === "user" || r.role === "assistant")
-            .map((r) => ({ id: r.id, role: r.role as "user" | "assistant", content: r.content })),
+            .map((r) => ({
+              id: r.id,
+              role: r.role as "user" | "assistant",
+              content: r.content,
+              created_at: r.created_at,
+            })),
         );
       }
       setLoading(false);
