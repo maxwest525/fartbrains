@@ -356,15 +356,37 @@ export const IdeaChatScreen = ({ idea, onClose }: Props) => {
                 )}
               </div>
             ))}
-            {sending && messages[messages.length - 1]?.role === "user" && (
+            {sending && (messages[messages.length - 1]?.role === "user" || !messages[messages.length - 1]?.content) && (
               <div className="flex justify-start">
-                <div className="text-muted-foreground text-sm inline-flex items-center gap-2">
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" /> Thinking…
+                <div className="inline-flex items-center gap-2 rounded-2xl bg-white/[0.04] border border-white/10 px-3 py-2 text-[13px] text-muted-foreground">
+                  <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary/60 opacity-75" />
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-primary" />
+                  </span>
+                  <span className="animate-pulse">Asher is thinking…</span>
+                </div>
+              </div>
+            )}
+            {errorText && !sending && (
+              <div className="flex justify-start">
+                <div className="w-full max-w-[94%] rounded-2xl border border-destructive/40 bg-destructive/10 px-3.5 py-2.5 text-[13.5px] text-destructive-foreground">
+                  <div className="font-medium text-destructive">Something went wrong</div>
+                  <p className="mt-0.5 text-foreground/80 leading-snug">{errorText}</p>
+                  {lastPrompt && (
+                    <button
+                      type="button"
+                      onClick={retryLast}
+                      className="press mt-2 inline-flex items-center gap-1.5 h-8 px-3 rounded-full bg-primary/15 hover:bg-primary/25 border border-primary/30 text-primary text-[12.5px] font-medium"
+                    >
+                      <RefreshCw className="h-3.5 w-3.5" /> Retry
+                    </button>
+                  )}
                 </div>
               </div>
             )}
           </div>
         )}
+
 
       </div>
 
