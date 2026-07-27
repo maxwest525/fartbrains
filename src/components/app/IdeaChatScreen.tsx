@@ -273,7 +273,7 @@ export const IdeaChatScreen = ({ idea, onClose }: Props) => {
       {/* Body */}
       <div
         ref={scrollRef}
-        className={`flex-1 min-h-0 ${isEmpty ? "overflow-hidden flex flex-col" : "overflow-y-auto"} px-3 sm:px-4 ${isEmpty ? "pt-3 pb-3" : "pt-2 sm:pt-4 pb-24 sm:pb-28"}`}
+        className={`flex-1 min-h-0 ${isEmpty ? "overflow-hidden flex flex-col" : "overflow-y-auto"} px-3 sm:px-4 ${isEmpty ? "pt-3 pb-3" : "pt-2 sm:pt-4 pb-3"}`}
       >
         {loading ? (
           <div className="flex items-center justify-center py-12 text-muted-foreground text-sm">
