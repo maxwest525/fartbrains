@@ -111,6 +111,7 @@ export const IdeaDetail = ({ ideaId, onClose, backLabel = "Back", onSelectIdea }
   const [copied, setCopied] = useState(false);
   const [reminderOpen, setReminderOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [chatOpen, setChatOpen] = useState(false);
 
   // Swipe-right from the left edge to go back (mobile only, not while editing)
   useSwipeGesture(containerRef, {
