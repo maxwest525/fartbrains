@@ -348,15 +348,9 @@ export const IdeaDetail = ({ ideaId, onClose, backLabel = "Back", onSelectIdea }
           >
             {createIdea.isPending ? <Loader2 className="h-[20px] w-[20px] animate-spin" /> : <Plus className="h-[22px] w-[22px]" strokeWidth={2.4} />}
           </button>
-          <button
-            onClick={() => setChatOpen(true)}
-            className="press h-10 px-3 flex items-center gap-1.5 text-primary rounded-full bg-primary/10 hover:bg-primary/15"
-            aria-label="Brainstorm with Asher"
-            title="Brainstorm with Asher"
-          >
-            <MessageSquare className="h-[18px] w-[18px]" />
-            <span className="text-[13px] font-medium hidden sm:inline">Brainstorm</span>
-          </button>
+
+
+
           <button
             onClick={onCollab}
             className="press h-10 w-10 flex items-center justify-center text-primary"
@@ -418,7 +412,7 @@ export const IdeaDetail = ({ ideaId, onClose, backLabel = "Back", onSelectIdea }
         </div>
       </div>
 
-      <div className="flex-1 min-h-0 overflow-y-auto scroll-momentum touch-pan-y px-4 sm:px-6 pt-4 sm:pt-5 pb-[calc(2rem+var(--mobile-tabbar-h,0px)+env(safe-area-inset-bottom))] space-y-5">
+      <div className="flex-1 min-h-0 overflow-y-auto scroll-momentum touch-pan-y px-4 sm:px-6 pt-4 sm:pt-5 pb-[calc(2rem+var(--mobile-tabbar-h,0px)+env(safe-area-inset-bottom))] space-y-8 [&>*+*]:pt-1">
         {editing ? (
           <Input
             value={title}
@@ -432,6 +426,21 @@ export const IdeaDetail = ({ ideaId, onClose, backLabel = "Back", onSelectIdea }
         )}
 
         <SourceMetaCard idea={idea} />
+
+        {!editing && (
+          <button
+            type="button"
+            onClick={() => setChatOpen(true)}
+            className="press w-full flex items-center justify-center gap-2 h-12 rounded-2xl bg-primary/15 hover:bg-primary/20 border border-primary/30 text-primary font-semibold text-[15px] transition"
+          >
+            <MessageSquare className="h-[18px] w-[18px]" />
+            Brainstorm with Asher
+          </button>
+        )}
+
+        <div className="h-px bg-white/10" aria-hidden />
+
+
 
 
         {idea.remind_at && (
