@@ -350,12 +350,12 @@ export const IdeaDetail = ({ ideaId, onClose, backLabel = "Back", onSelectIdea }
           </button>
           <button
             onClick={() => setChatOpen(true)}
-            className="press h-10 px-2.5 flex items-center gap-1.5 text-primary rounded-full bg-primary/10 hover:bg-primary/15"
-            aria-label="Chat with this idea"
-            title="Chat with this idea"
+            className="press h-10 px-3 flex items-center gap-1.5 text-primary rounded-full bg-primary/10 hover:bg-primary/15"
+            aria-label="Brainstorm with Asher"
+            title="Brainstorm with Asher"
           >
             <MessageSquare className="h-[18px] w-[18px]" />
-            <span className="text-[13px] font-medium hidden sm:inline">Chat</span>
+            <span className="text-[13px] font-medium hidden sm:inline">Brainstorm</span>
           </button>
           <button
             onClick={onCollab}
