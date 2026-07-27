@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { ChevronLeft, Send, Loader2, Trash2, Sparkles, MessageCirclePlus, X } from "lucide-react";
+import { ChevronLeft, Send, Loader2, Trash2, Sparkles, MessageCirclePlus, X, RefreshCw } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import type { Idea } from "@/hooks/useIdeas";
