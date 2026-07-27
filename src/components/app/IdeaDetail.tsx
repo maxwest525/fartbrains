@@ -664,7 +664,7 @@ export const IdeaDetail = ({ ideaId, onClose, backLabel = "Back", onSelectIdea }
                   </ReactMarkdown>
                 </div>
               ) : idea.raw_note ? (
-                <p className="whitespace-pre-wrap text-sm">{idea.raw_note}</p>
+                <div className="rounded-2xl bg-white/[0.05] border border-white/12 p-5 text-[15px] leading-relaxed text-foreground whitespace-pre-wrap">{idea.raw_note}</div>
               ) : (
                 <div className="rounded-xl glass-card-quiet border-dashed p-4 text-xs text-muted-foreground">
                   No note yet — tap Edit to add the idea text.
