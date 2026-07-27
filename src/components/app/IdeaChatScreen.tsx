@@ -235,7 +235,7 @@ export const IdeaChatScreen = ({ idea, onClose }: Props) => {
       </div>
 
       {/* Body */}
-      <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-6">
+      <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 pt-5 pb-32 sm:pb-28">
         {loading ? (
           <div className="flex items-center justify-center py-16 text-muted-foreground text-sm">
             <Loader2 className="h-4 w-4 animate-spin mr-2" /> Loading…
