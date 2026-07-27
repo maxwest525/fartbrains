@@ -290,11 +290,11 @@ export const IdeaChatScreen = ({ idea, onClose }: Props) => {
 
       {/* Floating "Ask your own" button (when composer is hidden) */}
       {!composerOpen && !loading && (
-        <div className="safe-bottom absolute bottom-0 left-0 right-0 px-4 pb-4 pointer-events-none">
+        <div className="safe-bottom absolute bottom-0 left-0 right-0 px-4 pb-5 pointer-events-none">
           <div className="flex justify-center pointer-events-auto">
             <button
               onClick={() => setComposerOpen(true)}
-              className="press inline-flex items-center gap-2 h-12 px-5 rounded-full brand-gradient text-white shadow-xl shadow-primary/30 text-[15px] font-medium"
+              className="press inline-flex items-center gap-2 h-12 px-6 rounded-full brand-gradient text-white shadow-xl shadow-primary/30 text-[15px] font-medium"
             >
               <MessageCirclePlus className="h-[18px] w-[18px]" />
               {isEmpty ? "Ask your own question" : "Continue the conversation"}
@@ -305,7 +305,7 @@ export const IdeaChatScreen = ({ idea, onClose }: Props) => {
 
       {/* Composer (only when opened) */}
       {composerOpen && (
-        <div className="safe-bottom border-t border-white/10 bg-background/60 backdrop-blur-xl px-3 py-2 anim-slide-in">
+        <div className="safe-bottom border-t border-white/10 bg-background/70 backdrop-blur-xl px-3 pt-2.5 pb-3 anim-slide-in">
           <div className="flex items-end gap-2 rounded-2xl bg-white/5 border border-white/10 px-3 py-2">
             <button
               onClick={() => setComposerOpen(false)}
