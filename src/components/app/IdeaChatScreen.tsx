@@ -337,32 +337,10 @@ export const IdeaChatScreen = ({ idea, onClose }: Props) => {
 
       </div>
 
-      {/* Floating "Continue" button — only when there is history and composer closed */}
-      {!composerOpen && !loading && !isEmpty && (
-        <div className="safe-bottom absolute bottom-0 left-0 right-0 px-4 pb-4 pointer-events-none">
-          <div className="flex justify-center pointer-events-auto">
-            <button
-              onClick={() => setComposerOpen(true)}
-              className="press inline-flex items-center gap-2 h-11 px-5 rounded-full brand-gradient text-white shadow-xl shadow-primary/30 text-[14px] font-medium"
-            >
-              <MessageCirclePlus className="h-[17px] w-[17px]" />
-              Continue the conversation
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Composer (only when opened) */}
-      {composerOpen && (
-        <div className="safe-bottom shrink-0 border-t border-white/10 bg-background/70 backdrop-blur-xl px-3 pt-2 pb-2.5 anim-slide-in">
+      {/* Composer — always pinned to bottom once there's a conversation */}
+      {!loading && !isEmpty && (
+        <div className="safe-bottom shrink-0 sticky bottom-0 border-t border-white/10 bg-background/80 backdrop-blur-xl px-3 pt-2 pb-2.5">
           <div className="flex items-end gap-2 rounded-2xl bg-white/5 border border-white/10 px-3 py-2">
-            <button
-              onClick={() => setComposerOpen(false)}
-              className="press h-9 w-9 flex items-center justify-center text-muted-foreground shrink-0"
-              aria-label="Close composer"
-            >
-              <X className="h-4 w-4" />
-            </button>
             <textarea
               ref={inputRef}
               value={input}
@@ -383,6 +361,7 @@ export const IdeaChatScreen = ({ idea, onClose }: Props) => {
           </div>
         </div>
       )}
+
     </div>
   );
 };
