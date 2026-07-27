@@ -209,7 +209,7 @@ export const IdeaChatScreen = ({ idea, onClose }: Props) => {
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-background/80 backdrop-blur-2xl anim-slide-in">
       {/* Header */}
-      <div className="safe-top sticky top-0 z-10 px-2 py-1.5 flex items-center gap-2 border-b border-white/10 bg-background/40 backdrop-blur-xl min-h-[52px]">
+      <div className="safe-top sticky top-0 z-10 px-3 py-2 flex items-center gap-3 border-b border-white/10 bg-background/50 backdrop-blur-xl min-h-[60px]">
         <button
           onClick={onClose}
           className="press flex items-center text-primary pl-1 pr-2 h-10 text-[17px]"
