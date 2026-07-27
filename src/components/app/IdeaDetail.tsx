@@ -728,7 +728,7 @@ export const IdeaDetail = ({ ideaId, onClose, backLabel = "Back", onSelectIdea }
               }}
               className="mt-2 inline-flex items-center gap-1.5 text-xs text-primary hover:underline"
             >
-              <MessageSquare className="h-3.5 w-3.5" /> Chat with this idea in Ash
+              <MessageSquare className="h-3.5 w-3.5" /> Brainstorm with Asher
             </button>
           </CollapsibleSection>
         )}
