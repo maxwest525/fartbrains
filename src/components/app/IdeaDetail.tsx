@@ -348,11 +348,8 @@ export const IdeaDetail = ({ ideaId, onClose, backLabel = "Back", onSelectIdea }
           >
             {createIdea.isPending ? <Loader2 className="h-[20px] w-[20px] animate-spin" /> : <Plus className="h-[22px] w-[22px]" strokeWidth={2.4} />}
           </button>
-          <button
-            onClick={onCollab}
-            className="press h-10 w-10 flex items-center justify-center text-primary hidden"
-            aria-label="Copy collab link (moved below)"
-          />
+
+
 
           <button
             onClick={onCollab}
