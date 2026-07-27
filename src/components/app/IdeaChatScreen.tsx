@@ -235,34 +235,34 @@ export const IdeaChatScreen = ({ idea, onClose }: Props) => {
   const isEmpty = !loading && messages.length === 0;
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-background/80 backdrop-blur-2xl anim-slide-in">
+    <div className="fixed inset-0 z-50 flex flex-col bg-background/80 backdrop-blur-2xl anim-slide-in overflow-hidden">
       {/* Header */}
-      <div className="safe-top sticky top-0 z-10 px-3 py-2 flex items-center gap-3 border-b border-white/10 bg-background/50 backdrop-blur-xl min-h-[60px]">
+      <div className="safe-top shrink-0 px-3 py-1.5 flex items-center gap-2 border-b border-white/10 bg-background/50 backdrop-blur-xl">
         <button
           onClick={onClose}
-          className="press flex items-center text-primary pl-1 pr-2 h-10 text-[17px]"
+          className="press flex items-center text-primary pl-1 pr-1.5 h-9 text-[15px]"
           aria-label="Back to idea"
         >
-          <ChevronLeft className="h-6 w-6 -mr-0.5" strokeWidth={2.4} />
+          <ChevronLeft className="h-5 w-5 -mr-0.5" strokeWidth={2.4} />
           <span className="font-normal">Idea</span>
         </button>
-        <div className="flex-1 min-w-0 text-center px-2">
-          <div className="text-[10.5px] uppercase tracking-[0.14em] text-muted-foreground/70 flex items-center justify-center gap-1">
+        <div className="flex-1 min-w-0 text-center px-1">
+          <div className="text-[10px] uppercase tracking-[0.14em] text-muted-foreground/70 flex items-center justify-center gap-1">
             <Sparkles className="h-3 w-3 text-accent" />
             <span className="truncate max-w-[70%]">{idea.title || "Untitled idea"}</span>
           </div>
-          <div className="text-[13.5px] font-medium truncate leading-tight mt-0.5">
-            {threadLabel.title}
-          </div>
-          {threadLabel.when && (
-            <div className="text-[10.5px] text-muted-foreground/60 leading-tight">
-              Started {threadLabel.when}
+          {(threadLabel.title !== "New conversation" || threadLabel.when) && (
+            <div className="text-[12px] font-medium truncate leading-tight mt-0.5">
+              {threadLabel.title}
+              {threadLabel.when && (
+                <span className="text-muted-foreground/60 font-normal"> · {threadLabel.when}</span>
+              )}
             </div>
           )}
         </div>
         <button
           onClick={clearHistory}
-          className="press h-10 w-10 flex items-center justify-center text-muted-foreground hover:text-destructive"
+          className="press h-9 w-9 flex items-center justify-center text-muted-foreground hover:text-destructive"
           aria-label="Clear chat history"
           title="Clear history"
         >
@@ -271,31 +271,43 @@ export const IdeaChatScreen = ({ idea, onClose }: Props) => {
       </div>
 
       {/* Body */}
-      <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 pt-5 pb-32 sm:pb-28">
+      <div
+        ref={scrollRef}
+        className={`flex-1 min-h-0 ${isEmpty ? "overflow-hidden flex flex-col" : "overflow-y-auto"} px-4 ${isEmpty ? "pt-3 pb-3" : "pt-4 pb-28"}`}
+      >
         {loading ? (
-          <div className="flex items-center justify-center py-16 text-muted-foreground text-sm">
+          <div className="flex items-center justify-center py-12 text-muted-foreground text-sm">
             <Loader2 className="h-4 w-4 animate-spin mr-2" /> Loading…
           </div>
         ) : isEmpty ? (
-          <div className="max-w-md mx-auto flex flex-col items-center text-center pt-4 pb-8">
-            <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-primary/30 to-accent/20 border border-white/15 flex items-center justify-center mb-4 shadow-lg shadow-primary/10">
-              <Sparkles className="h-6 w-6 text-accent" />
+          <div className="flex-1 min-h-0 flex flex-col items-center text-center max-w-md mx-auto w-full">
+            <div className="h-11 w-11 rounded-2xl bg-gradient-to-br from-primary/30 to-accent/20 border border-white/15 flex items-center justify-center mb-2 shadow-lg shadow-primary/10 shrink-0">
+              <Sparkles className="h-5 w-5 text-accent" />
             </div>
-            <h2 className="text-xl font-semibold tracking-tight">Think this through with Ash</h2>
-            <p className="text-sm text-muted-foreground mt-2 px-4 leading-relaxed">
-              Pick a starting point below, or start your own thread when you're ready.
+            <h2 className="text-[17px] font-semibold tracking-tight shrink-0">Brainstorm with Asher</h2>
+            <p className="text-[12.5px] text-muted-foreground mt-1 px-2 leading-snug shrink-0">
+              Pick a starting point, or start your own thread.
             </p>
 
-            <div className="w-full mt-6 space-y-2.5">
+            <div className="w-full mt-3 space-y-1.5 flex-1 min-h-0 flex flex-col justify-center">
               {suggestions.map((s) => (
                 <button
                   key={s}
                   onClick={() => handleSuggestion(s)}
-                  className="press w-full text-left text-[14.5px] leading-relaxed px-4 py-3.5 rounded-2xl border border-white/10 bg-white/[0.04] hover:bg-white/[0.08] transition-colors"
+                  className="press w-full text-left text-[13.5px] leading-snug px-3.5 py-2.5 rounded-xl border border-white/10 bg-white/[0.04] hover:bg-white/[0.08] transition-colors"
                 >
                   {s}
                 </button>
               ))}
+            </div>
+            <div className="shrink-0 pt-2 pb-1">
+              <button
+                onClick={() => setComposerOpen(true)}
+                className="press inline-flex items-center gap-2 h-11 px-5 rounded-full brand-gradient text-white shadow-xl shadow-primary/30 text-[14px] font-medium"
+              >
+                <MessageCirclePlus className="h-[17px] w-[17px]" />
+                Ask your own question
+              </button>
             </div>
           </div>
         ) : (
@@ -324,16 +336,16 @@ export const IdeaChatScreen = ({ idea, onClose }: Props) => {
         )}
       </div>
 
-      {/* Floating "Ask your own" button (when composer is hidden) */}
-      {!composerOpen && !loading && (
-        <div className="safe-bottom absolute bottom-0 left-0 right-0 px-4 pb-5 pointer-events-none">
+      {/* Floating "Continue" button — only when there is history and composer closed */}
+      {!composerOpen && !loading && !isEmpty && (
+        <div className="safe-bottom absolute bottom-0 left-0 right-0 px-4 pb-4 pointer-events-none">
           <div className="flex justify-center pointer-events-auto">
             <button
               onClick={() => setComposerOpen(true)}
-              className="press inline-flex items-center gap-2 h-12 px-6 rounded-full brand-gradient text-white shadow-xl shadow-primary/30 text-[15px] font-medium"
+              className="press inline-flex items-center gap-2 h-11 px-5 rounded-full brand-gradient text-white shadow-xl shadow-primary/30 text-[14px] font-medium"
             >
-              <MessageCirclePlus className="h-[18px] w-[18px]" />
-              {isEmpty ? "Ask your own question" : "Continue the conversation"}
+              <MessageCirclePlus className="h-[17px] w-[17px]" />
+              Continue the conversation
             </button>
           </div>
         </div>
@@ -341,8 +353,8 @@ export const IdeaChatScreen = ({ idea, onClose }: Props) => {
 
       {/* Composer (only when opened) */}
       {composerOpen && (
-        <div className="safe-bottom border-t border-white/10 bg-background/70 backdrop-blur-xl px-3 pt-2.5 pb-3 anim-slide-in">
-          <div className="flex items-end gap-2 rounded-2xl bg-white/5 border border-white/10 px-3 py-2.5">
+        <div className="safe-bottom shrink-0 border-t border-white/10 bg-background/70 backdrop-blur-xl px-3 pt-2 pb-2.5 anim-slide-in">
+          <div className="flex items-end gap-2 rounded-2xl bg-white/5 border border-white/10 px-3 py-2">
             <button
               onClick={() => setComposerOpen(false)}
               className="press h-9 w-9 flex items-center justify-center text-muted-foreground shrink-0"
@@ -355,7 +367,7 @@ export const IdeaChatScreen = ({ idea, onClose }: Props) => {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={onKey}
-              placeholder="Ask about this idea…"
+              placeholder="Ask Asher about this idea…"
               rows={1}
               className="flex-1 bg-transparent outline-none resize-none text-[15px] leading-snug max-h-40 py-1"
             />
