@@ -39,6 +39,7 @@ import { SourceMetaCard } from "./SourceMetaCard";
 import { RelatedIdeas } from "./RelatedIdeas";
 import { IdeaReferences } from "./IdeaReferences";
 import { CollapsibleSection } from "./CollapsibleSection";
+import { IdeaChatScreen } from "./IdeaChatScreen";
 
 const NO_FOLDER = "__none__";
 
@@ -110,6 +111,7 @@ export const IdeaDetail = ({ ideaId, onClose, backLabel = "Back", onSelectIdea }
   const [copied, setCopied] = useState(false);
   const [reminderOpen, setReminderOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [chatOpen, setChatOpen] = useState(false);
 
   // Swipe-right from the left edge to go back (mobile only, not while editing)
   useSwipeGesture(containerRef, {
@@ -345,6 +347,15 @@ export const IdeaDetail = ({ ideaId, onClose, backLabel = "Back", onSelectIdea }
             title={idea.folder_id ? `Add to ${folders.find((f) => f.id === idea.folder_id)?.name ?? "folder"}` : "Add new idea"}
           >
             {createIdea.isPending ? <Loader2 className="h-[20px] w-[20px] animate-spin" /> : <Plus className="h-[22px] w-[22px]" strokeWidth={2.4} />}
+          </button>
+          <button
+            onClick={() => setChatOpen(true)}
+            className="press h-10 px-2.5 flex items-center gap-1.5 text-primary rounded-full bg-primary/10 hover:bg-primary/15"
+            aria-label="Chat with this idea"
+            title="Chat with this idea"
+          >
+            <MessageSquare className="h-[18px] w-[18px]" />
+            <span className="text-[13px] font-medium hidden sm:inline">Chat</span>
           </button>
           <button
             onClick={onCollab}
@@ -713,19 +724,7 @@ export const IdeaDetail = ({ ideaId, onClose, backLabel = "Back", onSelectIdea }
               type="button"
               onClick={(e) => {
                 e.stopPropagation();
-                const seed = [
-                  idea.generated_prompt,
-                  !idea.generated_prompt && idea.ai_summary ? `Context — AI summary:\n${idea.ai_summary}` : null,
-                  !idea.generated_prompt && !idea.ai_summary && idea.extracted_text
-                    ? `Context — extracted text:\n${idea.extracted_text.slice(0, 4000)}`
-                    : null,
-                  idea.raw_note ? `My note: ${idea.raw_note}` : null,
-                ].filter(Boolean).join("\n\n");
-                window.dispatchEvent(
-                  new CustomEvent("idea-vault:chat-with-idea", {
-                    detail: { ideaId: idea.id, seed: seed || `Let's discuss: ${idea.title}` },
-                  }),
-                );
+                setChatOpen(true);
               }}
               className="mt-2 inline-flex items-center gap-1.5 text-xs text-primary hover:underline"
             >
@@ -878,6 +877,7 @@ export const IdeaDetail = ({ ideaId, onClose, backLabel = "Back", onSelectIdea }
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      {chatOpen && <IdeaChatScreen idea={idea} onClose={() => setChatOpen(false)} />}
     </div>
   );
 };

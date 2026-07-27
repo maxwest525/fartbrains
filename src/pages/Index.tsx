@@ -421,7 +421,7 @@ const Shell = () => {
         />
       )}
 
-      {!showFolders && !showCalendar && !showGraph && <AshDock />}
+      {!showFolders && !showCalendar && !showGraph && !showDetailOnly && <AshDock />}
 
       <SettingsSheet open={settingsOpen} onOpenChange={setSettingsOpen} />
       <AlarmOverlay />
