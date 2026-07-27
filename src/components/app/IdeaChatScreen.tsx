@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { ChevronLeft, Send, Loader2, Trash2, Sparkles, MessageCirclePlus, X } from "lucide-react";
+import { ChevronLeft, Send, Loader2, Trash2, Sparkles, MessageCirclePlus, X, RefreshCw } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import type { Idea } from "@/hooks/useIdeas";
@@ -60,8 +60,11 @@ export const IdeaChatScreen = ({ idea, onClose }: Props) => {
   const [sending, setSending] = useState(false);
   const [loading, setLoading] = useState(true);
   const [composerOpen, setComposerOpen] = useState(false);
+  const [errorText, setErrorText] = useState<string | null>(null);
+  const [lastPrompt, setLastPrompt] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+
 
   const suggestions = useMemo(() => buildSuggestions(idea), [idea]);
 
@@ -135,6 +138,8 @@ export const IdeaChatScreen = ({ idea, onClose }: Props) => {
     const trimmed = text.trim();
     if (!trimmed || sending) return;
     setInput("");
+    setErrorText(null);
+    setLastPrompt(trimmed);
     const nextUser: ChatMsg = { role: "user", content: trimmed };
     const history = [...messages, nextUser];
     setMessages(history);
@@ -160,9 +165,15 @@ export const IdeaChatScreen = ({ idea, onClose }: Props) => {
       });
       if (!res.ok || !res.body) {
         const errText = await res.text().catch(() => "");
-        if (res.status === 429) toast.error("Rate limit — try again in a moment.");
-        else if (res.status === 402) toast.error("AI credits exhausted.");
-        else toast.error("Chat failed");
+        const msg =
+          res.status === 429
+            ? "Rate limit — try again in a moment."
+            : res.status === 402
+            ? "AI credits exhausted."
+            : res.status === 401
+            ? "You need to be signed in to chat."
+            : "Asher couldn't respond. Check your connection and try again.";
+        setErrorText(msg);
         console.error("ash-chat error", res.status, errText);
         setSending(false);
         return;
@@ -200,14 +211,34 @@ export const IdeaChatScreen = ({ idea, onClose }: Props) => {
           }
         }
       }
-      if (acc.trim()) void persist("assistant", acc);
+      if (acc.trim()) {
+        void persist("assistant", acc);
+      } else {
+        // Stream ended with no content — surface a soft error.
+        setMessages((prev) => prev.filter((m, i) => !(i === prev.length - 1 && m.role === "assistant" && !m.content)));
+        setErrorText("Asher didn't return a response. Try again.");
+      }
     } catch (e) {
       console.error(e);
-      toast.error("Chat failed");
+      setErrorText("Network error — your message wasn't sent. Try again.");
     } finally {
       setSending(false);
     }
   };
+
+  const retryLast = () => {
+    if (!lastPrompt || sending) return;
+    // Remove the trailing failed user message so we don't duplicate it.
+    setMessages((prev) => {
+      const copy = [...prev];
+      if (copy.length && copy[copy.length - 1].role === "user" && copy[copy.length - 1].content === lastPrompt) {
+        copy.pop();
+      }
+      return copy;
+    });
+    void sendText(lastPrompt);
+  };
+
 
   const clearHistory = async () => {
     if (!confirm("Clear this idea's chat history?")) return;
@@ -325,15 +356,37 @@ export const IdeaChatScreen = ({ idea, onClose }: Props) => {
                 )}
               </div>
             ))}
-            {sending && messages[messages.length - 1]?.role === "user" && (
+            {sending && (messages[messages.length - 1]?.role === "user" || !messages[messages.length - 1]?.content) && (
               <div className="flex justify-start">
-                <div className="text-muted-foreground text-sm inline-flex items-center gap-2">
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" /> Thinking…
+                <div className="inline-flex items-center gap-2 rounded-2xl bg-white/[0.04] border border-white/10 px-3 py-2 text-[13px] text-muted-foreground">
+                  <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary/60 opacity-75" />
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-primary" />
+                  </span>
+                  <span className="animate-pulse">Asher is thinking…</span>
+                </div>
+              </div>
+            )}
+            {errorText && !sending && (
+              <div className="flex justify-start">
+                <div className="w-full max-w-[94%] rounded-2xl border border-destructive/40 bg-destructive/10 px-3.5 py-2.5 text-[13.5px] text-destructive-foreground">
+                  <div className="font-medium text-destructive">Something went wrong</div>
+                  <p className="mt-0.5 text-foreground/80 leading-snug">{errorText}</p>
+                  {lastPrompt && (
+                    <button
+                      type="button"
+                      onClick={retryLast}
+                      className="press mt-2 inline-flex items-center gap-1.5 h-8 px-3 rounded-full bg-primary/15 hover:bg-primary/25 border border-primary/30 text-primary text-[12.5px] font-medium"
+                    >
+                      <RefreshCw className="h-3.5 w-3.5" /> Retry
+                    </button>
+                  )}
                 </div>
               </div>
             )}
           </div>
         )}
+
 
       </div>
 
