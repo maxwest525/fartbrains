@@ -33,12 +33,10 @@ const buildSystemContext = (idea: Idea): string => {
 const buildSuggestions = (idea: Idea): string[] => {
   const t = idea.title || "this idea";
   return [
-    `Sharpen the core insight behind "${t}" in one paragraph.`,
-    `What are the 3 biggest risks or blind spots here?`,
-    `Give me 5 concrete next actions I can take this week.`,
-    `Who is the ideal audience, and how would I reach them?`,
+    `Sharpen the core insight behind "${t}".`,
+    `What are the 3 biggest risks or blind spots?`,
+    `Give me 5 concrete next actions this week.`,
     `Rewrite this as a punchy one-line pitch.`,
-    `What existing products or ideas is this most similar to?`,
   ];
 };
 
