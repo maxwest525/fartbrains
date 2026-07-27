@@ -6,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import type { Idea } from "@/hooks/useIdeas";
 
-type ChatMsg = { id?: string; role: "user" | "assistant"; content: string };
+type ChatMsg = { id?: string; role: "user" | "assistant"; content: string; created_at?: string };
 
 type Props = {
   idea: Idea;
