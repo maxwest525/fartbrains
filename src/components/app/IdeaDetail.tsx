@@ -427,6 +427,19 @@ export const IdeaDetail = ({ ideaId, onClose, backLabel = "Back", onSelectIdea }
 
         <SourceMetaCard idea={idea} />
 
+        {!editing && (
+          <button
+            type="button"
+            onClick={() => setChatOpen(true)}
+            className="press inline-flex items-center gap-1.5 h-8 px-3 rounded-full bg-primary/15 hover:bg-primary/20 border border-primary/30 text-primary font-medium text-[13px] transition"
+          >
+            <MessageSquare className="h-3.5 w-3.5" />
+            Brainstorm with Asher
+          </button>
+        )}
+
+
+
 
 
 
@@ -637,7 +650,7 @@ export const IdeaDetail = ({ ideaId, onClose, backLabel = "Back", onSelectIdea }
                   className={isProject ? "font-mono text-xs" : undefined}
                 />
               ) : isChecklist ? (
-                <div className="rounded-2xl bg-white/[0.05] border border-white/12 p-5 text-[15px] leading-relaxed text-foreground prose prose-sm dark:prose-invert max-w-none prose-ul:my-0 prose-li:my-1">
+                <div className="rounded-2xl bg-white/[0.09] border border-white/20 shadow-sm p-5 text-[15px] leading-relaxed text-foreground prose prose-sm dark:prose-invert max-w-none prose-ul:my-0 prose-li:my-1">
                   <ReactMarkdown
                     remarkPlugins={[remarkGfm]}
                     components={{
@@ -664,7 +677,7 @@ export const IdeaDetail = ({ ideaId, onClose, backLabel = "Back", onSelectIdea }
                   </ReactMarkdown>
                 </div>
               ) : idea.raw_note ? (
-                <div className="rounded-2xl bg-white/[0.05] border border-white/12 p-5 text-[15px] leading-relaxed text-foreground whitespace-pre-wrap">{idea.raw_note}</div>
+                <div className="rounded-2xl bg-white/[0.09] border border-white/20 shadow-sm p-5 text-[15px] leading-relaxed text-foreground whitespace-pre-wrap">{idea.raw_note}</div>
               ) : (
                 <div className="rounded-xl glass-card-quiet border-dashed p-4 text-xs text-muted-foreground">
                   No note yet — tap Edit to add the idea text.
@@ -709,7 +722,7 @@ export const IdeaDetail = ({ ideaId, onClose, backLabel = "Back", onSelectIdea }
           >
             {generating && <ThinkingPanel active className="mb-2" />}
             {idea.generated_prompt ? (
-              <div className="rounded-2xl bg-white/[0.05] border border-white/12 p-5 text-[14px] text-foreground whitespace-pre-wrap font-mono leading-relaxed select-text">
+              <div className="rounded-2xl bg-white/[0.09] border border-white/20 shadow-sm p-5 text-[14px] text-foreground whitespace-pre-wrap font-mono leading-relaxed select-text">
                 {idea.generated_prompt}
               </div>
             ) : (
@@ -750,7 +763,7 @@ export const IdeaDetail = ({ ideaId, onClose, backLabel = "Back", onSelectIdea }
                 placeholder="No summary yet — click Generate to create one from your note or extracted text."
               />
             ) : idea.ai_summary ? (
-              <div className="rounded-2xl bg-white/[0.05] border border-white/12 p-5 text-[15px] leading-relaxed text-foreground prose prose-sm dark:prose-invert max-w-none prose-headings:mt-3 prose-headings:mb-2 prose-headings:font-semibold prose-h1:text-lg prose-h2:text-base prose-h3:text-sm prose-p:my-2 prose-ul:my-2 prose-ol:my-2 prose-li:my-1 prose-strong:text-foreground prose-a:text-primary prose-code:text-xs prose-code:bg-muted prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:before:content-none prose-code:after:content-none">
+              <div className="rounded-2xl bg-white/[0.09] border border-white/20 shadow-sm p-5 text-[15px] leading-relaxed text-foreground prose prose-sm dark:prose-invert max-w-none prose-headings:mt-3 prose-headings:mb-2 prose-headings:font-semibold prose-h1:text-lg prose-h2:text-base prose-h3:text-sm prose-p:my-2 prose-ul:my-2 prose-ol:my-2 prose-li:my-1 prose-strong:text-foreground prose-a:text-primary prose-code:text-xs prose-code:bg-muted prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:before:content-none prose-code:after:content-none">
                 <ReactMarkdown remarkPlugins={[remarkGfm]}>{idea.ai_summary}</ReactMarkdown>
               </div>
             ) : (
@@ -785,16 +798,8 @@ export const IdeaDetail = ({ ideaId, onClose, backLabel = "Back", onSelectIdea }
           <RelatedIdeas ideaId={idea.id} onSelect={onSelectIdea} />
         )}
 
-        {!editing && (
-          <button
-            type="button"
-            onClick={() => setChatOpen(true)}
-            className="press w-full flex items-center justify-center gap-2 h-12 rounded-2xl bg-primary/15 hover:bg-primary/20 border border-primary/30 text-primary font-semibold text-[15px] transition"
-          >
-            <MessageSquare className="h-[18px] w-[18px]" />
-            Brainstorm with Asher
-          </button>
-        )}
+
+
 
         {(editing ? extractedText : idea.extracted_text) && (
           <CollapsibleSection
@@ -830,7 +835,7 @@ export const IdeaDetail = ({ ideaId, onClose, backLabel = "Back", onSelectIdea }
                 className="text-xs leading-relaxed"
               />
             ) : (
-              <div className="rounded-2xl bg-white/[0.05] border border-white/12 p-5 text-[13px] leading-relaxed text-foreground/90 whitespace-pre-wrap">
+              <div className="rounded-2xl bg-white/[0.09] border border-white/20 shadow-sm p-5 text-[13px] leading-relaxed text-foreground/90 whitespace-pre-wrap">
                 {idea.extracted_text}
               </div>
             )}
