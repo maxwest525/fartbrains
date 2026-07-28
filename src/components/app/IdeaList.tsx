@@ -387,7 +387,7 @@ export const IdeaList = ({ filter, selectedId, onSelect, onBackToFolders, onFilt
                           <ChevronRight className="h-4 w-4 text-muted-foreground/60 shrink-0 -mr-1" />
                         </div>
                         {preview && (
-                          <p className="text-[14px] text-muted-foreground line-clamp-2 mt-0.5 leading-snug">
+                          <p className="text-[14px] text-foreground/75 line-clamp-2 mt-0.5 leading-snug">
                             {preview}
                           </p>
                         )}
