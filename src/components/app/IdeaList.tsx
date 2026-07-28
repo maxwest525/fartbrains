@@ -425,9 +425,10 @@ export const IdeaList = ({ filter, selectedId, onSelect, onBackToFolders, onFilt
                     }}
                     className={cn(
                       "w-full text-left min-h-[64px] transition-colors cursor-pointer",
-                      "border-b border-border/60 px-5 py-3.5",
-                      "hover:bg-muted/40 focus-visible:outline-none focus-visible:bg-muted/60",
-                      active && "bg-muted"
+                      "border border-white/15 bg-white/[0.06] hover:bg-white/[0.1] hover:border-white/25 shadow-[0_1px_6px_rgba(0,0,0,0.15)]",
+                      "rounded-xl mx-3 my-2 px-4 py-3.5",
+                      "focus-visible:outline-none focus-visible:bg-white/[0.12]",
+                      active && "bg-white/[0.14] border-white/30"
                     )}
                   >
                     <div className="flex items-start gap-2 mb-1">
