@@ -412,7 +412,7 @@ export const IdeaDetail = ({ ideaId, onClose, backLabel = "Back", onSelectIdea }
         </div>
       </div>
 
-      <div className="flex-1 min-h-0 overflow-y-auto scroll-momentum touch-pan-y px-4 sm:px-6 pt-4 sm:pt-5 pb-[calc(2rem+var(--mobile-tabbar-h,0px)+env(safe-area-inset-bottom))] space-y-8 [&>*+*]:pt-1">
+      <div className="flex-1 min-h-0 overflow-y-auto scroll-momentum touch-pan-y px-4 sm:px-6 pt-4 sm:pt-5 pb-[calc(2rem+var(--mobile-tabbar-h,0px)+env(safe-area-inset-bottom))] [&>*+*]:mt-7 [&>*+*]:pt-7 [&>*+*]:border-t [&>*+*]:border-white/8">
         {editing ? (
           <Input
             value={title}
@@ -717,17 +717,8 @@ export const IdeaDetail = ({ ideaId, onClose, backLabel = "Back", onSelectIdea }
                 Combine your note with the AI summary into a single prompt you can paste into ChatGPT, Claude, or Gemini.
               </div>
             )}
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                setChatOpen(true);
-              }}
-              className="mt-2 inline-flex items-center gap-1.5 text-xs text-primary hover:underline"
-            >
-              <MessageSquare className="h-3.5 w-3.5" /> Brainstorm with Asher
-            </button>
           </CollapsibleSection>
+
         )}
 
 
@@ -885,7 +876,16 @@ export const IdeaDetail = ({ ideaId, onClose, backLabel = "Back", onSelectIdea }
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-      {chatOpen && <IdeaChatScreen idea={idea} onClose={() => setChatOpen(false)} />}
+      {chatOpen && (
+        <IdeaChatScreen
+          idea={idea}
+          onClose={() => setChatOpen(false)}
+          onPromoteToPrompt={async (content) => {
+            await updateIdea.mutateAsync({ id: idea.id, patch: { generated_prompt: content } });
+          }}
+        />
+      )}
+
     </div>
   );
 };
