@@ -56,7 +56,7 @@ const formatRelative = (iso: string): string => {
   return new Date(iso).toLocaleDateString(undefined, { month: "short", day: "numeric" });
 };
 
-export const IdeaChatScreen = ({ idea, onClose }: Props) => {
+export const IdeaChatScreen = ({ idea, onClose, onPromoteToPrompt }: Props) => {
   const [messages, setMessages] = useState<ChatMsg[]>([]);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
@@ -64,8 +64,10 @@ export const IdeaChatScreen = ({ idea, onClose }: Props) => {
   const [composerOpen, setComposerOpen] = useState(false);
   const [errorText, setErrorText] = useState<string | null>(null);
   const [lastPrompt, setLastPrompt] = useState<string | null>(null);
+  const [promotedIdx, setPromotedIdx] = useState<number | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+
 
 
   const suggestions = useMemo(() => buildSuggestions(idea), [idea]);
