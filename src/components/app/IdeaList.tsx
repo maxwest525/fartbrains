@@ -436,7 +436,7 @@ export const IdeaList = ({ filter, selectedId, onSelect, onBackToFolders, onFilt
                       {idea.pinned_at && (
                         <Pin className="h-3.5 w-3.5 mt-0.5 shrink-0 fill-accent text-accent -rotate-45" />
                       )}
-                      <h3 className="font-medium text-sm flex-1 truncate">{idea.title}</h3>
+                      <h3 className="font-semibold text-[14px] text-foreground flex-1 truncate">{idea.title}</h3>
                       {isProject && stats && (
                         <span className="shrink-0 text-[10px] font-semibold px-1.5 py-0.5 rounded bg-primary/10 text-primary">
                           {stats.done}/{stats.total}
@@ -446,7 +446,7 @@ export const IdeaList = ({ filter, selectedId, onSelect, onBackToFolders, onFilt
                         <Star className="h-3.5 w-3.5 shrink-0 fill-accent text-accent" />
                       )}
                     </div>
-                    <p className="text-xs text-muted-foreground line-clamp-2 mb-1.5">{preview}</p>
+                    <p className="text-[12.5px] text-foreground/70 line-clamp-2 mb-1.5 leading-snug">{preview}</p>
                     <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground flex-wrap">
                       <span>{formatDate(idea.updated_at)}</span>
                       {idea.tags.filter((t) => t !== PROJECT_TAG).slice(0, 4).map((t) => {
