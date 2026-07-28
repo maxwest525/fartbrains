@@ -876,7 +876,16 @@ export const IdeaDetail = ({ ideaId, onClose, backLabel = "Back", onSelectIdea }
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-      {chatOpen && <IdeaChatScreen idea={idea} onClose={() => setChatOpen(false)} />}
+      {chatOpen && (
+        <IdeaChatScreen
+          idea={idea}
+          onClose={() => setChatOpen(false)}
+          onPromoteToPrompt={async (content) => {
+            await updateIdea.mutateAsync({ id: idea.id, patch: { generated_prompt: content } });
+          }}
+        />
+      )}
+
     </div>
   );
 };
