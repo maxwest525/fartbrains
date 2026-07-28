@@ -339,7 +339,7 @@ export const IdeaList = ({ filter, selectedId, onSelect, onBackToFolders, onFilt
           <>
             {/* MOBILE — grouped inset card with hairline separators */}
             <div className="md:hidden px-4 pt-1">
-              <div className="overflow-hidden ios-separator-inset">
+              <div className="overflow-hidden rounded-2xl bg-white/[0.09] border border-white/20 shadow-[0_2px_12px_rgba(0,0,0,0.18)] ios-separator-inset">
                 {visibleIdeas.map((idea) => {
                   const isProject = idea.tags.includes(PROJECT_TAG);
                   const stats = isProject ? deliverableStats(idea.raw_note) : null;
