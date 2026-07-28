@@ -359,7 +359,7 @@ export const IdeaList = ({ filter, selectedId, onSelect, onBackToFolders, onFilt
                     <button
                       key={idea.id}
                       onClick={() => onSelect(idea.id)}
-                      className="row-press w-full text-left flex items-start gap-3 px-3.5 py-2.5 min-h-[60px] active:bg-secondary"
+                      className="row-press w-full text-left flex items-start gap-3 px-3.5 py-3 min-h-[64px] active:bg-white/10 hover:bg-white/[0.06] transition-colors"
                     >
                       <div className="h-9 w-9 flex items-center justify-center shrink-0 mt-0.5">
                         <Icon className={cn("h-[20px] w-[20px]", tone)} />
