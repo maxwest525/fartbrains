@@ -354,9 +354,31 @@ export const IdeaChatScreen = ({ idea, onClose, onPromoteToPrompt }: Props) => {
                     {m.content}
                   </div>
                 ) : (
-                  <div className="max-w-[94%] text-foreground text-[14px] sm:text-[15px] leading-snug sm:leading-relaxed prose prose-sm prose-invert prose-p:my-1 sm:prose-p:my-2 prose-ul:my-1 sm:prose-ul:my-2 prose-li:my-0 max-w-none">
-                    <ReactMarkdown remarkPlugins={[remarkGfm]}>{m.content || "…"}</ReactMarkdown>
+                  <div className="max-w-[94%] group">
+                    <div className="text-foreground text-[14px] sm:text-[15px] leading-snug sm:leading-relaxed prose prose-sm prose-invert prose-p:my-1 sm:prose-p:my-2 prose-ul:my-1 sm:prose-ul:my-2 prose-li:my-0 max-w-none">
+                      <ReactMarkdown remarkPlugins={[remarkGfm]}>{m.content || "…"}</ReactMarkdown>
+                    </div>
+                    {onPromoteToPrompt && m.content.trim().length > 20 && (
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          try {
+                            await onPromoteToPrompt(m.content);
+                            setPromotedIdx(i);
+                            toast.success("Promoted to prompt");
+                          } catch {
+                            toast.error("Couldn't promote — try again.");
+                          }
+                        }}
+                        className="press mt-1.5 inline-flex items-center gap-1.5 h-7 px-2.5 rounded-full border border-primary/30 bg-primary/10 hover:bg-primary/20 text-primary text-[11.5px] font-medium"
+                        title="Save this reply as the idea's ready-to-paste prompt"
+                      >
+                        {promotedIdx === i ? <Check className="h-3 w-3" /> : <Wand2 className="h-3 w-3" />}
+                        {promotedIdx === i ? "Promoted" : "Promote to prompt"}
+                      </button>
+                    )}
                   </div>
+
                 )}
               </div>
             ))}
