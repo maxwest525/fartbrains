@@ -68,16 +68,16 @@ export const SourceMetaCard = ({ idea }: Props) => {
         )}
 
         <div className="flex-1 min-w-0 space-y-1.5">
-          <div className="flex items-center gap-1.5 flex-wrap">
+          <div className="flex items-center gap-2.5 flex-wrap">
             <span className={cn(
-              "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10.5px] font-semibold uppercase tracking-wide",
-              display.tone
+              "inline-flex items-center gap-1 text-[10.5px] font-semibold uppercase tracking-wide bg-transparent",
+              display.tone.replace(/bg-\S+/g, "").replace(/border-\S+/g, "")
             )}>
               <Icon className="h-3 w-3" />
               {display.label}
             </span>
             {meta.hasTranscript && (
-              <span className="inline-flex items-center gap-1 rounded-full border border-accent/30 bg-accent/10 px-2 py-0.5 text-[10.5px] font-semibold uppercase tracking-wide text-accent">
+              <span className="inline-flex items-center gap-1 text-[10.5px] font-semibold uppercase tracking-wide text-accent">
                 <Mic className="h-3 w-3" />
                 Transcribed
               </span>
