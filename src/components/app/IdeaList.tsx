@@ -370,7 +370,10 @@ export const IdeaList = ({ filter, selectedId, onSelect, onBackToFolders, onFilt
                           {idea.pinned_at && (
                             <Pin className="h-3.5 w-3.5 shrink-0 fill-accent text-accent -rotate-45" />
                           )}
-                          <h3 className="font-semibold text-[16px] flex-1 truncate leading-tight">
+                          <h3
+                            className="font-semibold text-[16px] flex-1 truncate leading-tight"
+                            title={idea.title}
+                          >
                             {idea.title}
                           </h3>
                           {isProject && stats && (
@@ -387,7 +390,10 @@ export const IdeaList = ({ filter, selectedId, onSelect, onBackToFolders, onFilt
                           <ChevronRight className="h-4 w-4 text-muted-foreground/60 shrink-0 -mr-1" />
                         </div>
                         {preview && (
-                          <p className="text-[14px] text-foreground/75 line-clamp-2 mt-0.5 leading-snug">
+                          <p
+                            className="text-[14px] text-foreground/75 line-clamp-2 mt-0.5 leading-snug break-words"
+                            title={preview}
+                          >
                             {preview}
                           </p>
                         )}
