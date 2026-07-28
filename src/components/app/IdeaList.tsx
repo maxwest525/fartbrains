@@ -338,7 +338,7 @@ export const IdeaList = ({ filter, selectedId, onSelect, onBackToFolders, onFilt
           return (
           <>
             {/* MOBILE — grouped inset card with hairline separators */}
-            <div className="md:hidden px-4 pt-1">
+            <div className="md:hidden px-4 pt-2 pb-1">
               <div className="overflow-hidden rounded-2xl bg-white/[0.09] border border-white/20 shadow-[0_2px_12px_rgba(0,0,0,0.18)] ios-separator-inset">
                 {visibleIdeas.map((idea) => {
                   const isProject = idea.tags.includes(PROJECT_TAG);
@@ -359,7 +359,7 @@ export const IdeaList = ({ filter, selectedId, onSelect, onBackToFolders, onFilt
                     <button
                       key={idea.id}
                       onClick={() => onSelect(idea.id)}
-                      className="row-press w-full text-left flex items-start gap-3 px-3.5 py-3 min-h-[64px] active:bg-white/10 hover:bg-white/[0.06] transition-colors"
+                      className="row-press w-full text-left flex items-start gap-3 px-4 py-3.5 min-h-[72px] active:bg-white/10 hover:bg-white/[0.06] transition-colors"
                     >
                       <div className="h-9 w-9 flex items-center justify-center shrink-0 mt-0.5">
                         <Icon className={cn("h-[20px] w-[20px]", tone)} />
@@ -424,9 +424,9 @@ export const IdeaList = ({ filter, selectedId, onSelect, onBackToFolders, onFilt
                       }
                     }}
                     className={cn(
-                      "w-full text-left min-h-[64px] transition-colors cursor-pointer",
+                      "w-full text-left min-h-[76px] transition-colors cursor-pointer",
                       "border border-white/15 bg-white/[0.06] hover:bg-white/[0.1] hover:border-white/25 shadow-[0_1px_6px_rgba(0,0,0,0.15)]",
-                      "rounded-xl mx-3 my-2 px-4 py-3.5",
+                      "rounded-xl mx-4 my-2.5 px-4 py-4",
                       "focus-visible:outline-none focus-visible:bg-white/[0.12]",
                       active && "bg-white/[0.14] border-white/30"
                     )}
