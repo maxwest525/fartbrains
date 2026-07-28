@@ -463,16 +463,8 @@ export const IdeaDetail = ({ ideaId, onClose, backLabel = "Back", onSelectIdea }
           </div>
         )}
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-muted-foreground">
-          <div className="whitespace-nowrap overflow-hidden text-ellipsis">
-            <span className="font-medium text-foreground">Created:</span>{" "}
-            {new Date(idea.created_at).toLocaleDateString()}
-          </div>
-          <div className="whitespace-nowrap overflow-hidden text-ellipsis">
-            <span className="font-medium text-foreground">Updated:</span>{" "}
-            {new Date(idea.updated_at).toLocaleDateString()}
-          </div>
-        </div>
+
+
 
 
         {editing && (
