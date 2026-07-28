@@ -717,17 +717,8 @@ export const IdeaDetail = ({ ideaId, onClose, backLabel = "Back", onSelectIdea }
                 Combine your note with the AI summary into a single prompt you can paste into ChatGPT, Claude, or Gemini.
               </div>
             )}
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                setChatOpen(true);
-              }}
-              className="mt-2 inline-flex items-center gap-1.5 text-xs text-primary hover:underline"
-            >
-              <MessageSquare className="h-3.5 w-3.5" /> Brainstorm with Asher
-            </button>
           </CollapsibleSection>
+
         )}
 
 
