@@ -339,7 +339,7 @@ export const IdeaList = ({ filter, selectedId, onSelect, onBackToFolders, onFilt
           <>
             {/* MOBILE — grouped inset card with hairline separators */}
             <div className="md:hidden px-4 pt-1">
-              <div className="overflow-hidden ios-separator-inset">
+              <div className="overflow-hidden rounded-2xl bg-white/[0.09] border border-white/20 shadow-[0_2px_12px_rgba(0,0,0,0.18)] ios-separator-inset">
                 {visibleIdeas.map((idea) => {
                   const isProject = idea.tags.includes(PROJECT_TAG);
                   const stats = isProject ? deliverableStats(idea.raw_note) : null;
@@ -359,7 +359,7 @@ export const IdeaList = ({ filter, selectedId, onSelect, onBackToFolders, onFilt
                     <button
                       key={idea.id}
                       onClick={() => onSelect(idea.id)}
-                      className="row-press w-full text-left flex items-start gap-3 px-3.5 py-2.5 min-h-[60px] active:bg-secondary"
+                      className="row-press w-full text-left flex items-start gap-3 px-3.5 py-3 min-h-[64px] active:bg-white/10 hover:bg-white/[0.06] transition-colors"
                     >
                       <div className="h-9 w-9 flex items-center justify-center shrink-0 mt-0.5">
                         <Icon className={cn("h-[20px] w-[20px]", tone)} />
@@ -387,7 +387,7 @@ export const IdeaList = ({ filter, selectedId, onSelect, onBackToFolders, onFilt
                           <ChevronRight className="h-4 w-4 text-muted-foreground/60 shrink-0 -mr-1" />
                         </div>
                         {preview && (
-                          <p className="text-[14px] text-muted-foreground line-clamp-2 mt-0.5 leading-snug">
+                          <p className="text-[14px] text-foreground/75 line-clamp-2 mt-0.5 leading-snug">
                             {preview}
                           </p>
                         )}
@@ -425,9 +425,10 @@ export const IdeaList = ({ filter, selectedId, onSelect, onBackToFolders, onFilt
                     }}
                     className={cn(
                       "w-full text-left min-h-[64px] transition-colors cursor-pointer",
-                      "border-b border-border/60 px-5 py-3.5",
-                      "hover:bg-muted/40 focus-visible:outline-none focus-visible:bg-muted/60",
-                      active && "bg-muted"
+                      "border border-white/15 bg-white/[0.06] hover:bg-white/[0.1] hover:border-white/25 shadow-[0_1px_6px_rgba(0,0,0,0.15)]",
+                      "rounded-xl mx-3 my-2 px-4 py-3.5",
+                      "focus-visible:outline-none focus-visible:bg-white/[0.12]",
+                      active && "bg-white/[0.14] border-white/30"
                     )}
                   >
                     <div className="flex items-start gap-2 mb-1">
@@ -435,7 +436,7 @@ export const IdeaList = ({ filter, selectedId, onSelect, onBackToFolders, onFilt
                       {idea.pinned_at && (
                         <Pin className="h-3.5 w-3.5 mt-0.5 shrink-0 fill-accent text-accent -rotate-45" />
                       )}
-                      <h3 className="font-medium text-sm flex-1 truncate">{idea.title}</h3>
+                      <h3 className="font-semibold text-[14px] text-foreground flex-1 truncate">{idea.title}</h3>
                       {isProject && stats && (
                         <span className="shrink-0 text-[10px] font-semibold px-1.5 py-0.5 rounded bg-primary/10 text-primary">
                           {stats.done}/{stats.total}
@@ -445,7 +446,7 @@ export const IdeaList = ({ filter, selectedId, onSelect, onBackToFolders, onFilt
                         <Star className="h-3.5 w-3.5 shrink-0 fill-accent text-accent" />
                       )}
                     </div>
-                    <p className="text-xs text-muted-foreground line-clamp-2 mb-1.5">{preview}</p>
+                    <p className="text-[12.5px] text-foreground/70 line-clamp-2 mb-1.5 leading-snug">{preview}</p>
                     <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground flex-wrap">
                       <span>{formatDate(idea.updated_at)}</span>
                       {idea.tags.filter((t) => t !== PROJECT_TAG).slice(0, 4).map((t) => {
