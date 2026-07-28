@@ -412,7 +412,7 @@ export const IdeaDetail = ({ ideaId, onClose, backLabel = "Back", onSelectIdea }
         </div>
       </div>
 
-      <div className="flex-1 min-h-0 overflow-y-auto scroll-momentum touch-pan-y px-4 sm:px-6 pt-4 sm:pt-5 pb-[calc(2rem+var(--mobile-tabbar-h,0px)+env(safe-area-inset-bottom))] space-y-8 [&>*+*]:pt-1">
+      <div className="flex-1 min-h-0 overflow-y-auto scroll-momentum touch-pan-y px-4 sm:px-6 pt-4 sm:pt-5 pb-[calc(2rem+var(--mobile-tabbar-h,0px)+env(safe-area-inset-bottom))] [&>*+*]:mt-7 [&>*+*]:pt-7 [&>*+*]:border-t [&>*+*]:border-white/8">
         {editing ? (
           <Input
             value={title}
