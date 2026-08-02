@@ -728,28 +728,43 @@ export const IdeaDetail = ({ ideaId, onClose, backLabel = "Back", onSelectIdea, 
         )}
 
         {!editing && idea && (
-          <IdeaResearchActions
-            ideaTitle={idea.title}
-            extractedText={idea.extracted_text}
-            onAppendExtracted={async (block) => {
-              const next = `${idea.extracted_text ?? ""}${block}`.trim();
-              await updateIdea.mutateAsync({ id: idea.id, patch: { extracted_text: next } });
-            }}
-            onSetSummaryIfEmpty={async (md) => {
-              if (!idea.ai_summary?.trim()) {
-                await updateIdea.mutateAsync({ id: idea.id, patch: { ai_summary: md } });
-              }
-            }}
-          />
+          <div ref={researchRef} className="scroll-mt-4">
+            <div className="idea-section-label mb-2.5">Research</div>
+            <IdeaResearchActions
+              ideaTitle={idea.title}
+              extractedText={idea.extracted_text}
+              onAppendExtracted={async (block) => {
+                const next = `${idea.extracted_text ?? ""}${block}`.trim();
+                await updateIdea.mutateAsync({ id: idea.id, patch: { extracted_text: next } });
+              }}
+              onSetSummaryIfEmpty={async (md) => {
+                if (!idea.ai_summary?.trim()) {
+                  await updateIdea.mutateAsync({ id: idea.id, patch: { ai_summary: md } });
+                }
+              }}
+            />
+          </div>
         )}
 
         {!editing && idea && (
-          <IdeaReferences ideaId={idea.id} />
+          <div ref={connectionsRef} className="scroll-mt-4 space-y-5">
+            <div className="flex items-center justify-between gap-2">
+              <div className="idea-section-label">Connections</div>
+              {onOpenGraph && (
+                <button
+                  type="button"
+                  onClick={onOpenGraph}
+                  className="press inline-flex items-center gap-1.5 text-[12.5px] font-medium text-primary"
+                >
+                  <Share2 className="h-3.5 w-3.5" /> Open graph
+                </button>
+              )}
+            </div>
+            <IdeaReferences ideaId={idea.id} />
+            <RelatedIdeas ideaId={idea.id} onSelect={onSelectIdea} />
+          </div>
         )}
 
-        {!editing && idea && (
-          <RelatedIdeas ideaId={idea.id} onSelect={onSelectIdea} />
-        )}
 
 
 
