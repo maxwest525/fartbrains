@@ -101,6 +101,12 @@ export const IdeaDetail = ({ ideaId, onClose, backLabel = "Back", onSelectIdea, 
   const createIdea = useCreateIdea();
   const isMobile = useIsMobile();
   const containerRef = useRef<HTMLDivElement>(null);
+  const researchRef = useRef<HTMLDivElement>(null);
+  const connectionsRef = useRef<HTMLDivElement>(null);
+
+  const scrollTo = (ref: React.RefObject<HTMLDivElement>) =>
+    ref.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+
 
   const [editing, setEditing] = useState(false);
   const [title, setTitle] = useState("");
