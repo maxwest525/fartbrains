@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { Star, Trash2, ExternalLink, Sparkles, ChevronLeft, Wand2, Copy, Check, Loader2, RefreshCw, Bell, Pin, PinOff, MessageSquare, Plus, Users } from "lucide-react";
+import { Star, Trash2, ExternalLink, Sparkles, ChevronLeft, Wand2, Copy, Check, Loader2, RefreshCw, Bell, Pin, PinOff, MessageSquare, Plus, Users, Microscope, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -88,9 +88,12 @@ type Props = {
   onClose: () => void;
   backLabel?: string;
   onSelectIdea?: (id: string) => void;
+  /** Jump to the connections graph (hidden when already inside the graph). */
+  onOpenGraph?: () => void;
 };
 
-export const IdeaDetail = ({ ideaId, onClose, backLabel = "Back", onSelectIdea }: Props) => {
+export const IdeaDetail = ({ ideaId, onClose, backLabel = "Back", onSelectIdea, onOpenGraph }: Props) => {
+
   const { data: idea, isLoading } = useIdea(ideaId);
   const { data: folders = [] } = useFolders();
   const updateIdea = useUpdateIdea();
@@ -98,6 +101,12 @@ export const IdeaDetail = ({ ideaId, onClose, backLabel = "Back", onSelectIdea }
   const createIdea = useCreateIdea();
   const isMobile = useIsMobile();
   const containerRef = useRef<HTMLDivElement>(null);
+  const researchRef = useRef<HTMLDivElement>(null);
+  const connectionsRef = useRef<HTMLDivElement>(null);
+
+  const scrollTo = (ref: React.RefObject<HTMLDivElement>) =>
+    ref.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+
 
   const [editing, setEditing] = useState(false);
   const [title, setTitle] = useState("");
@@ -412,20 +421,79 @@ export const IdeaDetail = ({ ideaId, onClose, backLabel = "Back", onSelectIdea }
         </div>
       </div>
 
-      <div className="flex-1 min-h-0 overflow-y-auto scroll-momentum touch-pan-y px-4 sm:px-6 pt-4 sm:pt-5 pb-[calc(2rem+var(--mobile-tabbar-h,0px)+env(safe-area-inset-bottom))] [&>*+*]:mt-7 [&>*+*]:pt-7 [&>*+*]:border-t [&>*+*]:border-white/8">
-        {editing ? (
-          <Input
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            className="text-xl font-semibold h-auto py-2"
-          />
-        ) : (
-          <h1 className="text-[28px] md:text-2xl font-bold md:font-semibold tracking-tight leading-tight">
-            {idea.title}
-          </h1>
+      <div className="flex-1 min-h-0 overflow-y-auto scroll-momentum touch-pan-y px-4 sm:px-6 pt-3 sm:pt-4 pb-[calc(2rem+var(--mobile-tabbar-h,0px)+env(safe-area-inset-bottom))] [&>*+*]:mt-6">
+        {/* Hero — title + provenance in one readable frosted slab */}
+        <div className="idea-hero p-4 sm:p-5">
+          {editing ? (
+            <Input
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              className="text-xl font-semibold h-auto py-2"
+            />
+          ) : (
+            <h1 className="text-[26px] sm:text-[28px] font-bold tracking-tight leading-tight text-foreground">
+              {idea.title}
+            </h1>
+          )}
+          <div className="mt-3">
+            <SourceMetaCard idea={idea} />
+          </div>
+        </div>
+
+        {/* What you can do with this idea */}
+        {!editing && (
+          <div>
+            <div className="idea-section-label mb-2.5">Work this idea</div>
+            <div className="grid grid-cols-2 gap-2.5">
+              <button
+                type="button"
+                onClick={() => setChatOpen(true)}
+                className="idea-tile press text-left p-3.5"
+              >
+                <MessageSquare className="h-[18px] w-[18px] text-primary" />
+                <div className="mt-2 text-[13.5px] font-semibold leading-tight">Brainstorm with Asher</div>
+                <div className="text-[11.5px] text-foreground/60 leading-snug mt-0.5">Chat about this idea</div>
+              </button>
+              <button
+                type="button"
+                onClick={onGeneratePrompt}
+                disabled={generating}
+                className="idea-tile press text-left p-3.5 disabled:opacity-60"
+              >
+                {generating ? (
+                  <Loader2 className="h-[18px] w-[18px] text-accent animate-spin" />
+                ) : (
+                  <Wand2 className="h-[18px] w-[18px] text-accent" />
+                )}
+                <div className="mt-2 text-[13.5px] font-semibold leading-tight">
+                  {idea.generated_prompt ? "Refresh prompt" : "Generate prompt"}
+                </div>
+                <div className="text-[11.5px] text-foreground/60 leading-snug mt-0.5">Ready to paste anywhere</div>
+              </button>
+              <button
+                type="button"
+                onClick={() => scrollTo(researchRef)}
+                className="idea-tile press text-left p-3.5"
+              >
+                <Microscope className="h-[18px] w-[18px] text-primary" />
+                <div className="mt-2 text-[13.5px] font-semibold leading-tight">Deep research</div>
+                <div className="text-[11.5px] text-foreground/60 leading-snug mt-0.5">Scrape and dig deeper</div>
+              </button>
+              <button
+                type="button"
+                onClick={() => (onOpenGraph ? onOpenGraph() : scrollTo(connectionsRef))}
+                className="idea-tile press text-left p-3.5"
+              >
+                <Share2 className="h-[18px] w-[18px] text-accent" />
+                <div className="mt-2 text-[13.5px] font-semibold leading-tight">Connections</div>
+                <div className="text-[11.5px] text-foreground/60 leading-snug mt-0.5">
+                  {onOpenGraph ? "Open the brain graph" : "Linked ideas and sources"}
+                </div>
+              </button>
+            </div>
+          </div>
         )}
 
-        <SourceMetaCard idea={idea} />
 
 
 
@@ -534,7 +602,7 @@ export const IdeaDetail = ({ ideaId, onClose, backLabel = "Back", onSelectIdea }
                   className={isProject ? "font-mono text-xs" : undefined}
                 />
               ) : isChecklist ? (
-                <div className="rounded-2xl bg-white/[0.09] border border-white/20 shadow-sm p-5 text-[15px] leading-relaxed text-foreground prose prose-sm dark:prose-invert max-w-none prose-ul:my-0 prose-li:my-1">
+                <div className="idea-panel p-5 text-[15px] leading-relaxed text-foreground prose prose-sm dark:prose-invert max-w-none prose-ul:my-0 prose-li:my-1">
                   <ReactMarkdown
                     remarkPlugins={[remarkGfm]}
                     components={{
@@ -561,9 +629,9 @@ export const IdeaDetail = ({ ideaId, onClose, backLabel = "Back", onSelectIdea }
                   </ReactMarkdown>
                 </div>
               ) : idea.raw_note ? (
-                <div className="rounded-2xl bg-white/[0.09] border border-white/20 shadow-sm p-5 text-[15px] leading-relaxed text-foreground whitespace-pre-wrap">{idea.raw_note}</div>
+                <div className="idea-panel p-5 text-[15px] leading-relaxed text-foreground whitespace-pre-wrap">{idea.raw_note}</div>
               ) : (
-                <div className="rounded-xl glass-card-quiet border-dashed p-4 text-xs text-muted-foreground">
+                <div className="idea-panel-quiet p-4 text-xs text-muted-foreground">
                   No note yet — tap Edit to add the idea text.
                 </div>
               )}
@@ -571,18 +639,6 @@ export const IdeaDetail = ({ ideaId, onClose, backLabel = "Back", onSelectIdea }
           );
         })()}
 
-        {!editing && (
-          <div className="-mt-5 sm:-mt-6">
-            <button
-              type="button"
-              onClick={() => setChatOpen(true)}
-              className="press inline-flex items-center gap-1.5 text-primary hover:text-primary/80 font-medium text-[13.5px] bg-transparent border-0 p-0 h-auto transition"
-            >
-              <MessageSquare className="h-3.5 w-3.5" />
-              Brainstorm with Asher
-            </button>
-          </div>
-        )}
 
         {!editing && (idea.generated_prompt || idea.raw_note || idea.ai_summary) && (
           <CollapsibleSection
@@ -619,11 +675,11 @@ export const IdeaDetail = ({ ideaId, onClose, backLabel = "Back", onSelectIdea }
           >
             {generating && <ThinkingPanel active className="mb-2" />}
             {idea.generated_prompt ? (
-              <div className="rounded-2xl bg-white/[0.09] border border-white/20 shadow-sm p-5 text-[14px] text-foreground whitespace-pre-wrap font-mono leading-relaxed select-text">
+              <div className="idea-panel p-5 text-[14px] text-foreground whitespace-pre-wrap font-mono leading-relaxed select-text">
                 {idea.generated_prompt}
               </div>
             ) : (
-              <div className="rounded-xl glass-card-quiet border-dashed p-4 text-xs text-muted-foreground">
+              <div className="idea-panel-quiet p-4 text-xs text-muted-foreground">
                 Combine your note with the AI summary into a single prompt you can paste into ChatGPT, Claude, or Gemini.
               </div>
             )}
@@ -660,11 +716,11 @@ export const IdeaDetail = ({ ideaId, onClose, backLabel = "Back", onSelectIdea }
                 placeholder="No summary yet — click Generate to create one from your note or extracted text."
               />
             ) : idea.ai_summary ? (
-              <div className="rounded-2xl bg-white/[0.09] border border-white/20 shadow-sm p-5 text-[15px] leading-relaxed text-foreground prose prose-sm dark:prose-invert max-w-none prose-headings:mt-3 prose-headings:mb-2 prose-headings:font-semibold prose-h1:text-lg prose-h2:text-base prose-h3:text-sm prose-p:my-2 prose-ul:my-2 prose-ol:my-2 prose-li:my-1 prose-strong:text-foreground prose-a:text-primary prose-code:text-xs prose-code:bg-muted prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:before:content-none prose-code:after:content-none">
+              <div className="idea-panel p-5 text-[15px] leading-relaxed text-foreground prose prose-sm dark:prose-invert max-w-none prose-headings:mt-3 prose-headings:mb-2 prose-headings:font-semibold prose-h1:text-lg prose-h2:text-base prose-h3:text-sm prose-p:my-2 prose-ul:my-2 prose-ol:my-2 prose-li:my-1 prose-strong:text-foreground prose-a:text-primary prose-code:text-xs prose-code:bg-muted prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:before:content-none prose-code:after:content-none">
                 <ReactMarkdown remarkPlugins={[remarkGfm]}>{idea.ai_summary}</ReactMarkdown>
               </div>
             ) : (
-              <div className="rounded-xl glass-card-quiet border-dashed p-4 text-xs text-muted-foreground">
+              <div className="idea-panel-quiet p-4 text-xs text-muted-foreground">
                 No summary yet — click <span className="font-medium text-foreground">Generate</span> above to create one from your note or extracted text.
               </div>
             )}
@@ -672,28 +728,43 @@ export const IdeaDetail = ({ ideaId, onClose, backLabel = "Back", onSelectIdea }
         )}
 
         {!editing && idea && (
-          <IdeaResearchActions
-            ideaTitle={idea.title}
-            extractedText={idea.extracted_text}
-            onAppendExtracted={async (block) => {
-              const next = `${idea.extracted_text ?? ""}${block}`.trim();
-              await updateIdea.mutateAsync({ id: idea.id, patch: { extracted_text: next } });
-            }}
-            onSetSummaryIfEmpty={async (md) => {
-              if (!idea.ai_summary?.trim()) {
-                await updateIdea.mutateAsync({ id: idea.id, patch: { ai_summary: md } });
-              }
-            }}
-          />
+          <div ref={researchRef} className="scroll-mt-4">
+            <div className="idea-section-label mb-2.5">Research</div>
+            <IdeaResearchActions
+              ideaTitle={idea.title}
+              extractedText={idea.extracted_text}
+              onAppendExtracted={async (block) => {
+                const next = `${idea.extracted_text ?? ""}${block}`.trim();
+                await updateIdea.mutateAsync({ id: idea.id, patch: { extracted_text: next } });
+              }}
+              onSetSummaryIfEmpty={async (md) => {
+                if (!idea.ai_summary?.trim()) {
+                  await updateIdea.mutateAsync({ id: idea.id, patch: { ai_summary: md } });
+                }
+              }}
+            />
+          </div>
         )}
 
         {!editing && idea && (
-          <IdeaReferences ideaId={idea.id} />
+          <div ref={connectionsRef} className="scroll-mt-4 space-y-5">
+            <div className="flex items-center justify-between gap-2">
+              <div className="idea-section-label">Connections</div>
+              {onOpenGraph && (
+                <button
+                  type="button"
+                  onClick={onOpenGraph}
+                  className="press inline-flex items-center gap-1.5 text-[12.5px] font-medium text-primary"
+                >
+                  <Share2 className="h-3.5 w-3.5" /> Open graph
+                </button>
+              )}
+            </div>
+            <IdeaReferences ideaId={idea.id} />
+            <RelatedIdeas ideaId={idea.id} onSelect={onSelectIdea} />
+          </div>
         )}
 
-        {!editing && idea && (
-          <RelatedIdeas ideaId={idea.id} onSelect={onSelectIdea} />
-        )}
 
 
 
@@ -732,7 +803,7 @@ export const IdeaDetail = ({ ideaId, onClose, backLabel = "Back", onSelectIdea }
                 className="text-xs leading-relaxed"
               />
             ) : (
-              <div className="rounded-2xl bg-white/[0.09] border border-white/20 shadow-sm p-5 text-[13px] leading-relaxed text-foreground/90 whitespace-pre-wrap">
+              <div className="idea-panel p-5 text-[13px] leading-relaxed text-foreground/90 whitespace-pre-wrap">
                 {idea.extracted_text}
               </div>
             )}

@@ -390,7 +390,7 @@ const Shell = () => {
 
         {/* Detail — desktop always shows, mobile only when an idea is selected */}
         {!showFolders && !showCalendar && !showGraph && (!isMobile || showDetailOnly) && (
-          <IdeaDetail ideaId={selectedId} onClose={() => setSelectedId(null)} backLabel={backLabel} onSelectIdea={setSelectedId} />
+          <IdeaDetail ideaId={selectedId} onClose={() => setSelectedId(null)} backLabel={backLabel} onSelectIdea={setSelectedId} onOpenGraph={() => setView("graph")} />
         )}
       </div>
 
