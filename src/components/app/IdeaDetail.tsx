@@ -428,7 +428,9 @@ export const IdeaDetail = ({ ideaId, onClose, backLabel = "Back", onSelectIdea, 
             <Input
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="text-xl font-semibold h-auto py-2"
+              placeholder="Idea name"
+              aria-label="Idea name"
+              className="idea-title-input"
             />
           ) : (
             <h1 className="text-[26px] sm:text-[28px] font-bold tracking-tight leading-tight text-foreground">
