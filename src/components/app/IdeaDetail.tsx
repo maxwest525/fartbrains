@@ -639,18 +639,6 @@ export const IdeaDetail = ({ ideaId, onClose, backLabel = "Back", onSelectIdea, 
           );
         })()}
 
-        {!editing && (
-          <div className="-mt-5 sm:-mt-6">
-            <button
-              type="button"
-              onClick={() => setChatOpen(true)}
-              className="press inline-flex items-center gap-1.5 text-primary hover:text-primary/80 font-medium text-[13.5px] bg-transparent border-0 p-0 h-auto transition"
-            >
-              <MessageSquare className="h-3.5 w-3.5" />
-              Brainstorm with Asher
-            </button>
-          </div>
-        )}
 
         {!editing && (idea.generated_prompt || idea.raw_note || idea.ai_summary) && (
           <CollapsibleSection
