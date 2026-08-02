@@ -421,20 +421,79 @@ export const IdeaDetail = ({ ideaId, onClose, backLabel = "Back", onSelectIdea, 
         </div>
       </div>
 
-      <div className="flex-1 min-h-0 overflow-y-auto scroll-momentum touch-pan-y px-4 sm:px-6 pt-4 sm:pt-5 pb-[calc(2rem+var(--mobile-tabbar-h,0px)+env(safe-area-inset-bottom))] [&>*+*]:mt-7 [&>*+*]:pt-7 [&>*+*]:border-t [&>*+*]:border-white/8">
-        {editing ? (
-          <Input
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            className="text-xl font-semibold h-auto py-2"
-          />
-        ) : (
-          <h1 className="text-[28px] md:text-2xl font-bold md:font-semibold tracking-tight leading-tight">
-            {idea.title}
-          </h1>
+      <div className="flex-1 min-h-0 overflow-y-auto scroll-momentum touch-pan-y px-4 sm:px-6 pt-3 sm:pt-4 pb-[calc(2rem+var(--mobile-tabbar-h,0px)+env(safe-area-inset-bottom))] [&>*+*]:mt-6">
+        {/* Hero — title + provenance in one readable frosted slab */}
+        <div className="idea-hero p-4 sm:p-5">
+          {editing ? (
+            <Input
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              className="text-xl font-semibold h-auto py-2"
+            />
+          ) : (
+            <h1 className="text-[26px] sm:text-[28px] font-bold tracking-tight leading-tight text-foreground">
+              {idea.title}
+            </h1>
+          )}
+          <div className="mt-3">
+            <SourceMetaCard idea={idea} />
+          </div>
+        </div>
+
+        {/* What you can do with this idea */}
+        {!editing && (
+          <div>
+            <div className="idea-section-label mb-2.5">Work this idea</div>
+            <div className="grid grid-cols-2 gap-2.5">
+              <button
+                type="button"
+                onClick={() => setChatOpen(true)}
+                className="idea-tile press text-left p-3.5"
+              >
+                <MessageSquare className="h-[18px] w-[18px] text-primary" />
+                <div className="mt-2 text-[13.5px] font-semibold leading-tight">Brainstorm with Asher</div>
+                <div className="text-[11.5px] text-foreground/60 leading-snug mt-0.5">Chat about this idea</div>
+              </button>
+              <button
+                type="button"
+                onClick={onGeneratePrompt}
+                disabled={generating}
+                className="idea-tile press text-left p-3.5 disabled:opacity-60"
+              >
+                {generating ? (
+                  <Loader2 className="h-[18px] w-[18px] text-accent animate-spin" />
+                ) : (
+                  <Wand2 className="h-[18px] w-[18px] text-accent" />
+                )}
+                <div className="mt-2 text-[13.5px] font-semibold leading-tight">
+                  {idea.generated_prompt ? "Refresh prompt" : "Generate prompt"}
+                </div>
+                <div className="text-[11.5px] text-foreground/60 leading-snug mt-0.5">Ready to paste anywhere</div>
+              </button>
+              <button
+                type="button"
+                onClick={() => scrollTo(researchRef)}
+                className="idea-tile press text-left p-3.5"
+              >
+                <Microscope className="h-[18px] w-[18px] text-primary" />
+                <div className="mt-2 text-[13.5px] font-semibold leading-tight">Deep research</div>
+                <div className="text-[11.5px] text-foreground/60 leading-snug mt-0.5">Scrape and dig deeper</div>
+              </button>
+              <button
+                type="button"
+                onClick={() => (onOpenGraph ? onOpenGraph() : scrollTo(connectionsRef))}
+                className="idea-tile press text-left p-3.5"
+              >
+                <Share2 className="h-[18px] w-[18px] text-accent" />
+                <div className="mt-2 text-[13.5px] font-semibold leading-tight">Connections</div>
+                <div className="text-[11.5px] text-foreground/60 leading-snug mt-0.5">
+                  {onOpenGraph ? "Open the brain graph" : "Linked ideas and sources"}
+                </div>
+              </button>
+            </div>
+          </div>
         )}
 
-        <SourceMetaCard idea={idea} />
 
 
 
