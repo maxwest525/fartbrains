@@ -330,7 +330,7 @@ export const IdeaDetail = ({ ideaId, onClose, backLabel = "Back", onSelectIdea, 
   };
 
   return (
-    <div ref={containerRef} className="flex-1 flex flex-col h-full overflow-hidden bg-transparent md:animate-none anim-slide-in">
+    <div ref={containerRef} className="idea-scrim relative flex-1 flex flex-col h-full overflow-hidden bg-transparent md:animate-none anim-slide-in">
       {/* iOS-style nav bar: text "Back" on left, action cluster on right */}
       <div className="safe-top sticky top-0 z-10 bg-transparent backdrop-blur-xl px-1 sm:px-4 py-1 sm:py-2 flex items-center gap-1 min-h-[44px]">
         <button
@@ -430,7 +430,7 @@ export const IdeaDetail = ({ ideaId, onClose, backLabel = "Back", onSelectIdea, 
               onChange={(e) => setTitle(e.target.value)}
               placeholder="Idea name"
               aria-label="Idea name"
-              className="idea-title-input"
+              className="bubble-input bubble-input-title"
             />
           ) : (
             <h1 className="text-[26px] sm:text-[28px] font-bold tracking-tight leading-tight text-foreground">
@@ -601,7 +601,7 @@ export const IdeaDetail = ({ ideaId, onClose, backLabel = "Back", onSelectIdea, 
                   value={rawNote}
                   onChange={(e) => setRawNote(e.target.value)}
                   rows={isProject ? 12 : 6}
-                  className={isProject ? "font-mono text-xs" : undefined}
+                  className={isProject ? "bubble-input font-mono text-xs" : "bubble-input text-[15px] leading-relaxed"}
                 />
               ) : isChecklist ? (
                 <div className="idea-panel p-5 text-[15px] leading-relaxed text-foreground prose prose-sm dark:prose-invert max-w-none prose-ul:my-0 prose-li:my-1">
@@ -714,7 +714,7 @@ export const IdeaDetail = ({ ideaId, onClose, backLabel = "Back", onSelectIdea, 
                 value={summary}
                 onChange={(e) => setSummary(e.target.value)}
                 rows={8}
-                className="font-mono text-sm"
+                className="bubble-input font-mono text-sm"
                 placeholder="No summary yet — click Generate to create one from your note or extracted text."
               />
             ) : idea.ai_summary ? (
@@ -802,7 +802,7 @@ export const IdeaDetail = ({ ideaId, onClose, backLabel = "Back", onSelectIdea, 
                 value={extractedText}
                 onChange={(e) => setExtractedText(e.target.value)}
                 rows={8}
-                className="text-xs leading-relaxed"
+                className="bubble-input text-xs leading-relaxed"
               />
             ) : (
               <div className="idea-panel p-5 text-[13px] leading-relaxed text-foreground/90 whitespace-pre-wrap">
