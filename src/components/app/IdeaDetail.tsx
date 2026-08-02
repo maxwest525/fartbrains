@@ -88,9 +88,12 @@ type Props = {
   onClose: () => void;
   backLabel?: string;
   onSelectIdea?: (id: string) => void;
+  /** Jump to the connections graph (hidden when already inside the graph). */
+  onOpenGraph?: () => void;
 };
 
-export const IdeaDetail = ({ ideaId, onClose, backLabel = "Back", onSelectIdea }: Props) => {
+export const IdeaDetail = ({ ideaId, onClose, backLabel = "Back", onSelectIdea, onOpenGraph }: Props) => {
+
   const { data: idea, isLoading } = useIdea(ideaId);
   const { data: folders = [] } = useFolders();
   const updateIdea = useUpdateIdea();
