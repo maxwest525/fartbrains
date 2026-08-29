@@ -63,16 +63,70 @@ const FIELDS: Array<{
 const InstructionsInner = () => {
   const navigate = useNavigate();
   const { instructions, loading, saving, save } = useUserInstructions();
+  const {
+    suggestions,
+    ideaCount,
+    loading: drafting,
+    error: draftError,
+    generate,
+    clear,
+  } = useInstructionSuggestions();
   const [draft, setDraft] = useState<UserInstructions>(instructions);
   const [dirty, setDirty] = useState(false);
+  const [autoFill, setAutoFill] = useState(
+    () => localStorage.getItem(AUTO_KEY) !== "off",
+  );
+  const autoRan = useRef(false);
 
   useEffect(() => {
     if (!loading) setDraft(instructions);
   }, [loading, instructions]);
 
+  // Autofill on open when the user hasn't written rules yet (or opted in) —
+  // never overwrites: everything lands as an editable suggestion.
+  useEffect(() => {
+    if (loading || autoRan.current || !autoFill) return;
+    autoRan.current = true;
+    void generate(instructions);
+  }, [loading, autoFill, instructions, generate]);
+
   const update = (key: FieldKey, value: string) => {
     setDraft((prev) => ({ ...prev, [key]: value }));
     setDirty(true);
+  };
+
+  const useSuggestion = (key: FieldKey, mode: "replace" | "append") => {
+    const value = suggestions?.[key]?.trim();
+    if (!value) return;
+    setDraft((prev) => {
+      const current = prev[key].trim();
+      const next =
+        mode === "replace" || !current ? value : `${current}\n${value}`;
+      return { ...prev, [key]: next };
+    });
+    setDirty(true);
+  };
+
+  const useAllSuggestions = () => {
+    if (!suggestions) return;
+    setDraft((prev) => {
+      const next = { ...prev };
+      (Object.keys(next) as FieldKey[]).forEach((k) => {
+        const s = suggestions[k]?.trim();
+        if (s && !next[k].trim()) next[k] = s;
+      });
+      return next;
+    });
+    setDirty(true);
+    toast.success("Draft filled in — edit anything before saving");
+  };
+
+  const toggleAuto = () => {
+    setAutoFill((prev) => {
+      const next = !prev;
+      localStorage.setItem(AUTO_KEY, next ? "on" : "off");
+      return next;
+    });
   };
 
   const onSave = async () => {
