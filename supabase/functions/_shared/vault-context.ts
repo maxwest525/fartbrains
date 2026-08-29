@@ -10,6 +10,26 @@ export type VaultHit = {
   snippet: string;
   score: number;
   created_at: string;
+  /** Query terms that actually matched this idea. */
+  matchedTerms: string[];
+  /** Human-readable explanation of why this idea was retrieved. */
+  reason: string;
+};
+
+/** Builds a snippet window centred on the first matching term. */
+const focusedSnippet = (source: string, terms: string[], len = 420): string => {
+  const clean = (source || "").replace(/\s+/g, " ").trim();
+  if (!clean) return "";
+  const lower = clean.toLowerCase();
+  let at = -1;
+  for (const t of terms) {
+    const i = lower.indexOf(t);
+    if (i >= 0 && (at < 0 || i < at)) at = i;
+  }
+  if (at < 0 || clean.length <= len) return clean.slice(0, len);
+  const start = Math.max(0, at - Math.floor(len / 3));
+  const end = Math.min(clean.length, start + len);
+  return `${start > 0 ? "…" : ""}${clean.slice(start, end)}${end < clean.length ? "…" : ""}`;
 };
 
 const STOP = new Set(
@@ -67,25 +87,39 @@ export async function retrieveVaultContext(opts: {
       const bodyL = `${note}\n${summary}\n${extracted}`.toLowerCase();
 
       let score = 0;
+      const titleHits: string[] = [];
+      const tagHits: string[] = [];
+      const bodyHits: string[] = [];
       for (const t of terms) {
-        if (titleL.includes(t)) score += 6;
-        if (tagsL.includes(t)) score += 4;
-        if (bodyL.includes(t)) score += 2;
+        if (titleL.includes(t)) { score += 6; titleHits.push(t); }
+        if (tagsL.includes(t)) { score += 4; tagHits.push(t); }
+        if (bodyL.includes(t)) { score += 2; bodyHits.push(t); }
       }
       if (score <= 0) continue;
 
       // Mild recency boost (up to +2 for something from today).
       const ageDays = Math.max(0, (now - new Date(row.created_at).getTime()) / 86400000);
-      score += Math.max(0, 2 - ageDays / 30);
+      const recencyBoost = Math.max(0, 2 - ageDays / 30);
+      score += recencyBoost;
+
+      const matchedTerms = [...new Set([...titleHits, ...tagHits, ...bodyHits])];
+      const reasonParts: string[] = [];
+      if (titleHits.length) reasonParts.push(`title matches ${titleHits.map((t) => `"${t}"`).join(", ")}`);
+      if (tagHits.length) reasonParts.push(`tagged with ${tagHits.map((t) => `"${t}"`).join(", ")}`);
+      if (bodyHits.length) reasonParts.push(`body mentions ${bodyHits.map((t) => `"${t}"`).join(", ")}`);
+      if (recencyBoost > 1) reasonParts.push("captured recently");
+      const reason = reasonParts.join(" · ");
 
       const snippetSource = summary || note || extracted;
       scored.push({
         id: row.id,
         title: title || "(untitled)",
         tags,
-        snippet: snippetSource.replace(/\s+/g, " ").trim().slice(0, 420),
+        snippet: focusedSnippet(snippetSource, matchedTerms),
         score: Math.round(score * 10) / 10,
         created_at: row.created_at,
+        matchedTerms,
+        reason,
       });
     }
 
@@ -103,7 +137,7 @@ export function renderVaultContext(hits: VaultHit[]): string {
     "Use these only when they help. Cite them by title when you lean on one. Never invent vault content.",
     ...hits.map(
       (h, i) =>
-        `${i + 1}. ${h.title}${h.tags.length ? ` [${h.tags.join(", ")}]` : ""}\n   ${h.snippet || "(no body)"}`,
+        `${i + 1}. ${h.title}${h.tags.length ? ` [${h.tags.join(", ")}]` : ""}${h.reason ? `\n   (why: ${h.reason})` : ""}\n   ${h.snippet || "(no body)"}`,
     ),
   ].join("\n");
 }

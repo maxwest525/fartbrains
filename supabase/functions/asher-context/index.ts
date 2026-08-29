@@ -55,6 +55,8 @@ Deno.serve(async (req) => {
           tags: h.tags,
           snippet: h.snippet,
           score: h.score,
+          matchedTerms: h.matchedTerms,
+          reason: h.reason,
         })),
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } },

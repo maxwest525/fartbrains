@@ -1,10 +1,13 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, BrainCircuit, Loader2 } from "lucide-react";
+import { ArrowLeft, BrainCircuit, Loader2, Sparkles, Check, Plus, X } from "lucide-react";
 import { toast } from "sonner";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { Label } from "@/components/ui/label";
 import { useUserInstructions, type UserInstructions } from "@/hooks/useUserInstructions";
+import { useInstructionSuggestions } from "@/hooks/useInstructionSuggestions";
+
+const AUTO_KEY = "asher.instructions.autofill";
 
 type FieldKey = keyof UserInstructions;
 
@@ -60,16 +63,70 @@ const FIELDS: Array<{
 const InstructionsInner = () => {
   const navigate = useNavigate();
   const { instructions, loading, saving, save } = useUserInstructions();
+  const {
+    suggestions,
+    ideaCount,
+    loading: drafting,
+    error: draftError,
+    generate,
+    clear,
+  } = useInstructionSuggestions();
   const [draft, setDraft] = useState<UserInstructions>(instructions);
   const [dirty, setDirty] = useState(false);
+  const [autoFill, setAutoFill] = useState(
+    () => localStorage.getItem(AUTO_KEY) !== "off",
+  );
+  const autoRan = useRef(false);
 
   useEffect(() => {
     if (!loading) setDraft(instructions);
   }, [loading, instructions]);
 
+  // Autofill on open when the user hasn't written rules yet (or opted in) —
+  // never overwrites: everything lands as an editable suggestion.
+  useEffect(() => {
+    if (loading || autoRan.current || !autoFill) return;
+    autoRan.current = true;
+    void generate(instructions);
+  }, [loading, autoFill, instructions, generate]);
+
   const update = (key: FieldKey, value: string) => {
     setDraft((prev) => ({ ...prev, [key]: value }));
     setDirty(true);
+  };
+
+  const useSuggestion = (key: FieldKey, mode: "replace" | "append") => {
+    const value = suggestions?.[key]?.trim();
+    if (!value) return;
+    setDraft((prev) => {
+      const current = prev[key].trim();
+      const next =
+        mode === "replace" || !current ? value : `${current}\n${value}`;
+      return { ...prev, [key]: next };
+    });
+    setDirty(true);
+  };
+
+  const useAllSuggestions = () => {
+    if (!suggestions) return;
+    setDraft((prev) => {
+      const next = { ...prev };
+      (Object.keys(next) as FieldKey[]).forEach((k) => {
+        const s = suggestions[k]?.trim();
+        if (s && !next[k].trim()) next[k] = s;
+      });
+      return next;
+    });
+    setDirty(true);
+    toast.success("Draft filled in — edit anything before saving");
+  };
+
+  const toggleAuto = () => {
+    setAutoFill((prev) => {
+      const next = !prev;
+      localStorage.setItem(AUTO_KEY, next ? "on" : "off");
+      return next;
+    });
   };
 
   const onSave = async () => {
@@ -107,22 +164,117 @@ const InstructionsInner = () => {
         </div>
       ) : (
         <div className="space-y-6">
-          {FIELDS.map((f) => (
-            <div key={f.key} className="space-y-1.5">
-              <Label htmlFor={f.key} className="text-[14px] font-medium">
-                {f.label}
-              </Label>
-              <p className="text-[12px] text-foreground/60 leading-snug">{f.hint}</p>
-              <textarea
-                id={f.key}
-                rows={f.rows}
-                value={draft[f.key]}
-                onChange={(e) => update(f.key, e.target.value)}
-                placeholder={f.placeholder}
-                className="bubble-input w-full resize-y text-[14.5px] leading-relaxed"
-              />
+          <div className="rounded-2xl border border-white/15 bg-white/[0.06] p-3 space-y-2">
+            <div className="flex items-center gap-1.5 text-[13px] font-medium">
+              <Sparkles className="h-3.5 w-3.5 text-primary" />
+              Drafted from your vault
             </div>
-          ))}
+            <p className="text-[12px] text-foreground/65 leading-snug">
+              {drafting
+                ? "Reading your ideas, tags, and folders…"
+                : suggestions
+                  ? `Suggestions based on ${ideaCount ?? 0} ideas. Nothing is applied until you accept it, and every field stays editable.`
+                  : "Ask Asher to draft rules from how you already capture and organize."}
+            </p>
+            {draftError && (
+              <p className="text-[12px] text-destructive">{draftError}</p>
+            )}
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 pt-0.5">
+              <button
+                type="button"
+                onClick={() => void generate(draft)}
+                disabled={drafting}
+                className="press inline-flex items-center gap-1.5 text-[13px] text-primary disabled:opacity-50"
+              >
+                {drafting ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <Sparkles className="h-3.5 w-3.5" />
+                )}
+                {suggestions ? "Refresh suggestions" : "Draft from my vault"}
+              </button>
+              {suggestions && (
+                <>
+                  <button
+                    type="button"
+                    onClick={useAllSuggestions}
+                    className="press inline-flex items-center gap-1.5 text-[13px] text-primary"
+                  >
+                    <Check className="h-3.5 w-3.5" />
+                    Fill empty fields
+                  </button>
+                  <button
+                    type="button"
+                    onClick={clear}
+                    className="press inline-flex items-center gap-1.5 text-[13px] text-foreground/60"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                    Dismiss
+                  </button>
+                </>
+              )}
+            </div>
+            <button
+              type="button"
+              onClick={toggleAuto}
+              className="press text-[12px] text-foreground/60"
+            >
+              Auto-draft when I open this page: {autoFill ? "on" : "off"}
+            </button>
+          </div>
+
+          {FIELDS.map((f) => {
+            const suggestion = suggestions?.[f.key]?.trim() ?? "";
+            const isNew = suggestion && suggestion !== draft[f.key].trim();
+            return (
+              <div key={f.key} className="space-y-1.5">
+                <Label htmlFor={f.key} className="text-[14px] font-medium">
+                  {f.label}
+                </Label>
+                <p className="text-[12px] text-foreground/60 leading-snug">{f.hint}</p>
+                <textarea
+                  id={f.key}
+                  rows={f.rows}
+                  value={draft[f.key]}
+                  onChange={(e) => update(f.key, e.target.value)}
+                  placeholder={f.placeholder}
+                  className="bubble-input w-full resize-y text-[14.5px] leading-relaxed"
+                />
+                {isNew && (
+                  <div className="rounded-xl border border-primary/30 bg-primary/[0.07] p-2.5 space-y-2">
+                    <div className="flex items-center gap-1.5 text-[11px] uppercase tracking-[0.12em] text-primary/90">
+                      <Sparkles className="h-3 w-3" />
+                      Suggested
+                    </div>
+                    <p className="whitespace-pre-wrap text-[13px] text-foreground/80 leading-snug">
+                      {suggestion}
+                    </p>
+                    <div className="flex items-center gap-4">
+                      <button
+                        type="button"
+                        onClick={() => useSuggestion(f.key, "replace")}
+                        className="press inline-flex items-center gap-1 text-[12.5px] text-primary"
+                      >
+                        <Check className="h-3.5 w-3.5" />
+                        Use this
+                      </button>
+                      {draft[f.key].trim() && (
+                        <button
+                          type="button"
+                          onClick={() => useSuggestion(f.key, "append")}
+                          className="press inline-flex items-center gap-1 text-[12.5px] text-primary"
+                        >
+                          <Plus className="h-3.5 w-3.5" />
+                          Add to mine
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+
 
           <button
             type="button"
