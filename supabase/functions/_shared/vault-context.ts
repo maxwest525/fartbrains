@@ -10,6 +10,26 @@ export type VaultHit = {
   snippet: string;
   score: number;
   created_at: string;
+  /** Query terms that actually matched this idea. */
+  matchedTerms: string[];
+  /** Human-readable explanation of why this idea was retrieved. */
+  reason: string;
+};
+
+/** Builds a snippet window centred on the first matching term. */
+const focusedSnippet = (source: string, terms: string[], len = 420): string => {
+  const clean = (source || "").replace(/\s+/g, " ").trim();
+  if (!clean) return "";
+  const lower = clean.toLowerCase();
+  let at = -1;
+  for (const t of terms) {
+    const i = lower.indexOf(t);
+    if (i >= 0 && (at < 0 || i < at)) at = i;
+  }
+  if (at < 0 || clean.length <= len) return clean.slice(0, len);
+  const start = Math.max(0, at - Math.floor(len / 3));
+  const end = Math.min(clean.length, start + len);
+  return `${start > 0 ? "…" : ""}${clean.slice(start, end)}${end < clean.length ? "…" : ""}`;
 };
 
 const STOP = new Set(
