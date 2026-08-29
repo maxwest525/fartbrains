@@ -1,4 +1,5 @@
 import { requireUser } from "../_shared/user-auth.ts";
+import { instructionBlock } from "../_shared/instructions.ts";
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
@@ -56,7 +57,9 @@ Rules:
 
 Be concise. Do not invent details that aren't in the source.`;
 
-    const systemPrompt = kind === "transcript" ? transcriptSystemPrompt : defaultSystemPrompt;
+    const basePrompt = kind === "transcript" ? transcriptSystemPrompt : defaultSystemPrompt;
+    const userRules = await instructionBlock(_auth.user.id, "summarize");
+    const systemPrompt = userRules ? `${basePrompt}\n\n${userRules}` : basePrompt;
 
     const baseUserPrompt =
       kind === "webpage"

@@ -1,4 +1,5 @@
 import { requireUser } from "../_shared/user-auth.ts";
+import { instructionBlock } from "../_shared/instructions.ts";
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
@@ -44,6 +45,9 @@ Rules:
 - End with 2-4 numbered deliverables the AI should produce.
 - Keep it under ~300 words. Plain text. No emojis.`;
 
+    const userRules = await instructionBlock(_auth.user.id, "chat");
+    const finalSystemPrompt = userRules ? `${systemPrompt}\n\n${userRules}` : systemPrompt;
+
     const parts: string[] = [];
     if (title) parts.push(`Title of the idea: ${String(title).slice(0, 200)}`);
     if (sourceLabel) parts.push(`Source type: ${String(sourceLabel).slice(0, 60)}`);
@@ -63,7 +67,7 @@ Rules:
       body: JSON.stringify({
         model: "google/gemini-3-flash-preview",
         messages: [
-          { role: "system", content: systemPrompt },
+          { role: "system", content: finalSystemPrompt },
           { role: "user", content: userPrompt },
         ],
       }),

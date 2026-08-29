@@ -552,6 +552,39 @@ export type Database = {
         }
         Relationships: []
       }
+      user_instructions: {
+        Row: {
+          capture: string
+          created_at: string
+          general: string
+          organizing: string
+          summarize: string
+          tagging: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          capture?: string
+          created_at?: string
+          general?: string
+          organizing?: string
+          summarize?: string
+          tagging?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          capture?: string
+          created_at?: string
+          general?: string
+          organizing?: string
+          summarize?: string
+          tagging?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

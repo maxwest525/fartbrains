@@ -1,4 +1,5 @@
 import { requireUser } from "../_shared/user-auth.ts";
+import { instructionBlock } from "../_shared/instructions.ts";
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
@@ -36,6 +37,11 @@ Rules:
 - "reasoning" is ≤ 140 chars, plain English, no markdown.
 - If the content is too thin to tag meaningfully, return {"tags":[],"confidence":0,"reasoning":"too thin"}.`;
 
+    const userRules = await instructionBlock(_auth.user.id, "tagging");
+    const systemPrompt = userRules
+      ? `${system}\n\n${userRules}\n\nThe user's tagging rules override the generic rules above, but ALWAYS keep the JSON output shape.`
+      : system;
+
     const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -45,7 +51,7 @@ Rules:
       body: JSON.stringify({
         model: "google/gemini-2.5-flash-lite",
         messages: [
-          { role: "system", content: system },
+          { role: "system", content: systemPrompt },
           { role: "user", content: body },
         ],
         response_format: { type: "json_object" },

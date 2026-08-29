@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { ChevronLeft, Send, Loader2, Trash2, Sparkles, MessageCirclePlus, X, RefreshCw, Wand2, Check } from "lucide-react";
+import { ChevronLeft, Send, Loader2, Trash2, Sparkles, MessageCirclePlus, X, RefreshCw, Wand2, Check, BrainCircuit } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import type { Idea } from "@/hooks/useIdeas";
+import { AsherContextPanel } from "@/components/app/AsherContextPanel";
 
 type ChatMsg = { id?: string; role: "user" | "assistant"; content: string; created_at?: string };
 
@@ -14,23 +15,6 @@ type Props = {
   onPromoteToPrompt?: (content: string) => Promise<void> | void;
 };
 
-
-const buildSystemContext = (idea: Idea): string => {
-  const parts = [
-    `You are Ash, helping the user think through one specific idea from their vault.`,
-    `Stay focused on this idea. Be direct, warm, concise. Markdown ok.`,
-    ``,
-    `## The idea`,
-    `Title: ${idea.title || "(untitled)"}`,
-    idea.raw_note ? `\nUser's note:\n${idea.raw_note}` : "",
-    idea.ai_summary ? `\nAI summary:\n${idea.ai_summary}` : "",
-    idea.generated_prompt ? `\nGenerated prompt:\n${idea.generated_prompt}` : "",
-    idea.extracted_text
-      ? `\nExtracted context (truncated):\n${idea.extracted_text.slice(0, 3000)}`
-      : "",
-  ];
-  return parts.filter(Boolean).join("\n");
-};
 
 const buildSuggestions = (idea: Idea): string[] => {
   const t = idea.title || "this idea";
@@ -65,6 +49,7 @@ export const IdeaChatScreen = ({ idea, onClose, onPromoteToPrompt }: Props) => {
   const [errorText, setErrorText] = useState<string | null>(null);
   const [lastPrompt, setLastPrompt] = useState<string | null>(null);
   const [promotedIdx, setPromotedIdx] = useState<number | null>(null);
+  const [contextOpen, setContextOpen] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -161,10 +146,8 @@ export const IdeaChatScreen = ({ idea, onClose, onPromoteToPrompt }: Props) => {
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         body: JSON.stringify({
-          messages: [
-            { role: "system", content: buildSystemContext(idea) },
-            ...history.map((m) => ({ role: m.role, content: m.content })),
-          ],
+          ideaId: idea.id,
+          messages: history.map((m) => ({ role: m.role, content: m.content })),
         }),
       });
       if (!res.ok || !res.body) {
@@ -295,6 +278,14 @@ export const IdeaChatScreen = ({ idea, onClose, onPromoteToPrompt }: Props) => {
             </div>
           )}
         </div>
+        <button
+          onClick={() => setContextOpen(true)}
+          className="press h-9 w-9 flex items-center justify-center text-foreground/70 hover:text-primary"
+          aria-label="Preview Asher context"
+          title="What Asher is using"
+        >
+          <BrainCircuit className="h-[18px] w-[18px]" />
+        </button>
         <button
           onClick={clearHistory}
           className="press h-9 w-9 flex items-center justify-center text-muted-foreground hover:text-destructive"
@@ -441,6 +432,13 @@ export const IdeaChatScreen = ({ idea, onClose, onPromoteToPrompt }: Props) => {
         </div>
       )}
 
+      {contextOpen && (
+        <AsherContextPanel
+          query={input.trim() || lastPrompt || ""}
+          ideaId={idea.id}
+          onClose={() => setContextOpen(false)}
+        />
+      )}
     </div>
   );
 };
