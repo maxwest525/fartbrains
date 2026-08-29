@@ -1,6 +1,9 @@
 import { requireUser } from "../_shared/user-auth.ts";
-// Streaming chat endpoint for the /home Ash prompt bar.
-// Uses Lovable AI Gateway (Gemini) and streams SSE deltas back to the client.
+import { buildAsherPrompt, type IdeaContext } from "../_shared/asher-prompt.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.95.0";
+// Streaming chat endpoint for the Asher prompt bar and idea brainstorming.
+// Injects the user's personal instructions + retrieved vault context, then
+// streams SSE deltas back to the client.
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -8,11 +11,24 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
-const SYSTEM_PROMPT = `You are Ash — the user's personal command-center assistant living inside their idea-capture app.
-- Be direct, warm, and concise. No corporate filler.
-- The user is a single power user. Speak to them, not "users".
-- When they ask for a todo, idea, reminder, or plan, give a tight actionable answer.
-- Markdown is fine. Keep replies short unless they ask for depth.`;
+async function fetchIdea(userId: string, ideaId: string): Promise<IdeaContext | null> {
+  try {
+    const svc = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+      { auth: { persistSession: false, autoRefreshToken: false } },
+    );
+    const { data } = await svc
+      .from("ideas")
+      .select("id, title, raw_note, ai_summary, generated_prompt, extracted_text")
+      .eq("user_id", userId)
+      .eq("id", ideaId)
+      .maybeSingle();
+    return (data as IdeaContext | null) ?? null;
+  } catch (_e) {
+    return null;
+  }
+}
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
@@ -21,7 +37,7 @@ Deno.serve(async (req) => {
   if ("response" in _auth) return _auth.response;
 
   try {
-    const { messages } = await req.json();
+    const { messages, ideaId, retrieve } = await req.json();
     if (!Array.isArray(messages) || messages.length === 0) {
       return new Response(JSON.stringify({ error: "messages required" }), {
         status: 400,
@@ -32,6 +48,20 @@ Deno.serve(async (req) => {
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY missing");
 
+    // Drop any client-supplied system messages — the server owns the system prompt.
+    const convo = messages.filter(
+      (m: { role?: string }) => m?.role === "user" || m?.role === "assistant",
+    );
+    const lastUser = [...convo].reverse().find((m: { role: string }) => m.role === "user");
+    const idea = typeof ideaId === "string" && ideaId ? await fetchIdea(_auth.user.id, ideaId) : null;
+
+    const { systemPrompt } = await buildAsherPrompt({
+      userId: _auth.user.id,
+      query: String(lastUser?.content ?? ""),
+      idea,
+      retrieve: retrieve !== false,
+    });
+
     const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -41,7 +71,7 @@ Deno.serve(async (req) => {
       body: JSON.stringify({
         model: "google/gemini-3.1-flash-lite",
         stream: true,
-        messages: [{ role: "system", content: SYSTEM_PROMPT }, ...messages],
+        messages: [{ role: "system", content: systemPrompt }, ...convo],
       }),
     });
 
