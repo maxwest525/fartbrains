@@ -432,6 +432,13 @@ export const IdeaChatScreen = ({ idea, onClose, onPromoteToPrompt }: Props) => {
         </div>
       )}
 
+      {contextOpen && (
+        <AsherContextPanel
+          query={input.trim() || lastPrompt || ""}
+          ideaId={idea.id}
+          onClose={() => setContextOpen(false)}
+        />
+      )}
     </div>
   );
 };
