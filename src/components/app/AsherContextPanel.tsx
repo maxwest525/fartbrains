@@ -28,7 +28,7 @@ const Highlighted = ({ text, terms }: { text: string; terms: string[] }) => {
   return (
     <>
       {text.split(re).map((part, i) =>
-        re.test(part) && clean.some((t) => t.toLowerCase() === part.toLowerCase()) ? (
+        clean.some((t) => t.toLowerCase() === part.toLowerCase()) ? (
           <mark
             key={i}
             className="bg-primary/25 text-foreground rounded px-0.5 font-medium"
