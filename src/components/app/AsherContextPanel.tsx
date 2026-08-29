@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { Loader2, X, BrainCircuit, Library, FileText } from "lucide-react";
+import { Loader2, X, BrainCircuit, Library, FileText, Quote } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 export type AsherContext = {
