@@ -1,10 +1,13 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, BrainCircuit, Loader2 } from "lucide-react";
+import { ArrowLeft, BrainCircuit, Loader2, Sparkles, Check, Plus, X } from "lucide-react";
 import { toast } from "sonner";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { Label } from "@/components/ui/label";
 import { useUserInstructions, type UserInstructions } from "@/hooks/useUserInstructions";
+import { useInstructionSuggestions } from "@/hooks/useInstructionSuggestions";
+
+const AUTO_KEY = "asher.instructions.autofill";
 
 type FieldKey = keyof UserInstructions;
 
