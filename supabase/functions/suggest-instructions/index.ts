@@ -46,14 +46,23 @@ Deno.serve(async (req) => {
       { auth: { persistSession: false, autoRefreshToken: false } },
     );
 
-    const { data: ideas } = await svc
-      .from("ideas")
-      .select("title, tags, raw_note, ai_summary, folder, created_at")
-      .eq("user_id", _auth.user.id)
-      .order("updated_at", { ascending: false })
-      .limit(120);
+    const [{ data: ideas }, { data: folders }] = await Promise.all([
+      svc
+        .from("ideas")
+        .select("title, tags, raw_note, ai_summary, folder_id, created_at")
+        .eq("user_id", _auth.user.id)
+        .order("updated_at", { ascending: false })
+        .limit(120),
+      svc.from("folders").select("id, name").eq("user_id", _auth.user.id),
+    ]);
 
-    const rows = ideas ?? [];
+    const folderNames = new Map<string, string>(
+      (folders ?? []).map((f) => [String(f.id), String(f.name)]),
+    );
+    const rows = (ideas ?? []).map((r) => ({
+      ...r,
+      folder: r.folder_id ? folderNames.get(String(r.folder_id)) ?? null : null,
+    }));
     if (rows.length === 0) {
       return new Response(
         JSON.stringify({ suggestions: EMPTY, sampleCount: 0, ideaCount: 0 }),
