@@ -1,4 +1,5 @@
 import { requireUser } from "../_shared/user-auth.ts";
+import { instructionBlock } from "../_shared/instructions.ts";
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
