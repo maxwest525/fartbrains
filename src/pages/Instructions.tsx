@@ -164,22 +164,117 @@ const InstructionsInner = () => {
         </div>
       ) : (
         <div className="space-y-6">
-          {FIELDS.map((f) => (
-            <div key={f.key} className="space-y-1.5">
-              <Label htmlFor={f.key} className="text-[14px] font-medium">
-                {f.label}
-              </Label>
-              <p className="text-[12px] text-foreground/60 leading-snug">{f.hint}</p>
-              <textarea
-                id={f.key}
-                rows={f.rows}
-                value={draft[f.key]}
-                onChange={(e) => update(f.key, e.target.value)}
-                placeholder={f.placeholder}
-                className="bubble-input w-full resize-y text-[14.5px] leading-relaxed"
-              />
+          <div className="rounded-2xl border border-white/15 bg-white/[0.06] p-3 space-y-2">
+            <div className="flex items-center gap-1.5 text-[13px] font-medium">
+              <Sparkles className="h-3.5 w-3.5 text-primary" />
+              Drafted from your vault
             </div>
-          ))}
+            <p className="text-[12px] text-foreground/65 leading-snug">
+              {drafting
+                ? "Reading your ideas, tags, and folders…"
+                : suggestions
+                  ? `Suggestions based on ${ideaCount ?? 0} ideas. Nothing is applied until you accept it, and every field stays editable.`
+                  : "Ask Asher to draft rules from how you already capture and organize."}
+            </p>
+            {draftError && (
+              <p className="text-[12px] text-destructive">{draftError}</p>
+            )}
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 pt-0.5">
+              <button
+                type="button"
+                onClick={() => void generate(draft)}
+                disabled={drafting}
+                className="press inline-flex items-center gap-1.5 text-[13px] text-primary disabled:opacity-50"
+              >
+                {drafting ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <Sparkles className="h-3.5 w-3.5" />
+                )}
+                {suggestions ? "Refresh suggestions" : "Draft from my vault"}
+              </button>
+              {suggestions && (
+                <>
+                  <button
+                    type="button"
+                    onClick={useAllSuggestions}
+                    className="press inline-flex items-center gap-1.5 text-[13px] text-primary"
+                  >
+                    <Check className="h-3.5 w-3.5" />
+                    Fill empty fields
+                  </button>
+                  <button
+                    type="button"
+                    onClick={clear}
+                    className="press inline-flex items-center gap-1.5 text-[13px] text-foreground/60"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                    Dismiss
+                  </button>
+                </>
+              )}
+            </div>
+            <button
+              type="button"
+              onClick={toggleAuto}
+              className="press text-[12px] text-foreground/60"
+            >
+              Auto-draft when I open this page: {autoFill ? "on" : "off"}
+            </button>
+          </div>
+
+          {FIELDS.map((f) => {
+            const suggestion = suggestions?.[f.key]?.trim() ?? "";
+            const isNew = suggestion && suggestion !== draft[f.key].trim();
+            return (
+              <div key={f.key} className="space-y-1.5">
+                <Label htmlFor={f.key} className="text-[14px] font-medium">
+                  {f.label}
+                </Label>
+                <p className="text-[12px] text-foreground/60 leading-snug">{f.hint}</p>
+                <textarea
+                  id={f.key}
+                  rows={f.rows}
+                  value={draft[f.key]}
+                  onChange={(e) => update(f.key, e.target.value)}
+                  placeholder={f.placeholder}
+                  className="bubble-input w-full resize-y text-[14.5px] leading-relaxed"
+                />
+                {isNew && (
+                  <div className="rounded-xl border border-primary/30 bg-primary/[0.07] p-2.5 space-y-2">
+                    <div className="flex items-center gap-1.5 text-[11px] uppercase tracking-[0.12em] text-primary/90">
+                      <Sparkles className="h-3 w-3" />
+                      Suggested
+                    </div>
+                    <p className="whitespace-pre-wrap text-[13px] text-foreground/80 leading-snug">
+                      {suggestion}
+                    </p>
+                    <div className="flex items-center gap-4">
+                      <button
+                        type="button"
+                        onClick={() => useSuggestion(f.key, "replace")}
+                        className="press inline-flex items-center gap-1 text-[12.5px] text-primary"
+                      >
+                        <Check className="h-3.5 w-3.5" />
+                        Use this
+                      </button>
+                      {draft[f.key].trim() && (
+                        <button
+                          type="button"
+                          onClick={() => useSuggestion(f.key, "append")}
+                          className="press inline-flex items-center gap-1 text-[12.5px] text-primary"
+                        >
+                          <Plus className="h-3.5 w-3.5" />
+                          Add to mine
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+
 
           <button
             type="button"
