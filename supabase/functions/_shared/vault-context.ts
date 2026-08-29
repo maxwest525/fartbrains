@@ -137,7 +137,7 @@ export function renderVaultContext(hits: VaultHit[]): string {
     "Use these only when they help. Cite them by title when you lean on one. Never invent vault content.",
     ...hits.map(
       (h, i) =>
-        `${i + 1}. ${h.title}${h.tags.length ? ` [${h.tags.join(", ")}]` : ""}\n   ${h.snippet || "(no body)"}`,
+        `${i + 1}. ${h.title}${h.tags.length ? ` [${h.tags.join(", ")}]` : ""}${h.reason ? `\n   (why: ${h.reason})` : ""}\n   ${h.snippet || "(no body)"}`,
     ),
   ].join("\n");
 }
