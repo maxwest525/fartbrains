@@ -13,6 +13,7 @@ import Auth from "./pages/Auth.tsx";
 import Unsubscribe from "./pages/Unsubscribe.tsx";
 import PromptRules from "./pages/PromptRules.tsx";
 import Profile from "./pages/Profile.tsx";
+import Instructions from "./pages/Instructions.tsx";
 import ResetPassword from "./pages/ResetPassword.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
@@ -36,6 +37,7 @@ const App = () => (
             <Route path="/unsubscribe" element={<Unsubscribe />} />
             <Route path="/settings/prompt-rules" element={<PromptRules />} />
             <Route path="/profile" element={<Profile />} />
+            <Route path="/settings/instructions" element={<Instructions />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
