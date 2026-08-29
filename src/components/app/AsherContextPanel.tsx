@@ -168,19 +168,30 @@ export const AsherContextPanel = ({ query, ideaId, onClose }: Props) => {
                       className="rounded-2xl border border-white/15 bg-white/[0.06] p-3"
                     >
                       <div className="flex items-start justify-between gap-2">
-                        <span className="text-[14px] font-medium leading-snug">{h.title}</span>
+                        <span className="text-[14px] font-medium leading-snug">
+                          <Highlighted text={h.title} terms={h.matchedTerms ?? []} />
+                        </span>
                         <span className="text-[11px] text-foreground/55 shrink-0 mt-0.5">
                           {h.score}
                         </span>
                       </div>
                       {h.tags.length > 0 && (
                         <div className="text-[11.5px] text-foreground/60 mt-0.5">
-                          {h.tags.map((t) => `#${t}`).join(" ")}
+                          <Highlighted
+                            text={h.tags.map((t) => `#${t}`).join(" ")}
+                            terms={h.matchedTerms ?? []}
+                          />
+                        </div>
+                      )}
+                      {h.reason && (
+                        <div className="flex items-start gap-1.5 mt-1.5 text-[11.5px] text-primary/90">
+                          <Quote className="h-3 w-3 mt-0.5 shrink-0" />
+                          <span>Selected because {h.reason}</span>
                         </div>
                       )}
                       {h.snippet && (
-                        <p className="text-[13px] text-foreground/75 leading-snug mt-1">
-                          {h.snippet}
+                        <p className="text-[13px] text-foreground/75 leading-snug mt-1.5">
+                          <Highlighted text={h.snippet} terms={h.matchedTerms ?? []} />
                         </p>
                       )}
                     </li>
