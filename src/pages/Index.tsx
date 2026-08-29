@@ -17,6 +17,7 @@ import { CalendarPage } from "@/components/app/CalendarPage";
 import { GraphPage } from "@/components/app/GraphPage";
 import { AlarmOverlay } from "@/components/app/AlarmOverlay";
 import { AshDock } from "@/components/app/AshDock";
+import { DesktopScratchpad } from "@/components/app/DesktopScratchpad";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useAuth } from "@/hooks/useAuth";
@@ -422,6 +423,9 @@ const Shell = () => {
       )}
 
       {view === "ideas" && filter.kind === "all" && selectedId === null && <AshDock />}
+
+      {/* Desktop-only always-on to-do + scratchpad panel */}
+      <DesktopScratchpad />
 
       <SettingsSheet open={settingsOpen} onOpenChange={setSettingsOpen} />
       <AlarmOverlay />
