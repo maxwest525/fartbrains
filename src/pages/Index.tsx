@@ -424,6 +424,9 @@ const Shell = () => {
 
       {view === "ideas" && filter.kind === "all" && selectedId === null && <AshDock />}
 
+      {/* Desktop-only always-on to-do + scratchpad panel */}
+      <DesktopScratchpad />
+
       <SettingsSheet open={settingsOpen} onOpenChange={setSettingsOpen} />
       <AlarmOverlay />
 
