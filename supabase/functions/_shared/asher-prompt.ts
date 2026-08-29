@@ -53,7 +53,7 @@ export async function buildAsherPrompt(opts: {
   if (opts.retrieve !== false && opts.query.trim()) {
     hits = await retrieveVaultContext({
       userId: opts.userId,
-      query: `${opts.query}\n${opts.idea?.title ?? ""}\n${(opts.idea?.tags as never) ?? ""}`,
+      query: `${opts.query}\n${opts.idea?.title ?? ""}`,
       excludeIdeaId: opts.idea?.id,
       limit: opts.limit ?? 5,
     });
