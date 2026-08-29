@@ -7,7 +7,40 @@ export type AsherContext = {
   instructions: string;
   ideaContext: string;
   vaultContext: string;
-  hits: Array<{ id: string; title: string; tags: string[]; snippet: string; score: number }>;
+  hits: Array<{
+    id: string;
+    title: string;
+    tags: string[];
+    snippet: string;
+    score: number;
+    matchedTerms?: string[];
+    reason?: string;
+  }>;
+};
+
+const escapeRe = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+/** Renders text with each matched query term visually highlighted. */
+const Highlighted = ({ text, terms }: { text: string; terms: string[] }) => {
+  const clean = (terms ?? []).filter((t) => t.trim().length > 1);
+  if (clean.length === 0) return <>{text}</>;
+  const re = new RegExp(`(${clean.map(escapeRe).join("|")})`, "gi");
+  return (
+    <>
+      {text.split(re).map((part, i) =>
+        re.test(part) && clean.some((t) => t.toLowerCase() === part.toLowerCase()) ? (
+          <mark
+            key={i}
+            className="bg-primary/25 text-foreground rounded px-0.5 font-medium"
+          >
+            {part}
+          </mark>
+        ) : (
+          <span key={i}>{part}</span>
+        ),
+      )}
+    </>
+  );
 };
 
 type Props = {
