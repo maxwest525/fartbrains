@@ -57,7 +57,9 @@ Rules:
 
 Be concise. Do not invent details that aren't in the source.`;
 
-    const systemPrompt = kind === "transcript" ? transcriptSystemPrompt : defaultSystemPrompt;
+    const basePrompt = kind === "transcript" ? transcriptSystemPrompt : defaultSystemPrompt;
+    const userRules = await instructionBlock(_auth.user.id, "summarize");
+    const systemPrompt = userRules ? `${basePrompt}\n\n${userRules}` : basePrompt;
 
     const baseUserPrompt =
       kind === "webpage"
