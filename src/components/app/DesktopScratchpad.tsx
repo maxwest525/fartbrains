@@ -22,7 +22,7 @@ type Tab = "todo" | "jot";
 
 export const DesktopScratchpad = () => {
   const [isDesktop, setIsDesktop] = useState(false);
-  const [open, setOpen] = useState(true);
+  const [open, setOpen] = useState(false);
   const [tab, setTab] = useState<Tab>("todo");
   const [todoDraft, setTodoDraft] = useState("");
   const [note, setNote] = useState("");
@@ -95,13 +95,11 @@ export const DesktopScratchpad = () => {
     return createPortal(
       <button
         onClick={() => setOpen(true)}
-        className="fixed z-[95] right-0 top-1/2 -translate-y-1/2 flex flex-col items-center gap-2 px-2 py-4 rounded-l-2xl glass-card-strong text-foreground/80 hover:text-foreground transition"
+        className="fixed z-[95] right-3 top-3 inline-flex items-center gap-1.5 h-8 px-2.5 rounded-full glass-card-strong text-foreground/80 hover:text-foreground transition text-[11px] font-semibold"
         aria-label="Open desktop scratchpad"
       >
-        <CheckSquare className="h-4 w-4" />
-        <span className="text-[11px] font-semibold tracking-wide [writing-mode:vertical-rl]">
-          Scratchpad{openTodos > 0 ? ` · ${openTodos}` : ""}
-        </span>
+        <CheckSquare className="h-3.5 w-3.5" />
+        <span>Notes{openTodos > 0 ? ` · ${openTodos}` : ""}</span>
       </button>,
       document.body,
     );
@@ -109,21 +107,21 @@ export const DesktopScratchpad = () => {
 
   return createPortal(
     <aside
-      className="fixed z-[95] right-4 top-1/2 -translate-y-1/2 w-[340px] max-h-[76vh] flex flex-col rounded-2xl glass-card-strong overflow-hidden shadow-2xl animate-fade-in"
+      className="fixed z-[95] right-3 top-3 w-[248px] max-h-[46vh] flex flex-col rounded-2xl glass-card-strong overflow-hidden shadow-2xl animate-fade-in"
       aria-label="Desktop scratchpad"
     >
-      <div className="flex items-center gap-1 px-2 py-2 border-b border-white/10">
+      <div className="flex items-center gap-1 px-1.5 py-1.5 border-b border-white/10">
         <TabButton active={tab === "todo"} onClick={() => setTab("todo")}>
-          <CheckSquare className="h-3.5 w-3.5" />
+          <CheckSquare className="h-3 w-3" />
           To-do{openTodos > 0 ? ` · ${openTodos}` : ""}
         </TabButton>
         <TabButton active={tab === "jot"} onClick={() => setTab("jot")}>
-          <NotebookPen className="h-3.5 w-3.5" />
+          <NotebookPen className="h-3 w-3" />
           Jot
         </TabButton>
         <button
           onClick={() => setOpen(false)}
-          className="ml-auto h-8 w-8 inline-flex items-center justify-center text-foreground/60 hover:text-foreground transition"
+          className="ml-auto h-7 w-7 inline-flex items-center justify-center text-foreground/60 hover:text-foreground transition"
           aria-label="Collapse scratchpad"
           title="Collapse"
         >
@@ -133,7 +131,7 @@ export const DesktopScratchpad = () => {
 
       {tab === "todo" ? (
         <div className="flex flex-col min-h-0">
-          <div className="flex items-center gap-2 p-2.5">
+          <div className="flex items-center gap-1.5 p-2">
             <input
               value={todoDraft}
               onChange={(e) => setTodoDraft(e.target.value)}
@@ -144,12 +142,12 @@ export const DesktopScratchpad = () => {
                 }
               }}
               placeholder="Something to do…"
-              className="flex-1 h-9 rounded-xl bg-white/[0.06] border border-white/12 px-3 text-[14px] text-foreground placeholder:text-foreground/45 outline-none focus:border-primary/60"
+              className="flex-1 h-8 rounded-lg bg-white/[0.06] border border-white/12 px-2.5 text-[12.5px] text-foreground placeholder:text-foreground/45 outline-none focus:border-primary/60"
             />
             <button
               onClick={addTodo}
               disabled={!todoDraft.trim() || createTodo.isPending}
-              className="h-9 w-9 inline-flex items-center justify-center rounded-xl border border-primary/40 text-primary hover:bg-primary/10 transition disabled:opacity-40"
+              className="h-8 w-8 inline-flex items-center justify-center rounded-lg border border-primary/40 text-primary hover:bg-primary/10 transition disabled:opacity-40"
               aria-label="Add to-do"
             >
               {createTodo.isPending ? (
@@ -160,19 +158,19 @@ export const DesktopScratchpad = () => {
             </button>
           </div>
 
-          <div className="flex-1 min-h-0 overflow-y-auto px-2.5 pb-3 space-y-1.5">
+          <div className="flex-1 min-h-0 overflow-y-auto px-2 pb-2 space-y-1">
             {isLoading && (
-              <p className="text-[13px] text-foreground/60 px-1 py-2">Loading…</p>
+              <p className="text-[12px] text-foreground/60 px-1 py-1.5">Loading…</p>
             )}
             {!isLoading && todos.length === 0 && (
-              <p className="text-[13px] text-foreground/60 px-1 py-2">
-                Nothing here yet. Add the first thing you need to get done.
+              <p className="text-[12px] text-foreground/60 px-1 py-1.5">
+                Nothing yet.
               </p>
             )}
             {todos.map((t) => (
               <div
                 key={t.id}
-                className="group flex items-start gap-2 rounded-xl bg-white/[0.05] border border-white/10 px-2.5 py-2"
+                className="group flex items-start gap-2 rounded-lg bg-white/[0.05] border border-white/10 px-2 py-1.5"
               >
                 <button
                   onClick={() => toggleTodo.mutate({ id: t.id, done: !t.done })}
@@ -186,7 +184,7 @@ export const DesktopScratchpad = () => {
                 </button>
                 <span
                   className={cn(
-                    "flex-1 text-[14px] leading-snug break-words",
+                    "flex-1 text-[12.5px] leading-snug break-words",
                     t.done ? "text-foreground/45 line-through" : "text-foreground/90",
                   )}
                 >
@@ -204,7 +202,7 @@ export const DesktopScratchpad = () => {
           </div>
         </div>
       ) : (
-        <div className="flex flex-col p-2.5 gap-2">
+        <div className="flex flex-col p-2 gap-1.5">
           <textarea
             value={note}
             onChange={(e) => setNote(e.target.value)}
@@ -214,19 +212,19 @@ export const DesktopScratchpad = () => {
                 void saveNote();
               }
             }}
-            rows={10}
-            placeholder="Jot anything down. It stays here until you save it to your vault."
-            className="w-full resize-none rounded-xl bg-white/[0.06] border border-white/12 px-3 py-2.5 text-[14px] leading-relaxed text-foreground placeholder:text-foreground/45 outline-none focus:border-primary/60"
+            rows={5}
+            placeholder="Jot anything down…"
+            className="w-full resize-none rounded-lg bg-white/[0.06] border border-white/12 px-2.5 py-2 text-[12.5px] leading-relaxed text-foreground placeholder:text-foreground/45 outline-none focus:border-primary/60"
           />
           <div className="flex items-center justify-between gap-2">
-            <span className="text-[11px] text-foreground/50">Draft saves automatically</span>
+            <span className="text-[10.5px] text-foreground/50">Autosaved</span>
             <button
               onClick={() => void saveNote()}
               disabled={!note.trim() || createIdea.isPending}
-              className="h-9 px-3 inline-flex items-center gap-1.5 rounded-xl border border-primary/40 text-primary text-[13px] font-semibold hover:bg-primary/10 transition disabled:opacity-40"
+              className="h-8 px-2.5 inline-flex items-center gap-1.5 rounded-lg border border-primary/40 text-primary text-[12px] font-semibold hover:bg-primary/10 transition disabled:opacity-40"
             >
               {createIdea.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
-              Save to vault
+              Save
             </button>
           </div>
         </div>
@@ -248,7 +246,7 @@ const TabButton = ({
   <button
     onClick={onClick}
     className={cn(
-      "inline-flex items-center gap-1.5 h-8 px-3 rounded-xl text-[13px] font-semibold transition",
+      "inline-flex items-center gap-1.5 h-7 px-2 rounded-lg text-[11.5px] font-semibold transition",
       active
         ? "border border-primary/40 text-primary bg-primary/10"
         : "border border-transparent text-foreground/65 hover:text-foreground",
