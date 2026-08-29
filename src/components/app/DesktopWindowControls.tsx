@@ -47,7 +47,11 @@ export const DesktopWindowControls = () => {
     try {
       const m = localStorage.getItem(STORAGE) as Mode | null;
       if (m === "minimized" || m === "closed" || m === "open") setMode(m);
-      setExpanded(localStorage.getItem(EXPAND_STORAGE) === "1");
+      // First visit on a real desktop screen: start in the wide layout.
+      const storedExpanded = localStorage.getItem(EXPAND_STORAGE);
+      setExpanded(
+        storedExpanded === null ? window.innerWidth >= 1024 : storedExpanded === "1",
+      );
       const raw = localStorage.getItem(POS_STORAGE);
       if (raw) {
         const p = JSON.parse(raw);
