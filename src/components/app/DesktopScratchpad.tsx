@@ -6,7 +6,7 @@ import {
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useTodos, useCreateTodo, useToggleTodo, useDeleteTodo } from "@/hooks/useTodos";
-import { useCreateIdea, useIdeas } from "@/hooks/useIdeas";
+import { useCreateIdea, useDeleteIdea, useIdeas } from "@/hooks/useIdeas";
 
 /**
  * Desktop split view (>= 768px): a resizable right-hand column that shows the
@@ -64,6 +64,7 @@ export const DesktopScratchpad = () => {
   const toggleTodo = useToggleTodo();
   const deleteTodo = useDeleteTodo();
   const createIdea = useCreateIdea();
+  const deleteIdea = useDeleteIdea();
   const { data: recentIdeas = [] } = useIdeas({ kind: "recent" });
   const savedJots = recentIdeas.filter((i) => i.source_type === "manual").slice(0, 30);
 
@@ -365,19 +366,32 @@ export const DesktopScratchpad = () => {
                   <p className="text-[12px] text-foreground/55 px-0.5">Nothing saved yet.</p>
                 )}
                 {savedJots.map((idea) => (
-                  <button
+                  <div
                     key={idea.id}
-                    onClick={() => setNote(idea.raw_note ?? idea.title)}
-                    className="w-full text-left rounded-lg bg-white/[0.05] border border-white/10 px-2 py-1.5 hover:border-primary/40 transition"
-                    title="Load into the jot pad"
+                    className="group flex items-start gap-1.5 rounded-lg bg-white/[0.05] border border-white/10 px-2 py-1.5 hover:border-primary/40 transition"
                   >
-                    <span className="block text-[12.5px] text-foreground/90 leading-snug line-clamp-1">{idea.title}</span>
-                    {idea.raw_note && (
-                      <span className="block text-[11.5px] text-foreground/55 leading-snug line-clamp-2">
-                        {idea.raw_note}
-                      </span>
-                    )}
-                  </button>
+                    <button
+                      onClick={() => setNote(idea.raw_note ?? idea.title)}
+                      className="flex-1 min-w-0 text-left"
+                      title="Load into the jot pad"
+                    >
+                      <span className="block text-[12.5px] text-foreground/90 leading-snug line-clamp-1">{idea.title}</span>
+                      {idea.raw_note && (
+                        <span className="block text-[11.5px] text-foreground/55 leading-snug line-clamp-2">
+                          {idea.raw_note}
+                        </span>
+                      )}
+                    </button>
+                    <button
+                      onClick={() => deleteIdea.mutate(idea.id)}
+                      disabled={deleteIdea.isPending}
+                      className="mt-0.5 shrink-0 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition text-foreground/50 hover:text-destructive disabled:opacity-40"
+                      aria-label={`Delete jot ${idea.title}`}
+                      title="Delete jot"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
                 ))}
               </div>
             </div>
