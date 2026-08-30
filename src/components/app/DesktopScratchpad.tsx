@@ -64,6 +64,9 @@ export const DesktopScratchpad = () => {
   const toggleTodo = useToggleTodo();
   const deleteTodo = useDeleteTodo();
   const createIdea = useCreateIdea();
+  const { data: recentIdeas = [] } = useIdeas({ kind: "recent" });
+  const savedJots = recentIdeas.filter((i) => i.source_type === "manual").slice(0, 30);
+
 
   useEffect(() => {
     const mql = window.matchMedia("(min-width: 768px)");
