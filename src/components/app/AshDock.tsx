@@ -472,9 +472,24 @@ export const AshDock = ({ className }: { className?: string }) => {
             </div>
           ) : (
           <div id="ash-dock-body">
+          {/* Resize handle */}
+          <div
+            role="separator"
+            aria-orientation="horizontal"
+            aria-label="Drag to resize composer"
+            title="Drag to resize · double-click to reset"
+            onPointerDown={(e) => {
+              e.preventDefault();
+              resizeRef.current = { startY: e.clientY, startH: composerH };
+            }}
+            onDoubleClick={() => setComposerH(96)}
+            className="group flex items-center justify-center h-4 cursor-ns-resize touch-none select-none"
+          >
+            <span className="h-1 w-10 rounded-full bg-foreground/25 group-hover:bg-foreground/50 transition-colors" />
+          </div>
           {/* Input */}
 
-          <div className="px-4 pt-4 pb-3">
+          <div className="px-4 pt-1 pb-3">
             <textarea
               ref={textareaRef}
               value={text}
@@ -486,10 +501,11 @@ export const AshDock = ({ className }: { className?: string }) => {
                 }
               }}
               placeholder={isRecording ? `Listening… ${fmtSeconds(voice.seconds)}` : "Capture an idea, paste a link, drop a transcript…"}
-              rows={3}
-              className="w-full resize-none bg-transparent text-[17px] leading-7 placeholder:text-muted-foreground/70 focus:outline-none min-h-[96px] max-h-[220px] overflow-y-auto"
+              style={{ height: composerH }}
+              className="w-full resize-none bg-transparent text-[17px] leading-7 placeholder:text-muted-foreground/70 focus:outline-none overflow-y-auto"
             />
           </div>
+
 
 
           {/* Controls */}
