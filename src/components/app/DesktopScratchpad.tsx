@@ -6,7 +6,7 @@ import {
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useTodos, useCreateTodo, useToggleTodo, useDeleteTodo } from "@/hooks/useTodos";
-import { useCreateIdea } from "@/hooks/useIdeas";
+import { useCreateIdea, useIdeas } from "@/hooks/useIdeas";
 
 /**
  * Desktop split view (>= 768px): a resizable right-hand column that shows the
@@ -64,6 +64,9 @@ export const DesktopScratchpad = () => {
   const toggleTodo = useToggleTodo();
   const deleteTodo = useDeleteTodo();
   const createIdea = useCreateIdea();
+  const { data: recentIdeas = [] } = useIdeas({ kind: "recent" });
+  const savedJots = recentIdeas.filter((i) => i.source_type === "manual").slice(0, 30);
+
 
   useEffect(() => {
     const mql = window.matchMedia("(min-width: 768px)");
@@ -341,7 +344,7 @@ export const DesktopScratchpad = () => {
                   }
                 }}
                 placeholder="Jot anything down…"
-                className="flex-1 min-h-[72px] w-full resize-none rounded-lg bg-white/[0.06] border border-white/12 px-2.5 py-2 text-[12.5px] leading-relaxed text-foreground placeholder:text-foreground/45 outline-none focus:border-primary/60"
+                className="h-[96px] shrink-0 w-full resize-none rounded-lg bg-white/[0.06] border border-white/12 px-2.5 py-2 text-[12.5px] leading-relaxed text-foreground placeholder:text-foreground/45 outline-none focus:border-primary/60"
               />
               <div className="flex items-center justify-between gap-2">
                 <span className="text-[10.5px] text-foreground/50">Autosaved</span>
@@ -354,8 +357,32 @@ export const DesktopScratchpad = () => {
                   Save
                 </button>
               </div>
+
+              {/* Saved jots */}
+              <p className="text-[10.5px] uppercase tracking-wide text-foreground/45 px-0.5">Saved jots</p>
+              <div className="min-h-0 flex-1 overflow-y-auto space-y-1">
+                {savedJots.length === 0 && (
+                  <p className="text-[12px] text-foreground/55 px-0.5">Nothing saved yet.</p>
+                )}
+                {savedJots.map((idea) => (
+                  <button
+                    key={idea.id}
+                    onClick={() => setNote(idea.raw_note ?? idea.title)}
+                    className="w-full text-left rounded-lg bg-white/[0.05] border border-white/10 px-2 py-1.5 hover:border-primary/40 transition"
+                    title="Load into the jot pad"
+                  >
+                    <span className="block text-[12.5px] text-foreground/90 leading-snug line-clamp-1">{idea.title}</span>
+                    {idea.raw_note && (
+                      <span className="block text-[11.5px] text-foreground/55 leading-snug line-clamp-2">
+                        {idea.raw_note}
+                      </span>
+                    )}
+                  </button>
+                ))}
+              </div>
             </div>
           )}
+
         </section>
       </div>
     </aside>,
