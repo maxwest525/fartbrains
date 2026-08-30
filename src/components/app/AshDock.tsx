@@ -37,6 +37,10 @@ const CHIPS_KEY = "ash-dock-chips-v1";
 const FOLDER_KEY = "ash-dock-folder-v1";
 const SIDE_KEY = "ash-dock-side-v1";
 const COLLAPSED_KEY = "ash-dock-collapsed-v1";
+const HEIGHT_KEY = "ash-dock-height-v1";
+
+const MIN_COMPOSER_H = 44;
+const MAX_COMPOSER_H = 420;
 
 type Side = "left" | "center" | "right";
 
@@ -101,13 +105,37 @@ export const AshDock = ({ className }: { className?: string }) => {
   const createIdea = useCreateIdea();
   const voice = useVoiceCapture({ maxSeconds: 180 });
   const [text, setText] = useState("");
-  // Auto-grow up to 2 lines (~48px), then scroll inside.
+  const [composerH, setComposerH] = useState<number>(() => {
+    try {
+      const v = Number(localStorage.getItem(HEIGHT_KEY));
+      return Number.isFinite(v) && v >= MIN_COMPOSER_H ? Math.min(v, MAX_COMPOSER_H) : 96;
+    } catch { return 96; }
+  });
+  const resizeRef = useRef<{ startY: number; startH: number } | null>(null);
+
   useEffect(() => {
-    const el = textareaRef.current;
-    if (!el) return;
-    el.style.height = "auto";
-    el.style.height = Math.min(el.scrollHeight, 48) + "px";
-  }, [text]);
+    try { localStorage.setItem(HEIGHT_KEY, String(Math.round(composerH))); } catch { /* ignore */ }
+  }, [composerH]);
+
+  // Drag the top handle to resize the composer (up = taller, down = shorter).
+  useEffect(() => {
+    const onMove = (e: PointerEvent) => {
+      const start = resizeRef.current;
+      if (!start) return;
+      const next = start.startH + (start.startY - e.clientY);
+      setComposerH(Math.max(MIN_COMPOSER_H, Math.min(MAX_COMPOSER_H, next)));
+    };
+    const onUp = () => { resizeRef.current = null; };
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+    window.addEventListener("pointercancel", onUp);
+    return () => {
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+      window.removeEventListener("pointercancel", onUp);
+    };
+  }, []);
+
 
   // Receive dictated transcripts from VoiceOrb — append, expand, and focus.
   useEffect(() => {
@@ -444,9 +472,24 @@ export const AshDock = ({ className }: { className?: string }) => {
             </div>
           ) : (
           <div id="ash-dock-body">
+          {/* Resize handle */}
+          <div
+            role="separator"
+            aria-orientation="horizontal"
+            aria-label="Drag to resize composer"
+            title="Drag to resize · double-click to reset"
+            onPointerDown={(e) => {
+              e.preventDefault();
+              resizeRef.current = { startY: e.clientY, startH: composerH };
+            }}
+            onDoubleClick={() => setComposerH(96)}
+            className="group flex items-center justify-center h-4 cursor-ns-resize touch-none select-none"
+          >
+            <span className="h-1 w-10 rounded-full bg-foreground/25 group-hover:bg-foreground/50 transition-colors" />
+          </div>
           {/* Input */}
 
-          <div className="px-4 pt-4 pb-3">
+          <div className="px-4 pt-1 pb-3">
             <textarea
               ref={textareaRef}
               value={text}
@@ -458,10 +501,11 @@ export const AshDock = ({ className }: { className?: string }) => {
                 }
               }}
               placeholder={isRecording ? `Listening… ${fmtSeconds(voice.seconds)}` : "Capture an idea, paste a link, drop a transcript…"}
-              rows={3}
-              className="w-full resize-none bg-transparent text-[17px] leading-7 placeholder:text-muted-foreground/70 focus:outline-none min-h-[96px] max-h-[220px] overflow-y-auto"
+              style={{ height: composerH }}
+              className="w-full resize-none bg-transparent text-[17px] leading-7 placeholder:text-muted-foreground/70 focus:outline-none overflow-y-auto"
             />
           </div>
+
 
 
           {/* Controls */}
