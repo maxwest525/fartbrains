@@ -37,6 +37,10 @@ const CHIPS_KEY = "ash-dock-chips-v1";
 const FOLDER_KEY = "ash-dock-folder-v1";
 const SIDE_KEY = "ash-dock-side-v1";
 const COLLAPSED_KEY = "ash-dock-collapsed-v1";
+const HEIGHT_KEY = "ash-dock-height-v1";
+
+const MIN_COMPOSER_H = 44;
+const MAX_COMPOSER_H = 420;
 
 type Side = "left" | "center" | "right";
 
