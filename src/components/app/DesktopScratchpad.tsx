@@ -12,18 +12,14 @@ import { useCreateIdea } from "@/hooks/useIdeas";
  *
  * Rendered through a portal onto <body> so it anchors to the desktop viewport
  * instead of the 430px phone frame (#root creates its own containing block).
- * Open/closed state and the active tab persist to localStorage.
+ * Open/closed state persists to localStorage.
  */
 const OPEN_KEY = "desktop-scratchpad-open-v1";
-const TAB_KEY = "desktop-scratchpad-tab-v1";
 const DRAFT_KEY = "desktop-scratchpad-draft-v1";
-
-type Tab = "todo" | "jot";
 
 export const DesktopScratchpad = () => {
   const [isDesktop, setIsDesktop] = useState(false);
   const [open, setOpen] = useState(false);
-  const [tab, setTab] = useState<Tab>("todo");
   const [todoDraft, setTodoDraft] = useState("");
   const [note, setNote] = useState("");
 
@@ -45,8 +41,6 @@ export const DesktopScratchpad = () => {
     try {
       const storedOpen = localStorage.getItem(OPEN_KEY);
       if (storedOpen !== null) setOpen(storedOpen === "1");
-      const storedTab = localStorage.getItem(TAB_KEY);
-      if (storedTab === "todo" || storedTab === "jot") setTab(storedTab);
       setNote(localStorage.getItem(DRAFT_KEY) ?? "");
     } catch { /* ignore */ }
   }, []);
@@ -54,9 +48,8 @@ export const DesktopScratchpad = () => {
   useEffect(() => {
     try {
       localStorage.setItem(OPEN_KEY, open ? "1" : "0");
-      localStorage.setItem(TAB_KEY, tab);
     } catch { /* ignore */ }
-  }, [open, tab]);
+  }, [open]);
 
   // Keep the scratchpad draft across reloads so nothing is ever lost.
   useEffect(() => {
