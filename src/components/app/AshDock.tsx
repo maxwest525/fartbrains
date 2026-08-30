@@ -105,13 +105,37 @@ export const AshDock = ({ className }: { className?: string }) => {
   const createIdea = useCreateIdea();
   const voice = useVoiceCapture({ maxSeconds: 180 });
   const [text, setText] = useState("");
-  // Auto-grow up to 2 lines (~48px), then scroll inside.
+  const [composerH, setComposerH] = useState<number>(() => {
+    try {
+      const v = Number(localStorage.getItem(HEIGHT_KEY));
+      return Number.isFinite(v) && v >= MIN_COMPOSER_H ? Math.min(v, MAX_COMPOSER_H) : 96;
+    } catch { return 96; }
+  });
+  const resizeRef = useRef<{ startY: number; startH: number } | null>(null);
+
   useEffect(() => {
-    const el = textareaRef.current;
-    if (!el) return;
-    el.style.height = "auto";
-    el.style.height = Math.min(el.scrollHeight, 48) + "px";
-  }, [text]);
+    try { localStorage.setItem(HEIGHT_KEY, String(Math.round(composerH))); } catch { /* ignore */ }
+  }, [composerH]);
+
+  // Drag the top handle to resize the composer (up = taller, down = shorter).
+  useEffect(() => {
+    const onMove = (e: PointerEvent) => {
+      const start = resizeRef.current;
+      if (!start) return;
+      const next = start.startH + (start.startY - e.clientY);
+      setComposerH(Math.max(MIN_COMPOSER_H, Math.min(MAX_COMPOSER_H, next)));
+    };
+    const onUp = () => { resizeRef.current = null; };
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+    window.addEventListener("pointercancel", onUp);
+    return () => {
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+      window.removeEventListener("pointercancel", onUp);
+    };
+  }, []);
+
 
   // Receive dictated transcripts from VoiceOrb — append, expand, and focus.
   useEffect(() => {
