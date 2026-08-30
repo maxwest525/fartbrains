@@ -84,7 +84,7 @@ export const InstallAppPrompt = () => {
       <button
         onClick={handleClick}
         title="Install Fart Brains as a desktop app"
-        className="fixed z-[90] bottom-4 right-4 hidden [html.desktop-expanded_&]:inline-flex md:inline-flex items-center gap-2 h-10 px-4 rounded-full text-sm font-medium text-white bg-gradient-to-br from-fuchsia-500/80 via-violet-500/80 to-cyan-500/80 shadow-[0_0_24px_rgba(168,85,247,0.45)] border border-white/15 backdrop-blur-xl hover:scale-[1.03] active:scale-[0.97] transition"
+        className="fixed z-[90] right-4 bottom-[calc(var(--mobile-tabbar-h,72px)+var(--ash-dock-h,0px)+env(safe-area-inset-bottom)+1.25rem)] hidden [html.desktop-expanded_&]:inline-flex md:inline-flex items-center gap-2 h-10 px-4 rounded-full text-sm font-medium text-white bg-gradient-to-br from-fuchsia-500/80 via-violet-500/80 to-cyan-500/80 shadow-[0_0_24px_rgba(168,85,247,0.45)] border border-white/15 backdrop-blur-xl hover:scale-[1.03] active:scale-[0.97] transition"
       >
         <Download className="h-4 w-4" />
         Install app
