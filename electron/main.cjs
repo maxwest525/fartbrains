@@ -113,6 +113,9 @@ const createTray = () => {
       { label: "Show / hide", click: toggleWindow },
       { label: "Toggle always on top", click: togglePin },
       { type: "separator" },
+      { label: "Wide layout (todos + jots)", click: () => setPreset("wide") },
+      { label: "Compact pad", click: () => setPreset("compact") },
+      { type: "separator" },
       { label: "Quit", click: () => app.quit() },
     ]));
   } catch {
