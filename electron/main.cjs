@@ -15,12 +15,38 @@ const LOCAL_INDEX = path.join(__dirname, "..", "dist", "index.html");
 let win = null;
 let tray = null;
 
+const boundsFile = () => path.join(app.getPath("userData"), "window-bounds.json");
+
+const readBounds = () => {
+  try {
+    const raw = fs.readFileSync(boundsFile(), "utf8");
+    const b = JSON.parse(raw);
+    if (typeof b.width === "number" && typeof b.height === "number") return b;
+  } catch { /* first run */ }
+  return null;
+};
+
+const saveBounds = () => {
+  if (!win || win.isDestroyed()) return;
+  try {
+    fs.writeFileSync(boundsFile(), JSON.stringify(win.getNormalBounds()));
+  } catch { /* ignore */ }
+};
+
 const createWindow = () => {
+  const saved = readBounds();
   win = new BrowserWindow({
-    width: 460,
-    height: 900,
-    minWidth: 360,
+    // Wide enough by default to show the desktop split view (todos + jots
+    // beside the composer); the layout switches to that at >= 768px.
+    width: saved?.width ?? 1120,
+    height: saved?.height ?? 880,
+    x: saved?.x,
+    y: saved?.y,
+    minWidth: 380,
     minHeight: 480,
+    resizable: true,
+    maximizable: true,
+    fullscreenable: true,
     show: false,
     alwaysOnTop: true,
     titleBarStyle: process.platform === "darwin" ? "hiddenInset" : "default",
@@ -49,9 +75,22 @@ const createWindow = () => {
     return { action: "deny" };
   });
 
+  win.on("resize", saveBounds);
+  win.on("move", saveBounds);
   win.once("ready-to-show", () => win.show());
+  win.on("close", saveBounds);
   win.on("closed", () => { win = null; });
 };
+
+/** Snap between a narrow always-on-top pad and the wide split view. */
+const setPreset = (mode) => {
+  if (!win) return;
+  const b = win.getNormalBounds();
+  if (mode === "compact") win.setBounds({ x: b.x, y: b.y, width: 460, height: 900 });
+  else win.setBounds({ x: b.x, y: b.y, width: 1120, height: 880 });
+  saveBounds();
+};
+
 
 const toggleWindow = () => {
   if (!win) return createWindow();
@@ -73,6 +112,9 @@ const createTray = () => {
     tray.setContextMenu(Menu.buildFromTemplate([
       { label: "Show / hide", click: toggleWindow },
       { label: "Toggle always on top", click: togglePin },
+      { type: "separator" },
+      { label: "Wide layout (todos + jots)", click: () => setPreset("wide") },
+      { label: "Compact pad", click: () => setPreset("compact") },
       { type: "separator" },
       { label: "Quit", click: () => app.quit() },
     ]));
