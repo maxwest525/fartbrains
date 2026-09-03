@@ -16,6 +16,7 @@ import { toast } from "sonner";
 import { ThemeToggle, useTheme } from "@/hooks/useTheme";
 import { AppLockSection } from "@/components/app/AppLockSection";
 import { DataPrivacySection } from "@/components/app/DataPrivacySection";
+import { BillingSection } from "@/components/app/BillingSection";
 
 type Props = {
   open: boolean;
@@ -331,6 +332,9 @@ export const SettingsSheet = ({ open, onOpenChange }: Props) => {
             )}
           </div>
 
+
+          {/* Billing — plan, status and the Stripe portal */}
+          <BillingSection />
 
           {/* Data ownership — export and account deletion */}
           <DataPrivacySection />

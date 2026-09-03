@@ -61,7 +61,11 @@ means *proved by automated test in this repo*.
 ## Billing
 | Feature | Status | Notes |
 |---|---|---|
-| Stripe / subscriptions / entitlements | NOT IMPLEMENTED | Launch blocker. |
+| Stripe Checkout + Customer Portal | WIRED BUT UNPROVEN | Env-driven price ids; no Stripe test-mode run yet. |
+| Webhook + idempotency | WIRED BUT UNPROVEN | Signature-verified; `billing_events` primary key rejects replays. |
+| Entitlements | WIRED BUT UNPROVEN | Central config, server-side in `_shared/billing.ts`; 12 tests cover the client mirror. |
+| Usage counters against plan limits | PARTIALLY IMPLEMENTED | Counted in `ai_usage_events`; not yet surfaced in the UI. |
+| Trials, plan changes, dunning recovery | WIRED BUT UNPROVEN | Handled by Stripe + the webhook; untested. |
 
 ## Data ownership
 | Feature | Status | Notes |

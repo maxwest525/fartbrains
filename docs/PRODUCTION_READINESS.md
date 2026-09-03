@@ -12,9 +12,10 @@
 - [x] Immediate permanent deletes with no trash and no undo (data loss).
 
 ### P1 — launch blockers
-- [ ] Stripe billing, subscriptions and server-side entitlement enforcement.
-      (Plan limits and the entitlement lookup already exist in `_shared/ai-guard.ts`;
-      it needs the `subscriptions` table and the Stripe webhook to write it.)
+- [~] Stripe billing, subscriptions and entitlements — built (checkout, portal,
+      signature-verified idempotent webhook, plan config, billing UI).
+      **Nothing has been run against Stripe test mode**, which the release gate
+      requires. See the Stripe checklist in `docs/DEPLOYMENT.md`.
 - [~] Secure, revocable single-idea sharing — built; migration + edge function **not deployed**, E2E unproven.
 - [x] Full data export (JSON + Markdown).
 - [x] Account deletion with derived-data cleanup.
@@ -26,7 +27,7 @@
 - [x] Hide phone auth until an SMS provider is configured and tested.
 - [ ] Restrict CORS to production origins; add CSP and security headers.
 - [ ] Error monitoring and privacy-safe product analytics.
-- [ ] Production email sender-domain configuration.
+- [~] Production email sender-domain configuration — documented in `docs/DEPLOYMENT.md`, not verified.
 - [ ] Real automated coverage: auth, two-account RLS, capture, sharing, billing.
 
 ### P2 — post launch

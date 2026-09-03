@@ -154,7 +154,35 @@
         "per-item export is still missing",
         "billing cancellation on deletion is instructional, not automatic (no billing yet)"
       ]
+    },
+    {
+      "n": 8,
+      "task": "P1 \u2014 Stripe billing, subscriptions and entitlements",
+      "evidence": [
+        "11 new entitlement tests pass",
+        "43 tests total",
+        "tsc clean; eslint clean on new files; build passes",
+        "docs/DEPLOYMENT.md documents every env var and the Stripe test-mode checklist"
+      ],
+      "files": [
+        "supabase/migrations/20260903160000_billing.sql",
+        "supabase/functions/_shared/billing.ts",
+        "supabase/functions/create-checkout-session/index.ts",
+        "supabase/functions/create-portal-session/index.ts",
+        "supabase/functions/stripe-webhook/index.ts",
+        "src/lib/entitlements.ts",
+        "src/hooks/useSubscription.ts",
+        "src/components/app/BillingSection.tsx",
+        "src/components/app/SettingsSheet.tsx",
+        "docs/DEPLOYMENT.md"
+      ],
+      "db_changes": "subscriptions + billing_events \u2014 NOT APPLIED",
+      "remaining_risks": [
+        "NOTHING has been run against Stripe test mode; the release gate requires the full lifecycle",
+        "usage against plan limits is counted but not shown to the customer",
+        "ai-guard enforces quotas by plan but does not yet block PAID_ONLY operations outright for free accounts"
+      ]
     }
   ],
-  "next": "P1 \u2014 Stripe billing and entitlements"
+  "next": "P1 \u2014 onboarding, durable capture jobs, imports, server-side search; then observability"
 }

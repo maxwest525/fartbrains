@@ -30,6 +30,12 @@ manual run. Code inspection is never evidence.
 | Export | Ideas group by folder, rest under Unfiled | `exportAccount.test.ts` | PASS |
 | Export | Every user-owned content table is covered | `exportAccount.test.ts` | PASS |
 | Export | The share table (token hashes) is never exported | `exportAccount.test.ts` | PASS |
+| Billing | Trialing / active / past_due grant paid features | `entitlements.test.ts` | PASS |
+| Billing | Free / incomplete / unpaid / canceled do not | `entitlements.test.ts` | PASS |
+| Billing | Read, search, export and deletion survive every status | `entitlements.test.ts` | PASS |
+| Billing | Only costly actions are restricted after cancellation | `entitlements.test.ts` | PASS |
+| Billing | A cancelled customer can still manage billing and resubscribe | `entitlements.test.ts` | PASS |
+| Billing | Cancelled / past_due / renewal messaging is correct | `entitlements.test.ts` | PASS |
 
 ## Not yet covered (all required before launch)
 Signup · email verification · magic link · password reset · session expiry ·
@@ -37,6 +43,8 @@ two-account RLS isolation across every table · capture (text, URL, voice,
 transcript, duplicate, AI failure, retry, offline) · library (search,
 pagination, folders, tags, archive, trash, restore, bulk) · retrieval
 (citations, no-result, isolation, prompt injection, embedding fallback) ·
+the full Stripe test-mode lifecycle (checkout, webhook, duplicate webhook,
+failed payment, cancellation, resubscription) ·
 sharing end-to-end against a real database (valid, revoked, invalid token,
 enumeration, hidden private fields, owner preview, share of a deleted idea) · billing (checkout, webhook, duplicate webhook,
 failed payment, cancellation, resubscription, entitlements, export after
