@@ -39,7 +39,7 @@ means *proved by automated test in this repo*.
 | Folders, tags, favorites, pins, recent | WIRED BUT UNPROVEN | |
 | Search | PARTIALLY IMPLEMENTED | Client-side filtering; no server FTS. |
 | Pagination | NOT IMPLEMENTED | Scale risk. |
-| Archive / trash / restore | NOT IMPLEMENTED | Deletes are immediate and permanent. Launch blocker. |
+| Trash / restore / permanent delete / empty | WIRED BUT UNPROVEN | Soft delete with undo, 30-day retention, `purge_expired_trash()`; 6 tests assert no DELETE on the delete path. Migration not applied. Archive (distinct from trash) is still not implemented. |
 | Bulk actions | NOT IMPLEMENTED | |
 
 ## AI

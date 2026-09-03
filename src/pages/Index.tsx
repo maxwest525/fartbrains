@@ -18,6 +18,7 @@ import { GraphPage } from "@/components/app/GraphPage";
 import { AlarmOverlay } from "@/components/app/AlarmOverlay";
 import { AshDock } from "@/components/app/AshDock";
 import { DesktopScratchpad } from "@/components/app/DesktopScratchpad";
+import { TrashView } from "@/components/app/TrashView";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useAuth } from "@/hooks/useAuth";
@@ -163,6 +164,10 @@ const Shell = () => {
   const showFolders = view === "folders" && !showDetailOnly;
   const showCalendar = view === "calendar" && !showDetailOnly;
   const showGraph = view === "graph";
+  // Trash is a filter, but it renders its own restore/purge surface rather than
+  // the normal idea list + detail pane.
+  const showTrash =
+    !showFolders && !showCalendar && !showGraph && filter.kind === "trash";
   const defaultFolderId = filter.kind === "folder" ? filter.folderId : null;
 
   const activeFolderName =
@@ -367,8 +372,10 @@ const Shell = () => {
           </div>
         )}
 
+        {showTrash && <TrashView />}
+
         {/* Browse view — flat list of ideas (Recents, Favorites, Folder-filtered, Search). */}
-        {!showFolders && !showCalendar && !showGraph && !showDetailOnly && filter.kind !== "all" && (
+        {!showTrash && !showFolders && !showCalendar && !showGraph && !showDetailOnly && filter.kind !== "all" && (
           <div
             className="w-full flex-1 min-w-0 md:w-[28rem] md:flex-none md:shrink-0 md:border-r border-border flex flex-col min-h-0 bg-transparent md:overflow-hidden overflow-y-auto scroll-momentum touch-pan-y"
             style={{ paddingBottom: isMobile ? "calc(var(--ash-dock-h, 0px) + var(--mobile-tabbar-h, 0px) + env(safe-area-inset-bottom) + 1rem)" : "1.5rem" }}
@@ -388,14 +395,14 @@ const Shell = () => {
         )}
 
         {/* Detail — desktop always shows, mobile only when an idea is selected */}
-        {!showFolders && !showCalendar && !showGraph && (!isMobile || showDetailOnly) && (
+        {!showTrash && !showFolders && !showCalendar && !showGraph && (!isMobile || showDetailOnly) && (
           <IdeaDetail ideaId={selectedId} onClose={() => setSelectedId(null)} backLabel={backLabel} onSelectIdea={setSelectedId} onOpenGraph={() => setView("graph")} />
         )}
       </div>
 
       {/* Floating "+ Add" — visible in any browse scope (folder, recent, favorites, search).
           Creates a stub idea in the active folder (or default) and opens it for editing. */}
-      {!showFolders && !showCalendar && !showGraph && !showDetailOnly && filter.kind !== "all" && (
+      {!showTrash && !showFolders && !showCalendar && !showGraph && !showDetailOnly && filter.kind !== "all" && (
         <button
           onClick={handleQuickAdd}
           disabled={createIdea.isPending}

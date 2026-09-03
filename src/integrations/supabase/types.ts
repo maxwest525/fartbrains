@@ -401,6 +401,7 @@ export type Database = {
         Row: {
           ai_summary: string | null
           created_at: string
+          deleted_at: string | null
           extracted_text: string | null
           folder_id: string | null
           generated_prompt: string | null
@@ -427,6 +428,7 @@ export type Database = {
         Insert: {
           ai_summary?: string | null
           created_at?: string
+          deleted_at?: string | null
           extracted_text?: string | null
           folder_id?: string | null
           generated_prompt?: string | null
@@ -453,6 +455,7 @@ export type Database = {
         Update: {
           ai_summary?: string | null
           created_at?: string
+          deleted_at?: string | null
           extracted_text?: string | null
           folder_id?: string | null
           generated_prompt?: string | null

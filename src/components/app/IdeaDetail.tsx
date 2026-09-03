@@ -925,9 +925,10 @@ export const IdeaDetail = ({ ideaId, onClose, backLabel = "Back", onSelectIdea, 
       <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete this idea?</AlertDialogTitle>
+            <AlertDialogTitle>Move to Trash?</AlertDialogTitle>
             <AlertDialogDescription>
-              "{idea.title}" will be permanently removed. This can't be undone.
+              "{idea.title}" moves to Trash and stops being shared. You can
+              restore it for 30 days.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -945,10 +946,10 @@ export const IdeaDetail = ({ ideaId, onClose, backLabel = "Back", onSelectIdea, 
               {deleteIdea.isPending ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
-                  Deleting…
+                  Moving…
                 </>
               ) : (
-                "Delete"
+                "Move to Trash"
               )}
             </AlertDialogAction>
           </AlertDialogFooter>

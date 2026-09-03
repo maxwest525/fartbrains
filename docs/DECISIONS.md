@@ -17,3 +17,6 @@
 | 13 | 2026-09-03 | Quota is reserved before the work runs; the outcome is filled in afterwards. | A route that crashes or forgets to report still has to count against the allowance, otherwise failures become a free retry loop. |
 | 14 | 2026-09-03 | `ai_usage_events` stores metadata only — operation, plan, sizes, cost, success. | Usage analytics must never become a second copy of customers' private notes. |
 | 15 | 2026-09-03 | Weighted quotas: deep research 5x, transcription 3x, ask 2x, everything else 1x. | A flat call count prices a 20-minute transcription the same as an auto-tag. |
+| 16 | 2026-09-03 | Deleting an idea soft-deletes it (`deleted_at`) with an undo toast; 30-day retention, then `purge_expired_trash()`. | A product whose promise is "capture anything and find it later" cannot put a captured thought one mis-tap from gone. |
+| 17 | 2026-09-03 | Trashing an idea revokes its share links via a database trigger, not application code. | A recipient must stop reading the moment the owner deletes, even if the deletion came from a path that forgot to clean up. |
+| 18 | 2026-09-03 | Permanent deletion is only reachable from Trash and only behind an explicit confirmation. | Irreversible actions should require the customer to already be looking at the thing they are destroying. |

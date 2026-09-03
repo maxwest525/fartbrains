@@ -17,6 +17,12 @@ manual run. Code inspection is never evidence.
 | Sharing | Hash is stable, 64-hex, and never contains the token | `share.test.ts` | PASS |
 | Sharing | Expired link reports expired | `share.test.ts` | PASS |
 | Sharing | Revocation wins over an unexpired link | `share.test.ts` | PASS |
+| Trash | Deleting soft-deletes and issues no DELETE | `useIdeas.trash.test.tsx` | PASS |
+| Trash | Restore clears `deleted_at` | `useIdeas.trash.test.tsx` | PASS |
+| Trash | Permanent delete is scoped to trashed rows | `useIdeas.trash.test.tsx` | PASS |
+| Trash | Empty Trash is scoped to trashed rows | `useIdeas.trash.test.tsx` | PASS |
+| Library | Normal lists exclude trashed items | `useIdeas.trash.test.tsx` | PASS |
+| Library | Trash view shows only trashed items | `useIdeas.trash.test.tsx` | PASS |
 
 ## Not yet covered (all required before launch)
 Signup · email verification · magic link · password reset · session expiry ·

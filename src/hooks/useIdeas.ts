@@ -50,6 +50,8 @@ export type Idea = {
   reminder_fired_at: string | null;
   /** When set, the idea is pinned and sorts above unpinned items. */
   pinned_at: string | null;
+  /** Soft delete. NULL = live; set = in Trash. */
+  deleted_at?: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -60,7 +62,8 @@ export type IdeaFilter =
   | { kind: "favorites"; sourceType?: SourceType }
   | { kind: "recent"; sourceType?: SourceType }
   | { kind: "folder"; folderId: string; sourceType?: SourceType }
-  | { kind: "search"; query: string; folderId?: string; sourceType?: SourceType };
+  | { kind: "search"; query: string; folderId?: string; sourceType?: SourceType }
+  | { kind: "trash"; sourceType?: SourceType };
 
 export function useIdeas(filter: IdeaFilter) {
   return useQuery({
@@ -68,9 +71,21 @@ export function useIdeas(filter: IdeaFilter) {
     queryFn: async (): Promise<Idea[]> => {
       // Pinned items always float to the top (most recently pinned first),
       // then fall back to recency. NULLS LAST keeps unpinned below.
+      // Trash is its own view; every other list shows live items only.
+      if (filter.kind === "trash") {
+        const { data, error } = await supabase
+          .from("ideas")
+          .select("*")
+          .not("deleted_at", "is", null)
+          .order("deleted_at", { ascending: false });
+        if (error) throw error;
+        return (data ?? []) as Idea[];
+      }
+
       let q = supabase
         .from("ideas")
         .select("*")
+        .is("deleted_at", null)
         .order("pinned_at", { ascending: false, nullsFirst: false })
         .order("updated_at", { ascending: false });
 
@@ -295,19 +310,94 @@ export function useUpdateIdea() {
   });
 }
 
+const invalidateLists = (qc: ReturnType<typeof useQueryClient>) => {
+  qc.invalidateQueries({ queryKey: ["ideas"] });
+  qc.invalidateQueries({ queryKey: ["folder-counts"] });
+  qc.invalidateQueries({ queryKey: ["folder-previews"] });
+};
+
+/**
+ * Deleting moves an item to Trash rather than destroying it. Nothing a customer
+ * captured should be one mis-tap from gone: they get an immediate undo, and the
+ * item stays restorable for 30 days before `purge_expired_trash()` removes it.
+ * Trashing also revokes any share links pointing at the item (DB trigger).
+ */
 export function useDeleteIdea() {
+  const qc = useQueryClient();
+  const restore = useRestoreIdea();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from("ideas")
+        .update({ deleted_at: new Date().toISOString() })
+        .eq("id", id);
+      if (error) throw error;
+      return id;
+    },
+    onSuccess: (id) => {
+      invalidateLists(qc);
+      toast.success("Moved to Trash", {
+        description: "Kept for 30 days.",
+        action: { label: "Undo", onClick: () => restore.mutate(id) },
+      });
+    },
+    onError: () => toast.error("Couldn't delete this. Try again."),
+  });
+}
+
+export function useRestoreIdea() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("ideas").delete().eq("id", id);
+      const { error } = await supabase
+        .from("ideas")
+        .update({ deleted_at: null })
+        .eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["ideas"] });
-      qc.invalidateQueries({ queryKey: ["folder-counts"] });
-      qc.invalidateQueries({ queryKey: ["folder-previews"] });
-      toast.success("Idea deleted");
+      invalidateLists(qc);
+      toast.success("Restored");
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: () => toast.error("Couldn't restore this. Try again."),
+  });
+}
+
+/** Irreversible. Only ever called from Trash, behind an explicit confirmation. */
+export function usePurgeIdea() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from("ideas")
+        .delete()
+        .eq("id", id)
+        .not("deleted_at", "is", null);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      invalidateLists(qc);
+      toast.success("Permanently deleted");
+    },
+    onError: () => toast.error("Couldn't delete this. Try again."),
+  });
+}
+
+/** Irreversible. Empties the whole Trash for the signed-in owner. */
+export function useEmptyTrash() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase
+        .from("ideas")
+        .delete()
+        .not("deleted_at", "is", null);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      invalidateLists(qc);
+      toast.success("Trash emptied");
+    },
+    onError: () => toast.error("Couldn't empty the Trash. Try again."),
   });
 }

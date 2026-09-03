@@ -9,7 +9,7 @@
 - [x] `notes-feed` edge function leaked every tenant's notes, todos and reminders.
 - [~] RLS `UPDATE` policies missing `WITH CHECK` — migration written, **not applied**.
 - [x] No rate limiting or server-side usage accounting on AI routes.
-- [ ] Immediate permanent deletes with no trash and no undo (data loss).
+- [x] Immediate permanent deletes with no trash and no undo (data loss).
 
 ### P1 — launch blockers
 - [ ] Stripe billing, subscriptions and server-side entitlement enforcement.

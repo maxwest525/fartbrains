@@ -111,7 +111,29 @@
         "resolvePlan reads a subscriptions table that does not exist yet, so everyone resolves to the free plan",
         "only summarize enriches usage rows with model/size/outcome; the rest record the call itself"
       ]
+    },
+    {
+      "n": 6,
+      "task": "P0 \u2014 trash, undo and retention instead of permanent delete",
+      "evidence": [
+        "6 new tests assert the delete path issues no DELETE and that purge is scoped to trashed rows",
+        "22 tests pass; tsc clean; build passes"
+      ],
+      "files": [
+        "supabase/migrations/20260903150000_trash.sql",
+        "src/hooks/useIdeas.ts",
+        "src/components/app/TrashView.tsx",
+        "src/components/app/AppSidebar.tsx",
+        "src/components/app/IdeaDetail.tsx",
+        "src/pages/Index.tsx",
+        "src/integrations/supabase/types.ts"
+      ],
+      "db_changes": "ideas.deleted_at + partial indexes + purge_expired_trash() + revoke_shares_on_trash trigger \u2014 NOT APPLIED",
+      "remaining_risks": [
+        "purge_expired_trash() needs a daily schedule (pg_cron) that does not exist yet",
+        "archive, distinct from trash, is still unimplemented"
+      ]
     }
   ],
-  "next": "P1 \u2014 trash/undo (data loss), then data export + account deletion, then Stripe billing"
+  "next": "P1 \u2014 data export + account deletion, then Stripe billing"
 }
