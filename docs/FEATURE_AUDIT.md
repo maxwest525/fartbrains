@@ -55,7 +55,8 @@ means *proved by automated test in this repo*.
 ## Sharing
 | Feature | Status | Notes |
 |---|---|---|
-| "Brainstorm with a friend" | VISUAL ONLY / MISLEADING | Copies `/?idea=<id>&collab=1` — an owner-only URL. The recipient cannot open it. Must be replaced with real single-idea share links and the collaboration language removed. |
+| Secure single-idea share links | WIRED BUT UNPROVEN | Replaced the fake collab link in iteration 3. Token generation and status logic are unit-tested; the migration and edge function are **not yet deployed**, so end-to-end resolution is unproven. |
+| "Brainstorm with a friend" collab link | REMOVED | Copied `/?idea=<id>&collab=1`, an owner-only URL the recipient could not open, and treated the idea UUID as authorization. |
 
 ## Billing
 | Feature | Status | Notes |

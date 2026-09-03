@@ -13,7 +13,7 @@
 
 ### P1 — launch blockers
 - [ ] Stripe billing, subscriptions and server-side entitlement enforcement.
-- [ ] Secure, revocable single-idea sharing (replacing the fake collab link).
+- [~] Secure, revocable single-idea sharing — built; migration + edge function **not deployed**, E2E unproven.
 - [ ] Full data export (JSON + Markdown).
 - [ ] Account deletion with derived-data cleanup.
 - [ ] Durable processing-job model for long-running capture.

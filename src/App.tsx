@@ -15,6 +15,7 @@ import PromptRules from "./pages/PromptRules.tsx";
 import Profile from "./pages/Profile.tsx";
 import Instructions from "./pages/Instructions.tsx";
 import ResetPassword from "./pages/ResetPassword.tsx";
+import SharedIdea from "./pages/SharedIdea.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
@@ -39,6 +40,8 @@ const App = () => (
             <Route path="/profile" element={<Profile />} />
             <Route path="/settings/instructions" element={<Instructions />} />
             <Route path="/reset-password" element={<ResetPassword />} />
+            {/* Public, read-only view of a single shared idea. */}
+            <Route path="/s/:token" element={<SharedIdea />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

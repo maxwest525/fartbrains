@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { Star, Trash2, ExternalLink, Sparkles, ChevronLeft, Wand2, Copy, Check, Loader2, RefreshCw, Bell, Pin, PinOff, MessageSquare, Plus, Users, Microscope, Share2 } from "lucide-react";
+import { Star, Trash2, ExternalLink, Sparkles, ChevronLeft, Wand2, Copy, Check, Loader2, RefreshCw, Bell, Pin, PinOff, MessageSquare, Plus, Microscope, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -32,6 +32,7 @@ import { toast } from "sonner";
 import { ThinkingPanel } from "./ThinkingPanel";
 import { IdeaResearchActions } from "./IdeaResearchActions";
 import { IdeaReminderDialog } from "./IdeaReminderDialog";
+import { ShareIdeaDialog } from "./ShareIdeaDialog";
 import { ProjectBoard } from "./ProjectBoard";
 import { PROJECT_TAG } from "@/lib/deliverables";
 import { formatReminder } from "@/lib/formatTime";
@@ -118,6 +119,7 @@ export const IdeaDetail = ({ ideaId, onClose, backLabel = "Back", onSelectIdea, 
   const [generating, setGenerating] = useState(false);
   const [regenerating, setRegenerating] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
   const [reminderOpen, setReminderOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
@@ -313,22 +315,6 @@ export const IdeaDetail = ({ ideaId, onClose, backLabel = "Back", onSelectIdea, 
     }
   };
 
-  // Collab: copy a shareable brainstorm link for this idea.
-  // A friend opening the link lands on the same idea; real-time co-edit is a
-  // follow-up (Supabase Realtime presence on a channel keyed by idea.id).
-  const onCollab = async () => {
-    if (!idea) return;
-    const url = `${window.location.origin}/?idea=${idea.id}&collab=1`;
-    try {
-      await navigator.clipboard.writeText(url);
-      toast.success("Collab link copied", {
-        description: "Send it to a friend — you'll both land on this idea.",
-      });
-    } catch {
-      toast.error("Couldn't copy link", { description: url });
-    }
-  };
-
   return (
     <div ref={containerRef} className="idea-scrim relative flex-1 flex flex-col h-full overflow-hidden bg-transparent md:animate-none anim-slide-in">
       {/* iOS-style nav bar: text "Back" on left, action cluster on right */}
@@ -361,12 +347,12 @@ export const IdeaDetail = ({ ideaId, onClose, backLabel = "Back", onSelectIdea, 
 
 
           <button
-            onClick={onCollab}
+            onClick={() => setShareOpen(true)}
             className="press h-10 w-10 flex items-center justify-center text-primary"
-            aria-label="Copy collab link"
-            title="Brainstorm with a friend — copy link"
+            aria-label="Share this idea"
+            title="Share this idea — read-only link"
           >
-            <Users className="h-[20px] w-[20px]" />
+            <Share2 className="h-[20px] w-[20px]" />
           </button>
           <button
             onClick={() => setReminderOpen(true)}
@@ -922,6 +908,13 @@ export const IdeaDetail = ({ ideaId, onClose, backLabel = "Back", onSelectIdea, 
           </div>
         )}
       </div>
+
+      <ShareIdeaDialog
+        open={shareOpen}
+        onOpenChange={setShareOpen}
+        ideaId={idea.id}
+        ideaTitle={idea.title}
+      />
 
       <IdeaReminderDialog
         open={reminderOpen}

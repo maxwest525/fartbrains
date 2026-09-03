@@ -255,6 +255,51 @@ export type Database = {
           },
         ]
       }
+      idea_shares: {
+        Row: {
+          access_count: number
+          created_at: string
+          expires_at: string | null
+          id: string
+          idea_id: string
+          include_note: boolean
+          include_refs: boolean
+          include_summary: boolean
+          last_accessed_at: string | null
+          revoked_at: string | null
+          token_hash: string
+          user_id: string
+        }
+        Insert: {
+          access_count?: number
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          idea_id: string
+          include_note?: boolean
+          include_refs?: boolean
+          include_summary?: boolean
+          last_accessed_at?: string | null
+          revoked_at?: string | null
+          token_hash: string
+          user_id: string
+        }
+        Update: {
+          access_count?: number
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          idea_id?: string
+          include_note?: boolean
+          include_refs?: boolean
+          include_summary?: boolean
+          last_accessed_at?: string | null
+          revoked_at?: string | null
+          token_hash?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       idea_references: {
         Row: {
           created_at: string

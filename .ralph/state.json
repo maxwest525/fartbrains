@@ -3,14 +3,14 @@
   "updated": "2026-09-03",
   "baseline": {
     "typecheck": "pass",
-    "build": "pass (single 1.19 MB JS chunk — code splitting is a P2)",
+    "build": "pass (single 1.19 MB JS chunk \u2014 code splitting is a P2)",
     "lint": "29 errors / 17 warnings",
     "tests": "1 trivial test (src/test/example.test.ts)"
   },
   "iterations": [
     {
       "n": 1,
-      "task": "P0 — restore the authentication gate",
+      "task": "P0 \u2014 restore the authentication gate",
       "evidence": [
         "ProtectedRoute no longer calls supabase.auth.signInAnonymously()",
         "useAuth signs out any anonymous session",
@@ -29,11 +29,55 @@
       "db_changes": "none",
       "remaining_risks": [
         "notes-feed edge function is single-tenant: service-role query with no user scoping",
-        "RLS UPDATE policies lack WITH CHECK — a user can reassign user_id",
+        "RLS UPDATE policies lack WITH CHECK \u2014 a user can reassign user_id",
         "wildcard CORS on every edge function",
         "no billing, no sharing, no export, no account deletion"
       ]
+    },
+    {
+      "n": 2,
+      "task": "P0 \u2014 notes-feed cross-tenant leak + RLS WITH CHECK",
+      "evidence": [
+        "notes-feed now requires a user JWT, runs as that user, filters by user_id",
+        "migration 20260903120000_rls_update_with_check.sql written"
+      ],
+      "files": [
+        "supabase/functions/notes-feed/index.ts",
+        "supabase/migrations/20260903120000_rls_update_with_check.sql"
+      ],
+      "db_changes": "migration written, NOT APPLIED (no database access in this environment)",
+      "remaining_risks": [
+        "migration unapplied",
+        "two-account RLS test still outstanding"
+      ]
+    },
+    {
+      "n": 3,
+      "task": "P1 \u2014 replace the fake collab link with secure single-idea sharing",
+      "evidence": [
+        "9 new share tests pass",
+        "16 tests total pass",
+        "tsc clean",
+        "vite build passes",
+        "no collaboration language left in the UI"
+      ],
+      "files": [
+        "supabase/migrations/20260903130000_idea_shares.sql",
+        "supabase/functions/resolve-share/index.ts",
+        "src/lib/share.ts",
+        "src/hooks/useIdeaShares.ts",
+        "src/components/app/ShareIdeaDialog.tsx",
+        "src/pages/SharedIdea.tsx",
+        "src/App.tsx",
+        "src/components/app/IdeaDetail.tsx",
+        "src/pages/Index.tsx",
+        "src/integrations/supabase/types.ts"
+      ],
+      "db_changes": "new table idea_shares + resolve_idea_share() \u2014 migration written, NOT APPLIED",
+      "remaining_risks": [
+        "share flow unproven end-to-end until the migration and edge function are deployed"
+      ]
     }
   ],
-  "next": "P0 — notes-feed cross-tenant leak + RLS UPDATE WITH CHECK migration"
+  "next": "P1 \u2014 hide unconfigured phone auth; then AI rate limiting + usage accounting"
 }
