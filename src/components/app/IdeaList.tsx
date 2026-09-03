@@ -1,8 +1,8 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Star, FileText, Link2, Mic, MessageSquare, ChevronRight, Loader2, ChevronLeft, Inbox, Search as SearchIcon, Folder as FolderIcon, Clock as ClockIcon, Briefcase, LayoutGrid, Tag as TagIcon, X, Pin } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
-import { useIdeas, type Idea, type IdeaFilter } from "@/hooks/useIdeas";
+import { IDEAS_PAGE_SIZE, useIdeas, type Idea, type IdeaFilter } from "@/hooks/useIdeas";
 import { useFolders } from "@/hooks/useFolders";
 import { Skeleton } from "@/components/ui/skeleton";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
@@ -44,7 +44,13 @@ type Props = {
 };
 
 export const IdeaList = ({ filter, selectedId, onSelect, onBackToFolders, onFilterChange, pageScroll = false }: Props) => {
-  const { data: ideas = [], isLoading } = useIdeas(filter);
+  // Lists are paged so a large library never lands in browser memory at once.
+  // Growing the page (rather than appending) keeps the list a single sorted
+  // result, which matters because pinned items float to the top.
+  const [pageSize, setPageSize] = useState(IDEAS_PAGE_SIZE);
+  useEffect(() => { setPageSize(IDEAS_PAGE_SIZE); }, [filter]);
+  const { data: ideas = [], isLoading, isFetching } = useIdeas(filter, pageSize);
+  const hasMore = ideas.length >= pageSize;
   const { data: folders = [] } = useFolders();
   const qc = useQueryClient();
   const isMobile = useIsMobile();
@@ -127,7 +133,10 @@ export const IdeaList = ({ filter, selectedId, onSelect, onBackToFolders, onFilt
               <span>Loading ideas…</span>
             </>
           ) : (
-            <span>{ideas.length} idea{ideas.length === 1 ? "" : "s"}</span>
+            <span>
+              {ideas.length} idea{ideas.length === 1 ? "" : "s"}
+              {hasMore ? "+" : ""}
+            </span>
           )}
         </p>
 
@@ -485,6 +494,26 @@ export const IdeaList = ({ filter, selectedId, onSelect, onBackToFolders, onFilt
           </>
           );
         })()}
+
+        {/* Never truncate a library silently: say there is more, and load it. */}
+        {hasMore && (
+          <div className="px-4 py-4 flex justify-center">
+            <button
+              type="button"
+              onClick={() => setPageSize((n) => n + IDEAS_PAGE_SIZE)}
+              disabled={isFetching}
+              className="press h-10 px-5 rounded-full border border-border/60 text-sm font-medium text-primary disabled:opacity-60"
+            >
+              {isFetching ? (
+                <span className="flex items-center gap-2">
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" /> Loading…
+                </span>
+              ) : (
+                "Load more"
+              )}
+            </button>
+          </div>
+        )}
         </div>
       </div>
     </div>

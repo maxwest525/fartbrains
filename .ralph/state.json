@@ -245,6 +245,21 @@
         "there is no 'load more', so a library past 100 items is silently truncated in the UI \u2014 this is a launch blocker",
         "nothing queries search_vector yet; search is still ILIKE"
       ]
+    },
+    {
+      "n": 12,
+      "task": "P1 \u2014 Load more, closing the silent-truncation gap introduced in iteration 11",
+      "evidence": [
+        "71 tests pass; tsc clean; eslint clean; build passes"
+      ],
+      "files": [
+        "src/components/app/IdeaList.tsx"
+      ],
+      "db_changes": "none",
+      "remaining_risks": [
+        "paging grows the page rather than appending, which refetches; fine to a few hundred items, worth moving to useInfiniteQuery if libraries get large",
+        "not exercised against a real large library"
+      ]
     }
   ],
   "next": "Remaining P1s: durable capture jobs, Import Center, server-side search + pagination, semantic retrieval with citations, email verification enforcement, accessibility pass"
