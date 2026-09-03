@@ -19,12 +19,15 @@ import { AlarmOverlay } from "@/components/app/AlarmOverlay";
 import { AshDock } from "@/components/app/AshDock";
 import { DesktopScratchpad } from "@/components/app/DesktopScratchpad";
 import { TrashView } from "@/components/app/TrashView";
+import { OnboardingFlow } from "@/components/app/OnboardingFlow";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useAuth } from "@/hooks/useAuth";
 import { useFolders } from "@/hooks/useFolders";
 import { useReminderNotifier } from "@/hooks/useReminderNotifier";
-import { useCreateIdea } from "@/hooks/useIdeas";
+import { useCreateIdea, useIdeas } from "@/hooks/useIdeas";
+import { readOnboarding, shouldShowOnboarding } from "@/lib/onboarding";
+import { track } from "@/lib/analytics";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { Plus } from "lucide-react";
@@ -166,6 +169,24 @@ const Shell = () => {
   const showGraph = view === "graph";
   // Trash is a filter, but it renders its own restore/purge surface rather than
   // the normal idea list + detail pane.
+  // First run. Offered only to an account that hasn't started using the
+  // product, and never on top of a mid-task view.
+  const { data: allIdeas } = useIdeas({ kind: "all" });
+  const [onboardingState, setOnboardingState] = useState(() => readOnboarding(user?.id));
+  useEffect(() => { setOnboardingState(readOnboarding(user?.id)); }, [user?.id]);
+  const showOnboarding =
+    !!user &&
+    allIdeas !== undefined &&
+    view === "ideas" &&
+    filter.kind === "all" &&
+    !selectedId &&
+    shouldShowOnboarding(onboardingState, allIdeas.length);
+  useEffect(() => {
+    if (showOnboarding && onboardingState.completed.length === 0) {
+      track("onboarding_started");
+    }
+  }, [showOnboarding, onboardingState.completed.length]);
+
   const showTrash =
     !showFolders && !showCalendar && !showGraph && filter.kind === "trash";
   const defaultFolderId = filter.kind === "folder" ? filter.folderId : null;
@@ -350,8 +371,18 @@ const Shell = () => {
         )}
 
 
+        {/* First run replaces the capture view until it is done or skipped. */}
+        {showOnboarding && user && (
+          <OnboardingFlow
+            userId={user.id}
+            onDone={() => setOnboardingState(readOnboarding(user.id))}
+            onOpenItem={(id) => setSelectedId(id)}
+            onOpenSearch={() => handleFilterChange({ kind: "search", query: "" })}
+          />
+        )}
+
         {/* Capture view — compose only, full width. Shown when filter is "all" (the default landing). */}
-        {!showFolders && !showCalendar && !showGraph && !showDetailOnly && filter.kind === "all" && (
+        {!showOnboarding && !showFolders && !showCalendar && !showGraph && !showDetailOnly && filter.kind === "all" && (
           <div
             className="w-full flex-1 min-w-0 flex flex-col min-h-0 bg-transparent overflow-y-auto scroll-momentum touch-pan-y"
             style={{ paddingBottom: "calc(var(--ash-dock-h, 0px) + env(safe-area-inset-bottom) + (var(--mobile-tabbar-h, 0px)) + 1.25rem)" }}

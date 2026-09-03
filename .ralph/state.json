@@ -209,7 +209,25 @@
         "no analytics or crash-reporting provider is actually wired",
         "CSP is unverified in a real browser \u2014 it may block something at runtime"
       ]
+    },
+    {
+      "n": 10,
+      "task": "P1 \u2014 first-run onboarding",
+      "evidence": [
+        "14 new onboarding tests; 69 tests total",
+        "tsc clean; eslint clean on changed files; build passes"
+      ],
+      "files": [
+        "src/lib/onboarding.ts",
+        "src/components/app/OnboardingFlow.tsx",
+        "src/pages/Index.tsx"
+      ],
+      "db_changes": "none",
+      "remaining_risks": [
+        "no visual verification at any viewport \u2014 this session has no browser",
+        "the flow demonstrates typed capture only; URL, voice and import are described rather than exercised"
+      ]
     }
   ],
-  "next": "P1 \u2014 first-run onboarding; then durable capture jobs, imports, server-side search"
+  "next": "Remaining P1s: durable capture jobs, Import Center, server-side search + pagination, semantic retrieval with citations, email verification enforcement, accessibility pass"
 }

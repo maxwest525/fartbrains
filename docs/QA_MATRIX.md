@@ -42,6 +42,12 @@ manual run. Code inspection is never evidence.
 | Reliability | A render crash shows a recoverable screen, not a blank page | `ErrorBoundary.test.tsx` | PASS |
 | Reliability | The crash screen reassures the customer their notes are safe | `ErrorBoundary.test.tsx` | PASS |
 | Reliability | Crashes reach an installed sink; a broken sink is survivable | `ErrorBoundary.test.tsx` | PASS |
+| Onboarding | Completed steps are remembered and never repeated | `onboarding.test.ts` | PASS |
+| Onboarding | Two accounts on one device keep separate progress | `onboarding.test.ts` | PASS |
+| Onboarding | Corrupted or outdated stored state degrades safely | `onboarding.test.ts` | PASS |
+| Onboarding | Offered to an empty account, never to one with items | `onboarding.test.ts` | PASS |
+| Onboarding | Continues after the first capture creates an item | `onboarding.test.ts` | PASS |
+| Onboarding | Never shown again once finished or skipped | `onboarding.test.ts` | PASS |
 
 ## Not yet covered (all required before launch)
 Signup · email verification · magic link · password reset · session expiry ·

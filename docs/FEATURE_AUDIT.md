@@ -22,6 +22,12 @@ means *proved by automated test in this repo*.
 | Account deletion | WIRED BUT UNPROVEN | `delete-account` edge function; requires password re-entry, a session under 15 minutes old, and the typed phrase. Not deployed. |
 | Single-user email allowlist | DEAD CODE (removed) | Was a no-op returning true. |
 
+## Onboarding
+| Feature | Status | Notes |
+|---|---|---|
+| First-run flow (capture → find → privacy) | WIRED BUT UNPROVEN | 14 tests cover progress, per-account isolation, corrupted storage and when it is offered. Visual pass outstanding. |
+| No silent sample data | VERIFIED END TO END | The first capture is the customer's own text; nothing is written into a private brain on their behalf. |
+
 ## Capture
 | Feature | Status | Notes |
 |---|---|---|

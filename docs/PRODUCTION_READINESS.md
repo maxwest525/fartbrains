@@ -21,7 +21,7 @@
 - [x] Account deletion with derived-data cleanup.
 - [ ] Durable processing-job model for long-running capture.
 - [ ] Import Center.
-- [ ] First-run onboarding.
+- [x] First-run onboarding.
 - [ ] Server-side search + pagination for large libraries.
 - [ ] Semantic retrieval with citations, and grounded "not in your vault" answers.
 - [x] Hide phone auth until an SMS provider is configured and tested.
