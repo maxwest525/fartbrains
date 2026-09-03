@@ -65,9 +65,38 @@ export type IdeaFilter =
   | { kind: "search"; query: string; folderId?: string; sourceType?: SourceType }
   | { kind: "trash"; sourceType?: SourceType };
 
-export function useIdeas(filter: IdeaFilter) {
+/**
+ * How many items one list request may fetch.
+ *
+ * Lists used to run with no limit at all, so a customer with ten thousand items
+ * downloaded ten thousand items — and their whole private vault sat in browser
+ * memory — every time a list mounted. A bounded page keeps the first paint flat
+ * as a library grows.
+ */
+export const IDEAS_PAGE_SIZE = 100;
+
+/**
+ * Count only — no rows. Used where the app needs to know whether a customer has
+ * anything yet (first run) without pulling their vault to find out.
+ */
+export function useIdeaCount() {
   return useQuery({
-    queryKey: ["ideas", filter],
+    queryKey: ["idea-count"],
+    queryFn: async (): Promise<number> => {
+      const { count, error } = await supabase
+        .from("ideas")
+        .select("id", { count: "exact", head: true })
+        .is("deleted_at", null);
+      if (error) throw error;
+      return count ?? 0;
+    },
+    staleTime: 30_000,
+  });
+}
+
+export function useIdeas(filter: IdeaFilter, pageSize: number = IDEAS_PAGE_SIZE) {
+  return useQuery({
+    queryKey: ["ideas", filter, pageSize],
     queryFn: async (): Promise<Idea[]> => {
       // Pinned items always float to the top (most recently pinned first),
       // then fall back to recency. NULLS LAST keeps unpinned below.
@@ -77,7 +106,8 @@ export function useIdeas(filter: IdeaFilter) {
           .from("ideas")
           .select("*")
           .not("deleted_at", "is", null)
-          .order("deleted_at", { ascending: false });
+          .order("deleted_at", { ascending: false })
+          .range(0, pageSize - 1);
         if (error) throw error;
         return (data ?? []) as Idea[];
       }
@@ -104,6 +134,9 @@ export function useIdeas(filter: IdeaFilter) {
 
       // Optional source-type facet (e.g. "Transcript only").
       if (filter.sourceType) q = q.eq("source_type", filter.sourceType);
+
+      // "recent" sets its own tighter limit above; everything else is paged.
+      if (filter.kind !== "recent") q = q.range(0, pageSize - 1);
 
       const { data, error } = await q;
       if (error) throw error;
@@ -312,6 +345,7 @@ export function useUpdateIdea() {
 
 const invalidateLists = (qc: ReturnType<typeof useQueryClient>) => {
   qc.invalidateQueries({ queryKey: ["ideas"] });
+  qc.invalidateQueries({ queryKey: ["idea-count"] });
   qc.invalidateQueries({ queryKey: ["folder-counts"] });
   qc.invalidateQueries({ queryKey: ["folder-previews"] });
 };

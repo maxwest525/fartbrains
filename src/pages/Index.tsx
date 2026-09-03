@@ -25,7 +25,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { useAuth } from "@/hooks/useAuth";
 import { useFolders } from "@/hooks/useFolders";
 import { useReminderNotifier } from "@/hooks/useReminderNotifier";
-import { useCreateIdea, useIdeas } from "@/hooks/useIdeas";
+import { useCreateIdea, useIdeaCount } from "@/hooks/useIdeas";
 import { readOnboarding, shouldShowOnboarding } from "@/lib/onboarding";
 import { track } from "@/lib/analytics";
 import { toast } from "sonner";
@@ -171,16 +171,16 @@ const Shell = () => {
   // the normal idea list + detail pane.
   // First run. Offered only to an account that hasn't started using the
   // product, and never on top of a mid-task view.
-  const { data: allIdeas } = useIdeas({ kind: "all" });
+  const { data: ideaCount } = useIdeaCount();
   const [onboardingState, setOnboardingState] = useState(() => readOnboarding(user?.id));
   useEffect(() => { setOnboardingState(readOnboarding(user?.id)); }, [user?.id]);
   const showOnboarding =
     !!user &&
-    allIdeas !== undefined &&
+    ideaCount !== undefined &&
     view === "ideas" &&
     filter.kind === "all" &&
     !selectedId &&
-    shouldShowOnboarding(onboardingState, allIdeas.length);
+    shouldShowOnboarding(onboardingState, ideaCount);
   useEffect(() => {
     if (showOnboarding && onboardingState.completed.length === 0) {
       track("onboarding_started");

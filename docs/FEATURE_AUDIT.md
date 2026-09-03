@@ -43,8 +43,8 @@ means *proved by automated test in this repo*.
 | Feature | Status | Notes |
 |---|---|---|
 | Folders, tags, favorites, pins, recent | WIRED BUT UNPROVEN | |
-| Search | PARTIALLY IMPLEMENTED | Client-side filtering; no server FTS. |
-| Pagination | NOT IMPLEMENTED | Scale risk. |
+| Search | PARTIALLY IMPLEMENTED | Server-side ILIKE, now trigram-indexed. A generated `search_vector` column and GIN index exist for ranked full-text search but nothing queries them yet. |
+| Pagination | PARTIALLY IMPLEMENTED | Every list is bounded to 100 rows and indexed, so no query pulls the whole vault. There is no "load more", so a library past one page is truncated without telling the customer — a launch blocker in its own right. |
 | Trash / restore / permanent delete / empty | WIRED BUT UNPROVEN | Soft delete with undo, 30-day retention, `purge_expired_trash()`; 6 tests assert no DELETE on the delete path. Migration not applied. Archive (distinct from trash) is still not implemented. |
 | Bulk actions | NOT IMPLEMENTED | |
 

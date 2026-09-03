@@ -48,6 +48,8 @@ manual run. Code inspection is never evidence.
 | Onboarding | Offered to an empty account, never to one with items | `onboarding.test.ts` | PASS |
 | Onboarding | Continues after the first capture creates an item | `onboarding.test.ts` | PASS |
 | Onboarding | Never shown again once finished or skipped | `onboarding.test.ts` | PASS |
+| Scale | List queries never fetch the whole vault | `useIdeas.trash.test.tsx` | PASS |
+| Scale | A caller-supplied page size is honoured | `useIdeas.trash.test.tsx` | PASS |
 
 ## Not yet covered (all required before launch)
 Signup · email verification · magic link · password reset · session expiry ·

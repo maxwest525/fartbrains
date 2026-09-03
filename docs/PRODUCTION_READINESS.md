@@ -22,7 +22,7 @@
 - [ ] Durable processing-job model for long-running capture.
 - [ ] Import Center.
 - [x] First-run onboarding.
-- [ ] Server-side search + pagination for large libraries.
+- [~] Server-side search + pagination — every list is now bounded and indexed; true infinite scroll / "load more" is still missing, so a library past one page is silently truncated in the UI.
 - [ ] Semantic retrieval with citations, and grounded "not in your vault" answers.
 - [x] Hide phone auth until an SMS provider is configured and tested.
 - [x] Restrict CORS to production origins; add CSP (remaining response headers documented for the CDN).

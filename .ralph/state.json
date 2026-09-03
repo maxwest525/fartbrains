@@ -227,6 +227,24 @@
         "no visual verification at any viewport \u2014 this session has no browser",
         "the flow demonstrates typed capture only; URL, voice and import are described rather than exercised"
       ]
+    },
+    {
+      "n": 11,
+      "task": "P1 \u2014 bound every list query and index the search paths",
+      "evidence": [
+        "2 new tests assert no query fetches the whole vault; 71 tests total",
+        "tsc clean; eslint clean; build passes"
+      ],
+      "files": [
+        "src/hooks/useIdeas.ts",
+        "src/pages/Index.tsx",
+        "supabase/migrations/20260903170000_search_indexes.sql"
+      ],
+      "db_changes": "trigram + partial + tags indexes, and a generated search_vector column \u2014 NOT APPLIED",
+      "remaining_risks": [
+        "there is no 'load more', so a library past 100 items is silently truncated in the UI \u2014 this is a launch blocker",
+        "nothing queries search_vector yet; search is still ILIKE"
+      ]
     }
   ],
   "next": "Remaining P1s: durable capture jobs, Import Center, server-side search + pagination, semantic retrieval with citations, email verification enforcement, accessibility pass"

@@ -25,6 +25,7 @@ const h = vi.hoisted(() => {
       or: rec("or"),
       order: rec("order"),
       limit: rec("limit"),
+      range: rec("range"),
       then: (resolve: (v: unknown) => unknown) => resolve({ data: [], error: null }),
     };
     return proxy;
@@ -38,6 +39,7 @@ vi.mock("@/hooks/useIdeaReferences", () => ({ triggerExtractReferences: vi.fn() 
 vi.mock("@/lib/amosFolderSync", () => ({ maybeSyncIdeaToAmosByFolder: vi.fn() }));
 
 import {
+  IDEAS_PAGE_SIZE,
   useDeleteIdea,
   useEmptyTrash,
   useIdeas,
@@ -106,6 +108,21 @@ describe("listing ideas", () => {
 
     expect(ops("is").some((c) => c.args[0] === "deleted_at" && c.args[1] === null)).toBe(true);
     expect(ops("not")).toHaveLength(0);
+  });
+
+  it("never fetches the whole vault", async () => {
+    const { result } = renderHook(() => useIdeas({ kind: "all" }), { wrapper });
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+    const range = ops("range")[0];
+    expect(range).toBeDefined();
+    expect(range.args).toEqual([0, IDEAS_PAGE_SIZE - 1]);
+  });
+
+  it("honours a caller-supplied page size", async () => {
+    const { result } = renderHook(() => useIdeas({ kind: "all" }, 10), { wrapper });
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(ops("range")[0].args).toEqual([0, 9]);
   });
 
   it("the trash view shows only trashed items", async () => {
