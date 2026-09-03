@@ -16,8 +16,8 @@
       (Plan limits and the entitlement lookup already exist in `_shared/ai-guard.ts`;
       it needs the `subscriptions` table and the Stripe webhook to write it.)
 - [~] Secure, revocable single-idea sharing — built; migration + edge function **not deployed**, E2E unproven.
-- [ ] Full data export (JSON + Markdown).
-- [ ] Account deletion with derived-data cleanup.
+- [x] Full data export (JSON + Markdown).
+- [x] Account deletion with derived-data cleanup.
 - [ ] Durable processing-job model for long-running capture.
 - [ ] Import Center.
 - [ ] First-run onboarding.

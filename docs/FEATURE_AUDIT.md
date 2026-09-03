@@ -18,8 +18,8 @@ means *proved by automated test in this repo*.
 | Phone / SMS OTP | DEFERRED (hidden) | Gated behind `VITE_ENABLE_PHONE_AUTH`, off by default until an SMS provider is configured and tested. |
 | Email verification enforcement | PARTIALLY IMPLEMENTED | Signup succeeds; app does not gate on `email_confirmed_at`. |
 | Change email / change password | PARTIALLY IMPLEMENTED | `updateUser` exists on the auth screen only. |
-| Reauth before destructive actions | NOT IMPLEMENTED | |
-| Account deletion | NOT IMPLEMENTED | Launch blocker. |
+| Reauth before destructive actions | PARTIALLY IMPLEMENTED | Enforced for account deletion only. |
+| Account deletion | WIRED BUT UNPROVEN | `delete-account` edge function; requires password re-entry, a session under 15 minutes old, and the typed phrase. Not deployed. |
 | Single-user email allowlist | DEAD CODE (removed) | Was a no-op returning true. |
 
 ## Capture
@@ -66,8 +66,8 @@ means *proved by automated test in this repo*.
 ## Data ownership
 | Feature | Status | Notes |
 |---|---|---|
-| Export (JSON / Markdown) | NOT IMPLEMENTED | Launch blocker. |
-| Account deletion | NOT IMPLEMENTED | Launch blocker. |
+| Export (JSON / Markdown) | WIRED BUT UNPROVEN | 9 tests cover secret stripping, Markdown rendering and table coverage; the live query pass is unproven. Per-item export is still missing. |
+| Account deletion | WIRED BUT UNPROVEN | `delete-account` edge function; requires password re-entry, a session under 15 minutes old, and the typed phrase. Not deployed. |
 
 ## Advanced / consolidation decisions
 | Feature | Disposition |

@@ -23,6 +23,13 @@ manual run. Code inspection is never evidence.
 | Trash | Empty Trash is scoped to trashed rows | `useIdeas.trash.test.tsx` | PASS |
 | Library | Normal lists exclude trashed items | `useIdeas.trash.test.tsx` | PASS |
 | Library | Trash view shows only trashed items | `useIdeas.trash.test.tsx` | PASS |
+| Export | Token hashes and push keys are stripped | `exportAccount.test.ts` | PASS |
+| Export | Ordinary content survives stripping | `exportAccount.test.ts` | PASS |
+| Export | Markdown renders title, summary, note, extracted text | `exportAccount.test.ts` | PASS |
+| Export | A newline in a title cannot break the heading | `exportAccount.test.ts` | PASS |
+| Export | Ideas group by folder, rest under Unfiled | `exportAccount.test.ts` | PASS |
+| Export | Every user-owned content table is covered | `exportAccount.test.ts` | PASS |
+| Export | The share table (token hashes) is never exported | `exportAccount.test.ts` | PASS |
 
 ## Not yet covered (all required before launch)
 Signup · email verification · magic link · password reset · session expiry ·

@@ -133,7 +133,28 @@
         "purge_expired_trash() needs a daily schedule (pg_cron) that does not exist yet",
         "archive, distinct from trash, is still unimplemented"
       ]
+    },
+    {
+      "n": 7,
+      "task": "P1 \u2014 data export and account deletion",
+      "evidence": [
+        "10 new export tests pass",
+        "32 tests total",
+        "tsc clean; eslint clean on new files; build passes"
+      ],
+      "files": [
+        "src/lib/exportAccount.ts",
+        "src/components/app/DataPrivacySection.tsx",
+        "src/components/app/SettingsSheet.tsx",
+        "supabase/functions/delete-account/index.ts"
+      ],
+      "db_changes": "none",
+      "remaining_risks": [
+        "delete-account is not deployed and has no automated coverage",
+        "per-item export is still missing",
+        "billing cancellation on deletion is instructional, not automatic (no billing yet)"
+      ]
     }
   ],
-  "next": "P1 \u2014 data export + account deletion, then Stripe billing"
+  "next": "P1 \u2014 Stripe billing and entitlements"
 }

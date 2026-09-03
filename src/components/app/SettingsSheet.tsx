@@ -15,6 +15,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { ThemeToggle, useTheme } from "@/hooks/useTheme";
 import { AppLockSection } from "@/components/app/AppLockSection";
+import { DataPrivacySection } from "@/components/app/DataPrivacySection";
 
 type Props = {
   open: boolean;
@@ -330,6 +331,9 @@ export const SettingsSheet = ({ open, onOpenChange }: Props) => {
             )}
           </div>
 
+
+          {/* Data ownership — export and account deletion */}
+          <DataPrivacySection />
 
           {/* Rules & references block */}
           <div className="mt-5 rounded-2xl bg-card border border-border/60 divide-y divide-border/60 overflow-hidden">
