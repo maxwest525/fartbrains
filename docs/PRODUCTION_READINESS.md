@@ -6,8 +6,8 @@
 
 ### P0 — security / data loss
 - [x] Authentication gate disabled; anonymous session minted for every visitor.
-- [ ] `notes-feed` edge function leaks every tenant's notes, todos and reminders.
-- [ ] RLS `UPDATE` policies missing `WITH CHECK` (user_id reassignment).
+- [x] `notes-feed` edge function leaked every tenant's notes, todos and reminders.
+- [~] RLS `UPDATE` policies missing `WITH CHECK` — migration written, **not applied**.
 - [ ] No rate limiting or server-side usage accounting on AI routes.
 - [ ] Immediate permanent deletes with no trash and no undo (data loss).
 

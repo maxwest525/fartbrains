@@ -10,19 +10,27 @@ account's AI, transcription and scraping budget, and the product could not be
 sold at all. Now: real auth screen for signed-out visitors, no anonymous session
 minting, and anonymous sessions are actively signed out.
 
-## P0 — open
-### 2. `notes-feed` returns every tenant's data
+### 2. `notes-feed` returned every tenant's data  ✅ FIXED (iteration 2)
 The function queries `ideas`, `todos`, `idea_reminders` and `folders` with the
 service-role key and **no `user_id` filter**, gated only by a shared
 `NOTES_FEED_TOKEN`. Its own comment states the project is "effectively
-single-tenant". In a multi-customer product this is a full cross-tenant dump.
-Fix: scope to a single owner and authenticate as a user, or remove the function.
+single-tenant". In a multi-customer product that is a full cross-tenant dump.
+Now: `requireUser()` authenticates the caller, the function runs as that user
+(so RLS applies), and every query carries an explicit `user_id` filter as
+defence in depth. The shared `NOTES_FEED_TOKEN` is gone — desktop pollers must
+send the customer's own access token.
 
-### 3. RLS `UPDATE` policies have no `WITH CHECK`
+### 3. RLS `UPDATE` policies have no `WITH CHECK`  ✅ FIX WRITTEN, NOT YET APPLIED
 `ideas`, `folders`, `calendar_events`, `idea_reminders`, `idea_references`,
 `event_gifts` and `todos` define `FOR UPDATE USING (auth.uid() = user_id)` with
 no `WITH CHECK`. A user can therefore update a row they own and set
 `user_id` to another account, pushing rows into someone else's brain.
+`supabase/migrations/20260903120000_rls_update_with_check.sql` recreates each
+policy with the matching `WITH CHECK`. **This migration has not been applied** —
+this session has no database access. It must be applied and then verified with
+the two-account test before launch.
+
+## P0 — open
 
 ### 4. No rate limiting or usage accounting on AI routes
 Every AI edge function is unlimited per user. One authenticated account can
