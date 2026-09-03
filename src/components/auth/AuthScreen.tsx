@@ -11,6 +11,15 @@ const LAST_PHONE_KEY = "iv.auth.lastPhone.v1";
 const LAST_IDENTIFIER_KIND_KEY = "iv.auth.lastKind.v1"; // "email" | "phone"
 const WELCOME_PENDING_KEY = "iv.welcome.pending.v1";
 
+/**
+ * Phone / SMS sign-in is only offered when an SMS provider is actually
+ * configured in Supabase and has been tested. Shipping the toggle without one
+ * puts a dead authentication method in front of paying customers: the code
+ * sends, nothing arrives, and they cannot get in. Set
+ * VITE_ENABLE_PHONE_AUTH=true once SMS is verified end to end.
+ */
+const PHONE_AUTH_ENABLED = import.meta.env.VITE_ENABLE_PHONE_AUTH === "true";
+
 type Mode = "password" | "magic";
 type Kind = "email" | "phone";
 
@@ -29,6 +38,7 @@ const isValidE164 = (v: string) => /^\+[1-9]\d{7,14}$/.test(v);
 
 export const AuthScreen = () => {
   const [kind, setKind] = useState<Kind>("email");
+  // kind can only ever leave "email" while PHONE_AUTH_ENABLED.
   const [mode, setMode] = useState<Mode>("password");
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState("");
@@ -49,9 +59,9 @@ export const AuthScreen = () => {
       const lastKind = localStorage.getItem(LAST_IDENTIFIER_KIND_KEY) as Kind | null;
       if (lastEmail) { setEmail(lastEmail); setRememberedEmail(lastEmail); }
       if (lastPhone) { setPhone(lastPhone); setRememberedPhone(lastPhone); }
-      if (lastKind === "email" || lastKind === "phone") setKind(lastKind);
+      if (PHONE_AUTH_ENABLED && (lastKind === "email" || lastKind === "phone")) setKind(lastKind);
       // If the user last logged in with phone, default to OTP mode (SMS).
-      if (lastKind === "phone") setMode("magic");
+      if (PHONE_AUTH_ENABLED && lastKind === "phone") setMode("magic");
     } catch { /* ignore */ }
   }, []);
 
@@ -263,7 +273,7 @@ export const AuthScreen = () => {
           ) : (
             <form onSubmit={onSubmit} className="flex flex-col gap-3">
               {/* Email / Phone toggle */}
-              {!otpSent && (
+              {PHONE_AUTH_ENABLED && !otpSent && (
                 <div className="flex gap-1 p-1 rounded-2xl bg-white/[0.04] border border-white/10">
                   {(["email", "phone"] as Kind[]).map((k) => (
                     <button

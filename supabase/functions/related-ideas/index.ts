@@ -1,3 +1,4 @@
+import { guardAiRequest } from "../_shared/ai-guard.ts";
 // Related Nodes: hybrid recommender.
 // 1) Prefilter the user's library by tag overlap (Jaccard), shared folder,
 //    and shared idea_references hosts.
@@ -30,6 +31,9 @@ type ScoredCandidate = {
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+
+  const _guard = await guardAiRequest(req, corsHeaders, "related_ideas");
+  if ("response" in _guard) return _guard.response;
 
   try {
     const { ideaId } = await req.json().catch(() => ({}));

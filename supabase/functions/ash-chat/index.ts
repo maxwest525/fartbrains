@@ -1,4 +1,4 @@
-import { requireUser } from "../_shared/user-auth.ts";
+import { guardAiRequest } from "../_shared/ai-guard.ts";
 import { buildAsherPrompt, type IdeaContext } from "../_shared/asher-prompt.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.95.0";
 // Streaming chat endpoint for the Asher prompt bar and idea brainstorming.
@@ -33,8 +33,9 @@ async function fetchIdea(userId: string, ideaId: string): Promise<IdeaContext | 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
-  const _auth = await requireUser(req, corsHeaders);
-  if ("response" in _auth) return _auth.response;
+  const _guard = await guardAiRequest(req, corsHeaders, "ask");
+  if ("response" in _guard) return _guard.response;
+  const _auth = { user: _guard.user };
 
   try {
     const { messages, ideaId, retrieve } = await req.json();

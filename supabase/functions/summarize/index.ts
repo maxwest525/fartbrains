@@ -1,5 +1,7 @@
-import { requireUser } from "../_shared/user-auth.ts";
+import { guardAiRequest } from "../_shared/ai-guard.ts";
 import { instructionBlock } from "../_shared/instructions.ts";
+const MODEL = "google/gemini-3-flash-preview";
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
@@ -9,11 +11,23 @@ const corsHeaders = {
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
-  const _auth = await requireUser(req, corsHeaders);
-  if ("response" in _auth) return _auth.response;
+  // Parse first so the guard can reject an oversized payload before we pay for
+  // it, and so usage is attributed to the right operation size.
+  const body = await req.json().catch(() => ({}));
+  const { text, kind, userNote } = body as {
+    text?: unknown; kind?: unknown; userNote?: unknown;
+  };
+
+  const _guard = await guardAiRequest(
+    req,
+    corsHeaders,
+    "summarize",
+    typeof text === "string" ? text.length : 0,
+  );
+  if ("response" in _guard) return _guard.response;
+  const _auth = { user: _guard.user };
 
   try {
-    const { text, kind, userNote } = await req.json();
     if (!text || typeof text !== "string" || text.trim().length < 20) {
       return new Response(JSON.stringify({ error: "Text too short to summarize" }), {
         status: 400,
@@ -81,7 +95,7 @@ Be concise. Do not invent details that aren't in the source.`;
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
+        model: MODEL,
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: userPrompt },
@@ -104,6 +118,12 @@ Be concise. Do not invent details that aren't in the source.`;
       }
       const t = await resp.text();
       console.error("AI gateway error:", resp.status, t);
+      await _guard.record({
+        success: false,
+        provider: "lovable",
+        model: MODEL,
+        errorCode: `gateway_${resp.status}`,
+      });
       return new Response(JSON.stringify({ error: "AI summary failed" }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -117,13 +137,23 @@ Be concise. Do not invent details that aren't in the source.`;
     const titleMatch = summary.match(/\*\*Suggested title:\*\*\s*(.+)/i);
     const suggestedTitle = titleMatch?.[1]?.trim().replace(/^["']|["']$/g, "") ?? null;
 
+    await _guard.record({
+      success: true,
+      provider: "lovable",
+      model: MODEL,
+      inputUnits: typeof text === "string" ? text.length : 0,
+      outputUnits: summary.length,
+    });
+
     return new Response(JSON.stringify({ summary, suggestedTitle }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
     console.error("summarize error:", e);
+    await _guard.record({ success: false, provider: "lovable", model: MODEL, errorCode: "exception" });
+    // Internal errors are never echoed to the customer.
     return new Response(
-      JSON.stringify({ error: e instanceof Error ? e.message : "Unknown error" }),
+      JSON.stringify({ error: "Couldn't summarize this. Try again in a moment." }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }

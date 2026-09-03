@@ -15,7 +15,7 @@ means *proved by automated test in this repo*.
 | Email + password signup / login | WIRED BUT UNPROVEN | Code present, no E2E. |
 | Magic link | WIRED BUT UNPROVEN | Requires production email domain config. |
 | Password reset | WIRED BUT UNPROVEN | `/reset-password` route exists. |
-| Phone / SMS OTP | BROKEN (must be hidden) | UI is present but no SMS provider is known to be configured. Showing it ships a dead auth method. |
+| Phone / SMS OTP | DEFERRED (hidden) | Gated behind `VITE_ENABLE_PHONE_AUTH`, off by default until an SMS provider is configured and tested. |
 | Email verification enforcement | PARTIALLY IMPLEMENTED | Signup succeeds; app does not gate on `email_confirmed_at`. |
 | Change email / change password | PARTIALLY IMPLEMENTED | `updateUser` exists on the auth screen only. |
 | Reauth before destructive actions | NOT IMPLEMENTED | |
@@ -49,8 +49,8 @@ means *proved by automated test in this repo*.
 | Ask / Ash chat with vault context | WIRED BUT UNPROVEN | `_shared/vault-context.ts`. |
 | Embeddings / semantic retrieval | NOT IMPLEMENTED | Retrieval is keyword-based only. |
 | Prompt-injection defence for scraped content | UNVERIFIED | |
-| Server-side usage + cost accounting | NOT IMPLEMENTED | Launch blocker for a public AI product. |
-| Rate limiting on AI routes | NOT IMPLEMENTED | Launch blocker. |
+| Server-side usage + cost accounting | WIRED BUT UNPROVEN | `ai_usage_events` + `_shared/ai-guard.ts` on all 17 paid routes; migration not applied. |
+| Rate limiting on AI routes | WIRED BUT UNPROVEN | Per-minute / per-hour / per-month weighted quotas, input-size caps. |
 
 ## Sharing
 | Feature | Status | Notes |

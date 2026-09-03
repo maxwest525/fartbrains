@@ -1,3 +1,4 @@
+import { guardAiRequest } from "../_shared/ai-guard.ts";
 // Extract specific recommendations from an idea and resolve each to one URL.
 // Uses Lovable AI to detect items, Firecrawl search for the URL, with an
 // AI-only "best guess" fallback if Firecrawl isn't available.
@@ -28,6 +29,9 @@ const SKIP_NAMES = new Set(
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+
+  const _guard = await guardAiRequest(req, corsHeaders, "extract_references");
+  if ("response" in _guard) return _guard.response;
 
   try {
     const { ideaId } = await req.json().catch(() => ({}));

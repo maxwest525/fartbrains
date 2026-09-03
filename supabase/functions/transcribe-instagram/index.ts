@@ -1,3 +1,4 @@
+import { guardAiRequest } from "../_shared/ai-guard.ts";
 /**
  * Resolve an Instagram Reel/Post URL to its underlying video, then transcribe it.
  *
@@ -34,6 +35,9 @@ const MAX_MEDIA_BYTES = 50 * 1024 * 1024; // 50 MB
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+
+  const _guard = await guardAiRequest(req, corsHeaders, "transcribe_instagram");
+  if ("response" in _guard) return _guard.response;
 
   try {
     const { url } = (await req.json()) as { url?: string };

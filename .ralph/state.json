@@ -77,7 +77,41 @@
       "remaining_risks": [
         "share flow unproven end-to-end until the migration and edge function are deployed"
       ]
+    },
+    {
+      "n": 4,
+      "task": "P1 \u2014 hide the unconfigured phone auth method",
+      "evidence": [
+        "AuthScreen gates phone behind VITE_ENABLE_PHONE_AUTH, default off",
+        "tsc clean, build passes"
+      ],
+      "files": [
+        "src/components/auth/AuthScreen.tsx"
+      ],
+      "db_changes": "none",
+      "remaining_risks": [
+        "email verification is still not enforced before app entry"
+      ]
+    },
+    {
+      "n": 5,
+      "task": "P0 \u2014 AI rate limiting and server-side usage accounting",
+      "evidence": [
+        "17 paid edge functions routed through guardAiRequest",
+        "transcribe-instagram had no authentication at all and now does",
+        "eslint clean on new files; 16 tests pass; build passes"
+      ],
+      "files": [
+        "supabase/migrations/20260903140000_ai_usage.sql",
+        "supabase/functions/_shared/ai-guard.ts",
+        "17 edge function index.ts files"
+      ],
+      "db_changes": "new table ai_usage_events + view ai_usage_current_month \u2014 NOT APPLIED",
+      "remaining_risks": [
+        "resolvePlan reads a subscriptions table that does not exist yet, so everyone resolves to the free plan",
+        "only summarize enriches usage rows with model/size/outcome; the rest record the call itself"
+      ]
     }
   ],
-  "next": "P1 \u2014 hide unconfigured phone auth; then AI rate limiting + usage accounting"
+  "next": "P1 \u2014 trash/undo (data loss), then data export + account deletion, then Stripe billing"
 }

@@ -32,9 +32,16 @@ the two-account test before launch.
 
 ## P0 — open
 
-### 4. No rate limiting or usage accounting on AI routes
-Every AI edge function is unlimited per user. One authenticated account can
-exhaust the provider budget.
+### 4. No rate limiting or usage accounting on AI routes  ✅ FIXED (iteration 5)
+Every AI edge function was unlimited per user, and `transcribe-instagram` had no
+authentication at all — an unauthenticated caller could drive Apify and
+ElevenLabs spend directly. All 17 paid routes now go through
+`_shared/ai-guard.ts`, which authenticates the caller, resolves their plan,
+enforces per-minute / per-hour / per-month weighted quotas, caps input size, and
+records the call in `ai_usage_events`. Quota is reserved *before* the work runs,
+so a route that crashes still counts. The table stores metadata only — never
+note bodies, transcripts, prompts, completions or scraped content.
+(Migration `20260903140000_ai_usage.sql` is **not yet applied**.)
 
 ## P1 — open
 - **Wildcard CORS** (`Access-Control-Allow-Origin: *`) on all 26 edge functions.
@@ -43,7 +50,8 @@ exhaust the provider budget.
 - **No account deletion**, so no way to honour a deletion request.
 - **Markdown/HTML sanitisation** of scraped content and AI output is unverified.
 - **Prompt injection** from scraped pages and transcripts is undefended.
-- **Phone auth is exposed** without a verified SMS provider.
+- ~~Phone auth is exposed without a verified SMS provider~~ ✅ gated behind `VITE_ENABLE_PHONE_AUTH`, off by default.
+- `check-url` performs authenticated outbound fetches; SSRF-guarded but not rate limited (P2).
 
 ## Verified good
 - Owner-scoped RLS is enabled on all 15 user-owned tables.

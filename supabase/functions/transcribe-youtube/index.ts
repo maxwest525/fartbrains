@@ -1,4 +1,4 @@
-import { requireUser } from "../_shared/user-auth.ts";
+import { guardAiRequest } from "../_shared/ai-guard.ts";
 /**
  * Transcribe a YouTube video.
  *
@@ -170,8 +170,9 @@ async function transcribeWithElevenLabs(bytes: Uint8Array, mime: string, elevenK
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
-  const _auth = await requireUser(req, corsHeaders);
-  if ("response" in _auth) return _auth.response;
+  const _guard = await guardAiRequest(req, corsHeaders, "transcribe_youtube");
+  if ("response" in _guard) return _guard.response;
+  const _auth = { user: _guard.user };
 
   try {
     const { url } = (await req.json()) as { url?: string };

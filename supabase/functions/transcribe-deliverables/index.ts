@@ -1,4 +1,4 @@
-import { requireUser } from "../_shared/user-auth.ts";
+import { guardAiRequest } from "../_shared/ai-guard.ts";
 /**
  * Transcribes a short audio clip and extracts typed deliverables in one shot.
  *
@@ -33,8 +33,9 @@ const json = (body: unknown, status = 200) =>
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
-  const _auth = await requireUser(req, corsHeaders);
-  if ("response" in _auth) return _auth.response;
+  const _guard = await guardAiRequest(req, corsHeaders, "transcribe_deliverables");
+  if ("response" in _guard) return _guard.response;
+  const _auth = { user: _guard.user };
 
   try {
     const { audioBase64, mimeType, allowedTypes, projectName, existingItems } =
