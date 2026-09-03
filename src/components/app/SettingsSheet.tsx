@@ -14,6 +14,7 @@ import { usePushSubscription } from "@/hooks/usePushSubscription";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { ThemeToggle, useTheme } from "@/hooks/useTheme";
+import { AppLockSection } from "@/components/app/AppLockSection";
 
 type Props = {
   open: boolean;
@@ -220,6 +221,9 @@ export const SettingsSheet = ({ open, onOpenChange }: Props) => {
           </div>
 
 
+
+          {/* Privacy & security — optional device app lock */}
+          <AppLockSection />
 
           {/* Notifications block — explicit status + fix steps */}
           <div className="mt-5 rounded-2xl bg-card border border-border/60 overflow-hidden">

@@ -1,0 +1,39 @@
+{
+  "loop": "fartbrains-production-readiness",
+  "updated": "2026-09-03",
+  "baseline": {
+    "typecheck": "pass",
+    "build": "pass (single 1.19 MB JS chunk — code splitting is a P2)",
+    "lint": "29 errors / 17 warnings",
+    "tests": "1 trivial test (src/test/example.test.ts)"
+  },
+  "iterations": [
+    {
+      "n": 1,
+      "task": "P0 — restore the authentication gate",
+      "evidence": [
+        "ProtectedRoute no longer calls supabase.auth.signInAnonymously()",
+        "useAuth signs out any anonymous session",
+        "6 new tests in src/components/__tests__/ProtectedRoute.test.tsx, all passing",
+        "tsc --noEmit clean; vite build passes"
+      ],
+      "files": [
+        "src/components/ProtectedRoute.tsx",
+        "src/hooks/useAuth.ts",
+        "src/components/auth/AuthScreen.tsx",
+        "src/components/app/AppLockSection.tsx",
+        "src/components/app/SettingsSheet.tsx",
+        "src/lib/allowlist.ts (deleted)",
+        "src/components/auth/PasscodeSetupPrompt.tsx (deleted)"
+      ],
+      "db_changes": "none",
+      "remaining_risks": [
+        "notes-feed edge function is single-tenant: service-role query with no user scoping",
+        "RLS UPDATE policies lack WITH CHECK — a user can reassign user_id",
+        "wildcard CORS on every edge function",
+        "no billing, no sharing, no export, no account deletion"
+      ]
+    }
+  ],
+  "next": "P0 — notes-feed cross-tenant leak + RLS UPDATE WITH CHECK migration"
+}

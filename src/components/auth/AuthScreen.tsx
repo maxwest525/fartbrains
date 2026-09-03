@@ -4,7 +4,6 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Mail, Loader2, CheckCircle2, KeyRound, X, Phone } from "lucide-react";
 import { toast } from "sonner";
-import { isEmailAllowed } from "@/lib/allowlist";
 import logo from "@/assets/fartbrains-logo.png";
 
 const LAST_EMAIL_KEY = "iv.auth.lastEmail.v1";
@@ -87,10 +86,6 @@ export const AuthScreen = () => {
     try {
       if (kind === "email") {
         const trimmed = email.trim();
-        if (!isEmailAllowed(trimmed)) {
-          toast.error("This email isn't allowed to sign in.");
-          return;
-        }
         const { error } = await supabase.auth.signInWithOtp({
           email: trimmed,
           options: { emailRedirectTo: `${window.location.origin}/` },
@@ -138,10 +133,6 @@ export const AuthScreen = () => {
     try {
       if (kind === "email") {
         const trimmed = email.trim();
-        if (!isEmailAllowed(trimmed)) {
-          toast.error("This email isn't allowed to sign in.");
-          return;
-        }
         if (isSignUp) {
           const { error } = await supabase.auth.signUp({
             email: trimmed,
@@ -200,10 +191,6 @@ export const AuthScreen = () => {
   const sendPasswordReset = async () => {
     if (kind !== "email" || !isValidEmail || sending) return;
     const trimmed = email.trim();
-    if (!isEmailAllowed(trimmed)) {
-      toast.error("This email isn't allowed to sign in.");
-      return;
-    }
     setSending(true);
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(trimmed, {

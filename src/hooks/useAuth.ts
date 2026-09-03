@@ -1,7 +1,18 @@
 import { useEffect, useState } from "react";
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
-import { isEmailAllowed } from "@/lib/allowlist";
+
+/**
+ * Anonymous Supabase sessions are never a signed-in customer. The app used to
+ * mint them for every visitor, which handed unauthenticated traffic a valid JWT
+ * (and therefore access to paid AI edge functions). Treat them as signed-out and
+ * clear them so no stale anonymous token lingers in local storage.
+ */
+export function isAnonymousSession(session: Session | null): boolean {
+  const u = session?.user as (User & { is_anonymous?: boolean }) | undefined;
+  if (!u) return false;
+  return u.is_anonymous === true;
+}
 
 export function useAuth() {
   const [session, setSession] = useState<Session | null>(null);
@@ -10,9 +21,7 @@ export function useAuth() {
 
   useEffect(() => {
     const apply = (s: Session | null) => {
-      // Enforce single-user allowlist. If a non-allowed user somehow has a
-      // session (e.g. stale token, prior signup), sign them out immediately.
-      if (s?.user && !isEmailAllowed(s.user.email)) {
+      if (isAnonymousSession(s)) {
         void supabase.auth.signOut();
         setSession(null);
         setUser(null);

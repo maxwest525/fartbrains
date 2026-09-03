@@ -1,21 +1,24 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
-import { supabase } from "@/integrations/supabase/client";
 import { PasscodeKeypad } from "@/components/auth/PasscodeKeypad";
 import { SplashScreen } from "@/components/auth/SplashScreen";
 import { AuthScreen } from "@/components/auth/AuthScreen";
-import { PasscodeSetupPrompt } from "@/components/auth/PasscodeSetupPrompt";
 import { WelcomeBackScreen } from "@/components/auth/WelcomeBackScreen";
-import {
-  hasPasscode,
-  hasOptedOut,
-  setOptedOut,
-  isUnlocked,
-} from "@/lib/passcode";
+import { hasPasscode, isUnlocked, lock } from "@/lib/passcode";
 
 const SPLASH_KEY = "iv.splash.shown.v1";
 const WELCOME_PENDING_KEY = "iv.welcome.pending.v1";
 
+/**
+ * Gate for every authenticated surface.
+ *
+ * Order: splash -> auth loading -> sign in -> one-time welcome -> optional
+ * app lock -> app.
+ *
+ * App lock (the local passcode) is deliberately NOT part of first run. It is an
+ * opt-in device-level convenience configured under Settings -> Privacy &
+ * security, so a brand-new customer reaches their brain immediately.
+ */
 export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, loading } = useAuth();
 
@@ -25,9 +28,6 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   );
 
   const [unlocked, setUnlocked] = useState<boolean>(() => isUnlocked());
-  const [wantsSetup, setWantsSetup] = useState(false);
-  // Local re-render triggers for passcode state changes.
-  const [passcodeVer, setPasscodeVer] = useState(0);
 
   // One-time welcome shown to freshly signed-up accounts. The flag is set on
   // signUp success in AuthScreen and cleared after the user dismisses it.
@@ -38,22 +38,22 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     try { localStorage.removeItem(WELCOME_PENDING_KEY); } catch { /* ignore */ }
     setWelcomePending(false);
   };
-  // Auto-establish an anonymous Supabase session when no user is signed in.
-  // Edge functions (transcription, scraping, deep research) require a valid
-  // JWT via requireUser(); without this, PIN-only mode would 401.
+
+  // Signing out must re-arm the app lock, otherwise the next account on this
+  // device inherits an unlocked session.
   useEffect(() => {
-    if (loading) return;
-    if (user) return;
-    let cancelled = false;
-    (async () => {
-      try {
-        const { data } = await supabase.auth.getSession();
-        if (cancelled || data.session) return;
-        await supabase.auth.signInAnonymously();
-      } catch { /* ignore — surfaces later if a call needs auth */ }
-    })();
-    return () => { cancelled = true; };
-  }, [user, loading]);
+    if (!loading && !user) {
+      lock();
+      setUnlocked(false);
+    }
+  }, [loading, user]);
+
+  // Keep the welcome flag in sync if a signup completes while mounted.
+  useEffect(() => {
+    if (user && localStorage.getItem(WELCOME_PENDING_KEY) === "1") {
+      setWelcomePending(true);
+    }
+  }, [user]);
 
   // 1) Splash
   if (!splashDone) {
@@ -76,15 +76,19 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     );
   }
 
-  // 3) Auth gate disabled — PIN-only. Existing sessions still hydrate normally.
-  // (AuthScreen kept in the codebase in case we re-enable email/phone later.)
+  // 3) Not signed in → real auth gate. No anonymous fallback session: an
+  //    anonymous JWT is still a JWT, and it would let unauthenticated traffic
+  //    spend the account's AI budget through the edge functions.
+  if (!user) {
+    return <AuthScreen />;
+  }
 
-  // 3b) Brand-new account? Show the cheeky welcome once.
+  // 4) Brand-new account? Show the welcome once.
   if (welcomePending) {
     return <WelcomeBackScreen onDone={dismissWelcome} />;
   }
 
-  // 4) Signed in, passcode set, not unlocked → unlock keypad
+  // 5) Optional app lock configured on this device → unlock keypad
   if (hasPasscode() && !unlocked) {
     return (
       <main className="relative min-h-dvh w-full flex items-center justify-center overflow-hidden text-foreground animate-fade-in">
@@ -95,39 +99,6 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
         />
         <div className="relative z-10 w-full max-w-md mx-6 px-6 py-10 animate-fade-in">
           <PasscodeKeypad mode="unlock" onUnlocked={() => setUnlocked(true)} />
-        </div>
-      </main>
-    );
-  }
-
-  // 5) Signed in, no passcode, hasn't opted out → prompt
-  if (!hasPasscode() && !hasOptedOut() && !wantsSetup) {
-    return (
-      <PasscodeSetupPrompt
-        onSetup={() => setWantsSetup(true)}
-        onSkip={() => { setOptedOut(); setPasscodeVer((v) => v + 1); }}
-      />
-    );
-  }
-
-  // 5b) Setup flow — pick a passcode
-  if (wantsSetup && !hasPasscode()) {
-    return (
-      <main className="relative min-h-dvh w-full flex items-center justify-center overflow-hidden text-foreground animate-fade-in">
-        <div
-          aria-hidden
-          className="absolute inset-0 pointer-events-none"
-          style={{ background: "radial-gradient(900px 600px at 50% 45%, rgba(0,0,0,0) 0%, rgba(0,0,0,0.10) 70%, rgba(0,0,0,0.22) 100%)" }}
-        />
-        <div className="relative z-10 w-full max-w-md mx-6 px-6 py-10 animate-fade-in">
-          <PasscodeKeypad
-            mode="setup"
-            onUnlocked={() => {
-              setWantsSetup(false);
-              setUnlocked(true);
-              setPasscodeVer((v) => v + 1);
-            }}
-          />
         </div>
       </main>
     );
