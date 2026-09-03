@@ -19,6 +19,7 @@ import {
   exportFilename,
   exportToMarkdown,
 } from "@/lib/exportAccount";
+import { track } from "@/lib/analytics";
 
 /**
  * Data ownership: take everything with you, or remove it entirely.
@@ -44,6 +45,7 @@ export const DataPrivacySection = () => {
       } else {
         downloadFile(exportFilename("md"), exportToMarkdown(data), "text/markdown");
       }
+      track("export_downloaded", { format });
       toast.success("Export downloaded");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Couldn't build the export");
@@ -81,6 +83,7 @@ export const DataPrivacySection = () => {
         return;
       }
 
+      track("account_deleted");
       toast.success("Your account and data have been deleted");
       await signOut();
     } catch (e) {

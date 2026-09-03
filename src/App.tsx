@@ -4,6 +4,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/hooks/useTheme";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { IdeaCreatedFx } from "@/components/app/IdeaCreatedFx";
 import { DesktopWindowControls } from "@/components/app/DesktopWindowControls";
 import { InstallAppPrompt } from "@/components/app/InstallAppPrompt";
@@ -21,7 +22,8 @@ import NotFound from "./pages/NotFound.tsx";
 const queryClient = new QueryClient();
 
 const App = () => (
-  <ThemeProvider>
+  <ErrorBoundary>
+    <ThemeProvider>
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <Toaster />
@@ -48,7 +50,8 @@ const App = () => (
         </BrowserRouter>
       </TooltipProvider>
     </QueryClientProvider>
-  </ThemeProvider>
+    </ThemeProvider>
+  </ErrorBoundary>
 );
 
 export default App;

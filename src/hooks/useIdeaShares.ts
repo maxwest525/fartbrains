@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { generateShareToken, hashShareToken } from "@/lib/share";
+import { track } from "@/lib/analytics";
 
 export type IdeaShare = {
   id: string;
@@ -86,6 +87,7 @@ export function useCreateShare() {
       return { share: data as IdeaShare, token };
     },
     onSuccess: (_r, vars) => {
+      track("share_created");
       void qc.invalidateQueries({ queryKey: ["idea-shares", vars.ideaId] });
     },
   });
@@ -103,6 +105,7 @@ export function useRevokeShare() {
       if (error) throw error;
     },
     onSuccess: (_r, vars) => {
+      track("share_revoked");
       void qc.invalidateQueries({ queryKey: ["idea-shares", vars.ideaId] });
     },
   });

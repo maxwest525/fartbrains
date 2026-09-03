@@ -1,3 +1,4 @@
+import { ALLOWED_ORIGIN } from "../_shared/cors.ts";
 // Public resolver for a single shared idea.
 //
 // The only unauthenticated route in the product. It takes the raw share token
@@ -11,7 +12,8 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.95.0";
 
 const cors = {
-  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Origin": ALLOWED_ORIGIN,
+  "Vary": "Origin",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };

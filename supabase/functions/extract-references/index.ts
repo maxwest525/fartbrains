@@ -1,3 +1,4 @@
+import { ALLOWED_ORIGIN } from "../_shared/cors.ts";
 import { guardAiRequest } from "../_shared/ai-guard.ts";
 // Extract specific recommendations from an idea and resolve each to one URL.
 // Uses Lovable AI to detect items, Firecrawl search for the URL, with an
@@ -5,7 +6,8 @@ import { guardAiRequest } from "../_shared/ai-guard.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Origin": ALLOWED_ORIGIN,
+  "Vary": "Origin",
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type",
 };

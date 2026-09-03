@@ -1,3 +1,4 @@
+import { ALLOWED_ORIGIN } from "../_shared/cors.ts";
 // Starts a Stripe Checkout session for the signed-in customer.
 //
 // The customer never chooses a price id: the plan key maps to an environment
@@ -9,7 +10,8 @@ import { requireUser } from "../_shared/user-auth.ts";
 import { priceIdFor, type PlanKey } from "../_shared/billing.ts";
 
 const cors = {
-  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Origin": ALLOWED_ORIGIN,
+  "Vary": "Origin",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };

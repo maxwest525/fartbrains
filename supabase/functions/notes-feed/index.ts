@@ -1,3 +1,4 @@
+import { ALLOWED_ORIGIN } from "../_shared/cors.ts";
 // Pull-based bridge for a customer's desktop notes app.
 //
 // The desktop polls, with that customer's own Supabase access token:
@@ -19,7 +20,8 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.95.0";
 import { requireUser } from "../_shared/user-auth.ts";
 
 const cors = {
-  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Origin": ALLOWED_ORIGIN,
+  "Vary": "Origin",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
   "Access-Control-Allow-Methods": "GET, OPTIONS",
 };

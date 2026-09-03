@@ -1,3 +1,4 @@
+import { ALLOWED_ORIGIN } from "../_shared/cors.ts";
 import { guardAiRequest } from "../_shared/ai-guard.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.95.0";
 
@@ -6,7 +7,8 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.95.0";
 // The client decides what to accept, merge, or discard.
 
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Origin": ALLOWED_ORIGIN,
+  "Vary": "Origin",
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type",
 };

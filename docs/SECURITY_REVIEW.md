@@ -44,14 +44,25 @@ note bodies, transcripts, prompts, completions or scraped content.
 (Migration `20260903140000_ai_usage.sql` is **not yet applied**.)
 
 ## P1 — open
-- **Wildcard CORS** (`Access-Control-Allow-Origin: *`) on all 26 edge functions.
-- **No security headers / CSP** on the deployed app.
+- ~~Wildcard CORS on all edge functions~~ ✅ pinned to `ALLOWED_ORIGIN` / `APP_URL` across all 28 functions, with `Vary: Origin`. The `*` fallback remains only for local/preview when neither is set — production **must** set one.
+- ~~No security headers / CSP~~ ✅ CSP and `referrer` meta tags added to `index.html`. `frame-ancestors` / `X-Frame-Options`, `X-Content-Type-Options` and `Permissions-Policy` are header-only and still need to be set at the CDN — see `docs/DEPLOYMENT.md`.
 - **Fake share links** (`?idea=<id>&collab=1`) — see Phase 10.
 - **No account deletion**, so no way to honour a deletion request.
 - **Markdown/HTML sanitisation** of scraped content and AI output is unverified.
 - **Prompt injection** from scraped pages and transcripts is undefended.
 - ~~Phone auth is exposed without a verified SMS provider~~ ✅ gated behind `VITE_ENABLE_PHONE_AUTH`, off by default.
 - `check-url` performs authenticated outbound fetches; SSRF-guarded but not rate limited (P2).
+
+## Privacy
+Product analytics (`src/lib/analytics.ts`) accept a fixed event name and an
+**allowlisted** set of enum-shaped properties only; everything else is dropped
+before it can leave the browser, and allowlisted strings are truncated to 32
+characters. No analytics or crash-reporting provider is wired yet — `track()`
+and the error sink are no-ops until one is installed and reviewed, which is
+deliberate: shipping without analytics beats shipping with a provider that has
+not been checked for what it collects. Note that a React error message can quote
+rendered content, i.e. someone's private notes, so any crash reporter must be
+configured to scrub before it is enabled.
 
 ## Verified good
 - Owner-scoped RLS is enabled on all 15 user-owned tables.

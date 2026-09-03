@@ -182,7 +182,34 @@
         "usage against plan limits is counted but not shown to the customer",
         "ai-guard enforces quotas by plan but does not yet block PAID_ONLY operations outright for free accounts"
       ]
+    },
+    {
+      "n": 9,
+      "task": "P1 \u2014 CORS lockdown, CSP, error boundary and privacy-safe analytics",
+      "evidence": [
+        "28 edge functions moved off wildcard CORS; grep confirms none remain",
+        "CSP + referrer meta in index.html; build passes",
+        "12 new tests (analytics + error boundary); 55 tests total",
+        "lint error count unchanged at 29 (all pre-existing)"
+      ],
+      "files": [
+        "supabase/functions/_shared/cors.ts",
+        "28 edge function index.ts files",
+        "index.html",
+        "src/lib/analytics.ts",
+        "src/components/ErrorBoundary.tsx",
+        "src/App.tsx",
+        "src/hooks/useIdeaShares.ts",
+        "src/hooks/useSubscription.ts",
+        "src/components/app/DataPrivacySection.tsx"
+      ],
+      "db_changes": "none",
+      "remaining_risks": [
+        "frame-ancestors, X-Content-Type-Options and Permissions-Policy are header-only and must be set at the CDN",
+        "no analytics or crash-reporting provider is actually wired",
+        "CSP is unverified in a real browser \u2014 it may block something at runtime"
+      ]
     }
   ],
-  "next": "P1 \u2014 onboarding, durable capture jobs, imports, server-side search; then observability"
+  "next": "P1 \u2014 first-run onboarding; then durable capture jobs, imports, server-side search"
 }

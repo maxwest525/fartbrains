@@ -36,6 +36,12 @@ manual run. Code inspection is never evidence.
 | Billing | Only costly actions are restricted after cancellation | `entitlements.test.ts` | PASS |
 | Billing | A cancelled customer can still manage billing and resubscribe | `entitlements.test.ts` | PASS |
 | Billing | Cancelled / past_due / renewal messaging is correct | `entitlements.test.ts` | PASS |
+| Analytics | Note bodies, titles, queries, URLs and emails are dropped | `analytics.test.ts` | PASS |
+| Analytics | Only enum-shaped allowlisted props survive, truncated | `analytics.test.ts` | PASS |
+| Analytics | A broken provider cannot break the product | `analytics.test.ts` | PASS |
+| Reliability | A render crash shows a recoverable screen, not a blank page | `ErrorBoundary.test.tsx` | PASS |
+| Reliability | The crash screen reassures the customer their notes are safe | `ErrorBoundary.test.tsx` | PASS |
+| Reliability | Crashes reach an installed sink; a broken sink is survivable | `ErrorBoundary.test.tsx` | PASS |
 
 ## Not yet covered (all required before launch)
 Signup · email verification · magic link · password reset · session expiry ·

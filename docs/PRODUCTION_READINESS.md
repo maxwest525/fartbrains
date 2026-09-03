@@ -25,8 +25,8 @@
 - [ ] Server-side search + pagination for large libraries.
 - [ ] Semantic retrieval with citations, and grounded "not in your vault" answers.
 - [x] Hide phone auth until an SMS provider is configured and tested.
-- [ ] Restrict CORS to production origins; add CSP and security headers.
-- [ ] Error monitoring and privacy-safe product analytics.
+- [x] Restrict CORS to production origins; add CSP (remaining response headers documented for the CDN).
+- [~] Error monitoring and privacy-safe product analytics — error boundary and a content-safe analytics layer exist; no provider is wired.
 - [~] Production email sender-domain configuration — documented in `docs/DEPLOYMENT.md`, not verified.
 - [ ] Real automated coverage: auth, two-account RLS, capture, sharing, billing.
 

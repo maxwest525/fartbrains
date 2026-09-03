@@ -1,6 +1,7 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { SubscriptionStatus } from "@/lib/entitlements";
+import { track } from "@/lib/analytics";
 
 export type Subscription = {
   status: SubscriptionStatus;
@@ -49,7 +50,10 @@ const redirectTo = async (fn: "create-checkout-session" | "create-portal-session
 
 export function useStartCheckout() {
   return useMutation({
-    mutationFn: (plan: string = "pro") => redirectTo("create-checkout-session", { plan }),
+    mutationFn: (plan: string = "pro") => {
+      track("checkout_started", { plan });
+      return redirectTo("create-checkout-session", { plan });
+    },
   });
 }
 
