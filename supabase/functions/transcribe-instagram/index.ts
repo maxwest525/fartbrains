@@ -1,5 +1,13 @@
 import { ALLOWED_ORIGIN } from "../_shared/cors.ts";
 import { guardAiRequest } from "../_shared/ai-guard.ts";
+import { SttError, checkAudioLimits, resolveSttConfig, transcribeAudio } from "../_shared/stt.ts";
+import {
+  completeJob,
+  createJob,
+  failJob,
+  lookupTranscript,
+  storeTranscript,
+} from "../_shared/transcripts.ts";
 /**
  * Resolve an Instagram Reel/Post URL to its underlying video, then transcribe it.
  *
@@ -8,12 +16,13 @@ import { guardAiRequest } from "../_shared/ai-guard.ts";
  *   2. Run Apify's `apify/instagram-scraper` actor synchronously (run-sync-get-dataset-items)
  *      to get the direct CDN videoUrl + caption + author.
  *   3. Download the video bytes (Apify returns a short-lived CDN URL).
- *   4. Send the audio to ElevenLabs Scribe (`scribe_v2`) for transcription.
+ *   4. Transcribe via the shared STT config (_shared/stt.ts) — provider and
+ *      model are environment-driven, not hardcoded here.
  *   5. Return { transcript, caption, author, title, thumbnail, videoUrl, finalUrl }.
  *
  * Required secrets:
  *   - APIFY_API_TOKEN     (Apify personal API token)
- *   - ELEVENLABS_API_KEY  (ElevenLabs API key with STT enabled)
+ *   - LOVABLE_API_KEY or ELEVENLABS_API_KEY, depending on STT_PROVIDER
  */
 
 const corsHeaders = {
@@ -35,11 +44,22 @@ const APIFY_ACTOR_ID = "shu8hvrXbJbY3Eb9W"; // apify/instagram-scraper
 // Cap downloaded media to keep memory + ElevenLabs costs sane (≈ 5–6 min reel).
 const MAX_MEDIA_BYTES = 50 * 1024 * 1024; // 50 MB
 
+/**
+ * Instagram's own id for a post — the shortcode in /p/<code>/, /reel/<code>/ or
+ * /tv/<code>/. It is the cache key, so a link with tracking parameters or a
+ * different path prefix still resolves to one cached transcript.
+ */
+function extractShortcode(u: URL): string | null {
+  const m = u.pathname.match(/\/(?:p|reel|reels|tv)\/([A-Za-z0-9_-]{5,})/);
+  return m ? m[1] : null;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   const _guard = await guardAiRequest(req, corsHeaders, "transcribe_instagram");
   if ("response" in _guard) return _guard.response;
+  const _auth = { user: _guard.user };
 
   try {
     const { url } = (await req.json()) as { url?: string };
@@ -51,15 +71,43 @@ Deno.serve(async (req) => {
     } catch {
       return json({ error: "Invalid URL" }, 400);
     }
+    // Instagram has no captions track to fall back on, so unlike YouTube every
+    // reel is a paid transcription. The shared cache is the only cheap source
+    // here, which makes checking it before spending anything the whole game.
     if (!/(^|\.)instagram\.com$/i.test(target.hostname)) {
       return json({ error: "URL must be an instagram.com link" }, 400);
     }
 
-    const APIFY_API_TOKEN = Deno.env.get("APIFY_API_TOKEN");
-    if (!APIFY_API_TOKEN) return json({ error: "APIFY_API_TOKEN not configured" }, 500);
+    const shortcode = extractShortcode(target);
 
-    const ELEVENLABS_API_KEY = Deno.env.get("ELEVENLABS_API_KEY");
-    if (!ELEVENLABS_API_KEY) return json({ error: "ELEVENLABS_API_KEY not configured" }, 500);
+    // Cache first: free, and the only cheap source this path has.
+    if (shortcode) {
+      const cached = await lookupTranscript("instagram", shortcode);
+      if (cached) {
+        await _guard.refund("cache_hit");
+        return json({
+          transcript: cached.transcript,
+          language: null,
+          caption: "",
+          author: cached.author,
+          thumbnail: null,
+          videoUrl: null,
+          finalUrl: target.toString(),
+          title: cached.title ?? (cached.author ? `Instagram — ${cached.author}` : "Instagram reel"),
+          resolvedFrom: "cache",
+        });
+      }
+    }
+
+    const jobId = await createJob(_auth.user.id, "instagram", target.toString(), shortcode);
+
+    const APIFY_API_TOKEN = Deno.env.get("APIFY_API_TOKEN");
+    if (!APIFY_API_TOKEN) {
+      await failJob(jobId, "not_configured");
+      await _guard.refund("failed_before_spend");
+      return json({ error: "Transcription isn't available right now." }, 503);
+    }
+
 
     // 1) Resolve via Apify (sync) — returns dataset items directly.
     const apifyUrl =
@@ -138,31 +186,31 @@ Deno.serve(async (req) => {
       );
     }
 
-    // 3) Send the file straight to ElevenLabs Scribe.
-    // Scribe accepts video files directly and pulls the audio track.
-    const sttForm = new FormData();
-    sttForm.append(
-      "file",
-      new Blob([mediaBuffer], { type: mediaResp.headers.get("content-type") ?? "video/mp4" }),
-      "reel.mp4",
-    );
-    sttForm.append("model_id", "scribe_v2");
-    sttForm.append("tag_audio_events", "false");
-    sttForm.append("diarize", "false");
+    // 3) Paid path — the shared STT config decides provider and model.
+    const cfg = resolveSttConfig(Deno.env.toObject());
+    const mime = mediaResp.headers.get("content-type") ?? "video/mp4";
+    const bytes = new Uint8Array(mediaBuffer);
 
-    const sttResp = await fetch("https://api.elevenlabs.io/v1/speech-to-text", {
-      method: "POST",
-      headers: { "xi-api-key": ELEVENLABS_API_KEY },
-      body: sttForm,
-    });
+    const overLimit = checkAudioLimits(cfg, bytes.byteLength, null);
+    if (overLimit) {
+      await failJob(jobId, overLimit.code);
+      await _guard.refund("failed_before_spend");
+      return json({ error: overLimit.message, code: overLimit.code }, 413);
+    }
 
-    if (!sttResp.ok) {
-      const t = await sttResp.text();
-      console.error("ElevenLabs error", sttResp.status, t);
-      // Still return the caption so the user gets *something* useful.
+    let stt;
+    try {
+      stt = await transcribeAudio(bytes, mime, Deno.env.toObject());
+    } catch (e) {
+      const code = e instanceof SttError ? e.code : "stt_failed";
+      await failJob(jobId, code);
+      await _guard.record({ success: false, errorCode: code });
+      console.error("transcribe-instagram: stt failed", code);
+      // The caption is still worth returning — the user gets something useful.
       return json(
         {
-          error: `Transcription failed (${sttResp.status}). Caption returned instead.`,
+          error: "Couldn't transcribe this reel. The caption is below.",
+          code,
           transcript: "",
           caption,
           author,
@@ -175,22 +223,41 @@ Deno.serve(async (req) => {
       );
     }
 
-    const sttData = (await sttResp.json()) as { text?: string; language_code?: string };
-    const transcript = (sttData.text ?? "").trim();
+    const title = author ? `Instagram — ${author}` : "Instagram reel";
+
+    if (shortcode) {
+      await storeTranscript("instagram", shortcode, {
+        transcript: stt.text,
+        title,
+        author,
+        durationSeconds: null,
+        source: "stt",
+        provider: stt.provider,
+        model: stt.model,
+      });
+    }
+    await completeJob(jobId, "stt", { transcript: stt.text, title, author, thumbnail });
+    await _guard.record({
+      success: true,
+      provider: stt.provider,
+      model: stt.model,
+      outputUnits: stt.text.length,
+    });
 
     return json({
-      transcript,
-      language: sttData.language_code ?? null,
+      transcript: stt.text,
+      language: null,
       caption,
       author,
       thumbnail,
       videoUrl,
       finalUrl,
-      title: author ? `Instagram — ${author}` : "Instagram reel",
+      title,
+      resolvedFrom: "stt",
     });
   } catch (e) {
     console.error("transcribe-instagram error:", e);
-    return json({ error: e instanceof Error ? e.message : "Unknown error" }, 500);
+    return json({ error: "Something went wrong transcribing that reel." }, 500);
   }
 });
 

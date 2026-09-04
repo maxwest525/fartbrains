@@ -23,7 +23,12 @@ Never put a service-role key, Stripe secret, or any provider API key in a
 | `STRIPE_WEBHOOK_SECRET` | webhook | From the Stripe endpoint. Without it the webhook refuses every request. |
 | `STRIPE_PRICE_ID_PRO` | checkout | The price customers check out on. Pricing is not hard-coded anywhere. |
 | `LOVABLE_API_KEY` | AI routes | |
-| Transcription / scraping provider keys | transcribe-*, extract-* | As already configured. |
+| `STT_PROVIDER` | transcribe-* | `lovable` (default) or `elevenlabs`. Unknown values fall back to the default. |
+| `STT_LOVABLE_MODEL` / `STT_ELEVENLABS_MODEL` | transcribe-* | Override the model without a deploy. Defaults: `openai/gpt-4o-mini-transcribe`, `scribe_v2`. |
+| `STT_FALLBACK_PROVIDER` | transcribe-* | Optional failover if the primary errors. Leave unset for one vendor, one bill. |
+| `STT_MAX_BYTES` / `STT_MAX_DURATION_SECONDS` | transcribe-* | Cost ceilings. Default 50MB / 90 min. |
+| `APIFY_API_TOKEN` | transcribe-youtube, transcribe-instagram | Fetches captions and media. |
+| `ELEVENLABS_API_KEY` | transcribe-* | Only needed when ElevenLabs is the provider or the fallback. |
 | Email provider + sender domain | send-transactional-email, process-email-queue | See below. |
 
 `NOTES_FEED_TOKEN` is **no longer used** — `notes-feed` now authenticates the
@@ -45,6 +50,10 @@ access. Apply and then run the verification listed with each.
    trashing revokes share links, and schedule `purge_expired_trash()` daily
    (pg_cron or a scheduled function). **The schedule does not exist yet.**
 5. `20260903160000_billing.sql` — then run the Stripe checklist below.
+6. `20260904120000_transcription.sql` — verify a second save of the same
+   YouTube video hits the cache and does **not** charge an AI action, that a
+   captions-only video charges nothing, and that `transcript_cache` contains no
+   user-identifying column. Confirm a voice note is never written to the cache.
 
 After applying, regenerate `src/integrations/supabase/types.ts` from the live
 schema; the entries added by hand in this branch are a stand-in.

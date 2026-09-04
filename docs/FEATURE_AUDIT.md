@@ -34,7 +34,9 @@ means *proved by automated test in this repo*.
 | Manual note / idea capture | WIRED BUT UNPROVEN | |
 | Voice capture | WIRED BUT UNPROVEN | |
 | URL capture + extraction | WIRED BUT UNPROVEN | `extract-url`, `scrape-url`. |
-| YouTube / Instagram transcripts | WIRED BUT UNPROVEN | Third-party scraping; fragile by nature. |
+| YouTube / Instagram transcripts | WIRED BUT UNPROVEN | Cache → captions → paid model, with quota refunded for the free paths. Third-party scraping; fragile by nature. |
+| Shared transcript cache | WIRED BUT UNPROVEN | Public media only, no `user_id` column. 14 tests cover STT config and caps; the cache itself is unproven until the migration is applied. |
+| Durable transcription jobs | PARTIALLY IMPLEMENTED | Job rows are created and completed/failed, and are readable by their owner, but processing is still synchronous — a very long video can still outlive the request. |
 | Durable processing-job model | NOT IMPLEMENTED | Everything is synchronous. Launch blocker for reliability. |
 | Duplicate detection | PARTIALLY IMPLEMENTED | `useDuplicateUrl` covers URLs only. |
 | Offline capture queue | NOT IMPLEMENTED | PWA implies offline; it is not real. |

@@ -83,6 +83,17 @@ export type Guard = {
   limits: Limits;
   requestId: string;
   record: (r: UsageRecord) => Promise<void>;
+  /**
+   * Give the reserved quota back.
+   *
+   * Quota is reserved before the work runs so a crash cannot become a free
+   * retry loop. But a customer should not be charged an action for something we
+   * never actually paid a provider for — a cache hit, a free captions track, or
+   * a failure that produced nothing. Refunding flips the decision off
+   * "allowed", so it stops counting against the allowance while staying in the
+   * log for diagnostics.
+   */
+  refund: (reason: "cache_hit" | "no_cost_source" | "failed_before_spend") => Promise<void>;
 };
 
 const svc = () =>
@@ -251,6 +262,14 @@ export async function guardAiRequest(
     plan,
     limits,
     requestId,
+    refund: async (reason) => {
+      if (!eventId) return;
+      const { error } = await client
+        .from("ai_usage_events")
+        .update({ decision: reason, success: true, estimated_cost: 0 })
+        .eq("id", eventId);
+      if (error) console.error("ai-guard: refund failed", error.message);
+    },
     record: async (r: UsageRecord) => {
       if (!eventId) return;
       const { error } = await client

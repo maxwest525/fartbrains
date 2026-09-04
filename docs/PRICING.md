@@ -43,6 +43,17 @@ a real, permanent tier, not a trial.
 14 days of Pro, no card required. Card-free trials convert worse but generate
 far less refund noise for a solo operator — worth it at this scale.
 
+## What is NOT charged as an AI action
+Since the transcription rework, a customer is only charged when we actually paid
+a provider. These are refunded automatically:
+
+- **Cache hit** — someone already transcribed that public video, ever.
+- **Captions** — YouTube's own caption track, which costs us next to nothing.
+- **Failure before spend** — a download that failed, a file over the size cap.
+
+This matters for the free tier: 50 actions goes a lot further when saving a
+popular YouTube video usually costs nothing at all.
+
 ## What counts as an "AI action"
 Operations are weighted, because a 20-minute transcription is not the same cost
 as an auto-tag:
@@ -66,6 +77,11 @@ So 50 free actions is roughly *50 summaries*, or *~16 transcriptions*, or a mix.
 - **1,000 Pro actions** is far above normal personal use, so the limit exists to
   catch abuse and runaway loops, not to nickel-and-dime customers. Watch actual
   usage in `ai_usage_events` for a month before tightening it.
+- **Transcription is now much cheaper per save than the weights suggest.** The
+  shared cache and the captions-first path mean many saves cost nothing. Check
+  the real ratio in `ai_usage_events` (`decision = 'cache_hit'` /
+  `'no_cost_source'` versus `'allowed'`) before assuming the 3x weight is right —
+  it may be too punitive.
 
 ## Cost check — do this before publishing
 Nothing above is grounded in your real provider bill. Before committing:
@@ -85,6 +101,6 @@ Nothing above is grounded in your real provider bill. Before committing:
 
 ## Not decided
 - Whether to offer a lifetime or founding-member deal at launch.
-- Whether transcription should be metered separately — it is by far the most
-  expensive operation and the weighting may not be enough.
+- Whether transcription should be metered separately. Caching and captions have
+  taken a lot of the pressure off, so re-measure before adding complexity.
 - Regional pricing.
