@@ -5,7 +5,11 @@ import reactRefresh from "eslint-plugin-react-refresh";
 import tseslint from "typescript-eslint";
 
 export default tseslint.config(
-  { ignores: ["dist"] },
+  // Build artifacts. supabase/functions/mcp/index.ts is generated from
+  // src/lib/mcp by the Vite plugin and carries a do-not-edit banner, so its
+  // style is not ours to fix - and any fix would be overwritten on the next
+  // build. The source it is generated from is linted normally.
+  { ignores: ["dist", "supabase/functions/mcp/index.ts"] },
   {
     extends: [js.configs.recommended, ...tseslint.configs.recommended],
     files: ["**/*.{ts,tsx}"],

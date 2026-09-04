@@ -947,7 +947,8 @@ export const GraphPage = ({ onOpenIdea, onBack }: Props) => {
   const toggleKind = (k: EdgeKind) => setEnabledKinds((p) => ({ ...p, [k]: !p[k] }));
   const toggleIn = <T,>(set: Set<T>, v: T): Set<T> => {
     const n = new Set(set);
-    n.has(v) ? n.delete(v) : n.add(v);
+    if (n.has(v)) n.delete(v);
+    else n.add(v);
     return n;
   };
   const toggleFolder = (id: string) => setFolderFilter((p) => toggleIn(p, id));

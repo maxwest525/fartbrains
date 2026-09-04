@@ -414,7 +414,7 @@ export const AshDock = ({ className }: { className?: string }) => {
     setChips((cs) => cs.filter((c) => c.id !== chipEditor.id));
     setChipEditor(null);
   };
-  const useChip = (c: Chip) => {
+  const applyChip = (c: Chip) => {
     setText(c.prefill || c.label);
     requestAnimationFrame(() => textareaRef.current?.focus());
   };
@@ -626,7 +626,7 @@ export const AshDock = ({ className }: { className?: string }) => {
             <button
               key={c.id}
               type="button"
-              onClick={() => useChip(c)}
+              onClick={() => applyChip(c)}
               onContextMenu={(e) => { e.preventDefault(); openEditChip(c); }}
               className="group inline-flex items-center gap-1 h-7 px-2.5 rounded-full bg-secondary/70 hover:bg-secondary text-[12px] text-foreground/90 border border-border/50"
               title="Click to use · right-click to edit"
