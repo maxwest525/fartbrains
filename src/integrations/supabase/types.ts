@@ -552,6 +552,30 @@ export type Database = {
         }
         Relationships: []
       }
+      user_drafts: {
+        Row: {
+          composer: string
+          created_at: string
+          jot: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          composer?: string
+          created_at?: string
+          jot?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          composer?: string
+          created_at?: string
+          jot?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_instructions: {
         Row: {
           capture: string
