@@ -17,6 +17,8 @@ import Profile from "./pages/Profile.tsx";
 import Instructions from "./pages/Instructions.tsx";
 import ResetPassword from "./pages/ResetPassword.tsx";
 import SharedIdea from "./pages/SharedIdea.tsx";
+import Privacy from "./pages/Privacy.tsx";
+import Terms from "./pages/Terms.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
@@ -44,6 +46,9 @@ const App = () => (
             <Route path="/reset-password" element={<ResetPassword />} />
             {/* Public, read-only view of a single shared idea. */}
             <Route path="/s/:token" element={<SharedIdea />} />
+            {/* Public legal pages — currently WIP drafts. */}
+            <Route path="/privacy" element={<Privacy />} />
+            <Route path="/terms" element={<Terms />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

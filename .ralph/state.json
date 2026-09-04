@@ -260,6 +260,31 @@
         "paging grows the page rather than appending, which refetches; fine to a few hundred items, worth moving to useInfiniteQuery if libraries get large",
         "not exercised against a real large library"
       ]
+    },
+    {
+      "n": 13,
+      "task": "WIP legal drafts and a draft pricing structure",
+      "evidence": [
+        "/privacy and /terms routes with a visible WIP banner",
+        "8 new tests assert the banner and that no unbackable claim is made; 79 tests total",
+        "tsc clean; eslint clean; build passes"
+      ],
+      "files": [
+        "src/pages/Privacy.tsx",
+        "src/pages/Terms.tsx",
+        "src/components/legal/LegalPage.tsx",
+        "src/App.tsx",
+        "src/components/app/SettingsSheet.tsx",
+        "src/components/app/BillingSection.tsx",
+        "supabase/functions/_shared/ai-guard.ts",
+        "docs/PRICING.md"
+      ],
+      "db_changes": "none",
+      "remaining_risks": [
+        "legal text is unreviewed and must be replaced before taking customers",
+        "pricing is not validated against a real provider bill and no Stripe price exists",
+        "support email and legal entity are placeholders in both documents"
+      ]
     }
   ],
   "next": "Remaining P1s: durable capture jobs, Import Center, server-side search + pagination, semantic retrieval with citations, email verification enforcement, accessibility pass"

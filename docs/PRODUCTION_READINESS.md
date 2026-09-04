@@ -12,6 +12,8 @@
 - [x] Immediate permanent deletes with no trash and no undo (data loss).
 
 ### P1 — launch blockers
+- [~] Privacy policy and terms — WIP drafts live at `/privacy` and `/terms`, banner-marked as unreviewed. **Must be replaced with legally reviewed text before taking customers.**
+- [~] Public pricing — draft structure in `docs/PRICING.md` ($9/mo, $90/yr, 50 free / 1,000 Pro AI actions). Not validated against a real provider bill; no Stripe price created.
 - [~] Stripe billing, subscriptions and entitlements — built (checkout, portal,
       signature-verified idempotent webhook, plan config, billing UI).
       **Nothing has been run against Stripe test mode**, which the release gate

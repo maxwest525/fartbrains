@@ -59,11 +59,31 @@ export const BillingSection = () => {
       )}
 
       {status === "canceled" || status === "free" ? (
-        <p className="text-[12px] text-muted-foreground mt-2 leading-snug">
-          Everything you've captured stays readable, searchable and exportable on
-          the free plan. A subscription covers the AI features — summaries,
-          asking your brain, research and transcription.
-        </p>
+        <>
+          <p className="text-[12px] text-muted-foreground mt-2 leading-snug">
+            Everything you've captured stays readable, searchable and exportable
+            on the free plan. A subscription covers the AI features — summaries,
+            asking your brain, research and transcription.
+          </p>
+          {/* WIP: draft pricing, see docs/PRICING.md. The real figure comes from
+              the Stripe price, so this copy must be updated alongside it. */}
+          <div className="mt-3 rounded-xl border border-border/60 bg-secondary/40 px-3 py-2.5">
+            <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+              Pro · draft pricing
+            </p>
+            <p className="text-[13px] mt-1">
+              <span className="font-semibold">$9</span>
+              <span className="text-muted-foreground"> / month, or $90 / year</span>
+            </p>
+            <p className="text-[11px] text-muted-foreground mt-1 leading-snug">
+              1,000 AI actions a month, longer transcripts and bigger pages.
+              Free includes 50 AI actions a month and unlimited notes.
+            </p>
+            <p className="text-[10.5px] text-muted-foreground/80 mt-1.5">
+              Pricing is still being finalised and may change before launch.
+            </p>
+          </div>
+        </>
       ) : null}
 
       <div className="mt-3 flex gap-2">

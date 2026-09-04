@@ -50,6 +50,12 @@ manual run. Code inspection is never evidence.
 | Onboarding | Never shown again once finished or skipped | `onboarding.test.ts` | PASS |
 | Scale | List queries never fetch the whole vault | `useIdeas.trash.test.tsx` | PASS |
 | Scale | A caller-supplied page size is honoured | `useIdeas.trash.test.tsx` | PASS |
+| Legal | Both drafts carry the work-in-progress banner | `legal.test.tsx` | PASS |
+| Legal | Privacy never claims AI providers don't train on data | `legal.test.tsx` | PASS |
+| Legal | Privacy makes no SLA or encryption-at-rest guarantee | `legal.test.tsx` | PASS |
+| Legal | Privacy denies teams/shared workspaces rather than offering them | `legal.test.tsx` | PASS |
+| Legal | Terms state cancelling never deletes content | `legal.test.tsx` | PASS |
+| Legal | Terms state export and deletion are free forever | `legal.test.tsx` | PASS |
 
 ## Not yet covered (all required before launch)
 Signup · email verification · magic link · password reset · session expiry ·

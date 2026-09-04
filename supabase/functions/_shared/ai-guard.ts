@@ -44,13 +44,20 @@ type Limits = {
 
 // Central plan configuration. Entitlements live here, never as scattered
 // plan-name checks in components, and never as a frontend boolean.
+//
+// WORK IN PROGRESS: these allowances follow the draft structure in
+// docs/PRICING.md and have NOT been checked against a real provider bill.
+// Before launch, read a month of ai_usage_events and confirm a worst-case Pro
+// customer at 1,000 weighted actions still leaves margin at the chosen price.
 export const PLAN_LIMITS: Record<Plan, Limits> = {
-  free: { perMinute: 6, perHour: 40, perMonth: 150, maxInputChars: 60_000 },
-  trialing: { perMinute: 12, perHour: 120, perMonth: 1_000, maxInputChars: 200_000 },
-  active: { perMinute: 20, perHour: 300, perMonth: 5_000, maxInputChars: 400_000 },
+  free: { perMinute: 5, perHour: 30, perMonth: 50, maxInputChars: 60_000 },
+  trialing: { perMinute: 15, perHour: 150, perMonth: 1_000, maxInputChars: 300_000 },
+  active: { perMinute: 15, perHour: 150, perMonth: 1_000, maxInputChars: 300_000 },
 };
 
-// Expensive operations count for more than a cheap one.
+// Expensive operations count for more than a cheap one: a 20-minute
+// transcription is not the same cost as an auto-tag. Mirrored in
+// docs/PRICING.md — change both together.
 const OPERATION_WEIGHT: Partial<Record<AiOperation, number>> = {
   deep_research: 5,
   transcribe_youtube: 3,
