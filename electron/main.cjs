@@ -1,4 +1,4 @@
-const { app, BrowserWindow, globalShortcut, shell, Tray, Menu, nativeImage } = require("electron");
+const { app, BrowserWindow, globalShortcut, shell } = require("electron");
 const path = require("path");
 const fs = require("fs");
 
@@ -13,7 +13,6 @@ const APP_URL = process.env.FARTBRAIN_URL || "https://fartbrain.app";
 const LOCAL_INDEX = path.join(__dirname, "..", "dist", "index.html");
 
 let win = null;
-let tray = null;
 
 const boundsFile = () => path.join(app.getPath("userData"), "window-bounds.json");
 
@@ -102,32 +101,14 @@ const togglePin = () => {
   if (!win) return;
   const pinned = !win.isAlwaysOnTop();
   win.setAlwaysOnTop(pinned, "floating");
-  if (tray) tray.setToolTip(pinned ? "Fart Brains (pinned)" : "Fart Brains");
-};
-
-const createTray = () => {
-  try {
-    tray = new Tray(nativeImage.createEmpty());
-    tray.setToolTip("Fart Brains (pinned)");
-    tray.setContextMenu(Menu.buildFromTemplate([
-      { label: "Show / hide", click: toggleWindow },
-      { label: "Toggle always on top", click: togglePin },
-      { type: "separator" },
-      { label: "Wide layout (todos + jots)", click: () => setPreset("wide") },
-      { label: "Compact pad", click: () => setPreset("compact") },
-      { type: "separator" },
-      { label: "Quit", click: () => app.quit() },
-    ]));
-  } catch {
-    // Tray is optional; ignore on platforms without a tray surface.
-  }
 };
 
 app.whenReady().then(() => {
   createWindow();
-  createTray();
   globalShortcut.register("CommandOrControl+Shift+B", toggleWindow);
   globalShortcut.register("CommandOrControl+Shift+P", togglePin);
+  globalShortcut.register("CommandOrControl+Shift+1", () => setPreset("compact"));
+  globalShortcut.register("CommandOrControl+Shift+2", () => setPreset("wide"));
 
   app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
