@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
-  ArrowLeft, CheckSquare, Download, MessageSquare, NotebookPen, Search,
+  ArrowLeft, CalendarDays, CheckSquare, Download, Lightbulb, MessageSquare, NotebookPen, Search,
 } from "lucide-react";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { cn } from "@/lib/utils";
@@ -9,12 +9,16 @@ import { csvFilename, downloadCsv, toCsv } from "@/lib/csv";
 import { useTodos, type Todo } from "@/hooks/useTodos";
 import { useIdeas, type Idea } from "@/hooks/useIdeas";
 import { useChatHistory, type ChatMessage } from "@/hooks/useChatHistory";
+import { useCalendarEvents } from "@/hooks/useCalendarEvents";
+import type { CalendarEvent } from "@/lib/calendarEvents";
 
-type TabKey = "todos" | "jots" | "chats";
+type TabKey = "ideas" | "todos" | "jots" | "calendar" | "chats";
 
 const TABS: ReadonlyArray<{ key: TabKey; label: string; icon: typeof CheckSquare }> = [
+  { key: "ideas", label: "Ideas", icon: Lightbulb },
   { key: "todos", label: "To-dos", icon: CheckSquare },
   { key: "jots", label: "Jots", icon: NotebookPen },
+  { key: "calendar", label: "Calendar", icon: CalendarDays },
   { key: "chats", label: "Composer history", icon: MessageSquare },
 ];
 
