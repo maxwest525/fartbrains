@@ -354,6 +354,28 @@
         "main flipped robots to index,follow \u2014 the WIP privacy/terms drafts are now publicly indexable",
         "migrations still unapplied; PR #3 must merge and be applied before PR #1"
       ]
+    },
+    {
+      "n": 17,
+      "task": "Merge main after the migrations were applied to the live database",
+      "evidence": [
+        "all 7 migrations applied; 6 new tables + ideas.deleted_at confirmed in the regenerated types.ts",
+        "removed duplicate hand-written type blocks that auto-merge introduced (typecheck was failing)",
+        "93 tests, tsc, build all pass"
+      ],
+      "files": [
+        "src/integrations/supabase/types.ts",
+        "docs/SECURITY_REVIEW.md",
+        "docs/PRODUCTION_READINESS.md",
+        "docs/DECISIONS.md"
+      ],
+      "db_changes": "APPLIED: rls_update_with_check, idea_shares, ai_usage, trash, billing, search_indexes, transcription \u2014 plus Lovable's GRANTs and a REVOKE on revoke_shares_on_trash",
+      "remaining_risks": [
+        "edge functions not yet deployed",
+        "two-account RLS test still outstanding",
+        "purge_expired_trash still needs a daily schedule",
+        "Stripe test-mode lifecycle not run"
+      ]
     }
   ],
   "next": "Remaining P1s: durable capture jobs, Import Center, server-side search + pagination, semantic retrieval with citations, email verification enforcement, accessibility pass"

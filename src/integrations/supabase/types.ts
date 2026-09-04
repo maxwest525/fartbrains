@@ -14,6 +14,87 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_usage_events: {
+        Row: {
+          created_at: string
+          decision: string
+          error_code: string | null
+          estimated_cost: number | null
+          id: string
+          idea_id: string | null
+          input_units: number | null
+          model: string | null
+          operation: string
+          output_units: number | null
+          plan: string
+          provider: string | null
+          request_id: string | null
+          success: boolean
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          decision?: string
+          error_code?: string | null
+          estimated_cost?: number | null
+          id?: string
+          idea_id?: string | null
+          input_units?: number | null
+          model?: string | null
+          operation: string
+          output_units?: number | null
+          plan?: string
+          provider?: string | null
+          request_id?: string | null
+          success?: boolean
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          decision?: string
+          error_code?: string | null
+          estimated_cost?: number | null
+          id?: string
+          idea_id?: string | null
+          input_units?: number | null
+          model?: string | null
+          operation?: string
+          output_units?: number | null
+          plan?: string
+          provider?: string | null
+          request_id?: string | null
+          success?: boolean
+          user_id?: string
+        }
+        Relationships: []
+      }
+      billing_events: {
+        Row: {
+          error: string | null
+          id: string
+          processed_at: string
+          status: string
+          type: string
+          user_id: string | null
+        }
+        Insert: {
+          error?: string | null
+          id: string
+          processed_at?: string
+          status?: string
+          type: string
+          user_id?: string | null
+        }
+        Update: {
+          error?: string | null
+          id?: string
+          processed_at?: string
+          status?: string
+          type?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       calendar_events: {
         Row: {
           birth_year: number | null
@@ -255,51 +336,6 @@ export type Database = {
           },
         ]
       }
-      idea_shares: {
-        Row: {
-          access_count: number
-          created_at: string
-          expires_at: string | null
-          id: string
-          idea_id: string
-          include_note: boolean
-          include_refs: boolean
-          include_summary: boolean
-          last_accessed_at: string | null
-          revoked_at: string | null
-          token_hash: string
-          user_id: string
-        }
-        Insert: {
-          access_count?: number
-          created_at?: string
-          expires_at?: string | null
-          id?: string
-          idea_id: string
-          include_note?: boolean
-          include_refs?: boolean
-          include_summary?: boolean
-          last_accessed_at?: string | null
-          revoked_at?: string | null
-          token_hash: string
-          user_id: string
-        }
-        Update: {
-          access_count?: number
-          created_at?: string
-          expires_at?: string | null
-          id?: string
-          idea_id?: string
-          include_note?: boolean
-          include_refs?: boolean
-          include_summary?: boolean
-          last_accessed_at?: string | null
-          revoked_at?: string | null
-          token_hash?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
       idea_references: {
         Row: {
           created_at: string
@@ -397,6 +433,59 @@ export type Database = {
           },
         ]
       }
+      idea_shares: {
+        Row: {
+          access_count: number
+          created_at: string
+          expires_at: string | null
+          id: string
+          idea_id: string
+          include_note: boolean
+          include_refs: boolean
+          include_summary: boolean
+          last_accessed_at: string | null
+          revoked_at: string | null
+          token_hash: string
+          user_id: string
+        }
+        Insert: {
+          access_count?: number
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          idea_id: string
+          include_note?: boolean
+          include_refs?: boolean
+          include_summary?: boolean
+          last_accessed_at?: string | null
+          revoked_at?: string | null
+          token_hash: string
+          user_id: string
+        }
+        Update: {
+          access_count?: number
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          idea_id?: string
+          include_note?: boolean
+          include_refs?: boolean
+          include_summary?: boolean
+          last_accessed_at?: string | null
+          revoked_at?: string | null
+          token_hash?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "idea_shares_idea_id_fkey"
+            columns: ["idea_id"]
+            isOneToOne: false
+            referencedRelation: "ideas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ideas: {
         Row: {
           ai_summary: string | null
@@ -414,6 +503,7 @@ export type Database = {
           raw_note: string | null
           remind_at: string | null
           reminder_fired_at: string | null
+          search_vector: unknown
           source_label: string | null
           source_meta: Json | null
           source_type: Database["public"]["Enums"]["idea_source_type"]
@@ -441,6 +531,7 @@ export type Database = {
           raw_note?: string | null
           remind_at?: string | null
           reminder_fired_at?: string | null
+          search_vector?: unknown
           source_label?: string | null
           source_meta?: Json | null
           source_type?: Database["public"]["Enums"]["idea_source_type"]
@@ -468,6 +559,7 @@ export type Database = {
           raw_note?: string | null
           remind_at?: string | null
           reminder_fired_at?: string | null
+          search_vector?: unknown
           source_label?: string | null
           source_meta?: Json | null
           source_type?: Database["public"]["Enums"]["idea_source_type"]
@@ -642,6 +734,114 @@ export type Database = {
         }
         Relationships: []
       }
+      transcript_cache: {
+        Row: {
+          author: string | null
+          created_at: string
+          duration_seconds: number | null
+          external_id: string
+          hit_count: number
+          last_used_at: string
+          model: string | null
+          platform: string
+          provider: string | null
+          source: string
+          title: string | null
+          transcript: string
+        }
+        Insert: {
+          author?: string | null
+          created_at?: string
+          duration_seconds?: number | null
+          external_id: string
+          hit_count?: number
+          last_used_at?: string
+          model?: string | null
+          platform: string
+          provider?: string | null
+          source?: string
+          title?: string | null
+          transcript: string
+        }
+        Update: {
+          author?: string | null
+          created_at?: string
+          duration_seconds?: number | null
+          external_id?: string
+          hit_count?: number
+          last_used_at?: string
+          model?: string | null
+          platform?: string
+          provider?: string | null
+          source?: string
+          title?: string | null
+          transcript?: string
+        }
+        Relationships: []
+      }
+      transcription_jobs: {
+        Row: {
+          attempts: number
+          author: string | null
+          completed_at: string | null
+          created_at: string
+          duration_seconds: number | null
+          error_code: string | null
+          external_id: string | null
+          id: string
+          kind: string
+          resolved_from: string | null
+          source_url: string | null
+          status: string
+          thumbnail: string | null
+          title: string | null
+          transcript: string | null
+          updated_at: string
+          usage_event_id: string | null
+          user_id: string
+        }
+        Insert: {
+          attempts?: number
+          author?: string | null
+          completed_at?: string | null
+          created_at?: string
+          duration_seconds?: number | null
+          error_code?: string | null
+          external_id?: string | null
+          id?: string
+          kind: string
+          resolved_from?: string | null
+          source_url?: string | null
+          status?: string
+          thumbnail?: string | null
+          title?: string | null
+          transcript?: string | null
+          updated_at?: string
+          usage_event_id?: string | null
+          user_id: string
+        }
+        Update: {
+          attempts?: number
+          author?: string | null
+          completed_at?: string | null
+          created_at?: string
+          duration_seconds?: number | null
+          error_code?: string | null
+          external_id?: string | null
+          id?: string
+          kind?: string
+          resolved_from?: string | null
+          source_url?: string | null
+          status?: string
+          thumbnail?: string | null
+          title?: string | null
+          transcript?: string | null
+          updated_at?: string
+          usage_event_id?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_drafts: {
         Row: {
           composer: string
@@ -701,7 +901,16 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      ai_usage_current_month: {
+        Row: {
+          calls: number | null
+          estimated_cost: number | null
+          operation: string | null
+          succeeded: number | null
+          user_id: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       delete_email: {
@@ -722,6 +931,10 @@ export type Database = {
         }
         Returns: number
       }
+      purge_expired_trash: {
+        Args: { p_retention_days?: number }
+        Returns: number
+      }
       read_email_batch: {
         Args: { batch_size: number; queue_name: string; vt: number }
         Returns: {
@@ -730,6 +943,19 @@ export type Database = {
           read_ct: number
         }[]
       }
+      resolve_idea_share: {
+        Args: { p_token_hash: string }
+        Returns: {
+          expires_at: string
+          note: string
+          refs: Json
+          shared_at: string
+          summary: string
+          title: string
+        }[]
+      }
+      show_limit: { Args: never; Returns: number }
+      show_trgm: { Args: { "": string }; Returns: string[] }
     }
     Enums: {
       idea_priority: "none" | "low" | "medium" | "high"

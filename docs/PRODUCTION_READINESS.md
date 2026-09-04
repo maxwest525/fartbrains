@@ -7,7 +7,7 @@
 ### P0 — security / data loss
 - [x] Authentication gate disabled; anonymous session minted for every visitor.
 - [x] `notes-feed` edge function leaked every tenant's notes, todos and reminders.
-- [~] RLS `UPDATE` policies missing `WITH CHECK` — migration written, **not applied**.
+- [x] RLS `UPDATE` policies missing `WITH CHECK` — **applied 2026-09-04**.
 - [x] No rate limiting or server-side usage accounting on AI routes.
 - [x] Immediate permanent deletes with no trash and no undo (data loss).
 
@@ -18,7 +18,7 @@
       signature-verified idempotent webhook, plan config, billing UI).
       **Nothing has been run against Stripe test mode**, which the release gate
       requires. See the Stripe checklist in `docs/DEPLOYMENT.md`.
-- [~] Secure, revocable single-idea sharing — built; migration + edge function **not deployed**, E2E unproven.
+- [~] Secure, revocable single-idea sharing — built, schema **applied 2026-09-04**; edge function not yet deployed, E2E unproven.
 - [x] Full data export (JSON + Markdown).
 - [x] Account deletion with derived-data cleanup.
 - [ ] Durable processing-job model for long-running capture.

@@ -20,15 +20,20 @@ Now: `requireUser()` authenticates the caller, the function runs as that user
 defence in depth. The shared `NOTES_FEED_TOKEN` is gone — desktop pollers must
 send the customer's own access token.
 
-### 3. RLS `UPDATE` policies have no `WITH CHECK`  ✅ FIX WRITTEN, NOT YET APPLIED
+### 3. RLS `UPDATE` policies have no `WITH CHECK`  ✅ FIXED AND APPLIED (2026-09-04)
 `ideas`, `folders`, `calendar_events`, `idea_reminders`, `idea_references`,
 `event_gifts` and `todos` define `FOR UPDATE USING (auth.uid() = user_id)` with
 no `WITH CHECK`. A user can therefore update a row they own and set
 `user_id` to another account, pushing rows into someone else's brain.
 `supabase/migrations/20260903120000_rls_update_with_check.sql` recreates each
-policy with the matching `WITH CHECK`. **This migration has not been applied** —
-this session has no database access. It must be applied and then verified with
-the two-account test before launch.
+policy with the matching `WITH CHECK`. **Applied to the live database on
+2026-09-04.** The two-account isolation test is still outstanding.
+
+Applying the schema also surfaced a gap in the migrations as written: they set
+RLS policies but did not `GRANT` table privileges to `authenticated`. Policies
+alone are not enough — without the grant the role has no privilege to exercise.
+Lovable added the grants when applying. Any future table migration must include
+both.
 
 ## P0 — open
 
