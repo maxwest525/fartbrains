@@ -14,11 +14,34 @@ hosting provider and in Supabase → Edge Functions → Secrets.
 Never put a service-role key, Stripe secret, or any provider API key in a
 `VITE_*` variable — those are shipped to every browser.
 
+### Set `ALLOWED_ORIGIN` before launch
+
+Verified against production on 2026-09-04: neither `ALLOWED_ORIGIN` nor
+`APP_URL` is set on the deployed functions, so every one of them still answers
+`Access-Control-Allow-Origin: *`:
+
+```
+$ curl -s -X OPTIONS https://uwuhfvhqnpozhndrabwl.supabase.co/functions/v1/generate-prompt \
+    -H 'Origin: https://example.com' -D - -o /dev/null | grep -i allow-origin
+access-control-allow-origin: *
+```
+
+The pinning in `supabase/functions/_shared/cors.ts` is deployed but inert
+without the variable. Until it is set, any page a signed-in customer visits can
+call these functions from their browser and have their session token attached.
+The `*` fallback exists so local development and preview deploys keep working;
+production is meant to override it.
+
+Set `ALLOWED_ORIGIN=https://fartbrain.app` in the Supabase edge function
+secrets, then re-run the curl above and confirm it echoes the origin rather
+than `*`.
+
 ## Edge function secrets (server-side only)
 | Variable | Used by | Notes |
 |---|---|---|
 | `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` | all | Supplied by Supabase. |
-| `APP_URL` | checkout, portal | Production origin, e.g. `https://fartbrains.app`. Used for Stripe return URLs. |
+| `ALLOWED_ORIGIN` | **all** | Production origin, `https://fartbrain.app`. See the warning below — this is not optional. |
+| `APP_URL` | checkout, portal | Production origin, e.g. `https://fartbrain.app`. Used for Stripe return URLs. Also the fallback for `ALLOWED_ORIGIN`. |
 | `STRIPE_SECRET_KEY` | checkout, portal, webhook | Test key first. |
 | `STRIPE_WEBHOOK_SECRET` | webhook | From the Stripe endpoint. Without it the webhook refuses every request. |
 | `STRIPE_PRICE_ID_PRO` | checkout | The price customers check out on. Pricing is not hard-coded anywhere. |

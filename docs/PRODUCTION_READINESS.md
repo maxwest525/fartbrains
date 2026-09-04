@@ -48,5 +48,16 @@
 - [ ] Run `docs/rls-two-account-test.sql` with two real accounts.
 - [ ] Work through `docs/STRIPE_SETUP.md` in test mode.
 
+### Target architecture (new track, see `docs/SPEC_LEDGER.md`)
+- [ ] `sources` / `source_versions` — immutable, checksummed. Blocks everything else.
+- [ ] `evidence_spans` against a version.
+- [ ] Turn on `ideas.search_vector` — the FTS column and index exist and nothing queries them.
+- [ ] Enable pgvector; embed spans rather than whole items.
+- [ ] Proposals + review queue (accept / reject / merge / supersede / contradiction).
+- [ ] Durable worker — spec §16.4 forbids long compilation in edge functions.
+- [ ] Route models through LiteLLM → OpenRouter instead of the Lovable gateway.
+- [ ] MCP gateway to list/describe/execute rather than exposing 20 schemas at once.
+- [ ] Project / repo / folder ingestion.
+
 ### Deferred
 - Anything resembling teams, orgs, shared workspaces or collaboration.

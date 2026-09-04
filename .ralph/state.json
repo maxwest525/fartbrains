@@ -399,6 +399,30 @@
         "RLS test written but not executed",
         "Stripe untouched"
       ]
+    },
+    {
+      "n": 20,
+      "task": "Adopt the Karpathy second-brain spec; rewrite product truth; map the gap",
+      "evidence": [
+        "spec vendored at docs/spec/karpathy-second-brain-spec.md",
+        "PRODUCT_TRUTH rewritten around attachable brain + governed gateway",
+        "docs/SPEC_LEDGER.md maps Phase 1 and cross-cutting spec items to verified repo state in the spec's own \u00a723.2 five-column format",
+        "93 tests, build pass"
+      ],
+      "files": [
+        "docs/PRODUCT_TRUTH.md",
+        "docs/SPEC_LEDGER.md",
+        "docs/spec/karpathy-second-brain-spec.md",
+        "docs/DECISIONS.md",
+        "docs/PRODUCTION_READINESS.md"
+      ],
+      "db_changes": "none",
+      "remaining_risks": [
+        "no immutable sources \u2014 summaries and tags are written onto records as accepted truth, the pattern spec 3.4 and 24 prohibit",
+        "search_vector and FTS exist but nothing queries them",
+        "no durable worker; edge-function-only architecture violates spec 16.4",
+        "models route through the Lovable gateway, not LiteLLM/OpenRouter as the spec chooses"
+      ]
     }
   ],
   "next": "Remaining P1s: durable capture jobs, Import Center, server-side search + pagination, semantic retrieval with citations, email verification enforcement, accessibility pass"

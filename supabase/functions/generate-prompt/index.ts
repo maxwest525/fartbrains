@@ -9,8 +9,16 @@ const corsHeaders = {
 };
 
 /**
- * Combines a user's raw note with the AI summary of the source material into a
- * single, ready-to-paste prompt the user can drop into ChatGPT/Claude/etc.
+ * Turns a captured idea into a prompt. Two shapes:
+ *
+ *  - mode "paste" (default): a short prompt the user drops into ChatGPT/Claude.
+ *    This is what the idea detail page has always produced; unchanged.
+ *
+ *  - mode "build": a build brief for an agent that already sits inside the
+ *    user's project and has their filesystem. It gets the stack, the existing
+ *    context we hold, and an explicit build loop, because the caller is not a
+ *    person copy-pasting — it is an agent that is about to do the work.
+ *
  * Returns plain text (no markdown wrapping) so the copy-paste is clean.
  */
 Deno.serve(async (req) => {
@@ -21,7 +29,9 @@ Deno.serve(async (req) => {
   const _auth = { user: _guard.user };
 
   try {
-    const { title, note, summary, extractedText, sourceUrl, sourceLabel } = await req.json();
+    const { title, note, summary, extractedText, sourceUrl, sourceLabel, mode, stack, context } =
+      await req.json();
+    const buildMode = mode === "build";
 
     const hasNote = typeof note === "string" && note.trim().length > 0;
     const hasSummary = typeof summary === "string" && summary.trim().length > 0;
@@ -36,7 +46,7 @@ Deno.serve(async (req) => {
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY missing");
 
-    const systemPrompt = `You craft prompts that the user will paste into another AI assistant (ChatGPT, Claude, Gemini, etc.) to act on an idea they've captured.
+    const pasteSystemPrompt = `You craft prompts that the user will paste into another AI assistant (ChatGPT, Claude, Gemini, etc.) to act on an idea they've captured.
 
 Rules:
 - Output ONLY the prompt text. No preamble, no quotes, no markdown fences.
@@ -48,6 +58,23 @@ Rules:
 - End with 2-4 numbered deliverables the AI should produce.
 - Keep it under ~300 words. Plain text. No emojis.`;
 
+    const buildSystemPrompt = `You write build briefs. The reader is a coding agent already working inside the user's own project, with their filesystem and their stack in front of it. It is going to build the thing. It is not a person reading advice.
+
+The captured material is usually someone on a video or in an article demonstrating a technique, a workflow, or an agent they built. Your job is to turn that demonstration into something buildable for THIS user's project.
+
+Rules:
+- Output ONLY the brief. No preamble, no quotes, no markdown fences.
+- Open with one sentence naming what gets built and what it is for.
+- Then "What the source actually does:" — the mechanism, concretely. Steps, order, the specific tactic. If the source is vague or is mostly claims, say so plainly rather than inventing detail; a brief that oversells a thin source is worse than a short one.
+- Then "Build this:" — numbered, in dependency order, each step something the agent can act on without asking a question. Name files, commands, or endpoints where the material supports it.
+- Then "Adapt to this project:" — how it changes given the stack and existing context below. If the stack is unknown, say what the agent should check first.
+- Then "Verify:" — how to tell it actually works. Not "test it" — the specific observable outcome.
+- Then "Do not:" — the one or two things that would make this unsafe, expensive, or wrong to install. Include anything the source glosses over that touches credentials, third-party code, data exfiltration, or spend.
+- Improve on the source where you can, and mark those lines "(improvement, not from the source)" so the agent can tell what came from the material and what came from you.
+- Distill, never dump the transcript.
+- Under ~600 words. Plain text. No emojis.`;
+
+    const systemPrompt = buildMode ? buildSystemPrompt : pasteSystemPrompt;
     const userRules = await instructionBlock(_auth.user.id, "chat");
     const finalSystemPrompt = userRules ? `${systemPrompt}\n\n${userRules}` : systemPrompt;
 
@@ -58,8 +85,14 @@ Rules:
     if (hasNote) parts.push(`User's own note (their intent / what they want done — PRIMARY):\n${String(note).slice(0, 4000)}`);
     if (hasSummary) parts.push(`AI summary of the source material:\n${String(summary).slice(0, 8000)}`);
     if (hasExtracted) parts.push(`Raw extracted text / transcript (use for specific details, do not dump verbatim):\n${String(extractedText).slice(0, 12000)}`);
+    if (buildMode && typeof stack === "string" && stack.trim())
+      parts.push(`The project this is being built into (stack, framework, constraints):\n${stack.trim().slice(0, 2000)}`);
+    if (buildMode && typeof context === "string" && context.trim())
+      parts.push(`Related material this user has already saved (for continuity — reuse what they already decided, do not contradict it):\n${context.trim().slice(0, 8000)}`);
 
-    const userPrompt = `Build a ready-to-paste prompt from the following captured idea.\n\n${parts.join("\n\n")}`;
+    const userPrompt = buildMode
+      ? `Write a build brief from the following captured idea.\n\n${parts.join("\n\n")}`
+      : `Build a ready-to-paste prompt from the following captured idea.\n\n${parts.join("\n\n")}`;
 
     const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
