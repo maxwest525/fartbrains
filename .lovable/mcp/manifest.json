@@ -306,7 +306,7 @@
       {
         "name": "delete_idea",
         "title": "Delete idea",
-        "description": "Permanently delete one idea from the user's vault. Confirm with the user before calling this.",
+        "description": "Move one idea to the user's Trash. It stops being searchable and any share links for it are revoked, but it stays recoverable for 30 days. Confirm with the user before calling this.",
         "annotations": {
           "readOnlyHint": false,
           "destructiveHint": true,
