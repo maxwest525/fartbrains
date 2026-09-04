@@ -5,7 +5,7 @@
 // only ever called by our own app, so the origin is pinned to configuration.
 //
 // Set ALLOWED_ORIGIN (or APP_URL) to the production origin, e.g.
-// https://fartbrains.app. The "*" fallback exists only so local development and
+// https://fartbrain.app. The "*" fallback exists only so local development and
 // preview deployments keep working when neither is set — production must set one.
 
 export const ALLOWED_ORIGIN =

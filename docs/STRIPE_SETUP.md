@@ -23,7 +23,7 @@ browser):
 |---|---|
 | `STRIPE_SECRET_KEY` | `sk_test_…` |
 | `STRIPE_PRICE_ID_PRO` | the `price_…` from step 1 |
-| `APP_URL` | your production origin, e.g. `https://fartbrains.app` |
+| `APP_URL` | your production origin, e.g. `https://fartbrain.app` |
 | `ALLOWED_ORIGIN` | the same origin (also pins CORS on every edge function) |
 | `STRIPE_WEBHOOK_SECRET` | filled in at step 3 |
 

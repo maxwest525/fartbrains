@@ -34,7 +34,7 @@ describe("share tokens", () => {
   });
 
   it("builds a /s/<token> link", () => {
-    expect(shareUrl("abc", "https://fartbrains.app")).toBe("https://fartbrains.app/s/abc");
+    expect(shareUrl("abc", "https://fartbrain.app")).toBe("https://fartbrain.app/s/abc");
   });
 });
 
