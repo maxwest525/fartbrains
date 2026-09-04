@@ -879,6 +879,16 @@ html:not(.dark) .gemini ::selection {
     transition: none;
   }
 
+  /* Full-width surfaces (e.g. the dashboard) opt out of the phone frame. */
+  html.route-wide #root {
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+    min-height: 100dvh;
+    border-radius: 0;
+    box-shadow: none;
+    overflow: visible;
+  }
 }
 
 /* Desktop window controls — close / minimize / expand states.
