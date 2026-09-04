@@ -43,6 +43,8 @@ export type AsherPromptResult = {
   instructions: string;
   vaultContext: string;
   ideaContext: string;
+  /** Rendered to-do + calendar block, so the preview panel can show it too. */
+  operationalContext: string;
   hits: VaultHit[];
 };
 
@@ -54,17 +56,22 @@ export async function buildAsherPrompt(opts: {
   limit?: number;
 }): Promise<AsherPromptResult> {
   const instructions = await instructionBlock(opts.userId, "chat");
+  const retrieving = opts.retrieve !== false;
 
-  let hits: VaultHit[] = [];
-  if (opts.retrieve !== false && opts.query.trim()) {
-    hits = await retrieveVaultContext({
-      userId: opts.userId,
-      query: `${opts.query}\n${opts.idea?.title ?? ""}`,
-      excludeIdeaId: opts.idea?.id,
-      limit: opts.limit ?? 5,
-    });
-  }
+  const [hits, operational] = await Promise.all([
+    retrieving && opts.query.trim()
+      ? retrieveVaultContext({
+          userId: opts.userId,
+          query: `${opts.query}\n${opts.idea?.title ?? ""}`,
+          excludeIdeaId: opts.idea?.id,
+          limit: opts.limit ?? 5,
+        })
+      : Promise.resolve<VaultHit[]>([]),
+    retrieving ? retrieveOperationalContext(opts.userId) : Promise.resolve({ todos: [], events: [] }),
+  ]);
+
   const vaultContext = renderVaultContext(hits);
+  const operationalContext = renderOperationalContext(operational);
   const ideaContext = opts.idea ? renderIdeaContext(opts.idea) : "";
 
   const systemPrompt = [
@@ -73,9 +80,10 @@ export async function buildAsherPrompt(opts: {
     instructions,
     ideaContext,
     vaultContext,
+    operationalContext,
   ]
     .filter((s) => s && s.trim())
     .join("\n\n");
 
-  return { systemPrompt, instructions, vaultContext, ideaContext, hits };
+  return { systemPrompt, instructions, vaultContext, ideaContext, operationalContext, hits };
 }
