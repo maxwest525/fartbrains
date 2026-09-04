@@ -102,32 +102,14 @@ const togglePin = () => {
   if (!win) return;
   const pinned = !win.isAlwaysOnTop();
   win.setAlwaysOnTop(pinned, "floating");
-  if (tray) tray.setToolTip(pinned ? "Fart Brains (pinned)" : "Fart Brains");
-};
-
-const createTray = () => {
-  try {
-    tray = new Tray(nativeImage.createEmpty());
-    tray.setToolTip("Fart Brains (pinned)");
-    tray.setContextMenu(Menu.buildFromTemplate([
-      { label: "Show / hide", click: toggleWindow },
-      { label: "Toggle always on top", click: togglePin },
-      { type: "separator" },
-      { label: "Wide layout (todos + jots)", click: () => setPreset("wide") },
-      { label: "Compact pad", click: () => setPreset("compact") },
-      { type: "separator" },
-      { label: "Quit", click: () => app.quit() },
-    ]));
-  } catch {
-    // Tray is optional; ignore on platforms without a tray surface.
-  }
 };
 
 app.whenReady().then(() => {
   createWindow();
-  createTray();
   globalShortcut.register("CommandOrControl+Shift+B", toggleWindow);
   globalShortcut.register("CommandOrControl+Shift+P", togglePin);
+  globalShortcut.register("CommandOrControl+Shift+1", () => setPreset("compact"));
+  globalShortcut.register("CommandOrControl+Shift+2", () => setPreset("wide"));
 
   app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
