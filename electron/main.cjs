@@ -1,4 +1,4 @@
-const { app, BrowserWindow, globalShortcut, shell, Tray, Menu, nativeImage } = require("electron");
+const { app, BrowserWindow, globalShortcut, shell } = require("electron");
 const path = require("path");
 const fs = require("fs");
 
@@ -13,7 +13,6 @@ const APP_URL = process.env.FARTBRAIN_URL || "https://fartbrain.app";
 const LOCAL_INDEX = path.join(__dirname, "..", "dist", "index.html");
 
 let win = null;
-let tray = null;
 
 const boundsFile = () => path.join(app.getPath("userData"), "window-bounds.json");
 
