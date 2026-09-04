@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
-  ArrowLeft, CheckSquare, Download, MessageSquare, NotebookPen, Search,
+  ArrowLeft, CalendarDays, CheckSquare, Download, Lightbulb, MessageSquare, NotebookPen, Search,
 } from "lucide-react";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { cn } from "@/lib/utils";
@@ -9,12 +9,16 @@ import { csvFilename, downloadCsv, toCsv } from "@/lib/csv";
 import { useTodos, type Todo } from "@/hooks/useTodos";
 import { useIdeas, type Idea } from "@/hooks/useIdeas";
 import { useChatHistory, type ChatMessage } from "@/hooks/useChatHistory";
+import { useCalendarEvents } from "@/hooks/useCalendarEvents";
+import type { CalendarEvent } from "@/lib/calendarEvents";
 
-type TabKey = "todos" | "jots" | "chats";
+type TabKey = "ideas" | "todos" | "jots" | "calendar" | "chats";
 
 const TABS: ReadonlyArray<{ key: TabKey; label: string; icon: typeof CheckSquare }> = [
+  { key: "ideas", label: "Ideas", icon: Lightbulb },
   { key: "todos", label: "To-dos", icon: CheckSquare },
   { key: "jots", label: "Jots", icon: NotebookPen },
+  { key: "calendar", label: "Calendar", icon: CalendarDays },
   { key: "chats", label: "Composer history", icon: MessageSquare },
 ];
 
@@ -31,12 +35,13 @@ const matches = (query: string, ...fields: Array<string | null | undefined>) => 
 
 const DashboardInner = () => {
   const navigate = useNavigate();
-  const [tab, setTab] = useState<TabKey>("todos");
+  const [tab, setTab] = useState<TabKey>("ideas");
   const [query, setQuery] = useState("");
 
   const { data: todos = [], isLoading: todosLoading } = useTodos();
   const { data: allIdeas = [], isLoading: ideasLoading } = useIdeas({ kind: "all" });
   const { data: chats = [], isLoading: chatsLoading } = useChatHistory();
+  const { data: events = [], isLoading: eventsLoading } = useCalendarEvents();
 
   // The dashboard is the one full-width surface in an otherwise phone-framed app.
   useEffect(() => {
@@ -49,13 +54,26 @@ const DashboardInner = () => {
     [allIdeas],
   );
 
+  const ideaMatches = (i: Idea) =>
+    matches(query, i.title, i.raw_note, i.ai_summary, i.tags.join(" "));
+
+  const filteredIdeas = useMemo(
+    () => allIdeas.filter(ideaMatches),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [allIdeas, query],
+  );
   const filteredTodos = useMemo(
     () => todos.filter((t) => matches(query, t.title)),
     [todos, query],
   );
   const filteredJots = useMemo(
-    () => jots.filter((i) => matches(query, i.title, i.raw_note, i.ai_summary, i.tags.join(" "))),
+    () => jots.filter(ideaMatches),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [jots, query],
+  );
+  const filteredEvents = useMemo(
+    () => events.filter((e) => matches(query, e.name, e.notes, e.event_type)),
+    [events, query],
   );
   const filteredChats = useMemo(
     () => chats.filter((c) => matches(query, c.content, c.idea_title)),
@@ -63,6 +81,21 @@ const DashboardInner = () => {
   );
 
   const openTodos = todos.filter((t) => !t.done).length;
+
+  const ideaColumns = [
+    { header: "Title", value: (i: Idea) => i.title },
+    { header: "Source", value: (i: Idea) => i.source_type },
+    { header: "Note", value: (i: Idea) => i.raw_note ?? "" },
+    { header: "Summary", value: (i: Idea) => i.ai_summary ?? "" },
+    { header: "Tags", value: (i: Idea) => i.tags.join("; ") },
+    { header: "Priority", value: (i: Idea) => i.priority },
+    { header: "Favorite", value: (i: Idea) => (i.is_favorite ? "yes" : "no") },
+    { header: "Created at", value: (i: Idea) => i.created_at },
+    { header: "Updated at", value: (i: Idea) => i.updated_at },
+  ];
+
+  const exportIdeas = () =>
+    downloadCsv(csvFilename("ideas"), toCsv<Idea>(filteredIdeas, ideaColumns));
 
   const exportTodos = () =>
     downloadCsv(
@@ -77,17 +110,19 @@ const DashboardInner = () => {
     );
 
   const exportJots = () =>
+    downloadCsv(csvFilename("jots"), toCsv<Idea>(filteredJots, ideaColumns));
+
+  const exportEvents = () =>
     downloadCsv(
-      csvFilename("jots"),
-      toCsv<Idea>(filteredJots, [
-        { header: "Title", value: (i) => i.title },
-        { header: "Note", value: (i) => i.raw_note ?? "" },
-        { header: "Summary", value: (i) => i.ai_summary ?? "" },
-        { header: "Tags", value: (i) => i.tags.join("; ") },
-        { header: "Priority", value: (i) => i.priority },
-        { header: "Favorite", value: (i) => (i.is_favorite ? "yes" : "no") },
-        { header: "Created at", value: (i) => i.created_at },
-        { header: "Updated at", value: (i) => i.updated_at },
+      csvFilename("calendar"),
+      toCsv<CalendarEvent>(filteredEvents, [
+        { header: "Name", value: (e) => e.name },
+        { header: "Type", value: (e) => e.event_type },
+        { header: "Month", value: (e) => (e.month ? String(e.month) : "") },
+        { header: "Day", value: (e) => (e.day ? String(e.day) : "") },
+        { header: "Birth year", value: (e) => (e.birth_year ? String(e.birth_year) : "") },
+        { header: "Notes", value: (e) => e.notes ?? "" },
+        { header: "Created at", value: (e) => e.created_at },
       ]),
     );
 
@@ -103,14 +138,18 @@ const DashboardInner = () => {
     );
 
   const active = {
+    ideas: { count: filteredIdeas.length, loading: ideasLoading, onExport: exportIdeas },
     todos: { count: filteredTodos.length, loading: todosLoading, onExport: exportTodos },
     jots: { count: filteredJots.length, loading: ideasLoading, onExport: exportJots },
+    calendar: { count: filteredEvents.length, loading: eventsLoading, onExport: exportEvents },
     chats: { count: filteredChats.length, loading: chatsLoading, onExport: exportChats },
   }[tab];
 
   const exportAll = () => {
+    exportIdeas();
     exportTodos();
     exportJots();
+    exportEvents();
     exportChats();
   };
 
@@ -143,7 +182,8 @@ const DashboardInner = () => {
         </header>
 
         {/* Summary tiles */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-5">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-5">
+          <SummaryTile icon={Lightbulb} label="Ideas" value={`${allIdeas.length}`} hint="everything captured" />
           <SummaryTile
             icon={CheckSquare}
             label="To-dos"
@@ -151,6 +191,7 @@ const DashboardInner = () => {
             hint={`${todos.length} total`}
           />
           <SummaryTile icon={NotebookPen} label="Jots" value={`${jots.length}`} hint="typed notes" />
+          <SummaryTile icon={CalendarDays} label="Calendar" value={`${events.length}`} hint="saved events" />
           <SummaryTile
             icon={MessageSquare}
             label="Composer messages"
@@ -158,6 +199,7 @@ const DashboardInner = () => {
             hint="saved Asher threads"
           />
         </div>
+
 
         {/* Tabs + search + export */}
         <div className="flex flex-wrap items-center gap-2 mb-4">
@@ -218,6 +260,60 @@ const DashboardInner = () => {
                 {query ? "No matches for your search." : "Capture something and it shows up here."}
               </p>
             </div>
+          )}
+
+          {!active.loading && active.count > 0 && tab === "ideas" && (
+            <ul role="list" className="divide-y divide-white/10">
+              {filteredIdeas.map((i) => (
+                <li key={i.id} className="px-4 py-3">
+                  <div className="flex items-start gap-3">
+                    <div className="flex-1 min-w-0">
+                      <Link to="/" className="text-sm font-medium hover:underline break-words">
+                        {i.title}
+                      </Link>
+                      {(i.raw_note || i.ai_summary) && (
+                        <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                          {i.ai_summary ?? i.raw_note}
+                        </p>
+                      )}
+                      <p className="text-[11px] text-foreground/55 mt-1.5">
+                        {i.source_type}
+                        {i.tags.length > 0 && (
+                          <span className="text-primary/85"> · {i.tags.map((t) => `#${t}`).join(" ")}</span>
+                        )}
+                      </p>
+                    </div>
+                    <time className="text-[11px] text-muted-foreground whitespace-nowrap">
+                      {formatDate(i.created_at)}
+                    </time>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+
+          {!active.loading && active.count > 0 && tab === "calendar" && (
+            <ul role="list" className="divide-y divide-white/10">
+              {filteredEvents.map((e) => (
+                <li key={e.id} className="flex items-start gap-3 px-4 py-3">
+                  <span className="mt-0.5 shrink-0 text-[11px] px-2 py-0.5 rounded-full border border-white/20 text-foreground/70">
+                    {e.month && e.day ? `${e.month}/${e.day}` : e.event_type}
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium break-words">
+                      {e.emoji ? `${e.emoji} ` : ""}
+                      {e.name}
+                    </p>
+                    {e.notes && (
+                      <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{e.notes}</p>
+                    )}
+                  </div>
+                  <span className="text-[11px] text-muted-foreground whitespace-nowrap">
+                    {e.event_type.replace("_", " ")}
+                  </span>
+                </li>
+              ))}
+            </ul>
           )}
 
           {!active.loading && active.count > 0 && tab === "todos" && (

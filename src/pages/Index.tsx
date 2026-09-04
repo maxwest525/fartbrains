@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Search, X, Inbox, Folder, Star, Clock, CalendarDays, Settings as SettingsIcon, LogOut } from "lucide-react";
 import { MaterialIcon } from "@/components/ui/MaterialIcon";
 import { Input } from "@/components/ui/input";
@@ -21,6 +22,8 @@ import { DesktopScratchpad } from "@/components/app/DesktopScratchpad";
 import { TrashView } from "@/components/app/TrashView";
 import { OnboardingFlow } from "@/components/app/OnboardingFlow";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import Landing from "@/pages/Landing";
+import { hasEnteredVault, markEnteredVault } from "@/lib/entry";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useAuth } from "@/hooks/useAuth";
 import { useFolders } from "@/hooks/useFolders";
@@ -482,10 +485,40 @@ const Shell = () => {
   );
 };
 
-const Index = () => (
-  <ProtectedRoute>
-    <Shell />
-  </ProtectedRoute>
-);
+// First-time visitors get the landing page; anyone who has already been inside
+// goes straight to the vault. `?landing` forces the landing page, `?app` skips it.
+//
+// A signed-in customer always skips it, including on a device they have never
+// used before: showing someone a marketing page for a product they already pay
+// for is a bug, and the device-local marker alone cannot tell that case from a
+// genuine first visit.
+const Index = () => {
+  const [params, setParams] = useSearchParams();
+  const { user, loading } = useAuth();
+  const forceLanding = params.has("landing");
+  const forceApp = params.has("app");
+  const [entered, setEntered] = useState(() => forceApp || hasEnteredVault());
+
+  // Don't flash the landing page while the session is still resolving.
+  if (loading && !entered && !forceLanding) return null;
+
+  if (forceLanding || (!entered && !user)) {
+    return (
+      <Landing
+        onEnter={() => {
+          markEnteredVault();
+          setEntered(true);
+          if (forceLanding) setParams({}, { replace: true });
+        }}
+      />
+    );
+  }
+
+  return (
+    <ProtectedRoute>
+      <Shell />
+    </ProtectedRoute>
+  );
+};
 
 export default Index;

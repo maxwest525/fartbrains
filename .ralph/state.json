@@ -336,6 +336,24 @@
         "the generated mcp function is outside the shared CORS pinning",
         "recall_context pulls up to 300 rows including extracted_text"
       ]
+    },
+    {
+      "n": 16,
+      "task": "Merge main (landing page) and fix the landing gate it left inconsistent",
+      "evidence": [
+        "merge auto-resolved with no conflicts; CSP intact in index.html",
+        "signed-in users no longer see the landing page on an unfamiliar device",
+        "93 tests, tsc, build, eslint all pass"
+      ],
+      "files": [
+        "src/lib/entry.ts",
+        "src/pages/Index.tsx"
+      ],
+      "db_changes": "none",
+      "remaining_risks": [
+        "main flipped robots to index,follow \u2014 the WIP privacy/terms drafts are now publicly indexable",
+        "migrations still unapplied; PR #3 must merge and be applied before PR #1"
+      ]
     }
   ],
   "next": "Remaining P1s: durable capture jobs, Import Center, server-side search + pagination, semantic retrieval with citations, email verification enforcement, accessibility pass"
