@@ -43,6 +43,7 @@ const App = () => (
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/settings/instructions" element={<Instructions />} />
             <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="/settings/sync" element={<SyncAccount />} />
             <Route path="/.lovable/oauth/consent" element={<OAuthConsent />} />
 
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
