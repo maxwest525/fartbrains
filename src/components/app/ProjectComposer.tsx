@@ -73,7 +73,7 @@ export const ProjectComposer = ({ saving, onCreate }: Props) => {
         <Input
           value={name}
           onChange={(e) => setName(e.target.value)}
-          placeholder="e.g. TruMove launch"
+          placeholder="e.g. Spring launch"
           autoFocus
           className="h-14 rounded-2xl bg-secondary/60 border-transparent text-[18px] font-semibold px-4 placeholder:font-normal placeholder:text-muted-foreground/70"
         />

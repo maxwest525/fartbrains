@@ -35,7 +35,7 @@ type Props = {
 
 /**
  * Inside a folder, surface every project idea as a collapsible board grouped
- * by project (e.g., "TruMove") and then by deliverable type (Task, Buy, …).
+ * by project (e.g., "Spring launch") and then by deliverable type (Task, Buy, …).
  *
  * Reads/writes flow through `useUpdateIdea` so toggling a checkbox here stays
  * consistent with the ProjectBoard inside the idea detail view.
