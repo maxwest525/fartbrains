@@ -108,6 +108,12 @@ export function checkAudioLimits(
   return null;
 }
 
+function toBlobPart(bytes: Uint8Array): ArrayBuffer {
+  const copy = new ArrayBuffer(bytes.byteLength);
+  new Uint8Array(copy).set(bytes);
+  return copy;
+}
+
 async function callLovable(
   bytes: Uint8Array,
   mime: string,
@@ -115,7 +121,7 @@ async function callLovable(
   apiKey: string,
 ): Promise<string> {
   const fd = new FormData();
-  fd.append("file", new File([bytes], "audio", { type: mime }));
+  fd.append("file", new File([toBlobPart(bytes)], "audio", { type: mime }));
   fd.append("model", model);
 
   const resp = await fetch("https://ai.gateway.lovable.dev/v1/audio/transcriptions", {
@@ -140,7 +146,7 @@ async function callElevenLabs(
   apiKey: string,
 ): Promise<string> {
   const fd = new FormData();
-  fd.append("file", new Blob([bytes], { type: mime }), "audio");
+  fd.append("file", new Blob([toBlobPart(bytes)], { type: mime }), "audio");
   fd.append("model_id", model);
 
   const resp = await fetch("https://api.elevenlabs.io/v1/speech-to-text", {
