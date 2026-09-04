@@ -70,6 +70,7 @@ schema; the entries added by hand in this branch are a stand-in.
 | everything else | on or off | All AI routes authenticate in-function via `requireUser`; leaving `verify_jwt` on as well is fine and preferred. |
 
 ## Stripe checklist
+The full step-by-step lives in `docs/STRIPE_SETUP.md`. Summary:
 Test mode first, end to end, before touching live keys.
 - [ ] Product and price created; price id in `STRIPE_PRICE_ID_PRO`.
 - [ ] Webhook endpoint → `.../functions/v1/stripe-webhook`, subscribed to
@@ -95,7 +96,7 @@ Test mode first, end to end, before touching live keys.
 - [ ] Email confirmation required for signup.
 - [ ] Anonymous sign-ins **disabled** in Auth settings — the client no longer
       creates them, and disabling it server-side closes the door for good.
-- [ ] Daily schedule for `purge_expired_trash()`.
+- [x] Daily schedule for `purge_expired_trash()` — migration `20260904070000_schedule_trash_purge.sql`.
 
 ## Email checklist
 - [ ] Sending domain verified (SPF, DKIM, DMARC).

@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { AlertTriangle, ArrowLeft } from "lucide-react";
 
@@ -15,7 +15,19 @@ type Props = {
  * them without saying so would itself be a misleading claim. Remove the banner
  * only when a lawyer has signed the text off.
  */
-export const LegalPage = ({ title, lastUpdated, children }: Props) => (
+export const LegalPage = ({ title, lastUpdated, children }: Props) => {
+  // The site is indexable, but these drafts are not reviewed and must not be
+  // the version of our policy that search engines surface. Remove this once a
+  // lawyer has signed the text off — and remove the banner at the same time.
+  useEffect(() => {
+    const tag = document.createElement("meta");
+    tag.name = "robots";
+    tag.content = "noindex,nofollow";
+    document.head.appendChild(tag);
+    return () => { tag.remove(); };
+  }, []);
+
+  return (
   <main className="min-h-dvh bg-background text-foreground">
     <header className="border-b border-border/60 px-5 py-3 flex items-center gap-3">
       <Link to="/" className="text-sm text-primary inline-flex items-center gap-1.5">
@@ -55,4 +67,5 @@ export const LegalPage = ({ title, lastUpdated, children }: Props) => (
       </footer>
     </div>
   </main>
-);
+  );
+};

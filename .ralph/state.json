@@ -376,6 +376,29 @@
         "purge_expired_trash still needs a daily schedule",
         "Stripe test-mode lifecycle not run"
       ]
+    },
+    {
+      "n": 18,
+      "task": "Close the three remaining items that did not need the owner",
+      "evidence": [
+        "WIP legal drafts now noindex",
+        "purge_expired_trash scheduled nightly via pg_cron",
+        "two-account RLS test script covering 13 tables + the WITH CHECK hole",
+        "Stripe setup runbook",
+        "93 tests, build, lint pass"
+      ],
+      "files": [
+        "src/components/legal/LegalPage.tsx",
+        "supabase/migrations/20260904070000_schedule_trash_purge.sql",
+        "docs/rls-two-account-test.sql",
+        "docs/STRIPE_SETUP.md"
+      ],
+      "db_changes": "pg_cron schedule for purge_expired_trash \u2014 NOT APPLIED",
+      "remaining_risks": [
+        "edge functions still not deployed \u2014 merged code is not live",
+        "RLS test written but not executed",
+        "Stripe untouched"
+      ]
     }
   ],
   "next": "Remaining P1s: durable capture jobs, Import Center, server-side search + pagination, semantic retrieval with citations, email verification enforcement, accessibility pass"

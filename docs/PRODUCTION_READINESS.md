@@ -28,6 +28,7 @@
 - [ ] Semantic retrieval with citations, and grounded "not in your vault" answers.
 - [x] Hide phone auth until an SMS provider is configured and tested.
 - [x] Restrict CORS to production origins; add CSP (remaining response headers documented for the CDN).
+- [x] Trash retention is actually scheduled (nightly pg_cron job).
 - [~] Error monitoring and privacy-safe product analytics — error boundary and a content-safe analytics layer exist; no provider is wired.
 - [~] Production email sender-domain configuration — documented in `docs/DEPLOYMENT.md`, not verified.
 - [ ] Real automated coverage: auth, two-account RLS, capture, sharing, billing.
@@ -38,6 +39,13 @@
 - [ ] Offline capture queue, or stop implying offline support.
 - [ ] Electron hardening, or mark Beta and hide public install controls.
 - [ ] Clear the 29 lint errors.
+
+### Waiting on the owner (code and config are ready)
+- [ ] Deploy edge functions — `docs/DEPLOYMENT.md`. Until this runs, Supabase is
+      still serving the old functions: sharing, quotas, usage accounting and the
+      transcription rework are merged but not live.
+- [ ] Run `docs/rls-two-account-test.sql` with two real accounts.
+- [ ] Work through `docs/STRIPE_SETUP.md` in test mode.
 
 ### Deferred
 - Anything resembling teams, orgs, shared workspaces or collaboration.

@@ -70,6 +70,14 @@ enumeration, hidden private fields, owner preview, share of a deleted idea) · b
 failed payment, cancellation, resubscription, entitlements, export after
 cancellation) · import/export · responsive and keyboard-only UX.
 
+## Database security — script ready, not yet run
+`docs/rls-two-account-test.sql` covers, for two real accounts: cross-account
+reads on all 13 owner-scoped tables, cross-account update and delete, the
+`WITH CHECK` reassignment hole specifically, forging a row owned by another
+user, and a customer writing their own subscription status. It rolls back, and
+raises a named exception on the first breach. **Not yet executed** — it needs
+two real accounts and a live database.
+
 ## Manual / visual
 None recorded. This session has no browser; baseline screenshots at 320/390px,
 tablet, 1280/1440px and wide desktop remain outstanding.
