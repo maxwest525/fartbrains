@@ -35,12 +35,13 @@ const matches = (query: string, ...fields: Array<string | null | undefined>) => 
 
 const DashboardInner = () => {
   const navigate = useNavigate();
-  const [tab, setTab] = useState<TabKey>("todos");
+  const [tab, setTab] = useState<TabKey>("ideas");
   const [query, setQuery] = useState("");
 
   const { data: todos = [], isLoading: todosLoading } = useTodos();
   const { data: allIdeas = [], isLoading: ideasLoading } = useIdeas({ kind: "all" });
   const { data: chats = [], isLoading: chatsLoading } = useChatHistory();
+  const { data: events = [], isLoading: eventsLoading } = useCalendarEvents();
 
   // The dashboard is the one full-width surface in an otherwise phone-framed app.
   useEffect(() => {
@@ -53,13 +54,26 @@ const DashboardInner = () => {
     [allIdeas],
   );
 
+  const ideaMatches = (i: Idea) =>
+    matches(query, i.title, i.raw_note, i.ai_summary, i.tags.join(" "));
+
+  const filteredIdeas = useMemo(
+    () => allIdeas.filter(ideaMatches),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [allIdeas, query],
+  );
   const filteredTodos = useMemo(
     () => todos.filter((t) => matches(query, t.title)),
     [todos, query],
   );
   const filteredJots = useMemo(
-    () => jots.filter((i) => matches(query, i.title, i.raw_note, i.ai_summary, i.tags.join(" "))),
+    () => jots.filter(ideaMatches),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [jots, query],
+  );
+  const filteredEvents = useMemo(
+    () => events.filter((e) => matches(query, e.name, e.notes, e.event_type)),
+    [events, query],
   );
   const filteredChats = useMemo(
     () => chats.filter((c) => matches(query, c.content, c.idea_title)),
@@ -67,6 +81,21 @@ const DashboardInner = () => {
   );
 
   const openTodos = todos.filter((t) => !t.done).length;
+
+  const ideaColumns = [
+    { header: "Title", value: (i: Idea) => i.title },
+    { header: "Source", value: (i: Idea) => i.source_type },
+    { header: "Note", value: (i: Idea) => i.raw_note ?? "" },
+    { header: "Summary", value: (i: Idea) => i.ai_summary ?? "" },
+    { header: "Tags", value: (i: Idea) => i.tags.join("; ") },
+    { header: "Priority", value: (i: Idea) => i.priority },
+    { header: "Favorite", value: (i: Idea) => (i.is_favorite ? "yes" : "no") },
+    { header: "Created at", value: (i: Idea) => i.created_at },
+    { header: "Updated at", value: (i: Idea) => i.updated_at },
+  ];
+
+  const exportIdeas = () =>
+    downloadCsv(csvFilename("ideas"), toCsv<Idea>(filteredIdeas, ideaColumns));
 
   const exportTodos = () =>
     downloadCsv(
@@ -81,17 +110,19 @@ const DashboardInner = () => {
     );
 
   const exportJots = () =>
+    downloadCsv(csvFilename("jots"), toCsv<Idea>(filteredJots, ideaColumns));
+
+  const exportEvents = () =>
     downloadCsv(
-      csvFilename("jots"),
-      toCsv<Idea>(filteredJots, [
-        { header: "Title", value: (i) => i.title },
-        { header: "Note", value: (i) => i.raw_note ?? "" },
-        { header: "Summary", value: (i) => i.ai_summary ?? "" },
-        { header: "Tags", value: (i) => i.tags.join("; ") },
-        { header: "Priority", value: (i) => i.priority },
-        { header: "Favorite", value: (i) => (i.is_favorite ? "yes" : "no") },
-        { header: "Created at", value: (i) => i.created_at },
-        { header: "Updated at", value: (i) => i.updated_at },
+      csvFilename("calendar"),
+      toCsv<CalendarEvent>(filteredEvents, [
+        { header: "Name", value: (e) => e.name },
+        { header: "Type", value: (e) => e.event_type },
+        { header: "Month", value: (e) => (e.month ? String(e.month) : "") },
+        { header: "Day", value: (e) => (e.day ? String(e.day) : "") },
+        { header: "Birth year", value: (e) => (e.birth_year ? String(e.birth_year) : "") },
+        { header: "Notes", value: (e) => e.notes ?? "" },
+        { header: "Created at", value: (e) => e.created_at },
       ]),
     );
 
@@ -107,14 +138,18 @@ const DashboardInner = () => {
     );
 
   const active = {
+    ideas: { count: filteredIdeas.length, loading: ideasLoading, onExport: exportIdeas },
     todos: { count: filteredTodos.length, loading: todosLoading, onExport: exportTodos },
     jots: { count: filteredJots.length, loading: ideasLoading, onExport: exportJots },
+    calendar: { count: filteredEvents.length, loading: eventsLoading, onExport: exportEvents },
     chats: { count: filteredChats.length, loading: chatsLoading, onExport: exportChats },
   }[tab];
 
   const exportAll = () => {
+    exportIdeas();
     exportTodos();
     exportJots();
+    exportEvents();
     exportChats();
   };
 
