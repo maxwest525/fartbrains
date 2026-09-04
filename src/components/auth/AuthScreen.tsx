@@ -40,6 +40,22 @@ export const AuthScreen = () => {
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
 
+  // Honor a ?next= redirect (used by the MCP OAuth consent flow) once signed in.
+  useEffect(() => {
+    const raw = new URLSearchParams(window.location.search).get("next");
+    const next = raw && raw.startsWith("/") && !raw.startsWith("//") ? raw : null;
+    if (!next) return;
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_e, session) => {
+      if (session) window.location.replace(next);
+    });
+    void supabase.auth.getSession().then(({ data }) => {
+      if (data.session) window.location.replace(next);
+    });
+    return () => subscription.unsubscribe();
+  }, []);
+
+
+
   // Prefill last-used identifier so returning users can jump straight to password/PIN.
   const [rememberedEmail, setRememberedEmail] = useState<string | null>(null);
   const [rememberedPhone, setRememberedPhone] = useState<string | null>(null);
