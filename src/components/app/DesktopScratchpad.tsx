@@ -86,7 +86,6 @@ export const DesktopScratchpad = () => {
     setRatio(clamp(readNumber(RATIO_KEY, 0.5), MIN_RATIO, MAX_RATIO));
     setTodoOpen(readBool(TODO_OPEN_KEY, true));
     setJotOpen(readBool(JOT_OPEN_KEY, true));
-    try { setNote(localStorage.getItem(DRAFT_KEY) ?? ""); } catch { /* ignore */ }
     setHydrated(true);
   }, []);
 
@@ -101,12 +100,6 @@ export const DesktopScratchpad = () => {
       localStorage.setItem(JOT_OPEN_KEY, jotOpen ? "1" : "0");
     } catch { /* ignore */ }
   }, [hydrated, open, width, ratio, todoOpen, jotOpen]);
-
-  // Keep the scratchpad draft across reloads so nothing is ever lost.
-  useEffect(() => {
-    if (!hydrated) return;
-    try { localStorage.setItem(DRAFT_KEY, note); } catch { /* ignore */ }
-  }, [hydrated, note]);
 
   // Reserve space so the phone frame slides left instead of sitting underneath.
   useEffect(() => {
