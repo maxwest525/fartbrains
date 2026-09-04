@@ -9,6 +9,7 @@ import { DesktopWindowControls } from "@/components/app/DesktopWindowControls";
 import { InstallAppPrompt } from "@/components/app/InstallAppPrompt";
 import Index from "./pages/Index.tsx";
 import Auth from "./pages/Auth.tsx";
+import Landing from "./pages/Landing.tsx";
 
 import Unsubscribe from "./pages/Unsubscribe.tsx";
 import PromptRules from "./pages/PromptRules.tsx";
@@ -33,6 +34,7 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/home" element={<Navigate to="/" replace />} />
             <Route path="/auth" element={<Auth />} />
+            <Route path="/landing" element={<Landing />} />
 
             <Route path="/unsubscribe" element={<Unsubscribe />} />
             <Route path="/settings/prompt-rules" element={<PromptRules />} />
