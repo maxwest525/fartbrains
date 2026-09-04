@@ -52,7 +52,7 @@ const Shell = () => {
   const [searchValue, setSearchValue] = useState("");
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [capture, setCapture] = useState<
-    | { kind: "url"; url: string }
+    | { kind: "url"; url: string; note?: string }
     | null
   >(null);
   const isMobile = useIsMobile();
@@ -71,6 +71,20 @@ const Shell = () => {
     const ideaParam = params.get("idea");
     if (ideaParam) {
       setSelectedId(ideaParam);
+    }
+
+    // ?capture=<url> opens the URL capture screen already filled in. This is
+    // how a share from the OS share sheet arrives: /share parses whatever the
+    // sharing app sent and redirects here. Stripping the params afterwards
+    // stops a refresh from reopening a capture the user already dismissed.
+    const captureParam = params.get("capture");
+    if (captureParam) {
+      setCapture({ kind: "url", url: captureParam, note: params.get("note") ?? undefined });
+      const cleaned = new URLSearchParams(window.location.search);
+      cleaned.delete("capture");
+      cleaned.delete("note");
+      const qs = cleaned.toString();
+      window.history.replaceState({}, "", qs ? `${window.location.pathname}?${qs}` : window.location.pathname);
     }
   }, []);
 
@@ -472,6 +486,7 @@ const Shell = () => {
       {capture?.kind === "url" && (
         <UrlCaptureScreen
           defaultUrl={capture.url}
+          defaultNote={capture.note}
           defaultFolderId={defaultFolderId}
           onBack={() => setCapture(null)}
           onCreated={(id) => {
