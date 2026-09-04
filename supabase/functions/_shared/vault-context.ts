@@ -141,3 +141,82 @@ export function renderVaultContext(hits: VaultHit[]): string {
     ),
   ].join("\n");
 }
+
+/* ------------------------------------------------------------------ *
+ * Operational context: todos + calendar events.
+ * Asher needs these to answer "what's on my list" style questions, so
+ * they are always attached (small, bounded) rather than keyword-scored.
+ * ------------------------------------------------------------------ */
+
+export type OperationalContext = {
+  todos: Array<{ title: string; done: boolean; due_at: string | null }>;
+  events: Array<{ name: string; event_type: string; month: number | null; day: number | null; notes: string | null }>;
+};
+
+export async function retrieveOperationalContext(userId: string): Promise<OperationalContext> {
+  const empty: OperationalContext = { todos: [], events: [] };
+  try {
+    const client = svc();
+    const [todoRes, eventRes] = await Promise.all([
+      client
+        .from("todos")
+        .select("title, done, due_at, created_at")
+        .eq("user_id", userId)
+        .order("done", { ascending: true })
+        .order("created_at", { ascending: false })
+        .limit(40),
+      client
+        .from("calendar_events")
+        .select("name, event_type, month, day, notes")
+        .eq("user_id", userId)
+        .limit(40),
+    ]);
+    return {
+      todos: (todoRes.data ?? []).map((t) => ({
+        title: String(t.title ?? ""),
+        done: Boolean(t.done),
+        due_at: (t.due_at as string | null) ?? null,
+      })),
+      events: (eventRes.data ?? []).map((e) => ({
+        name: String(e.name ?? ""),
+        event_type: String(e.event_type ?? "custom"),
+        month: (e.month as number | null) ?? null,
+        day: (e.day as number | null) ?? null,
+        notes: (e.notes as string | null) ?? null,
+      })),
+    };
+  } catch (_e) {
+    return empty;
+  }
+}
+
+export function renderOperationalContext(ctx: OperationalContext): string {
+  const blocks: string[] = [];
+  if (ctx.todos.length > 0) {
+    const open = ctx.todos.filter((t) => !t.done);
+    const done = ctx.todos.filter((t) => t.done).slice(0, 10);
+    blocks.push(
+      [
+        "## The user's to-do list (live)",
+        open.length
+          ? open.map((t) => `- [ ] ${t.title}${t.due_at ? ` (due ${t.due_at})` : ""}`).join("\n")
+          : "- (nothing open)",
+        done.length ? `Recently completed: ${done.map((t) => t.title).join("; ")}` : "",
+      ]
+        .filter(Boolean)
+        .join("\n"),
+    );
+  }
+  if (ctx.events.length > 0) {
+    blocks.push(
+      [
+        "## The user's calendar events",
+        ...ctx.events.map(
+          (e) =>
+            `- ${e.name} (${e.event_type}${e.month && e.day ? `, ${e.month}/${e.day}` : ""})${e.notes ? ` — ${e.notes}` : ""}`,
+        ),
+      ].join("\n"),
+    );
+  }
+  return blocks.join("\n\n");
+}
