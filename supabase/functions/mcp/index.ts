@@ -120,6 +120,43 @@ import { defineTool as defineTool2 } from "npm:@lovable.dev/mcp-js@1.0.0";
 import { z as z2 } from "npm:zod@^3.25.76";
 var CONTEXT_LIMIT = 6;
 var CONTEXT_CHARS_EACH = 900;
+var STOPWORDS = /* @__PURE__ */ new Set([
+  "a",
+  "an",
+  "and",
+  "are",
+  "as",
+  "at",
+  "be",
+  "by",
+  "for",
+  "from",
+  "how",
+  "in",
+  "into",
+  "is",
+  "it",
+  "of",
+  "on",
+  "or",
+  "that",
+  "the",
+  "this",
+  "to",
+  "using",
+  "what",
+  "when",
+  "why",
+  "with",
+  "your"
+]);
+function titleTerms(title, max = 6) {
+  return [
+    ...new Set(
+      title.toLowerCase().replace(/[^a-z0-9\s]/g, " ").split(/\s+/).filter((w) => w.length > 2 && !STOPWORDS.has(w))
+    )
+  ].slice(0, max);
+}
 function renderContext(rows) {
   return rows.map((r) => {
     const body = (r.ai_summary ?? r.raw_note ?? "").trim().slice(0, CONTEXT_CHARS_EACH);
@@ -166,6 +203,17 @@ var build_prompt_default = defineTool2({
         if (neighbours.length === 0 && data.tags?.length) {
           const { data: rows } = await base().overlaps("tags", data.tags);
           neighbours = rows ?? [];
+        }
+        if (neighbours.length === 0) {
+          const terms2 = titleTerms(data.title);
+          if (terms2.length) {
+            const { data: rows } = await base().textSearch(
+              "search_vector",
+              terms2.join(" OR "),
+              { type: "websearch" }
+            );
+            neighbours = rows ?? [];
+          }
         }
       }
       const note = [data.raw_note ?? "", goal ? `Goal: ${goal}` : ""].filter(Boolean).join("\n\n");

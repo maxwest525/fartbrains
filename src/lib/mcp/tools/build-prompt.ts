@@ -22,8 +22,14 @@ import {
  *
  * Retrieval is what separates this from a summarizer. A brief built from one
  * reel in isolation ignores everything the user already decided; we pull the
- * neighbouring material — same folder first, then shared tags — so the brief
- * continues their thinking instead of restarting it.
+ * neighbouring material so the brief continues their thinking.
+ *
+ * Three strategies, in order of how much they reflect the user's own judgement:
+ * the folder they filed it in, then tags they applied, then full-text search on
+ * the idea's own title. The third matters more than it looks: filing and
+ * tagging are chores, so a large share of any real vault is loose — and loose
+ * brain-dump material is the part most in need of being connected to
+ * something. Without it, that share would get no context at all.
  */
 
 /** How many neighbouring ideas to feed in as continuity context. */
@@ -38,6 +44,28 @@ type Neighbour = {
   raw_note: string | null;
   tags: string[] | null;
 };
+
+/**
+ * Words from a title worth searching on. Drops the connective tissue that would
+ * match half the vault, and anything too short to be a real term.
+ */
+const STOPWORDS = new Set([
+  "a", "an", "and", "are", "as", "at", "be", "by", "for", "from", "how", "in",
+  "into", "is", "it", "of", "on", "or", "that", "the", "this", "to", "using",
+  "what", "when", "why", "with", "your",
+]);
+
+export function titleTerms(title: string, max = 6): string[] {
+  return [
+    ...new Set(
+      title
+        .toLowerCase()
+        .replace(/[^a-z0-9\s]/g, " ")
+        .split(/\s+/)
+        .filter((w) => w.length > 2 && !STOPWORDS.has(w)),
+    ),
+  ].slice(0, max);
+}
 
 function renderContext(rows: Neighbour[]): string {
   return rows
@@ -129,6 +157,20 @@ export default defineTool({
         if (neighbours.length === 0 && data.tags?.length) {
           const { data: rows } = await base().overlaps("tags", data.tags);
           neighbours = rows ?? [];
+        }
+        if (neighbours.length === 0) {
+          // Unfiled and untagged: fall back to the full-text index, using the
+          // idea's own title as the query. OR rather than AND, because an exact
+          // multi-word match would be rarer than no match at all.
+          const terms = titleTerms(data.title);
+          if (terms.length) {
+            const { data: rows } = await base().textSearch(
+              "search_vector",
+              terms.join(" OR "),
+              { type: "websearch" },
+            );
+            neighbours = rows ?? [];
+          }
         }
       }
 
