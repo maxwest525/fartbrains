@@ -146,7 +146,7 @@ async function callElevenLabs(
   apiKey: string,
 ): Promise<string> {
   const fd = new FormData();
-  fd.append("file", new Blob([bytes], { type: mime }), "audio");
+  fd.append("file", new Blob([toBlobPart(bytes)], { type: mime }), "audio");
   fd.append("model_id", model);
 
   const resp = await fetch("https://api.elevenlabs.io/v1/speech-to-text", {
