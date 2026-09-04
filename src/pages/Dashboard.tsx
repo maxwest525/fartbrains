@@ -262,6 +262,60 @@ const DashboardInner = () => {
             </div>
           )}
 
+          {!active.loading && active.count > 0 && tab === "ideas" && (
+            <ul role="list" className="divide-y divide-white/10">
+              {filteredIdeas.map((i) => (
+                <li key={i.id} className="px-4 py-3">
+                  <div className="flex items-start gap-3">
+                    <div className="flex-1 min-w-0">
+                      <Link to="/" className="text-sm font-medium hover:underline break-words">
+                        {i.title}
+                      </Link>
+                      {(i.raw_note || i.ai_summary) && (
+                        <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                          {i.ai_summary ?? i.raw_note}
+                        </p>
+                      )}
+                      <p className="text-[11px] text-foreground/55 mt-1.5">
+                        {i.source_type}
+                        {i.tags.length > 0 && (
+                          <span className="text-primary/85"> · {i.tags.map((t) => `#${t}`).join(" ")}</span>
+                        )}
+                      </p>
+                    </div>
+                    <time className="text-[11px] text-muted-foreground whitespace-nowrap">
+                      {formatDate(i.created_at)}
+                    </time>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+
+          {!active.loading && active.count > 0 && tab === "calendar" && (
+            <ul role="list" className="divide-y divide-white/10">
+              {filteredEvents.map((e) => (
+                <li key={e.id} className="flex items-start gap-3 px-4 py-3">
+                  <span className="mt-0.5 shrink-0 text-[11px] px-2 py-0.5 rounded-full border border-white/20 text-foreground/70">
+                    {e.month && e.day ? `${e.month}/${e.day}` : e.event_type}
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium break-words">
+                      {e.emoji ? `${e.emoji} ` : ""}
+                      {e.name}
+                    </p>
+                    {e.notes && (
+                      <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{e.notes}</p>
+                    )}
+                  </div>
+                  <span className="text-[11px] text-muted-foreground whitespace-nowrap">
+                    {e.event_type.replace("_", " ")}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+
           {!active.loading && active.count > 0 && tab === "todos" && (
             <ul role="list" className="divide-y divide-white/10">
               {filteredTodos.map((t) => (
