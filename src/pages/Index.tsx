@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Search, X, Inbox, Folder, Star, Clock, CalendarDays, Settings as SettingsIcon, LogOut } from "lucide-react";
 import { MaterialIcon } from "@/components/ui/MaterialIcon";
 import { Input } from "@/components/ui/input";
@@ -19,6 +20,8 @@ import { AlarmOverlay } from "@/components/app/AlarmOverlay";
 import { AshDock } from "@/components/app/AshDock";
 import { DesktopScratchpad } from "@/components/app/DesktopScratchpad";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import Landing from "@/pages/Landing";
+import { hasEnteredVault, markEnteredVault } from "@/lib/entry";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useAuth } from "@/hooks/useAuth";
 import { useFolders } from "@/hooks/useFolders";
@@ -446,10 +449,32 @@ const Shell = () => {
   );
 };
 
-const Index = () => (
-  <ProtectedRoute>
-    <Shell />
-  </ProtectedRoute>
-);
+// First-time visitors on this device get the landing page; anyone who has
+// already been inside goes straight to the vault. `?landing` forces the
+// landing page, `?app` skips it.
+const Index = () => {
+  const [params, setParams] = useSearchParams();
+  const forceLanding = params.has("landing");
+  const forceApp = params.has("app");
+  const [entered, setEntered] = useState(() => forceApp || hasEnteredVault());
+
+  if (forceLanding || !entered) {
+    return (
+      <Landing
+        onEnter={() => {
+          markEnteredVault();
+          setEntered(true);
+          if (forceLanding) setParams({}, { replace: true });
+        }}
+      />
+    );
+  }
+
+  return (
+    <ProtectedRoute>
+      <Shell />
+    </ProtectedRoute>
+  );
+};
 
 export default Index;

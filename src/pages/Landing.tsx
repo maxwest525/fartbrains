@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Link } from "react-router-dom";
 
 /* ------------------------------------------------------------------ *
  * Fart Brains — landing page.
@@ -378,7 +377,7 @@ const FEATURES = [
   },
 ];
 
-const Landing = () => {
+const Landing = ({ onEnter }: { onEnter?: () => void }) => {
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
@@ -412,9 +411,9 @@ const Landing = () => {
           <a href="#features">Features</a>
           <a href="#faq">FAQ</a>
         </nav>
-        <Link to="/auth" className="fb-btn fb-btn--sm">
+        <button type="button" className="fb-btn fb-btn--sm" onClick={onEnter}>
           Open the vault
-        </Link>
+        </button>
       </header>
 
       <main id="top">
@@ -441,10 +440,10 @@ const Landing = () => {
             </p>
 
             <div className="fb-cta-row">
-              <Link to="/auth" className="fb-btn">
+              <button type="button" className="fb-btn" onClick={onEnter}>
                 Start hoarding ideas
                 <span aria-hidden="true">→</span>
-              </Link>
+              </button>
               <a href="#how" className="fb-btn fb-btn--ghost">
                 See it work
               </a>
@@ -587,10 +586,10 @@ const Landing = () => {
               The vault takes about eleven seconds to set up and then quietly saves you
               from yourself forever.
             </p>
-            <Link to="/auth" className="fb-btn fb-btn--lg">
+            <button type="button" className="fb-btn fb-btn--lg" onClick={onEnter}>
               Open the vault
               <span aria-hidden="true">→</span>
-            </Link>
+            </button>
           </Reveal>
         </section>
       </main>
@@ -598,7 +597,9 @@ const Landing = () => {
       <footer className="fb-footer">
         <span>Fart Brains — a private idea vault.</span>
         <span className="fb-footer-links">
-          <Link to="/auth">Sign in</Link>
+          <button type="button" className="fb-footer-btn" onClick={onEnter}>
+            Open the vault
+          </button>
           <a href="#top">Back to top</a>
         </span>
       </footer>
@@ -664,6 +665,7 @@ const CSS = `
 
 /* buttons */
 .fb-btn {
+  font: inherit; cursor: pointer;
   display: inline-flex; align-items: center; gap: 8px;
   padding: 13px 22px; border-radius: 999px;
   font-size: 15px; font-weight: 600; white-space: nowrap;
@@ -905,5 +907,6 @@ const CSS = `
   font-size: 13.5px; color: #71717a;
 }
 .fb-footer-links { display: flex; gap: 20px; }
-.fb-footer-links a:hover { color: var(--ink); }
+.fb-footer-links a:hover, .fb-footer-btn:hover { color: var(--ink); }
+.fb-footer-btn { font: inherit; cursor: pointer; background: none; border: 0; color: inherit; padding: 0; }
 `;
