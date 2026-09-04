@@ -108,6 +108,12 @@ export function checkAudioLimits(
   return null;
 }
 
+function toBlobPart(bytes: Uint8Array): ArrayBuffer {
+  const copy = new ArrayBuffer(bytes.byteLength);
+  new Uint8Array(copy).set(bytes);
+  return copy;
+}
+
 async function callLovable(
   bytes: Uint8Array,
   mime: string,
