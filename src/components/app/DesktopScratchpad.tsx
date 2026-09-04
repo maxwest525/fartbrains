@@ -56,7 +56,8 @@ export const DesktopScratchpad = () => {
   const [todoOpen, setTodoOpen] = useState(true);
   const [jotOpen, setJotOpen] = useState(true);
   const [todoDraft, setTodoDraft] = useState("");
-  const [note, setNote] = useState("");
+  // Jot draft lives on the account so it follows phone <-> desktop.
+  const { value: note, setValue: setNote } = useSyncedDraft("jot", DRAFT_KEY);
   const columnRef = useRef<HTMLDivElement>(null);
 
   const { data: todos = [], isLoading } = useTodos();
