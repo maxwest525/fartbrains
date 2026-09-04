@@ -22,9 +22,8 @@
 --
 -- BUILD TIME vs RUN TIME
 --   Writing these rows is build-time work: ingest, checksum, chunk, embed,
---   compile. It runs in a local runner, CI, or a scheduled job — wherever the
---   source actually lives, which for a customer's folder or repo is their own
---   machine. Nothing here needs an always-on server.
+--   compile. It runs on our own server, off the request path. A subscriber
+--   installs nothing — repos are reached by OAuth and cloned server-side.
 --   Reading them is run time: retrieval over chunks, cheap and request-shaped.
 --   That split is why the writer is the service role and the reader is the
 --   customer's own RLS-scoped session.
@@ -179,7 +178,7 @@ CREATE POLICY "Users read own evidence spans" ON public.evidence_spans
   FOR SELECT TO authenticated USING (auth.uid() = user_id);
 
 -- Sources, versions, chunks and spans are READ-ONLY to the customer's session:
--- they are produced at build time by the runner, through the service role. An
+-- they are produced at build time by our runner, through the service role. An
 -- immutable source a browser can UPDATE is not immutable. `projects` is
 -- writable, because attaching and naming a project is a run-time action.
 

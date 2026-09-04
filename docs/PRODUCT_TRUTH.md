@@ -66,6 +66,22 @@ tenant today, so read those sections as describing one person's own review loop
 until we decide otherwise.
 
 **Build time and run time are different systems.** Ingest, chunk, embed, compile
-and scan happen wherever the source lives — a local runner or CI, including the
-customer's own machine for a folder or repo. Postgres holds canonical state. Run
-time is retrieval and the Composer, and stays request-shaped.
+and scan run on our own server, off the request path. Postgres holds canonical
+state. Run time is retrieval and the Composer, and stays request-shaped.
+
+## How a subscriber connects
+They subscribe, do their own setup, and are told to point their existing AI
+session at our MCP endpoint. That is the whole integration.
+
+**Their agent already has their filesystem.** It is running on their machine, in
+their project. We never reach for it, clone it, or ask them to install anything
+of ours — we expose one endpoint and their agent brings the local context.
+
+This is why the differentiator holds. The alternative is a pile of plugins and
+MCP servers each injecting unaudited code into someone's machine; we are one
+governed endpoint they point at.
+
+It also sets the direction of flow: local project material comes **in through
+the MCP write tools**, pushed by their agent, rather than out through an
+ingester of ours. Our own build-time work — chunk, embed, compile — runs on our
+server against what has arrived.

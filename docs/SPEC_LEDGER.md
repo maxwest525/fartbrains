@@ -34,11 +34,12 @@ Legend: ✅ done · 🟡 partial · ❌ absent · n/a not applicable
 
 | Capability | In repo | Tests pass | Provider configured | Live execution verified | Auth'd UI verified | Evidence / notes |
 |---|:--:|:--:|:--:|:--:|:--:|---|
-| Governed tool gateway — list/describe/execute | 🟡 | ❌ | ✅ | ✅ | n/a | MCP server, 20 tools, OAuth, RLS-scoped, AI tools inherit the quota guard. **Missing the three-operation shape**: all 20 schemas are exposed at once rather than list → describe → execute |
+| Governed tool gateway — list/describe/execute | 🟡 | ❌ | ✅ | ✅ | n/a | MCP server, 20 tools, OAuth, RLS-scoped, AI tools inherit the quota guard. **This is the product's entire integration surface** — a subscriber points their session at it and their agent does the rest. **Missing the three-operation shape**: all 20 schemas are exposed at once rather than list → describe → execute, which is the thing we criticise other servers for |
+| MCP write path carries project + source context | ❌ | ❌ | ✅ | ❌ | n/a | `create_idea` / `capture_url` write mutable rows with no project, source or version. For an agent pushing repo material up, they need to write a `source_version` scoped to a `project` |
 | Workspace scoping before ranking | ✅ | ✅ | ✅ | ✅ | ✅ | RLS on every user-owned table; verified two-account |
 | Credentials server-side only | ✅ | ❌ | ✅ | ✅ | n/a | No service-role key in client or MCP path |
 | Cost + context controls (§18) | 🟡 | ✅ | ✅ | ✅ | ❌ | `ai-guard`: model, input cap, retries, timeout, per-plan quotas, spend accounting, refunds. **Missing:** declared max output tokens, tool-call ceiling, explicit fallback policy |
-| Build-time runner (§16.4) | ❌ | ❌ | ❌ | ❌ | n/a | Everything happens inside request handlers today. Ingest / chunk / embed / compile / scan are **build-time** work and belong in a local runner or CI — not an always-on server, and not a request handler. A cloud-only design also cannot scan a customer's local folder, so the runner is required by the product, not just by scale |
+| Build-time runner (§16.4) | 🟡 | ❌ | ❌ | ❌ | n/a | Everything happens inside request handlers today. Ingest / chunk / embed / compile / scan are **build-time** work and belong on our own server. `jobs` (migration `20260904150000`) defines the durable lease-based queue; the runner that consumes it does not exist yet |
 | Model gateway = LiteLLM → OpenRouter (§16.1) | ❌ | n/a | ❌ | ❌ | n/a | **Documented deviation.** All 12 chat call sites hardcode `ai.gateway.lovable.dev`. `_shared/stt.ts` is already provider-configurable and shows the pattern |
 | Object storage for immutable bodies | ❌ | ❌ | ❌ | ❌ | n/a | Bodies live in Postgres text columns |
 | Honesty ledger | ✅ | n/a | n/a | ✅ | n/a | This file and `FEATURE_AUDIT.md` |
@@ -58,14 +59,15 @@ passing review.
 
 ### Build time vs run time
 Most of what is missing is build-time work — ingest, checksum, chunk, embed,
-compile, scan — and it runs wherever the source lives. For a customer's folder
-or repo, that is their own machine, which makes a local runner a product
-requirement rather than an optimisation. Postgres holds canonical state; the
-runner produces it.
+compile, scan. It runs on our own server, off the request path.
 
-Run time stays small and request-shaped: retrieval over chunks, plus the
-Composer. That split is what keeps serverless viable for the parts that stay
-serverless.
+The subscriber installs nothing: they point their existing AI session at our MCP
+endpoint, and their agent — already running in their project, with their
+filesystem — pushes what matters up through the MCP write tools. We do not reach
+into their machine. Our build-time work operates on what has arrived.
+
+Postgres holds canonical state; the runner produces it. Run time stays small and
+request-shaped: retrieval over chunks, plus the Composer.
 
 ### The dependency that orders everything
 `source` / `source_version` (§3.1) is load-bearing. Evidence spans, provenance,
