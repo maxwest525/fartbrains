@@ -1,0 +1,712 @@
+{
+  "version": 1,
+  "sdk_version": "1.0.0",
+  "path": "/mcp",
+  "auth": {
+    "type": "oauth",
+    "issuer": "https://uwuhfvhqnpozhndrabwl.supabase.co/auth/v1",
+    "accepted_audiences": [
+      "authenticated"
+    ]
+  },
+  "mcp": {
+    "server": {
+      "name": "fartbrains-app",
+      "version": "0.1.0",
+      "title": "Fartbrains.app"
+    },
+    "tools": [
+      {
+        "name": "whoami",
+        "title": "Who am I",
+        "description": "Confirm which vault account this connection is acting as, plus a quick size summary of the vault. Useful for verifying the connection works.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {}
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "get_instructions",
+        "title": "Get personal instructions",
+        "description": "Read the user's standing personal instructions for how their second brain should behave (general style, capture, summarizing, tagging, organizing). Call this first in a new session and follow the rules it returns.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {}
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "recall_context",
+        "title": "Recall second-brain context",
+        "description": "The main second-brain retrieval tool. Given a question or topic, returns the user's personal instructions plus the most relevant saved ideas as ranked snippets with the reason each was picked. Call this before answering questions that depend on what the user already knows or decided.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "query": {
+              "type": "string",
+              "minLength": 2,
+              "description": "The question or topic you need the user's own context for."
+            },
+            "limit": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 15,
+              "description": "Max snippets, default 6."
+            }
+          },
+          "required": [
+            "query"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "search_ideas",
+        "title": "Search ideas",
+        "description": "Search the signed-in user's second brain for saved ideas and notes. Matches title, note body, summary and extracted text. Use this before answering anything about what the user has already captured.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "query": {
+              "type": "string",
+              "description": "Free-text search. Omit to list the most recent ideas."
+            },
+            "folder_id": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Restrict results to one folder."
+            },
+            "tag": {
+              "type": "string",
+              "description": "Restrict results to ideas carrying this tag."
+            },
+            "favorites_only": {
+              "type": "boolean",
+              "description": "Only return favorited ideas."
+            },
+            "limit": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 50,
+              "description": "Max results, default 15."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "get_idea",
+        "title": "Get idea",
+        "description": "Read one saved idea in full: note body, AI summary, extracted source text, generated prompt, tags, folder and linked references.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "idea_id": {
+              "type": "string",
+              "format": "uuid",
+              "description": "The idea id."
+            },
+            "include_references": {
+              "type": "boolean",
+              "description": "Also return auto-extracted reference links. Default true."
+            }
+          },
+          "required": [
+            "idea_id"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "create_idea",
+        "title": "Create idea",
+        "description": "Save a new idea, note or captured text into the user's second brain. Use this whenever the user wants something remembered.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "title": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200,
+              "description": "Short title for the idea."
+            },
+            "note": {
+              "type": "string",
+              "description": "The note body / raw text to store verbatim."
+            },
+            "summary": {
+              "type": "string",
+              "description": "Optional summary of the note."
+            },
+            "folder_id": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Folder to file it under."
+            },
+            "tags": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              },
+              "maxItems": 12,
+              "description": "Tags for retrieval."
+            },
+            "source_url": {
+              "type": "string",
+              "format": "uri",
+              "description": "Where the idea came from, if any."
+            },
+            "source_type": {
+              "type": "string",
+              "enum": [
+                "manual",
+                "webpage",
+                "transcript",
+                "audio",
+                "youtube",
+                "instagram",
+                "tiktok"
+              ],
+              "description": "Capture path. Default manual."
+            },
+            "priority": {
+              "type": "string",
+              "enum": [
+                "none",
+                "low",
+                "medium",
+                "high"
+              ]
+            },
+            "is_favorite": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "title"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "update_idea",
+        "title": "Update idea",
+        "description": "Edit an existing idea: retitle it, rewrite the note, set the summary or generated prompt, move folders, change tags, priority or favorite state. Only the fields you pass change.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "idea_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "title": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            },
+            "note": {
+              "type": "string",
+              "description": "Replaces raw_note."
+            },
+            "summary": {
+              "type": "string"
+            },
+            "generated_prompt": {
+              "type": "string",
+              "description": "Reusable AI prompt derived from the idea."
+            },
+            "folder_id": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "tags": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              },
+              "maxItems": 12
+            },
+            "priority": {
+              "type": "string",
+              "enum": [
+                "none",
+                "low",
+                "medium",
+                "high"
+              ]
+            },
+            "is_favorite": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "idea_id"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "delete_idea",
+        "title": "Delete idea",
+        "description": "Permanently delete one idea from the user's vault. Confirm with the user before calling this.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "idea_id": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "required": [
+            "idea_id"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "capture_url",
+        "title": "Capture a URL",
+        "description": "Fetch a web page, extract its readable text, summarize it, and save the result as an idea in the vault. Use this when the user shares a link they want kept.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "openWorldHint": true
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "url": {
+              "type": "string",
+              "format": "uri",
+              "description": "Public http(s) URL to capture."
+            },
+            "folder_id": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Folder to file the capture under."
+            },
+            "note": {
+              "type": "string",
+              "maxLength": 2000,
+              "description": "The user's own note about why this matters."
+            },
+            "save": {
+              "type": "boolean",
+              "description": "Save to the vault. Default true; pass false to preview only."
+            }
+          },
+          "required": [
+            "url"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "summarize_text",
+        "title": "Summarize text",
+        "description": "Summarize a transcript or long passage using the user's own summarizing rules. Returns the summary and a suggested title without saving anything.",
+        "annotations": {
+          "readOnlyHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "text": {
+              "type": "string",
+              "minLength": 40,
+              "description": "The transcript or passage to summarize."
+            },
+            "kind": {
+              "type": "string",
+              "enum": [
+                "manual",
+                "webpage",
+                "transcript",
+                "audio"
+              ],
+              "description": "Content kind. Default transcript."
+            },
+            "note": {
+              "type": "string",
+              "maxLength": 2000,
+              "description": "The user's framing or question about the text."
+            }
+          },
+          "required": [
+            "text"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_folders",
+        "title": "List folders",
+        "description": "List the user's vault folders with idea counts, so you can file new ideas in the right place.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {}
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "create_folder",
+        "title": "Create folder",
+        "description": "Create a new folder in the vault. Reuses the existing folder when the name already exists.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 80
+            }
+          },
+          "required": [
+            "name"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_tags",
+        "title": "List tags",
+        "description": "List every tag used in the vault with its frequency. Use it to reuse the user's own vocabulary instead of inventing new tags.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {}
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_todos",
+        "title": "List todos",
+        "description": "List the user's todos, newest first. Defaults to open items only.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "include_done": {
+              "type": "boolean",
+              "description": "Include completed todos. Default false."
+            },
+            "limit": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "description": "Max results, default 30."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "create_todo",
+        "title": "Create todo",
+        "description": "Add a todo to the user's list, with an optional due date.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "title": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            },
+            "due_at": {
+              "type": "string",
+              "format": "date-time",
+              "description": "ISO 8601 due timestamp."
+            }
+          },
+          "required": [
+            "title"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "set_todo_done",
+        "title": "Complete or reopen todo",
+        "description": "Mark a todo complete, or reopen it by passing done=false.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "todo_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "done": {
+              "type": "boolean",
+              "description": "Default true."
+            }
+          },
+          "required": [
+            "todo_id"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_calendar_events",
+        "title": "List calendar events",
+        "description": "List the user's saved dates: birthdays, anniversaries and other recurring events, optionally filtered to one month.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "month": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 12,
+              "description": "Filter to a calendar month (1-12)."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "create_calendar_event",
+        "title": "Create calendar event",
+        "description": "Save a birthday, anniversary or other recurring date the user wants remembered.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 120,
+              "description": "Who or what the date is for."
+            },
+            "event_type": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 40,
+              "description": "For example birthday, anniversary, holiday."
+            },
+            "month": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 12
+            },
+            "day": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 31
+            },
+            "birth_year": {
+              "type": "integer",
+              "minimum": 1900,
+              "maximum": 2200
+            },
+            "emoji": {
+              "type": "string",
+              "maxLength": 8
+            },
+            "notes": {
+              "type": "string",
+              "maxLength": 2000
+            }
+          },
+          "required": [
+            "name",
+            "event_type"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "get_idea_chat",
+        "title": "Get idea brainstorm history",
+        "description": "Read the saved brainstorm conversation attached to one idea, so you can continue the user's earlier thinking instead of starting over.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "idea_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "limit": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200,
+              "description": "Max messages, default 50."
+            }
+          },
+          "required": [
+            "idea_id"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "append_idea_chat",
+        "title": "Append to idea brainstorm",
+        "description": "Append a message to an idea's brainstorm thread so the conversation you are having shows up inside the app next to that idea.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "idea_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "role": {
+              "type": "string",
+              "enum": [
+                "user",
+                "assistant"
+              ]
+            },
+            "content": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 20000
+            }
+          },
+          "required": [
+            "idea_id",
+            "role",
+            "content"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      }
+    ]
+  }
+}
