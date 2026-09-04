@@ -115,7 +115,7 @@ async function callLovable(
   apiKey: string,
 ): Promise<string> {
   const fd = new FormData();
-  fd.append("file", new File([bytes], "audio", { type: mime }));
+  fd.append("file", new File([toBlobPart(bytes)], "audio", { type: mime }));
   fd.append("model", model);
 
   const resp = await fetch("https://ai.gateway.lovable.dev/v1/audio/transcriptions", {
