@@ -71,10 +71,9 @@ export function useSyncedDraft(field: DraftField, localKey: string) {
         const { data: auth } = await supabase.auth.getUser();
         const userId = auth.user?.id;
         if (!userId) return;
-        const row =
-          field === "composer"
-            ? { user_id: userId, composer: value }
-            : { user_id: userId, jot: value };
+        const row: { user_id: string; composer?: string; jot?: string } = { user_id: userId };
+        if (field === "composer") row.composer = value;
+        else row.jot = value;
         await supabase.from("user_drafts").upsert(row, { onConflict: "user_id" });
       })();
     }, 900);
