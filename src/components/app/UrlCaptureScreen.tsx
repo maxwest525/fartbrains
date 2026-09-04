@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { ChevronLeft, Loader2, Sparkles, Inbox, Folder as FolderIcon, Plus, Link as LinkIcon, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { useFolders, useCreateFolder } from "@/hooks/useFolders";
 import { useCreateIdea } from "@/hooks/useIdeas";
@@ -13,6 +14,10 @@ const NO_FOLDER = "__none__";
 
 type Props = {
   defaultUrl?: string;
+  /** Whatever the user wrote around the link when sharing it. Their framing is
+   *  the reason they saved it, and generate-prompt treats the note as the
+   *  primary intent, so it must survive the trip in from the share sheet. */
+  defaultNote?: string;
   defaultFolderId?: string | null;
   onBack: () => void;
   onCreated?: (id: string, needsReview?: boolean) => void;
@@ -23,12 +28,13 @@ type Props = {
  * extract-url edge function, run summarize, and save raw + summary into the
  * chosen folder. Mirrors TranscriptCaptureScreen's UX.
  */
-export const UrlCaptureScreen = ({ defaultUrl, defaultFolderId, onBack, onCreated }: Props) => {
+export const UrlCaptureScreen = ({ defaultUrl, defaultNote, defaultFolderId, onBack, onCreated }: Props) => {
   const { data: folders = [] } = useFolders();
   const createIdea = useCreateIdea();
   const createFolder = useCreateFolder();
 
   const [url, setUrl] = useState(defaultUrl ?? "");
+  const [note, setNote] = useState(defaultNote ?? "");
   const [title, setTitle] = useState("");
   const [folder, setFolder] = useState<string>(defaultFolderId ?? NO_FOLDER);
   const [busy, setBusy] = useState(false);
@@ -111,7 +117,7 @@ export const UrlCaptureScreen = ({ defaultUrl, defaultFolderId, onBack, onCreate
 
       const idea = await createIdea.mutateAsync({
         title: finalTitle,
-        raw_note: null,
+        raw_note: note.trim() || null,
         source_url: validUrl,
         source_type: "webpage",
         source_label: siteName ?? "Web page",
@@ -189,6 +195,20 @@ export const UrlCaptureScreen = ({ defaultUrl, defaultFolderId, onBack, onCreate
             placeholder="AI will use the page title if blank"
             maxLength={200}
             className="h-12 rounded-xl text-[16px]"
+          />
+        </div>
+
+        <div className="space-y-1.5">
+          <label className="block text-[11px] font-semibold uppercase tracking-wide text-muted-foreground px-1">
+            Your note (optional)
+          </label>
+          <Textarea
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            placeholder="Why you saved it, or what you want out of it"
+            maxLength={2000}
+            rows={3}
+            className="rounded-xl text-[16px] resize-none"
           />
         </div>
 

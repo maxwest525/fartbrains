@@ -95,7 +95,7 @@ const InstructionsInner = () => {
     setDirty(true);
   };
 
-  const useSuggestion = (key: FieldKey, mode: "replace" | "append") => {
+  const applySuggestion = (key: FieldKey, mode: "replace" | "append") => {
     const value = suggestions?.[key]?.trim();
     if (!value) return;
     setDraft((prev) => {
@@ -252,7 +252,7 @@ const InstructionsInner = () => {
                     <div className="flex items-center gap-4">
                       <button
                         type="button"
-                        onClick={() => useSuggestion(f.key, "replace")}
+                        onClick={() => applySuggestion(f.key, "replace")}
                         className="press inline-flex items-center gap-1 text-[12.5px] text-primary"
                       >
                         <Check className="h-3.5 w-3.5" />
@@ -261,7 +261,7 @@ const InstructionsInner = () => {
                       {draft[f.key].trim() && (
                         <button
                           type="button"
-                          onClick={() => useSuggestion(f.key, "append")}
+                          onClick={() => applySuggestion(f.key, "append")}
                           className="press inline-flex items-center gap-1 text-[12.5px] text-primary"
                         >
                           <Plus className="h-3.5 w-3.5" />

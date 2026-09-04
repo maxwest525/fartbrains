@@ -250,7 +250,8 @@ export const AuthScreen = () => {
       if (otpSent) verifyPhoneOtp(); else sendMagic();
       return;
     }
-    mode === "password" ? signInPassword() : sendMagic();
+    if (mode === "password") signInPassword();
+    else sendMagic();
   };
 
   return (

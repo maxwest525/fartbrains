@@ -29,7 +29,7 @@ export const LiveWaveform = ({ stream, active, bars = 28, className }: Props) =>
     const c2d = canvas.getContext("2d");
     if (!c2d) return;
 
-    let smoothed = new Array(bars).fill(0);
+    const smoothed = new Array(bars).fill(0);
 
     const teardown = () => {
       if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);

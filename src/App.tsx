@@ -18,6 +18,7 @@ import Profile from "./pages/Profile.tsx";
 import Instructions from "./pages/Instructions.tsx";
 import ResetPassword from "./pages/ResetPassword.tsx";
 import SharedIdea from "./pages/SharedIdea.tsx";
+import Share from "./pages/Share";
 import Privacy from "./pages/Privacy.tsx";
 import Terms from "./pages/Terms.tsx";
 import Dashboard from "./pages/Dashboard.tsx";
@@ -66,6 +67,7 @@ const App = () => (
             <Route path="/settings/sync" element={<SyncAccount />} />
             {/* Public, read-only view of a single shared idea. */}
             <Route path="/s/:token" element={<SharedIdea />} />
+            <Route path="/share" element={<Share />} />
             {/* Public legal pages — currently WIP drafts. */}
             <Route path="/privacy" element={<Privacy />} />
             <Route path="/terms" element={<Terms />} />
