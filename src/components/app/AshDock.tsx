@@ -28,6 +28,9 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { useSyncedDraft } from "@/hooks/useSyncedDraft";
+
+const DRAFT_KEY = "ash-composer-draft-v1";
 import { Button } from "@/components/ui/button";
 
 type Chip = { id: string; label: string; prefill: string };
