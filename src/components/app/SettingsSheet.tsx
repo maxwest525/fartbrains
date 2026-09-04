@@ -173,6 +173,22 @@ export const SettingsSheet = ({ open, onOpenChange }: Props) => {
               <ChevronRight className="h-4 w-4 text-muted-foreground" />
             </Link>
             <Link
+              to="/dashboard"
+              onClick={() => onOpenChange(false)}
+              className="w-full flex items-center gap-3 px-4 py-3 press"
+            >
+              <div className="h-10 w-10 rounded-full bg-primary/10 text-primary flex items-center justify-center">
+                <LayoutDashboard className="h-5 w-5" />
+              </div>
+              <div className="flex-1 min-w-0 text-left">
+                <p className="text-sm font-medium">Dashboard</p>
+                <p className="text-xs text-muted-foreground truncate">
+                  To-dos, jots, composer history, CSV export
+                </p>
+              </div>
+              <ChevronRight className="h-4 w-4 text-muted-foreground" />
+            </Link>
+            <Link
               to="/settings/instructions"
               onClick={() => onOpenChange(false)}
               className="w-full flex items-center gap-3 px-4 py-3 press"
