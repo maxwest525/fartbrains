@@ -182,7 +182,8 @@ const DashboardInner = () => {
         </header>
 
         {/* Summary tiles */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-5">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-5">
+          <SummaryTile icon={Lightbulb} label="Ideas" value={`${allIdeas.length}`} hint="everything captured" />
           <SummaryTile
             icon={CheckSquare}
             label="To-dos"
@@ -190,6 +191,7 @@ const DashboardInner = () => {
             hint={`${todos.length} total`}
           />
           <SummaryTile icon={NotebookPen} label="Jots" value={`${jots.length}`} hint="typed notes" />
+          <SummaryTile icon={CalendarDays} label="Calendar" value={`${events.length}`} hint="saved events" />
           <SummaryTile
             icon={MessageSquare}
             label="Composer messages"
@@ -197,6 +199,7 @@ const DashboardInner = () => {
             hint="saved Asher threads"
           />
         </div>
+
 
         {/* Tabs + search + export */}
         <div className="flex flex-wrap items-center gap-2 mb-4">
