@@ -31,19 +31,20 @@ That is the product. The second brain is what makes it worth connecting to.
 - Able to turn captured material — including a transcript or a rough idea — into
   a working prompt, spec, or solution
 
-## What it is NOT
-Not a team workspace, company knowledge base, collaborative editor, or
-project-management tool for groups. There are no organizations, team accounts,
-shared workspaces, member roles, seat-based billing, workspace invitations,
-shared vaults, shared folders, or real-time collaborative editing — and none may
-be introduced.
+## Current scope
+The brain belongs to one account. "Projects" means **the customer's own repos
+and folders their brain is attached to** — not a shared workspace with other
+people in it. Review in the knowledge compiler is single-owner: the reviewer is
+the account holder, so there is no reviewer role, approver hierarchy, or
+permissions matrix over people to build.
 
-"Projects" here means **the customer's own repos and folders that their brain is
-attached to.** It never means a shared workspace with other people in it.
+That is a scope choice, not a principle. Multi-person scope is a real product
+question — people attaching work repos will ask for it — and if we decide to
+add it, it is a deliberate decision with its own design, not something that
+arrives by accident through a permissions column.
 
-Review and approval in the knowledge compiler are single-owner: the reviewer is
-the account holder. Do not build a reviewer role, an approver hierarchy, or a
-permissions matrix over people.
+What the product is not, and gains nothing from becoming: a general
+collaborative document editor or a project-management tool.
 
 ## The only interpersonal feature
 A customer may deliberately share **one specific idea** through a secure,
@@ -58,7 +59,13 @@ architecture (`docs/spec/karpathy-second-brain-spec.md`), an item resolves to an
 immutable `source_version` plus compiled knowledge derived from it.
 
 ## Target architecture
-`docs/spec/karpathy-second-brain-spec.md` is the build specification. Where this
-document and that specification disagree about people and permissions, **this
-document wins**: the spec's tenancy and review language assumes an organization,
-and Fartbrains is single-owner per tenant.
+`docs/spec/karpathy-second-brain-spec.md` is the build specification.
+
+Its tenancy and review language assumes an organization. We are single-owner per
+tenant today, so read those sections as describing one person's own review loop
+until we decide otherwise.
+
+**Build time and run time are different systems.** Ingest, chunk, embed, compile
+and scan happen wherever the source lives — a local runner or CI, including the
+customer's own machine for a folder or repo. Postgres holds canonical state. Run
+time is retrieval and the Composer, and stays request-shaped.

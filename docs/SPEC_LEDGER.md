@@ -38,7 +38,7 @@ Legend: ✅ done · 🟡 partial · ❌ absent · n/a not applicable
 | Workspace scoping before ranking | ✅ | ✅ | ✅ | ✅ | ✅ | RLS on every user-owned table; verified two-account |
 | Credentials server-side only | ✅ | ❌ | ✅ | ✅ | n/a | No service-role key in client or MCP path |
 | Cost + context controls (§18) | 🟡 | ✅ | ✅ | ✅ | ❌ | `ai-guard`: model, input cap, retries, timeout, per-plan quotas, spend accounting, refunds. **Missing:** declared max output tokens, tool-call ceiling, explicit fallback policy |
-| Durable worker (§16.4) | ❌ | ❌ | ❌ | ❌ | n/a | **Architectural violation.** Everything runs in Supabase edge functions; §16.4 forbids long compilation there. `transcription_jobs` records attempts but processing is synchronous |
+| Build-time runner (§16.4) | ❌ | ❌ | ❌ | ❌ | n/a | Everything happens inside request handlers today. Ingest / chunk / embed / compile / scan are **build-time** work and belong in a local runner or CI — not an always-on server, and not a request handler. A cloud-only design also cannot scan a customer's local folder, so the runner is required by the product, not just by scale |
 | Model gateway = LiteLLM → OpenRouter (§16.1) | ❌ | n/a | ❌ | ❌ | n/a | **Documented deviation.** All 12 chat call sites hardcode `ai.gateway.lovable.dev`. `_shared/stt.ts` is already provider-configurable and shows the pattern |
 | Object storage for immutable bodies | ❌ | ❌ | ❌ | ❌ | n/a | Bodies live in Postgres text columns |
 | Honesty ledger | ✅ | n/a | n/a | ✅ | n/a | This file and `FEATURE_AUDIT.md` |
@@ -52,7 +52,20 @@ parts and they are done and verified.
 What it is not yet is a **knowledge compiler.** There are no immutable sources,
 no evidence spans, no proposals, no review, no contradiction handling, and no
 semantic retrieval. Summaries and tags are written directly onto records as
-accepted truth, which is the specific pattern §3.4 and §24 prohibit.
+accepted truth. We want the opposite: a model proposes, a claim cites an exact
+range of an immutable version, and nothing becomes operating truth without
+passing review.
+
+### Build time vs run time
+Most of what is missing is build-time work — ingest, checksum, chunk, embed,
+compile, scan — and it runs wherever the source lives. For a customer's folder
+or repo, that is their own machine, which makes a local runner a product
+requirement rather than an optimisation. Postgres holds canonical state; the
+runner produces it.
+
+Run time stays small and request-shaped: retrieval over chunks, plus the
+Composer. That split is what keeps serverless viable for the parts that stay
+serverless.
 
 ### The dependency that orders everything
 `source` / `source_version` (§3.1) is load-bearing. Evidence spans, provenance,
