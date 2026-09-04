@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { setLandingActive } from "@/lib/landingMode";
 
 /* ------------------------------------------------------------------ *
  * Fart Brains — landing page.
@@ -387,6 +388,18 @@ const Landing = ({ onEnter }: { onEnter?: () => void }) => {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
+  // The app shell locks body/#root to the viewport (it's a desktop-style
+  // window). The landing page is a long scrolling document, so it unlocks
+  // page scroll for as long as it's mounted, and hides the app chrome.
+  useEffect(() => {
+    setLandingActive(true);
+    document.documentElement.classList.add("fb-landing");
+    return () => {
+      setLandingActive(false);
+      document.documentElement.classList.remove("fb-landing");
+    };
+  }, []);
+
   useEffect(() => {
     const prev = document.title;
     document.title = "Fart Brains — the vault for ideas your brain leaks";
@@ -612,6 +625,20 @@ export default Landing;
 /* -------------------------------- styles -------------------------------- */
 
 const CSS = `
+html.fb-landing,
+html.fb-landing body,
+html.fb-landing #root {
+  height: auto !important;
+  min-height: 100%;
+  max-width: none !important;
+  width: auto !important;
+  overflow: visible !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  scroll-behavior: smooth;
+}
+html.fb-landing body::before { display: none !important; }
+
 .fb-root {
   --ink: #f4f4f5;
   --dim: #a1a1aa;
@@ -828,7 +855,7 @@ const CSS = `
   padding: 4px 11px; border-radius: 999px; font-size: 12px;
   color: ${LIME}; border: 1px solid rgba(163,230,53,0.35); background: rgba(163,230,53,0.08);
 }
-.fb-card ul { margin: 0; padding-left: 18px; display: grid; gap: 7px; color: var(--dim); font-size: 14.5px; line-height: 1.5; }
+.fb-card ul { margin: 0; padding-left: 18px; list-style: disc; display: grid; gap: 7px; color: var(--dim); font-size: 14.5px; line-height: 1.5; }
 .fb-card-foot { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--edge); font-size: 12.5px; color: #71717a; }
 
 /* features */

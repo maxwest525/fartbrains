@@ -7,6 +7,7 @@ import { ThemeProvider } from "@/hooks/useTheme";
 import { IdeaCreatedFx } from "@/components/app/IdeaCreatedFx";
 import { DesktopWindowControls } from "@/components/app/DesktopWindowControls";
 import { InstallAppPrompt } from "@/components/app/InstallAppPrompt";
+import { useLandingActive } from "@/lib/landingMode";
 import Index from "./pages/Index.tsx";
 import Auth from "./pages/Auth.tsx";
 
@@ -19,15 +20,27 @@ import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
 
+// App chrome belongs to the vault, not to the landing page — the landing page
+// is a full-bleed marketing screen and shouldn't have a window titlebar or an
+// install pill floating over it.
+const AppChrome = () => {
+  if (useLandingActive()) return null;
+  return (
+    <>
+      <Toaster />
+      <Sonner />
+      <IdeaCreatedFx />
+      <DesktopWindowControls />
+      <InstallAppPrompt />
+    </>
+  );
+};
+
 const App = () => (
   <ThemeProvider>
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <IdeaCreatedFx />
-        <DesktopWindowControls />
-        <InstallAppPrompt />
+        <AppChrome />
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<Index />} />
