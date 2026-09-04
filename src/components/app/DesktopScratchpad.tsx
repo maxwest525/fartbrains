@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useTodos, useCreateTodo, useToggleTodo, useDeleteTodo } from "@/hooks/useTodos";
 import { useCreateIdea, useDeleteIdea, useIdeas } from "@/hooks/useIdeas";
+import { useSyncedDraft } from "@/hooks/useSyncedDraft";
 
 /**
  * Desktop split view (>= 768px): a resizable right-hand column that shows the
