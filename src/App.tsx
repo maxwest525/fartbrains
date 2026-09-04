@@ -16,6 +16,7 @@ import Profile from "./pages/Profile.tsx";
 import Instructions from "./pages/Instructions.tsx";
 import ResetPassword from "./pages/ResetPassword.tsx";
 import Dashboard from "./pages/Dashboard.tsx";
+import SyncAccount from "./pages/SyncAccount.tsx";
 import OAuthConsent from "./pages/OAuthConsent.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
