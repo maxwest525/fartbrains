@@ -26,6 +26,13 @@ const normalizePhone = (raw: string): string => {
   return digits ? `+${digits}` : "";
 };
 
+/** Post-auth landing URL, preserving a validated ?next= relative path. */
+const authRedirect = (): string => {
+  const raw = new URLSearchParams(window.location.search).get("next");
+  const next = raw && raw.startsWith("/") && !raw.startsWith("//") ? raw : "/";
+  return `${window.location.origin}${next}`;
+};
+
 const isValidE164 = (v: string) => /^\+[1-9]\d{7,14}$/.test(v);
 
 export const AuthScreen = () => {
@@ -109,7 +116,7 @@ export const AuthScreen = () => {
         }
         const { error } = await supabase.auth.signInWithOtp({
           email: trimmed,
-          options: { emailRedirectTo: `${window.location.origin}/` },
+          options: { emailRedirectTo: authRedirect() },
         });
         if (error) throw error;
         rememberSuccess();
@@ -162,7 +169,7 @@ export const AuthScreen = () => {
           const { error } = await supabase.auth.signUp({
             email: trimmed,
             password,
-            options: { emailRedirectTo: `${window.location.origin}/` },
+            options: { emailRedirectTo: authRedirect() },
           });
           if (error) throw error;
           try { localStorage.setItem(WELCOME_PENDING_KEY, "1"); } catch { /* ignore */ }
