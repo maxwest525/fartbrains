@@ -1,16 +1,22 @@
+import { ALLOWED_ORIGIN } from "../_shared/cors.ts";
+import { guardAiRequest } from "../_shared/ai-guard.ts";
 // Cross-pollinate: pick a random other idea from the user's library and
 // propose a creative, useful connection — how could that idea (or its angle)
 // act as a solution, accelerator, or unlock for the current one?
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Origin": ALLOWED_ORIGIN,
+  "Vary": "Origin",
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type",
 };
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+
+  const _guard = await guardAiRequest(req, corsHeaders, "cross_pollinate");
+  if ("response" in _guard) return _guard.response;
 
   try {
     const { ideaId, excludeIds = [] } = await req.json().catch(() => ({}));

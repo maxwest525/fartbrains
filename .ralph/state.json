@@ -1,0 +1,382 @@
+{
+  "loop": "fartbrains-production-readiness",
+  "updated": "2026-09-03",
+  "baseline": {
+    "typecheck": "pass",
+    "build": "pass (single 1.19 MB JS chunk \u2014 code splitting is a P2)",
+    "lint": "29 errors / 17 warnings",
+    "tests": "1 trivial test (src/test/example.test.ts)"
+  },
+  "iterations": [
+    {
+      "n": 1,
+      "task": "P0 \u2014 restore the authentication gate",
+      "evidence": [
+        "ProtectedRoute no longer calls supabase.auth.signInAnonymously()",
+        "useAuth signs out any anonymous session",
+        "6 new tests in src/components/__tests__/ProtectedRoute.test.tsx, all passing",
+        "tsc --noEmit clean; vite build passes"
+      ],
+      "files": [
+        "src/components/ProtectedRoute.tsx",
+        "src/hooks/useAuth.ts",
+        "src/components/auth/AuthScreen.tsx",
+        "src/components/app/AppLockSection.tsx",
+        "src/components/app/SettingsSheet.tsx",
+        "src/lib/allowlist.ts (deleted)",
+        "src/components/auth/PasscodeSetupPrompt.tsx (deleted)"
+      ],
+      "db_changes": "none",
+      "remaining_risks": [
+        "notes-feed edge function is single-tenant: service-role query with no user scoping",
+        "RLS UPDATE policies lack WITH CHECK \u2014 a user can reassign user_id",
+        "wildcard CORS on every edge function",
+        "no billing, no sharing, no export, no account deletion"
+      ]
+    },
+    {
+      "n": 2,
+      "task": "P0 \u2014 notes-feed cross-tenant leak + RLS WITH CHECK",
+      "evidence": [
+        "notes-feed now requires a user JWT, runs as that user, filters by user_id",
+        "migration 20260903120000_rls_update_with_check.sql written"
+      ],
+      "files": [
+        "supabase/functions/notes-feed/index.ts",
+        "supabase/migrations/20260903120000_rls_update_with_check.sql"
+      ],
+      "db_changes": "migration written, NOT APPLIED (no database access in this environment)",
+      "remaining_risks": [
+        "migration unapplied",
+        "two-account RLS test still outstanding"
+      ]
+    },
+    {
+      "n": 3,
+      "task": "P1 \u2014 replace the fake collab link with secure single-idea sharing",
+      "evidence": [
+        "9 new share tests pass",
+        "16 tests total pass",
+        "tsc clean",
+        "vite build passes",
+        "no collaboration language left in the UI"
+      ],
+      "files": [
+        "supabase/migrations/20260903130000_idea_shares.sql",
+        "supabase/functions/resolve-share/index.ts",
+        "src/lib/share.ts",
+        "src/hooks/useIdeaShares.ts",
+        "src/components/app/ShareIdeaDialog.tsx",
+        "src/pages/SharedIdea.tsx",
+        "src/App.tsx",
+        "src/components/app/IdeaDetail.tsx",
+        "src/pages/Index.tsx",
+        "src/integrations/supabase/types.ts"
+      ],
+      "db_changes": "new table idea_shares + resolve_idea_share() \u2014 migration written, NOT APPLIED",
+      "remaining_risks": [
+        "share flow unproven end-to-end until the migration and edge function are deployed"
+      ]
+    },
+    {
+      "n": 4,
+      "task": "P1 \u2014 hide the unconfigured phone auth method",
+      "evidence": [
+        "AuthScreen gates phone behind VITE_ENABLE_PHONE_AUTH, default off",
+        "tsc clean, build passes"
+      ],
+      "files": [
+        "src/components/auth/AuthScreen.tsx"
+      ],
+      "db_changes": "none",
+      "remaining_risks": [
+        "email verification is still not enforced before app entry"
+      ]
+    },
+    {
+      "n": 5,
+      "task": "P0 \u2014 AI rate limiting and server-side usage accounting",
+      "evidence": [
+        "17 paid edge functions routed through guardAiRequest",
+        "transcribe-instagram had no authentication at all and now does",
+        "eslint clean on new files; 16 tests pass; build passes"
+      ],
+      "files": [
+        "supabase/migrations/20260903140000_ai_usage.sql",
+        "supabase/functions/_shared/ai-guard.ts",
+        "17 edge function index.ts files"
+      ],
+      "db_changes": "new table ai_usage_events + view ai_usage_current_month \u2014 NOT APPLIED",
+      "remaining_risks": [
+        "resolvePlan reads a subscriptions table that does not exist yet, so everyone resolves to the free plan",
+        "only summarize enriches usage rows with model/size/outcome; the rest record the call itself"
+      ]
+    },
+    {
+      "n": 6,
+      "task": "P0 \u2014 trash, undo and retention instead of permanent delete",
+      "evidence": [
+        "6 new tests assert the delete path issues no DELETE and that purge is scoped to trashed rows",
+        "22 tests pass; tsc clean; build passes"
+      ],
+      "files": [
+        "supabase/migrations/20260903150000_trash.sql",
+        "src/hooks/useIdeas.ts",
+        "src/components/app/TrashView.tsx",
+        "src/components/app/AppSidebar.tsx",
+        "src/components/app/IdeaDetail.tsx",
+        "src/pages/Index.tsx",
+        "src/integrations/supabase/types.ts"
+      ],
+      "db_changes": "ideas.deleted_at + partial indexes + purge_expired_trash() + revoke_shares_on_trash trigger \u2014 NOT APPLIED",
+      "remaining_risks": [
+        "purge_expired_trash() needs a daily schedule (pg_cron) that does not exist yet",
+        "archive, distinct from trash, is still unimplemented"
+      ]
+    },
+    {
+      "n": 7,
+      "task": "P1 \u2014 data export and account deletion",
+      "evidence": [
+        "10 new export tests pass",
+        "32 tests total",
+        "tsc clean; eslint clean on new files; build passes"
+      ],
+      "files": [
+        "src/lib/exportAccount.ts",
+        "src/components/app/DataPrivacySection.tsx",
+        "src/components/app/SettingsSheet.tsx",
+        "supabase/functions/delete-account/index.ts"
+      ],
+      "db_changes": "none",
+      "remaining_risks": [
+        "delete-account is not deployed and has no automated coverage",
+        "per-item export is still missing",
+        "billing cancellation on deletion is instructional, not automatic (no billing yet)"
+      ]
+    },
+    {
+      "n": 8,
+      "task": "P1 \u2014 Stripe billing, subscriptions and entitlements",
+      "evidence": [
+        "11 new entitlement tests pass",
+        "43 tests total",
+        "tsc clean; eslint clean on new files; build passes",
+        "docs/DEPLOYMENT.md documents every env var and the Stripe test-mode checklist"
+      ],
+      "files": [
+        "supabase/migrations/20260903160000_billing.sql",
+        "supabase/functions/_shared/billing.ts",
+        "supabase/functions/create-checkout-session/index.ts",
+        "supabase/functions/create-portal-session/index.ts",
+        "supabase/functions/stripe-webhook/index.ts",
+        "src/lib/entitlements.ts",
+        "src/hooks/useSubscription.ts",
+        "src/components/app/BillingSection.tsx",
+        "src/components/app/SettingsSheet.tsx",
+        "docs/DEPLOYMENT.md"
+      ],
+      "db_changes": "subscriptions + billing_events \u2014 NOT APPLIED",
+      "remaining_risks": [
+        "NOTHING has been run against Stripe test mode; the release gate requires the full lifecycle",
+        "usage against plan limits is counted but not shown to the customer",
+        "ai-guard enforces quotas by plan but does not yet block PAID_ONLY operations outright for free accounts"
+      ]
+    },
+    {
+      "n": 9,
+      "task": "P1 \u2014 CORS lockdown, CSP, error boundary and privacy-safe analytics",
+      "evidence": [
+        "28 edge functions moved off wildcard CORS; grep confirms none remain",
+        "CSP + referrer meta in index.html; build passes",
+        "12 new tests (analytics + error boundary); 55 tests total",
+        "lint error count unchanged at 29 (all pre-existing)"
+      ],
+      "files": [
+        "supabase/functions/_shared/cors.ts",
+        "28 edge function index.ts files",
+        "index.html",
+        "src/lib/analytics.ts",
+        "src/components/ErrorBoundary.tsx",
+        "src/App.tsx",
+        "src/hooks/useIdeaShares.ts",
+        "src/hooks/useSubscription.ts",
+        "src/components/app/DataPrivacySection.tsx"
+      ],
+      "db_changes": "none",
+      "remaining_risks": [
+        "frame-ancestors, X-Content-Type-Options and Permissions-Policy are header-only and must be set at the CDN",
+        "no analytics or crash-reporting provider is actually wired",
+        "CSP is unverified in a real browser \u2014 it may block something at runtime"
+      ]
+    },
+    {
+      "n": 10,
+      "task": "P1 \u2014 first-run onboarding",
+      "evidence": [
+        "14 new onboarding tests; 69 tests total",
+        "tsc clean; eslint clean on changed files; build passes"
+      ],
+      "files": [
+        "src/lib/onboarding.ts",
+        "src/components/app/OnboardingFlow.tsx",
+        "src/pages/Index.tsx"
+      ],
+      "db_changes": "none",
+      "remaining_risks": [
+        "no visual verification at any viewport \u2014 this session has no browser",
+        "the flow demonstrates typed capture only; URL, voice and import are described rather than exercised"
+      ]
+    },
+    {
+      "n": 11,
+      "task": "P1 \u2014 bound every list query and index the search paths",
+      "evidence": [
+        "2 new tests assert no query fetches the whole vault; 71 tests total",
+        "tsc clean; eslint clean; build passes"
+      ],
+      "files": [
+        "src/hooks/useIdeas.ts",
+        "src/pages/Index.tsx",
+        "supabase/migrations/20260903170000_search_indexes.sql"
+      ],
+      "db_changes": "trigram + partial + tags indexes, and a generated search_vector column \u2014 NOT APPLIED",
+      "remaining_risks": [
+        "there is no 'load more', so a library past 100 items is silently truncated in the UI \u2014 this is a launch blocker",
+        "nothing queries search_vector yet; search is still ILIKE"
+      ]
+    },
+    {
+      "n": 12,
+      "task": "P1 \u2014 Load more, closing the silent-truncation gap introduced in iteration 11",
+      "evidence": [
+        "71 tests pass; tsc clean; eslint clean; build passes"
+      ],
+      "files": [
+        "src/components/app/IdeaList.tsx"
+      ],
+      "db_changes": "none",
+      "remaining_risks": [
+        "paging grows the page rather than appending, which refetches; fine to a few hundred items, worth moving to useInfiniteQuery if libraries get large",
+        "not exercised against a real large library"
+      ]
+    },
+    {
+      "n": 13,
+      "task": "WIP legal drafts and a draft pricing structure",
+      "evidence": [
+        "/privacy and /terms routes with a visible WIP banner",
+        "8 new tests assert the banner and that no unbackable claim is made; 79 tests total",
+        "tsc clean; eslint clean; build passes"
+      ],
+      "files": [
+        "src/pages/Privacy.tsx",
+        "src/pages/Terms.tsx",
+        "src/components/legal/LegalPage.tsx",
+        "src/App.tsx",
+        "src/components/app/SettingsSheet.tsx",
+        "src/components/app/BillingSection.tsx",
+        "supabase/functions/_shared/ai-guard.ts",
+        "docs/PRICING.md"
+      ],
+      "db_changes": "none",
+      "remaining_risks": [
+        "legal text is unreviewed and must be replaced before taking customers",
+        "pricing is not validated against a real provider bill and no Stripe price exists",
+        "support email and legal entity are placeholders in both documents"
+      ]
+    },
+    {
+      "n": 14,
+      "task": "Transcription rework \u2014 config-driven model, shared cache, cost caps, job records",
+      "evidence": [
+        "14 new STT config tests; 93 tests total",
+        "tsc clean; eslint clean; build passes",
+        "no hardcoded STT model or ELEVENLABS_API_KEY left in any function"
+      ],
+      "files": [
+        "supabase/functions/_shared/stt.ts",
+        "supabase/functions/_shared/transcripts.ts",
+        "supabase/functions/_shared/ai-guard.ts",
+        "supabase/functions/transcribe-youtube/index.ts",
+        "supabase/functions/transcribe-instagram/index.ts",
+        "supabase/functions/transcribe-deliverables/index.ts",
+        "supabase/migrations/20260904120000_transcription.sql",
+        "docs/PRICING.md",
+        "docs/DEPLOYMENT.md"
+      ],
+      "db_changes": "transcript_cache + transcription_jobs \u2014 NOT APPLIED",
+      "remaining_risks": [
+        "processing is still synchronous, so a very long video can outlive the request even though the job row survives",
+        "no live provider call has been made; the STT client code is untested against a real gateway",
+        "cache correctness is unproven until the migration is applied"
+      ]
+    },
+    {
+      "n": 15,
+      "task": "Review the MCP server added on main; merge main",
+      "evidence": [
+        "MCP auth model verified: OAuth issuer, RLS-scoped, no service-role key, AI tools inherit guardAiRequest",
+        "2 real bugs fixed: hard delete bypassing Trash, and trashed items resurfacing in 4 read tools",
+        "list_tags unbounded fetch bounded",
+        "Vite plugin regenerated the deployed bundle from source; tsc, 93 tests, build, eslint all pass"
+      ],
+      "files": [
+        "src/lib/mcp/tools/delete-idea.ts",
+        "src/lib/mcp/tools/search-ideas.ts",
+        "src/lib/mcp/tools/recall-context.ts",
+        "src/lib/mcp/tools/get-idea.ts",
+        "src/lib/mcp/tools/list-tags.ts",
+        "supabase/functions/mcp/index.ts (regenerated)",
+        "src/App.tsx"
+      ],
+      "db_changes": "none; merged main's user_drafts migration (RLS correct)",
+      "remaining_risks": [
+        "MCP reads now REQUIRE the trash migration to be applied before deploy, or they error",
+        "the generated mcp function is outside the shared CORS pinning",
+        "recall_context pulls up to 300 rows including extracted_text"
+      ]
+    },
+    {
+      "n": 16,
+      "task": "Merge main (landing page) and fix the landing gate it left inconsistent",
+      "evidence": [
+        "merge auto-resolved with no conflicts; CSP intact in index.html",
+        "signed-in users no longer see the landing page on an unfamiliar device",
+        "93 tests, tsc, build, eslint all pass"
+      ],
+      "files": [
+        "src/lib/entry.ts",
+        "src/pages/Index.tsx"
+      ],
+      "db_changes": "none",
+      "remaining_risks": [
+        "main flipped robots to index,follow \u2014 the WIP privacy/terms drafts are now publicly indexable",
+        "migrations still unapplied; PR #3 must merge and be applied before PR #1"
+      ]
+    },
+    {
+      "n": 17,
+      "task": "Merge main after the migrations were applied to the live database",
+      "evidence": [
+        "all 7 migrations applied; 6 new tables + ideas.deleted_at confirmed in the regenerated types.ts",
+        "removed duplicate hand-written type blocks that auto-merge introduced (typecheck was failing)",
+        "93 tests, tsc, build all pass"
+      ],
+      "files": [
+        "src/integrations/supabase/types.ts",
+        "docs/SECURITY_REVIEW.md",
+        "docs/PRODUCTION_READINESS.md",
+        "docs/DECISIONS.md"
+      ],
+      "db_changes": "APPLIED: rls_update_with_check, idea_shares, ai_usage, trash, billing, search_indexes, transcription \u2014 plus Lovable's GRANTs and a REVOKE on revoke_shares_on_trash",
+      "remaining_risks": [
+        "edge functions not yet deployed",
+        "two-account RLS test still outstanding",
+        "purge_expired_trash still needs a daily schedule",
+        "Stripe test-mode lifecycle not run"
+      ]
+    }
+  ],
+  "next": "Remaining P1s: durable capture jobs, Import Center, server-side search + pagination, semantic retrieval with citations, email verification enforcement, accessibility pass"
+}

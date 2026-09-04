@@ -1,3 +1,4 @@
+import { ALLOWED_ORIGIN } from "../_shared/cors.ts";
 import { requireUser } from "../_shared/user-auth.ts";
 import { assertPublicUrl, safeFetch } from "../_shared/ssrf.ts";
 // Lightweight URL reachability check. Returns whether the URL responds with a
@@ -9,7 +10,8 @@ import { assertPublicUrl, safeFetch } from "../_shared/ssrf.ts";
 // AbortController so the UI never waits more than a few seconds.
 
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Origin": ALLOWED_ORIGIN,
+  "Vary": "Origin",
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };

@@ -16,7 +16,12 @@ export default defineTool({
     try {
       requireAuth(ctx);
       const supabase = supabaseForUser(ctx);
-      const { data, error } = await supabase.from("ideas").select("*").eq("id", idea_id).maybeSingle();
+      const { data, error } = await supabase
+        .from("ideas")
+        .select("*")
+        .eq("id", idea_id)
+        .is("deleted_at", null)
+        .maybeSingle();
       if (error) return errorResult(error.message);
       if (!data) return errorResult("Idea not found");
 

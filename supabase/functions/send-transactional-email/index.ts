@@ -1,3 +1,4 @@
+import { ALLOWED_ORIGIN } from "../_shared/cors.ts";
 import * as React from 'npm:react@18.3.1'
 import { renderAsync } from 'npm:@react-email/components@0.0.22'
 import { createClient } from 'npm:@supabase/supabase-js@2'
@@ -16,7 +17,8 @@ const SENDER_DOMAIN = "notify.trumoveinc.com"
 const FROM_DOMAIN = "notify.trumoveinc.com"
 
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Origin': ALLOWED_ORIGIN,
+  'Vary': 'Origin',
   'Access-Control-Allow-Headers':
     'authorization, x-client-info, apikey, content-type',
 }

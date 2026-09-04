@@ -1,3 +1,4 @@
+import { ALLOWED_ORIGIN } from "../_shared/cors.ts";
 // Reminder dispatcher.
 // Runs every minute via pg_cron. For each idea/folder whose `remind_at` has
 // passed and hasn't been delivered yet, sends:
@@ -13,7 +14,8 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.95.0";
 import webpush from "https://esm.sh/web-push@3.6.7";
 
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Origin": ALLOWED_ORIGIN,
+  "Vary": "Origin",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 

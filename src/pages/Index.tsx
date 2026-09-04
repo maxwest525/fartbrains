@@ -19,6 +19,8 @@ import { GraphPage } from "@/components/app/GraphPage";
 import { AlarmOverlay } from "@/components/app/AlarmOverlay";
 import { AshDock } from "@/components/app/AshDock";
 import { DesktopScratchpad } from "@/components/app/DesktopScratchpad";
+import { TrashView } from "@/components/app/TrashView";
+import { OnboardingFlow } from "@/components/app/OnboardingFlow";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import Landing from "@/pages/Landing";
 import { hasEnteredVault, markEnteredVault } from "@/lib/entry";
@@ -26,7 +28,9 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { useAuth } from "@/hooks/useAuth";
 import { useFolders } from "@/hooks/useFolders";
 import { useReminderNotifier } from "@/hooks/useReminderNotifier";
-import { useCreateIdea } from "@/hooks/useIdeas";
+import { useCreateIdea, useIdeaCount } from "@/hooks/useIdeas";
+import { readOnboarding, shouldShowOnboarding } from "@/lib/onboarding";
+import { track } from "@/lib/analytics";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { Plus } from "lucide-react";
@@ -60,15 +64,13 @@ const Shell = () => {
     };
   }, []);
 
-  // Deep-link: ?idea=<id> opens that idea directly (used by Collab share links).
+  // Deep-link: ?idea=<id> opens that idea directly for the signed-in owner.
+  // Sharing with a friend goes through /s/<token> instead — see ShareIdeaDialog.
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const ideaParam = params.get("idea");
     if (ideaParam) {
       setSelectedId(ideaParam);
-      if (params.get("collab") === "1") {
-        toast.success("Brainstorm mode", { description: "You're viewing a shared idea." });
-      }
     }
   }, []);
 
@@ -168,6 +170,28 @@ const Shell = () => {
   const showFolders = view === "folders" && !showDetailOnly;
   const showCalendar = view === "calendar" && !showDetailOnly;
   const showGraph = view === "graph";
+  // Trash is a filter, but it renders its own restore/purge surface rather than
+  // the normal idea list + detail pane.
+  // First run. Offered only to an account that hasn't started using the
+  // product, and never on top of a mid-task view.
+  const { data: ideaCount } = useIdeaCount();
+  const [onboardingState, setOnboardingState] = useState(() => readOnboarding(user?.id));
+  useEffect(() => { setOnboardingState(readOnboarding(user?.id)); }, [user?.id]);
+  const showOnboarding =
+    !!user &&
+    ideaCount !== undefined &&
+    view === "ideas" &&
+    filter.kind === "all" &&
+    !selectedId &&
+    shouldShowOnboarding(onboardingState, ideaCount);
+  useEffect(() => {
+    if (showOnboarding && onboardingState.completed.length === 0) {
+      track("onboarding_started");
+    }
+  }, [showOnboarding, onboardingState.completed.length]);
+
+  const showTrash =
+    !showFolders && !showCalendar && !showGraph && filter.kind === "trash";
   const defaultFolderId = filter.kind === "folder" ? filter.folderId : null;
 
   const activeFolderName =
@@ -350,8 +374,18 @@ const Shell = () => {
         )}
 
 
+        {/* First run replaces the capture view until it is done or skipped. */}
+        {showOnboarding && user && (
+          <OnboardingFlow
+            userId={user.id}
+            onDone={() => setOnboardingState(readOnboarding(user.id))}
+            onOpenItem={(id) => setSelectedId(id)}
+            onOpenSearch={() => handleFilterChange({ kind: "search", query: "" })}
+          />
+        )}
+
         {/* Capture view — compose only, full width. Shown when filter is "all" (the default landing). */}
-        {!showFolders && !showCalendar && !showGraph && !showDetailOnly && filter.kind === "all" && (
+        {!showOnboarding && !showFolders && !showCalendar && !showGraph && !showDetailOnly && filter.kind === "all" && (
           <div
             className="w-full flex-1 min-w-0 flex flex-col min-h-0 bg-transparent overflow-y-auto scroll-momentum touch-pan-y"
             style={{ paddingBottom: "calc(var(--ash-dock-h, 0px) + env(safe-area-inset-bottom) + (var(--mobile-tabbar-h, 0px)) + 1.25rem)" }}
@@ -372,8 +406,10 @@ const Shell = () => {
           </div>
         )}
 
+        {showTrash && <TrashView />}
+
         {/* Browse view — flat list of ideas (Recents, Favorites, Folder-filtered, Search). */}
-        {!showFolders && !showCalendar && !showGraph && !showDetailOnly && filter.kind !== "all" && (
+        {!showTrash && !showFolders && !showCalendar && !showGraph && !showDetailOnly && filter.kind !== "all" && (
           <div
             className="w-full flex-1 min-w-0 md:w-[28rem] md:flex-none md:shrink-0 md:border-r border-border flex flex-col min-h-0 bg-transparent md:overflow-hidden overflow-y-auto scroll-momentum touch-pan-y"
             style={{ paddingBottom: isMobile ? "calc(var(--ash-dock-h, 0px) + var(--mobile-tabbar-h, 0px) + env(safe-area-inset-bottom) + 1rem)" : "1.5rem" }}
@@ -393,14 +429,14 @@ const Shell = () => {
         )}
 
         {/* Detail — desktop always shows, mobile only when an idea is selected */}
-        {!showFolders && !showCalendar && !showGraph && (!isMobile || showDetailOnly) && (
+        {!showTrash && !showFolders && !showCalendar && !showGraph && (!isMobile || showDetailOnly) && (
           <IdeaDetail ideaId={selectedId} onClose={() => setSelectedId(null)} backLabel={backLabel} onSelectIdea={setSelectedId} onOpenGraph={() => setView("graph")} />
         )}
       </div>
 
       {/* Floating "+ Add" — visible in any browse scope (folder, recent, favorites, search).
           Creates a stub idea in the active folder (or default) and opens it for editing. */}
-      {!showFolders && !showCalendar && !showGraph && !showDetailOnly && filter.kind !== "all" && (
+      {!showTrash && !showFolders && !showCalendar && !showGraph && !showDetailOnly && filter.kind !== "all" && (
         <button
           onClick={handleQuickAdd}
           disabled={createIdea.isPending}
@@ -449,16 +485,24 @@ const Shell = () => {
   );
 };
 
-// First-time visitors on this device get the landing page; anyone who has
-// already been inside goes straight to the vault. `?landing` forces the
-// landing page, `?app` skips it.
+// First-time visitors get the landing page; anyone who has already been inside
+// goes straight to the vault. `?landing` forces the landing page, `?app` skips it.
+//
+// A signed-in customer always skips it, including on a device they have never
+// used before: showing someone a marketing page for a product they already pay
+// for is a bug, and the device-local marker alone cannot tell that case from a
+// genuine first visit.
 const Index = () => {
   const [params, setParams] = useSearchParams();
+  const { user, loading } = useAuth();
   const forceLanding = params.has("landing");
   const forceApp = params.has("app");
   const [entered, setEntered] = useState(() => forceApp || hasEnteredVault());
 
-  if (forceLanding || !entered) {
+  // Don't flash the landing page while the session is still resolving.
+  if (loading && !entered && !forceLanding) return null;
+
+  if (forceLanding || (!entered && !user)) {
     return (
       <Landing
         onEnter={() => {

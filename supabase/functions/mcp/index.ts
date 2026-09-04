@@ -313,16 +313,18 @@ import { z as z7 } from "npm:zod@^3.25.76";
 var delete_idea_default = defineTool7({
   name: "delete_idea",
   title: "Delete idea",
-  description: "Permanently delete one idea from the user's vault. Confirm with the user before calling this.",
+  description: "Move one idea to the user's Trash. It stops being searchable and any share links for it are revoked, but it stays recoverable for 30 days. Confirm with the user before calling this.",
   inputSchema: { idea_id: z7.string().uuid() },
   annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: false },
   handler: async ({ idea_id }, ctx) => {
     try {
       requireAuth(ctx);
       const supabase = supabaseForUser(ctx);
-      const { error } = await supabase.from("ideas").delete().eq("id", idea_id);
+      const { error } = await supabase.from("ideas").update({ deleted_at: (/* @__PURE__ */ new Date()).toISOString() }).eq("id", idea_id).is("deleted_at", null);
       if (error) return errorResult(error.message);
-      return textResult(`Deleted idea ${idea_id}`);
+      return textResult(
+        `Moved idea ${idea_id} to Trash. It can be restored from Trash in the app for 30 days.`
+      );
     } catch (e) {
       return errorResult(e instanceof Error ? e.message : "Delete failed");
     }
@@ -345,7 +347,7 @@ var get_idea_default = defineTool8({
     try {
       requireAuth(ctx);
       const supabase = supabaseForUser(ctx);
-      const { data, error } = await supabase.from("ideas").select("*").eq("id", idea_id).maybeSingle();
+      const { data, error } = await supabase.from("ideas").select("*").eq("id", idea_id).is("deleted_at", null).maybeSingle();
       if (error) return errorResult(error.message);
       if (!data) return errorResult("Idea not found");
       let folderName = null;
@@ -484,7 +486,7 @@ var list_tags_default = defineTool13({
     try {
       requireAuth(ctx);
       const supabase = supabaseForUser(ctx);
-      const { data, error } = await supabase.from("ideas").select("tags");
+      const { data, error } = await supabase.from("ideas").select("tags").is("deleted_at", null).order("updated_at", { ascending: false }).limit(2e3);
       if (error) return errorResult(error.message);
       const counts = /* @__PURE__ */ new Map();
       for (const row of data ?? []) {
@@ -582,7 +584,7 @@ var recall_context_default = defineTool15({
       const supabase = supabaseForUser(ctx);
       const keys = terms(query);
       const [{ data: rows, error }, { data: instructions }, { data: folders }] = await Promise.all([
-        supabase.from("ideas").select("id, title, raw_note, ai_summary, extracted_text, tags, folder_id, updated_at").order("updated_at", { ascending: false }).limit(300),
+        supabase.from("ideas").select("id, title, raw_note, ai_summary, extracted_text, tags, folder_id, updated_at").is("deleted_at", null).order("updated_at", { ascending: false }).limit(300),
         supabase.from("user_instructions").select("general, capture, summarize, tagging, organizing").maybeSingle(),
         supabase.from("folders").select("id, name")
       ]);
@@ -640,7 +642,7 @@ var search_ideas_default = defineTool16({
     try {
       requireAuth(ctx);
       const supabase = supabaseForUser(ctx);
-      let q = supabase.from("ideas").select("id, title, ai_summary, raw_note, tags, folder_id, source_type, source_url, is_favorite, priority, created_at, updated_at").order("updated_at", { ascending: false }).limit(limit ?? 15);
+      let q = supabase.from("ideas").select("id, title, ai_summary, raw_note, tags, folder_id, source_type, source_url, is_favorite, priority, created_at, updated_at").is("deleted_at", null).order("updated_at", { ascending: false }).limit(limit ?? 15);
       if (folder_id) q = q.eq("folder_id", folder_id);
       if (favorites_only) q = q.eq("is_favorite", true);
       if (tag) q = q.contains("tags", [tag]);

@@ -1,7 +1,9 @@
-import { requireUser } from "../_shared/user-auth.ts";
+import { ALLOWED_ORIGIN } from "../_shared/cors.ts";
+import { guardAiRequest } from "../_shared/ai-guard.ts";
 import { instructionBlock } from "../_shared/instructions.ts";
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Origin": ALLOWED_ORIGIN,
+  "Vary": "Origin",
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
@@ -14,8 +16,9 @@ const corsHeaders = {
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
-  const _auth = await requireUser(req, corsHeaders);
-  if ("response" in _auth) return _auth.response;
+  const _guard = await guardAiRequest(req, corsHeaders, "generate_prompt");
+  if ("response" in _guard) return _guard.response;
+  const _auth = { user: _guard.user };
 
   try {
     const { title, note, summary, extractedText, sourceUrl, sourceLabel } = await req.json();

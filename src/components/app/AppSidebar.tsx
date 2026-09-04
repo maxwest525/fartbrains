@@ -93,6 +93,7 @@ export const AppSidebar = ({ filter, onFilterChange, onNewIdea, onOpenFolders, f
         <NavBtn f={{ kind: "all" }} icon={Inbox} label="All ideas" />
         <NavBtn f={{ kind: "favorites" }} icon={Star} label="Favorites" />
         <NavBtn f={{ kind: "recent" }} icon={Clock} label="Recent" />
+        <NavBtn f={{ kind: "trash" }} icon={Trash2} label="Trash" />
         {onOpenFolders && (
           <button
             onClick={onOpenFolders}

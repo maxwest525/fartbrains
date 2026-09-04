@@ -4,6 +4,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/hooks/useTheme";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { IdeaCreatedFx } from "@/components/app/IdeaCreatedFx";
 import { DesktopWindowControls } from "@/components/app/DesktopWindowControls";
 import { InstallAppPrompt } from "@/components/app/InstallAppPrompt";
@@ -16,6 +17,9 @@ import PromptRules from "./pages/PromptRules.tsx";
 import Profile from "./pages/Profile.tsx";
 import Instructions from "./pages/Instructions.tsx";
 import ResetPassword from "./pages/ResetPassword.tsx";
+import SharedIdea from "./pages/SharedIdea.tsx";
+import Privacy from "./pages/Privacy.tsx";
+import Terms from "./pages/Terms.tsx";
 import Dashboard from "./pages/Dashboard.tsx";
 import SyncAccount from "./pages/SyncAccount.tsx";
 import OAuthConsent from "./pages/OAuthConsent.tsx";
@@ -41,7 +45,8 @@ const AppChrome = () => {
 };
 
 const App = () => (
-  <ThemeProvider>
+  <ErrorBoundary>
+    <ThemeProvider>
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <AppChrome />
@@ -59,15 +64,20 @@ const App = () => (
             <Route path="/settings/instructions" element={<Instructions />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/settings/sync" element={<SyncAccount />} />
+            {/* Public, read-only view of a single shared idea. */}
+            <Route path="/s/:token" element={<SharedIdea />} />
+            {/* Public legal pages — currently WIP drafts. */}
+            <Route path="/privacy" element={<Privacy />} />
+            <Route path="/terms" element={<Terms />} />
             <Route path="/.lovable/oauth/consent" element={<OAuthConsent />} />
-
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
       </TooltipProvider>
     </QueryClientProvider>
-  </ThemeProvider>
+    </ThemeProvider>
+  </ErrorBoundary>
 );
 
 export default App;

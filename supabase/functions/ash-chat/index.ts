@@ -1,4 +1,5 @@
-import { requireUser } from "../_shared/user-auth.ts";
+import { ALLOWED_ORIGIN } from "../_shared/cors.ts";
+import { guardAiRequest } from "../_shared/ai-guard.ts";
 import { buildAsherPrompt, type IdeaContext } from "../_shared/asher-prompt.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.95.0";
 // Streaming chat endpoint for the Asher prompt bar and idea brainstorming.
@@ -6,7 +7,8 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.95.0";
 // streams SSE deltas back to the client.
 
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Origin": ALLOWED_ORIGIN,
+  "Vary": "Origin",
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type",
 };
@@ -33,8 +35,9 @@ async function fetchIdea(userId: string, ideaId: string): Promise<IdeaContext | 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
-  const _auth = await requireUser(req, corsHeaders);
-  if ("response" in _auth) return _auth.response;
+  const _guard = await guardAiRequest(req, corsHeaders, "ask");
+  if ("response" in _guard) return _guard.response;
+  const _auth = { user: _guard.user };
 
   try {
     const { messages, ideaId, retrieve } = await req.json();

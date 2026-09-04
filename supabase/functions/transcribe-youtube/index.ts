@@ -1,20 +1,35 @@
-import { requireUser } from "../_shared/user-auth.ts";
+import { ALLOWED_ORIGIN } from "../_shared/cors.ts";
+import { guardAiRequest } from "../_shared/ai-guard.ts";
+import { SttError, checkAudioLimits, resolveSttConfig, transcribeAudio } from "../_shared/stt.ts";
+import {
+  completeJob,
+  createJob,
+  failJob,
+  lookupTranscript,
+  storeTranscript,
+} from "../_shared/transcripts.ts";
 /**
  * Transcribe a YouTube video.
  *
- * Strategy:
- *   1) Try captions via Apify actor `starvibe/youtube-video-transcript` (fast, cheap).
- *   2) If no captions, download the audio via Apify actor
- *      `epicscrapers/youtube-audio-downloader` and transcribe it with
- *      ElevenLabs Scribe (`scribe_v2`).
+ * Cheapest source first, because a speech model is the most expensive thing
+ * this product does:
+ *   1) Shared transcript cache — free. Two customers saving the same video pay
+ *      for it once, ever.
+ *   2) Captions via Apify actor `starvibe/youtube-video-transcript` — near-free.
+ *   3) Only then: download the audio and pay a speech model, via the shared
+ *      STT config (see _shared/stt.ts).
+ *
+ * Quota reserved for steps 1 and 2 is refunded — the customer is only charged
+ * an AI action when we actually paid a provider.
  *
  * Required secrets:
  *   - APIFY_API_TOKEN
- *   - ELEVENLABS_API_KEY  (only needed for the audio fallback)
+ *   - LOVABLE_API_KEY or ELEVENLABS_API_KEY, per STT_PROVIDER
  */
 
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Origin": ALLOWED_ORIGIN,
+  "Vary": "Origin",
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
@@ -148,30 +163,12 @@ async function downloadAudio(
   };
 }
 
-async function transcribeWithElevenLabs(bytes: Uint8Array, mime: string, elevenKey: string): Promise<string> {
-  const fd = new FormData();
-  fd.append("file", new Blob([bytes], { type: mime }), "audio.mp3");
-  fd.append("model_id", "scribe_v2");
-  // language auto-detect; no diarize needed
-  const resp = await fetch("https://api.elevenlabs.io/v1/speech-to-text", {
-    method: "POST",
-    headers: { "xi-api-key": elevenKey },
-    body: fd,
-  });
-  if (!resp.ok) {
-    throw new Error(`ElevenLabs Scribe failed (${resp.status}): ${(await resp.text()).slice(0, 300)}`);
-  }
-  const data = (await resp.json()) as { text?: string };
-  const text = (data.text ?? "").trim();
-  if (!text) throw new Error("ElevenLabs returned no transcript text");
-  return text;
-}
-
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
-  const _auth = await requireUser(req, corsHeaders);
-  if ("response" in _auth) return _auth.response;
+  const _guard = await guardAiRequest(req, corsHeaders, "transcribe_youtube");
+  if ("response" in _guard) return _guard.response;
+  const _auth = { user: _guard.user };
 
   try {
     const { url } = (await req.json()) as { url?: string };
@@ -194,49 +191,127 @@ Deno.serve(async (req) => {
     if (!videoId) return json({ error: "Couldn't parse a video ID from that URL." }, 400);
 
     const APIFY_API_TOKEN = Deno.env.get("APIFY_API_TOKEN");
-    if (!APIFY_API_TOKEN) return json({ error: "APIFY_API_TOKEN not configured" }, 500);
+    if (!APIFY_API_TOKEN) return json({ error: "Transcription isn't available right now." }, 503);
     const canonicalUrl = `https://www.youtube.com/watch?v=${videoId}`;
+    const thumbnail = `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`;
 
-    // 1) Captions path
+    // 0) Cache — free, and the single biggest saving available here.
+    const cached = await lookupTranscript("youtube", videoId);
+    if (cached) {
+      await _guard.refund("cache_hit");
+      return json({
+        transcript: cached.transcript,
+        title: cached.title ?? "YouTube video",
+        author: cached.author,
+        thumbnail,
+        videoUrl: null,
+        finalUrl: canonicalUrl,
+        durationSeconds: cached.durationSeconds,
+        caption: "",
+        resolvedFrom: "cache",
+      });
+    }
+
+    const jobId = await createJob(_auth.user.id, "youtube", canonicalUrl, videoId);
+
+    // 1) Captions — near-free, so this is also refunded.
     const captioned = await tryCaptions(canonicalUrl, APIFY_API_TOKEN);
     if (captioned) {
+      await storeTranscript("youtube", videoId, {
+        transcript: captioned.transcript,
+        title: captioned.title ?? null,
+        author: captioned.author ?? null,
+        durationSeconds: null,
+        source: "captions",
+      });
+      await completeJob(jobId, "captions", {
+        transcript: captioned.transcript,
+        title: captioned.title,
+        author: captioned.author,
+        thumbnail,
+      });
+      await _guard.refund("no_cost_source");
       return json({
         transcript: captioned.transcript,
         title: captioned.title ?? "YouTube video",
         author: captioned.author,
-        thumbnail: `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`,
+        thumbnail,
         videoUrl: null,
         finalUrl: canonicalUrl,
         durationSeconds: null,
         caption: "",
+        resolvedFrom: "captions",
       });
     }
 
-    // 2) Audio fallback via ElevenLabs Scribe
-    const ELEVENLABS_API_KEY = Deno.env.get("ELEVENLABS_API_KEY");
-    if (!ELEVENLABS_API_KEY) {
-      return json(
-        { error: "This video has no captions and ELEVENLABS_API_KEY isn't configured for audio fallback." },
-        422,
-      );
+    // 2) Paid path. This is the only branch that costs an AI action.
+    console.log("transcribe-youtube: no captions, falling back to audio for", videoId);
+    const cfg = resolveSttConfig(Deno.env.toObject());
+
+    let audio: { bytes: Uint8Array; mime: string; title?: string | null; durationSeconds?: number | null };
+    try {
+      audio = await downloadAudio(canonicalUrl, APIFY_API_TOKEN);
+    } catch (e) {
+      await failJob(jobId, "audio_download_failed");
+      await _guard.refund("failed_before_spend");
+      console.error("transcribe-youtube: audio download failed", e instanceof Error ? e.message : e);
+      return json({ error: "Couldn't get the audio for this video." }, 502);
     }
 
-    console.log("transcribe-youtube: no captions, falling back to audio for", videoId);
-    const audio = await downloadAudio(canonicalUrl, APIFY_API_TOKEN);
-    const transcript = await transcribeWithElevenLabs(audio.bytes, audio.mime, ELEVENLABS_API_KEY);
+    const overLimit = checkAudioLimits(cfg, audio.bytes.byteLength, audio.durationSeconds ?? null);
+    if (overLimit) {
+      await failJob(jobId, overLimit.code);
+      await _guard.refund("failed_before_spend");
+      return json({ error: overLimit.message, code: overLimit.code }, 413);
+    }
+
+    let stt;
+    try {
+      stt = await transcribeAudio(audio.bytes, audio.mime, Deno.env.toObject());
+    } catch (e) {
+      const code = e instanceof SttError ? e.code : "stt_failed";
+      await failJob(jobId, code);
+      await _guard.record({ success: false, errorCode: code });
+      console.error("transcribe-youtube: stt failed", code);
+      return json({ error: "Couldn't transcribe this video. Try again in a moment.", code }, 502);
+    }
+
+    await storeTranscript("youtube", videoId, {
+      transcript: stt.text,
+      title: audio.title ?? null,
+      author: null,
+      durationSeconds: audio.durationSeconds ?? null,
+      source: "stt",
+      provider: stt.provider,
+      model: stt.model,
+    });
+    await completeJob(jobId, "stt", {
+      transcript: stt.text,
+      title: audio.title,
+      thumbnail,
+      durationSeconds: audio.durationSeconds,
+    });
+    await _guard.record({
+      success: true,
+      provider: stt.provider,
+      model: stt.model,
+      inputUnits: audio.durationSeconds ?? null,
+      outputUnits: stt.text.length,
+    });
 
     return json({
-      transcript,
+      transcript: stt.text,
       title: audio.title ?? "YouTube video",
       author: null,
-      thumbnail: `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`,
+      thumbnail,
       videoUrl: null,
       finalUrl: canonicalUrl,
       durationSeconds: audio.durationSeconds,
       caption: "",
+      resolvedFrom: "stt",
     });
   } catch (e) {
     console.error("transcribe-youtube error:", e);
-    return json({ error: e instanceof Error ? e.message : "Unknown error" }, 500);
+    return json({ error: "Something went wrong transcribing that video." }, 500);
   }
 });

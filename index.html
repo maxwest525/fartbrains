@@ -7,6 +7,32 @@
     <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <!--
+      Content Security Policy. Delivered as a meta tag so it ships with the app
+      regardless of host; the same policy SHOULD also be sent as a real response
+      header (along with X-Content-Type-Options, Referrer-Policy and
+      Permissions-Policy) at the CDN — see docs/DEPLOYMENT.md. frame-ancestors
+      and X-Frame-Options are header-only and are not enforceable from here.
+
+      'unsafe-inline' on style-src is required by the styling approach in use
+      (inline style attributes from Radix/Tailwind); script-src does NOT allow
+      inline script.
+    -->
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self';
+               script-src 'self';
+               style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+               font-src 'self' https://fonts.gstatic.com data:;
+               img-src 'self' data: blob: https:;
+               media-src 'self' blob: https:;
+               connect-src 'self' https://*.supabase.co wss://*.supabase.co;
+               form-action 'self';
+               base-uri 'self';
+               object-src 'none';
+               frame-ancestors 'none'"
+    />
+    <meta name="referrer" content="strict-origin-when-cross-origin" />
     <title>Fart Brains</title>
     <meta name="description" content="A private idea vault. Capture notes, links, and transcripts in one box — Fart Brains summarizes them, files them in folders, and hands them back when you need them.">
     <meta name="robots" content="index,follow" />

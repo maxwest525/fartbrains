@@ -14,6 +14,9 @@ import { usePushSubscription } from "@/hooks/usePushSubscription";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { ThemeToggle, useTheme } from "@/hooks/useTheme";
+import { AppLockSection } from "@/components/app/AppLockSection";
+import { DataPrivacySection } from "@/components/app/DataPrivacySection";
+import { BillingSection } from "@/components/app/BillingSection";
 
 type Props = {
   open: boolean;
@@ -255,6 +258,9 @@ export const SettingsSheet = ({ open, onOpenChange }: Props) => {
 
 
 
+          {/* Privacy & security — optional device app lock */}
+          <AppLockSection />
+
           {/* Notifications block — explicit status + fix steps */}
           <div className="mt-5 rounded-2xl bg-card border border-border/60 overflow-hidden">
             <div className="px-4 pt-4 pb-3 flex items-start gap-3">
@@ -361,6 +367,12 @@ export const SettingsSheet = ({ open, onOpenChange }: Props) => {
           </div>
 
 
+          {/* Billing — plan, status and the Stripe portal */}
+          <BillingSection />
+
+          {/* Data ownership — export and account deletion */}
+          <DataPrivacySection />
+
           {/* Rules & references block */}
           <div className="mt-5 rounded-2xl bg-card border border-border/60 divide-y divide-border/60 overflow-hidden">
             <Link
@@ -376,6 +388,32 @@ export const SettingsSheet = ({ open, onOpenChange }: Props) => {
                 <p className="text-xs text-muted-foreground truncate">
                   Safety checks the optimizer must pass
                 </p>
+              </div>
+              <ChevronRight className="h-4 w-4 text-muted-foreground" />
+            </Link>
+          </div>
+
+          {/* Legal — currently WIP drafts */}
+          <div className="mt-5 rounded-2xl bg-card border border-border/60 divide-y divide-border/60 overflow-hidden">
+            <Link
+              to="/privacy"
+              onClick={() => onOpenChange(false)}
+              className="w-full flex items-center gap-3 px-4 py-3 press"
+            >
+              <div className="flex-1 min-w-0 text-left">
+                <p className="text-sm font-medium">Privacy Policy</p>
+                <p className="text-xs text-muted-foreground">Draft — work in progress</p>
+              </div>
+              <ChevronRight className="h-4 w-4 text-muted-foreground" />
+            </Link>
+            <Link
+              to="/terms"
+              onClick={() => onOpenChange(false)}
+              className="w-full flex items-center gap-3 px-4 py-3 press"
+            >
+              <div className="flex-1 min-w-0 text-left">
+                <p className="text-sm font-medium">Terms of Service</p>
+                <p className="text-xs text-muted-foreground">Draft — work in progress</p>
               </div>
               <ChevronRight className="h-4 w-4 text-muted-foreground" />
             </Link>

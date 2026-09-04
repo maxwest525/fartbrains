@@ -1,4 +1,6 @@
-import { requireUser } from "../_shared/user-auth.ts";
+import { ALLOWED_ORIGIN } from "../_shared/cors.ts";
+import { guardAiRequest } from "../_shared/ai-guard.ts";
+import { SttError, checkAudioLimits, resolveSttConfig, transcribeAudio } from "../_shared/stt.ts";
 /**
  * Transcribes a short audio clip and extracts typed deliverables in one shot.
  *
@@ -19,7 +21,8 @@ import { requireUser } from "../_shared/user-auth.ts";
  */
 
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Origin": ALLOWED_ORIGIN,
+  "Vary": "Origin",
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
@@ -33,8 +36,9 @@ const json = (body: unknown, status = 200) =>
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
-  const _auth = await requireUser(req, corsHeaders);
-  if ("response" in _auth) return _auth.response;
+  const _guard = await guardAiRequest(req, corsHeaders, "transcribe_deliverables");
+  if ("response" in _guard) return _guard.response;
+  const _auth = { user: _guard.user };
 
   try {
     const { audioBase64, mimeType, allowedTypes, projectName, existingItems } =
@@ -86,42 +90,41 @@ Rules:
         ? `${contextLines.join("\n\n")}\n\nNow process the audio:`
         : "Process the audio:";
 
-    // 1) Transcribe via Lovable AI's dedicated STT endpoint (more reliable
-    //    than passing inline audio to a chat model).
+    // 1) Transcribe through the shared STT config. Provider and model are
+    //    environment-driven (_shared/stt.ts), so this path, YouTube and
+    //    Instagram all move together when the model changes.
+    //
+    //    NOTE: voice notes are never cached. The transcript cache holds public
+    //    media only and has no owner — a customer's own recording must not go
+    //    anywhere another account could reach it.
     const audioBytes = Uint8Array.from(atob(audioBase64), (c) => c.charCodeAt(0));
-    const ext = mimeTypeToExt(mimeType);
-    const sttForm = new FormData();
-    sttForm.append(
-      "file",
-      new File([audioBytes], `recording.${ext}`, { type: mimeType }),
-    );
-    sttForm.append("model", "openai/gpt-4o-mini-transcribe");
 
-    const sttResp = await fetch(
-      "https://ai.gateway.lovable.dev/v1/audio/transcriptions",
-      {
-        method: "POST",
-        headers: { Authorization: `Bearer ${LOVABLE_API_KEY}` },
-        body: sttForm,
-      },
-    );
-
-    if (!sttResp.ok) {
-      if (sttResp.status === 429) {
-        return json({ error: "Rate limit hit. Wait a moment and try again." }, 429);
-      }
-      if (sttResp.status === 402) {
-        return json({ error: "AI credits exhausted. Add credits in Lovable workspace." }, 402);
-      }
-      const t = await sttResp.text().catch(() => "");
-      console.error("STT error:", sttResp.status, t);
-      return json({ error: `Transcription failed (${sttResp.status})` }, 500);
+    const cfg = resolveSttConfig(Deno.env.toObject());
+    const overLimit = checkAudioLimits(cfg, audioBytes.byteLength, null);
+    if (overLimit) {
+      await _guard.refund("failed_before_spend");
+      return json({ error: overLimit.message, code: overLimit.code }, 413);
     }
 
-    const sttData = await sttResp.json().catch(() => ({} as Record<string, unknown>));
-    const transcript = typeof (sttData as { text?: unknown }).text === "string"
-      ? ((sttData as { text: string }).text).trim()
-      : "";
+    let stt;
+    try {
+      stt = await transcribeAudio(audioBytes, mimeType, Deno.env.toObject());
+    } catch (e) {
+      const code = e instanceof SttError ? e.code : "stt_failed";
+      await _guard.record({ success: false, errorCode: code });
+      console.error("transcribe-deliverables: stt failed", code);
+      return json(
+        {
+          error: code === "rate_limited"
+            ? "Too many recordings at once. Wait a moment and try again."
+            : "Couldn't transcribe that recording. Try again in a moment.",
+          code,
+        },
+        code === "rate_limited" ? 429 : 502,
+      );
+    }
+
+    const transcript = stt.text;
 
     if (!transcript) {
       return json({ transcript: "", items: [] });
@@ -176,6 +179,10 @@ Rules:
     if (!resp.ok) {
       // Transcript is the important thing — return it even if extraction fails.
       console.error("Deliverable extraction failed:", resp.status, await resp.text().catch(() => ""));
+      await _guard.record({
+        success: true, provider: stt.provider, model: stt.model,
+        inputUnits: audioBytes.byteLength, outputUnits: transcript.length,
+      });
       return json({ transcript, items: [] });
     }
 
@@ -195,6 +202,10 @@ Rules:
       }))
       .filter((i) => i.text.length > 0 && allowedTypes.includes(i.type));
 
+    await _guard.record({
+      success: true, provider: stt.provider, model: stt.model,
+      inputUnits: audioBytes.byteLength, outputUnits: transcript.length,
+    });
     return json({ transcript, items });
   } catch (e) {
     console.error("transcribe-deliverables error:", e);
@@ -206,13 +217,3 @@ Rules:
 });
 
 /** Map a browser MediaRecorder mime type to a file extension OpenAI's STT recognizes. */
-function mimeTypeToExt(mime: string): string {
-  const lower = mime.toLowerCase();
-  if (lower.includes("webm")) return "webm";
-  if (lower.includes("ogg")) return "ogg";
-  if (lower.includes("mp4") || lower.includes("aac") || lower.includes("m4a")) return "mp4";
-  if (lower.includes("wav")) return "wav";
-  if (lower.includes("mpeg") || lower.includes("mp3")) return "mp3";
-  return "webm";
-}
-
