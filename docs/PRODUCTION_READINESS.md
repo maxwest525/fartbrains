@@ -23,15 +23,25 @@
 - [x] Account deletion with derived-data cleanup.
 - [ ] Durable processing-job model for long-running capture.
 - [ ] Import Center.
+- [x] Capture from the OS share sheet (PWA share target) — PR #7.
 - [x] First-run onboarding.
 - [x] Server-side search + pagination — lists are bounded to 100 rows, indexed, and paged with an explicit "Load more" so nothing is truncated silently.
 - [ ] Semantic retrieval with citations, and grounded "not in your vault" answers.
 - [x] Hide phone auth until an SMS provider is configured and tested.
-- [x] Restrict CORS to production origins; add CSP (remaining response headers documented for the CDN).
+- [~] Restrict CORS to production origins; add CSP (remaining response headers documented for the CDN).
+      **Code shipped, control inert.** Verified 2026-09-04: neither `ALLOWED_ORIGIN`
+      nor `APP_URL` is set on the deployed functions, so every one still answers
+      `Access-Control-Allow-Origin: *`. Setting the secret is the whole fix — see
+      the check in `docs/DEPLOYMENT.md`. Ticked too early once; a control that
+      exists in code and not in the environment is worse than one never written,
+      because it reads as done.
 - [x] Trash retention is actually scheduled (nightly pg_cron job).
 - [~] Error monitoring and privacy-safe product analytics — error boundary and a content-safe analytics layer exist; no provider is wired.
 - [~] Production email sender-domain configuration — documented in `docs/DEPLOYMENT.md`, not verified.
-- [ ] Real automated coverage: auth, two-account RLS, capture, sharing, billing.
+- [~] Real automated coverage: auth, two-account RLS, capture, sharing, billing.
+      CI now runs typecheck, tests and build on every push and PR, and asserts the
+      generated MCP server matches `src/lib/mcp`. The flows above are still not
+      themselves covered end to end.
 
 ### P2 — post launch
 - [ ] Code splitting (single 1.19 MB bundle).
@@ -42,16 +52,21 @@
 
 ### Waiting on the owner (code and config are ready)
 - [x] Deploy edge functions — **done 2026-09-04**, all 32 live and spot-checked
-      with curl (see `docs/QA_MATRIX.md`). **Exception: the `mcp` function only
-      deploys on Publish**, so the live MCP is still the pre-fix build — its
-      `delete_idea` hard-deletes and its reads do not exclude trashed items.
+      with curl (see `docs/QA_MATRIX.md`).
+- [x] Publish, which is the only thing that deploys the `mcp` function —
+      **done 2026-09-04**. Lovable reports the published commit as the squash
+      merge of #6, which carries the soft-delete fix and `build_prompt`. Not
+      independently confirmed against the running function: Supabase denied
+      function-source read and `tools/list` needs auth. Confirm by pointing a
+      session at the endpoint and checking `build_prompt` is listed.
 - [ ] Run `docs/rls-two-account-test.sql` with two real accounts.
 - [ ] Work through `docs/STRIPE_SETUP.md` in test mode.
 
 ### Target architecture (new track, see `docs/SPEC_LEDGER.md`)
 - [ ] `sources` / `source_versions` — immutable, checksummed. Blocks everything else.
 - [ ] `evidence_spans` against a version.
-- [ ] Turn on `ideas.search_vector` — the FTS column and index exist and nothing queries them.
+- [x] Turn on `ideas.search_vector` — now queried as `build_prompt`'s third
+      retrieval pass. Still unused by `search_ideas`, which remains `ilike`.
 - [ ] Enable pgvector; embed spans rather than whole items.
 - [ ] Proposals + review queue (accept / reject / merge / supersede / contradiction).
 - [ ] Durable worker — spec §16.4 forbids long compilation in edge functions.
