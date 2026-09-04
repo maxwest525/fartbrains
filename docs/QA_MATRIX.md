@@ -78,6 +78,26 @@ user, and a customer writing their own subscription status. It rolls back, and
 raises a named exception on the first breach. **Not yet executed** — it needs
 two real accounts and a live database.
 
+## Live production verification (2026-09-04, after deploy)
+Executed against the deployed functions with curl. First evidence in this
+document that is not a unit test.
+
+| Area | Case | Result |
+|---|---|---|
+| Sharing | Well-formed unknown token → `404 {"status":"invalid"}` | PASS |
+| Sharing | Malformed token → **identical** `404 {"status":"invalid"}` — the endpoint is not an enumeration oracle | PASS |
+| Sharing | `GET` → `405` | PASS |
+| Auth | `summarize` unauthenticated → `401` | PASS |
+| Auth | `transcribe-instagram` unauthenticated → `401` (this route had **no** auth before) | PASS |
+| Auth | `deep-research` unauthenticated → `401` | PASS |
+| Auth | `notes-feed` unauthenticated → `401` (previously a shared-token cross-tenant dump) | PASS |
+| Auth | `delete-account` unauthenticated → `401` | PASS |
+| Billing | `stripe-webhook` with no signature → `503 not_configured`, i.e. fails closed until secrets are set | PASS |
+
+Not covered here: a *valid* share resolving, quota enforcement under load, and
+anything requiring a signed-in session. Those need the two-account test and the
+Stripe pass.
+
 ## Manual / visual
 None recorded. This session has no browser; baseline screenshots at 320/390px,
 tablet, 1280/1440px and wide desktop remain outstanding.
