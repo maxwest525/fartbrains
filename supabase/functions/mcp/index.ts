@@ -115,18 +115,69 @@ var append_idea_chat_default = defineTool({
   }
 });
 
-// src/lib/mcp/tools/capture-url.ts
+// src/lib/mcp/tools/build-prompt.ts
 import { defineTool as defineTool2 } from "npm:@lovable.dev/mcp-js@1.0.0";
 import { z as z2 } from "npm:zod@^3.25.76";
-var capture_url_default = defineTool2({
+var build_prompt_default = defineTool2({
+  name: "build_prompt",
+  title: "Build a prompt from a saved idea",
+  description: "Turn a saved idea \u2014 including a captured reel, video or article transcript \u2014 into a ready-to-use prompt the calling agent can act on. Use this when the user wants to build, spec or act on something they saved, rather than just read it back. Returns the prompt without saving anything.",
+  inputSchema: {
+    idea_id: z2.string().uuid().describe("The saved idea to turn into a prompt. Find it with search_ideas."),
+    goal: z2.string().trim().max(2e3).optional().describe(
+      "What the user wants out of it \u2014 'build an MVP', 'write a spec', 'turn this into a landing page'. Steers the prompt; leave empty for a general-purpose one."
+    )
+  },
+  annotations: { readOnlyHint: true, openWorldHint: false },
+  handler: async ({ idea_id, goal }, ctx) => {
+    try {
+      requireAuth(ctx);
+      const supabase = supabaseForUser(ctx);
+      const { data, error } = await supabase.from("ideas").select("title, raw_note, ai_summary, extracted_text, source_url, source_label").eq("id", idea_id).is("deleted_at", null).maybeSingle();
+      if (error) return errorResult(error.message);
+      if (!data) return errorResult("No such idea, or it is in the Trash.");
+      const note = [data.raw_note ?? "", goal ? `Goal: ${goal}` : ""].filter(Boolean).join("\n\n");
+      const res = await callFunction(ctx, "generate-prompt", {
+        title: data.title,
+        note,
+        summary: data.ai_summary,
+        extractedText: data.extracted_text,
+        sourceUrl: data.source_url,
+        sourceLabel: data.source_label
+      });
+      const prompt = String(res.prompt ?? "").trim();
+      if (!prompt) return errorResult("Couldn't build a prompt from that idea.");
+      return jsonResult({
+        prompt,
+        // Cite what it was built from, so the caller can show its working
+        // rather than presenting the prompt as having appeared from nowhere.
+        built_from: {
+          idea_id,
+          title: data.title,
+          source_url: data.source_url ?? null,
+          source_label: data.source_label ?? null,
+          used_summary: Boolean(data.ai_summary),
+          used_transcript: Boolean(data.extracted_text)
+        }
+      });
+    } catch (e) {
+      return errorResult(e instanceof Error ? e.message : "Couldn't build a prompt");
+    }
+  }
+});
+
+// src/lib/mcp/tools/capture-url.ts
+import { defineTool as defineTool3 } from "npm:@lovable.dev/mcp-js@1.0.0";
+import { z as z3 } from "npm:zod@^3.25.76";
+var capture_url_default = defineTool3({
   name: "capture_url",
   title: "Capture a URL",
   description: "Fetch a web page, extract its readable text, summarize it, and save the result as an idea in the vault. Use this when the user shares a link they want kept.",
   inputSchema: {
-    url: z2.string().url().describe("Public http(s) URL to capture."),
-    folder_id: z2.string().uuid().optional().describe("Folder to file the capture under."),
-    note: z2.string().trim().max(2e3).optional().describe("The user's own note about why this matters."),
-    save: z2.boolean().optional().describe("Save to the vault. Default true; pass false to preview only.")
+    url: z3.string().url().describe("Public http(s) URL to capture."),
+    folder_id: z3.string().uuid().optional().describe("Folder to file the capture under."),
+    note: z3.string().trim().max(2e3).optional().describe("The user's own note about why this matters."),
+    save: z3.boolean().optional().describe("Save to the vault. Default true; pass false to preview only.")
   },
   annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: true },
   handler: async ({ url, folder_id, note, save }, ctx) => {
@@ -176,20 +227,20 @@ var capture_url_default = defineTool2({
 });
 
 // src/lib/mcp/tools/create-calendar-event.ts
-import { defineTool as defineTool3 } from "npm:@lovable.dev/mcp-js@1.0.0";
-import { z as z3 } from "npm:zod@^3.25.76";
-var create_calendar_event_default = defineTool3({
+import { defineTool as defineTool4 } from "npm:@lovable.dev/mcp-js@1.0.0";
+import { z as z4 } from "npm:zod@^3.25.76";
+var create_calendar_event_default = defineTool4({
   name: "create_calendar_event",
   title: "Create calendar event",
   description: "Save a birthday, anniversary or other recurring date the user wants remembered.",
   inputSchema: {
-    name: z3.string().trim().min(1).max(120).describe("Who or what the date is for."),
-    event_type: z3.string().trim().min(1).max(40).describe("For example birthday, anniversary, holiday."),
-    month: z3.number().int().min(1).max(12).optional(),
-    day: z3.number().int().min(1).max(31).optional(),
-    birth_year: z3.number().int().min(1900).max(2200).optional(),
-    emoji: z3.string().trim().max(8).optional(),
-    notes: z3.string().trim().max(2e3).optional()
+    name: z4.string().trim().min(1).max(120).describe("Who or what the date is for."),
+    event_type: z4.string().trim().min(1).max(40).describe("For example birthday, anniversary, holiday."),
+    month: z4.number().int().min(1).max(12).optional(),
+    day: z4.number().int().min(1).max(31).optional(),
+    birth_year: z4.number().int().min(1900).max(2200).optional(),
+    emoji: z4.string().trim().max(8).optional(),
+    notes: z4.string().trim().max(2e3).optional()
   },
   annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: false },
   handler: async (input, ctx) => {
@@ -215,13 +266,13 @@ var create_calendar_event_default = defineTool3({
 });
 
 // src/lib/mcp/tools/create-folder.ts
-import { defineTool as defineTool4 } from "npm:@lovable.dev/mcp-js@1.0.0";
-import { z as z4 } from "npm:zod@^3.25.76";
-var create_folder_default = defineTool4({
+import { defineTool as defineTool5 } from "npm:@lovable.dev/mcp-js@1.0.0";
+import { z as z5 } from "npm:zod@^3.25.76";
+var create_folder_default = defineTool5({
   name: "create_folder",
   title: "Create folder",
   description: "Create a new folder in the vault. Reuses the existing folder when the name already exists.",
-  inputSchema: { name: z4.string().trim().min(1).max(80) },
+  inputSchema: { name: z5.string().trim().min(1).max(80) },
   annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: false },
   handler: async ({ name }, ctx) => {
     try {
@@ -239,23 +290,23 @@ var create_folder_default = defineTool4({
 });
 
 // src/lib/mcp/tools/create-idea.ts
-import { defineTool as defineTool5 } from "npm:@lovable.dev/mcp-js@1.0.0";
-import { z as z5 } from "npm:zod@^3.25.76";
+import { defineTool as defineTool6 } from "npm:@lovable.dev/mcp-js@1.0.0";
+import { z as z6 } from "npm:zod@^3.25.76";
 var SOURCE_TYPES = ["manual", "webpage", "transcript", "audio", "youtube", "instagram", "tiktok"];
-var create_idea_default = defineTool5({
+var create_idea_default = defineTool6({
   name: "create_idea",
   title: "Create idea",
   description: "Save a new idea, note or captured text into the user's second brain. Use this whenever the user wants something remembered.",
   inputSchema: {
-    title: z5.string().trim().min(1).max(200).describe("Short title for the idea."),
-    note: z5.string().trim().optional().describe("The note body / raw text to store verbatim."),
-    summary: z5.string().trim().optional().describe("Optional summary of the note."),
-    folder_id: z5.string().uuid().optional().describe("Folder to file it under."),
-    tags: z5.array(z5.string().trim().min(1)).max(12).optional().describe("Tags for retrieval."),
-    source_url: z5.string().url().optional().describe("Where the idea came from, if any."),
-    source_type: z5.enum(SOURCE_TYPES).optional().describe("Capture path. Default manual."),
-    priority: z5.enum(["none", "low", "medium", "high"]).optional(),
-    is_favorite: z5.boolean().optional()
+    title: z6.string().trim().min(1).max(200).describe("Short title for the idea."),
+    note: z6.string().trim().optional().describe("The note body / raw text to store verbatim."),
+    summary: z6.string().trim().optional().describe("Optional summary of the note."),
+    folder_id: z6.string().uuid().optional().describe("Folder to file it under."),
+    tags: z6.array(z6.string().trim().min(1)).max(12).optional().describe("Tags for retrieval."),
+    source_url: z6.string().url().optional().describe("Where the idea came from, if any."),
+    source_type: z6.enum(SOURCE_TYPES).optional().describe("Capture path. Default manual."),
+    priority: z6.enum(["none", "low", "medium", "high"]).optional(),
+    is_favorite: z6.boolean().optional()
   },
   annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: false },
   handler: async (input, ctx) => {
@@ -283,15 +334,15 @@ var create_idea_default = defineTool5({
 });
 
 // src/lib/mcp/tools/create-todo.ts
-import { defineTool as defineTool6 } from "npm:@lovable.dev/mcp-js@1.0.0";
-import { z as z6 } from "npm:zod@^3.25.76";
-var create_todo_default = defineTool6({
+import { defineTool as defineTool7 } from "npm:@lovable.dev/mcp-js@1.0.0";
+import { z as z7 } from "npm:zod@^3.25.76";
+var create_todo_default = defineTool7({
   name: "create_todo",
   title: "Create todo",
   description: "Add a todo to the user's list, with an optional due date.",
   inputSchema: {
-    title: z6.string().trim().min(1).max(200),
-    due_at: z6.string().datetime().optional().describe("ISO 8601 due timestamp.")
+    title: z7.string().trim().min(1).max(200),
+    due_at: z7.string().datetime().optional().describe("ISO 8601 due timestamp.")
   },
   annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: false },
   handler: async ({ title, due_at }, ctx) => {
@@ -308,13 +359,13 @@ var create_todo_default = defineTool6({
 });
 
 // src/lib/mcp/tools/delete-idea.ts
-import { defineTool as defineTool7 } from "npm:@lovable.dev/mcp-js@1.0.0";
-import { z as z7 } from "npm:zod@^3.25.76";
-var delete_idea_default = defineTool7({
+import { defineTool as defineTool8 } from "npm:@lovable.dev/mcp-js@1.0.0";
+import { z as z8 } from "npm:zod@^3.25.76";
+var delete_idea_default = defineTool8({
   name: "delete_idea",
   title: "Delete idea",
   description: "Move one idea to the user's Trash. It stops being searchable and any share links for it are revoked, but it stays recoverable for 30 days. Confirm with the user before calling this.",
-  inputSchema: { idea_id: z7.string().uuid() },
+  inputSchema: { idea_id: z8.string().uuid() },
   annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: false },
   handler: async ({ idea_id }, ctx) => {
     try {
@@ -332,15 +383,15 @@ var delete_idea_default = defineTool7({
 });
 
 // src/lib/mcp/tools/get-idea.ts
-import { defineTool as defineTool8 } from "npm:@lovable.dev/mcp-js@1.0.0";
-import { z as z8 } from "npm:zod@^3.25.76";
-var get_idea_default = defineTool8({
+import { defineTool as defineTool9 } from "npm:@lovable.dev/mcp-js@1.0.0";
+import { z as z9 } from "npm:zod@^3.25.76";
+var get_idea_default = defineTool9({
   name: "get_idea",
   title: "Get idea",
   description: "Read one saved idea in full: note body, AI summary, extracted source text, generated prompt, tags, folder and linked references.",
   inputSchema: {
-    idea_id: z8.string().uuid().describe("The idea id."),
-    include_references: z8.boolean().optional().describe("Also return auto-extracted reference links. Default true.")
+    idea_id: z9.string().uuid().describe("The idea id."),
+    include_references: z9.boolean().optional().describe("Also return auto-extracted reference links. Default true.")
   },
   annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
   handler: async ({ idea_id, include_references }, ctx) => {
@@ -368,15 +419,15 @@ var get_idea_default = defineTool8({
 });
 
 // src/lib/mcp/tools/get-idea-chat.ts
-import { defineTool as defineTool9 } from "npm:@lovable.dev/mcp-js@1.0.0";
-import { z as z9 } from "npm:zod@^3.25.76";
-var get_idea_chat_default = defineTool9({
+import { defineTool as defineTool10 } from "npm:@lovable.dev/mcp-js@1.0.0";
+import { z as z10 } from "npm:zod@^3.25.76";
+var get_idea_chat_default = defineTool10({
   name: "get_idea_chat",
   title: "Get idea brainstorm history",
   description: "Read the saved brainstorm conversation attached to one idea, so you can continue the user's earlier thinking instead of starting over.",
   inputSchema: {
-    idea_id: z9.string().uuid(),
-    limit: z9.number().int().min(1).max(200).optional().describe("Max messages, default 50.")
+    idea_id: z10.string().uuid(),
+    limit: z10.number().int().min(1).max(200).optional().describe("Max messages, default 50.")
   },
   annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
   handler: async ({ idea_id, limit }, ctx) => {
@@ -393,8 +444,8 @@ var get_idea_chat_default = defineTool9({
 });
 
 // src/lib/mcp/tools/get-instructions.ts
-import { defineTool as defineTool10 } from "npm:@lovable.dev/mcp-js@1.0.0";
-var get_instructions_default = defineTool10({
+import { defineTool as defineTool11 } from "npm:@lovable.dev/mcp-js@1.0.0";
+var get_instructions_default = defineTool11({
   name: "get_instructions",
   title: "Get personal instructions",
   description: "Read the user's standing personal instructions for how their second brain should behave (general style, capture, summarizing, tagging, organizing). Call this first in a new session and follow the rules it returns.",
@@ -417,14 +468,14 @@ var get_instructions_default = defineTool10({
 });
 
 // src/lib/mcp/tools/list-calendar-events.ts
-import { defineTool as defineTool11 } from "npm:@lovable.dev/mcp-js@1.0.0";
-import { z as z10 } from "npm:zod@^3.25.76";
-var list_calendar_events_default = defineTool11({
+import { defineTool as defineTool12 } from "npm:@lovable.dev/mcp-js@1.0.0";
+import { z as z11 } from "npm:zod@^3.25.76";
+var list_calendar_events_default = defineTool12({
   name: "list_calendar_events",
   title: "List calendar events",
   description: "List the user's saved dates: birthdays, anniversaries and other recurring events, optionally filtered to one month.",
   inputSchema: {
-    month: z10.number().int().min(1).max(12).optional().describe("Filter to a calendar month (1-12).")
+    month: z11.number().int().min(1).max(12).optional().describe("Filter to a calendar month (1-12).")
   },
   annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
   handler: async ({ month }, ctx) => {
@@ -443,8 +494,8 @@ var list_calendar_events_default = defineTool11({
 });
 
 // src/lib/mcp/tools/list-folders.ts
-import { defineTool as defineTool12 } from "npm:@lovable.dev/mcp-js@1.0.0";
-var list_folders_default = defineTool12({
+import { defineTool as defineTool13 } from "npm:@lovable.dev/mcp-js@1.0.0";
+var list_folders_default = defineTool13({
   name: "list_folders",
   title: "List folders",
   description: "List the user's vault folders with idea counts, so you can file new ideas in the right place.",
@@ -475,8 +526,8 @@ var list_folders_default = defineTool12({
 });
 
 // src/lib/mcp/tools/list-tags.ts
-import { defineTool as defineTool13 } from "npm:@lovable.dev/mcp-js@1.0.0";
-var list_tags_default = defineTool13({
+import { defineTool as defineTool14 } from "npm:@lovable.dev/mcp-js@1.0.0";
+var list_tags_default = defineTool14({
   name: "list_tags",
   title: "List tags",
   description: "List every tag used in the vault with its frequency. Use it to reuse the user's own vocabulary instead of inventing new tags.",
@@ -504,15 +555,15 @@ var list_tags_default = defineTool13({
 });
 
 // src/lib/mcp/tools/list-todos.ts
-import { defineTool as defineTool14 } from "npm:@lovable.dev/mcp-js@1.0.0";
-import { z as z11 } from "npm:zod@^3.25.76";
-var list_todos_default = defineTool14({
+import { defineTool as defineTool15 } from "npm:@lovable.dev/mcp-js@1.0.0";
+import { z as z12 } from "npm:zod@^3.25.76";
+var list_todos_default = defineTool15({
   name: "list_todos",
   title: "List todos",
   description: "List the user's todos, newest first. Defaults to open items only.",
   inputSchema: {
-    include_done: z11.boolean().optional().describe("Include completed todos. Default false."),
-    limit: z11.number().int().min(1).max(100).optional().describe("Max results, default 30.")
+    include_done: z12.boolean().optional().describe("Include completed todos. Default false."),
+    limit: z12.number().int().min(1).max(100).optional().describe("Max results, default 30.")
   },
   annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
   handler: async ({ include_done, limit }, ctx) => {
@@ -531,8 +582,8 @@ var list_todos_default = defineTool14({
 });
 
 // src/lib/mcp/tools/recall-context.ts
-import { defineTool as defineTool15 } from "npm:@lovable.dev/mcp-js@1.0.0";
-import { z as z12 } from "npm:zod@^3.25.76";
+import { defineTool as defineTool16 } from "npm:@lovable.dev/mcp-js@1.0.0";
+import { z as z13 } from "npm:zod@^3.25.76";
 var STOP = /* @__PURE__ */ new Set([
   "the",
   "and",
@@ -569,13 +620,13 @@ var snippet = (text, keys) => {
   const start = Math.max(0, hit - 120);
   return (start > 0 ? "\u2026" : "") + flat.slice(start, start + 360) + (flat.length > start + 360 ? "\u2026" : "");
 };
-var recall_context_default = defineTool15({
+var recall_context_default = defineTool16({
   name: "recall_context",
   title: "Recall second-brain context",
   description: "The main second-brain retrieval tool. Given a question or topic, returns the user's personal instructions plus the most relevant saved ideas as ranked snippets with the reason each was picked. Call this before answering questions that depend on what the user already knows or decided.",
   inputSchema: {
-    query: z12.string().trim().min(2).describe("The question or topic you need the user's own context for."),
-    limit: z12.number().int().min(1).max(15).optional().describe("Max snippets, default 6.")
+    query: z13.string().trim().min(2).describe("The question or topic you need the user's own context for."),
+    limit: z13.number().int().min(1).max(15).optional().describe("Max snippets, default 6.")
   },
   annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
   handler: async ({ query, limit }, ctx) => {
@@ -624,18 +675,18 @@ var recall_context_default = defineTool15({
 });
 
 // src/lib/mcp/tools/search-ideas.ts
-import { defineTool as defineTool16 } from "npm:@lovable.dev/mcp-js@1.0.0";
-import { z as z13 } from "npm:zod@^3.25.76";
-var search_ideas_default = defineTool16({
+import { defineTool as defineTool17 } from "npm:@lovable.dev/mcp-js@1.0.0";
+import { z as z14 } from "npm:zod@^3.25.76";
+var search_ideas_default = defineTool17({
   name: "search_ideas",
   title: "Search ideas",
   description: "Search the signed-in user's second brain for saved ideas and notes. Matches title, note body, summary and extracted text. Use this before answering anything about what the user has already captured.",
   inputSchema: {
-    query: z13.string().trim().optional().describe("Free-text search. Omit to list the most recent ideas."),
-    folder_id: z13.string().uuid().optional().describe("Restrict results to one folder."),
-    tag: z13.string().trim().optional().describe("Restrict results to ideas carrying this tag."),
-    favorites_only: z13.boolean().optional().describe("Only return favorited ideas."),
-    limit: z13.number().int().min(1).max(50).optional().describe("Max results, default 15.")
+    query: z14.string().trim().optional().describe("Free-text search. Omit to list the most recent ideas."),
+    folder_id: z14.string().uuid().optional().describe("Restrict results to one folder."),
+    tag: z14.string().trim().optional().describe("Restrict results to ideas carrying this tag."),
+    favorites_only: z14.boolean().optional().describe("Only return favorited ideas."),
+    limit: z14.number().int().min(1).max(50).optional().describe("Max results, default 15.")
   },
   annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
   handler: async ({ query, folder_id, tag, favorites_only, limit }, ctx) => {
@@ -664,15 +715,15 @@ var search_ideas_default = defineTool16({
 });
 
 // src/lib/mcp/tools/set-todo-done.ts
-import { defineTool as defineTool17 } from "npm:@lovable.dev/mcp-js@1.0.0";
-import { z as z14 } from "npm:zod@^3.25.76";
-var set_todo_done_default = defineTool17({
+import { defineTool as defineTool18 } from "npm:@lovable.dev/mcp-js@1.0.0";
+import { z as z15 } from "npm:zod@^3.25.76";
+var set_todo_done_default = defineTool18({
   name: "set_todo_done",
   title: "Complete or reopen todo",
   description: "Mark a todo complete, or reopen it by passing done=false.",
   inputSchema: {
-    todo_id: z14.string().uuid(),
-    done: z14.boolean().optional().describe("Default true.")
+    todo_id: z15.string().uuid(),
+    done: z15.boolean().optional().describe("Default true.")
   },
   annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
   handler: async ({ todo_id, done }, ctx) => {
@@ -695,16 +746,16 @@ var set_todo_done_default = defineTool17({
 });
 
 // src/lib/mcp/tools/summarize-text.ts
-import { defineTool as defineTool18 } from "npm:@lovable.dev/mcp-js@1.0.0";
-import { z as z15 } from "npm:zod@^3.25.76";
-var summarize_text_default = defineTool18({
+import { defineTool as defineTool19 } from "npm:@lovable.dev/mcp-js@1.0.0";
+import { z as z16 } from "npm:zod@^3.25.76";
+var summarize_text_default = defineTool19({
   name: "summarize_text",
   title: "Summarize text",
   description: "Summarize a transcript or long passage using the user's own summarizing rules. Returns the summary and a suggested title without saving anything.",
   inputSchema: {
-    text: z15.string().trim().min(40).describe("The transcript or passage to summarize."),
-    kind: z15.enum(["manual", "webpage", "transcript", "audio"]).optional().describe("Content kind. Default transcript."),
-    note: z15.string().trim().max(2e3).optional().describe("The user's framing or question about the text.")
+    text: z16.string().trim().min(40).describe("The transcript or passage to summarize."),
+    kind: z16.enum(["manual", "webpage", "transcript", "audio"]).optional().describe("Content kind. Default transcript."),
+    note: z16.string().trim().max(2e3).optional().describe("The user's framing or question about the text.")
   },
   annotations: { readOnlyHint: true, openWorldHint: false },
   handler: async ({ text, kind, note }, ctx) => {
@@ -723,22 +774,22 @@ var summarize_text_default = defineTool18({
 });
 
 // src/lib/mcp/tools/update-idea.ts
-import { defineTool as defineTool19 } from "npm:@lovable.dev/mcp-js@1.0.0";
-import { z as z16 } from "npm:zod@^3.25.76";
-var update_idea_default = defineTool19({
+import { defineTool as defineTool20 } from "npm:@lovable.dev/mcp-js@1.0.0";
+import { z as z17 } from "npm:zod@^3.25.76";
+var update_idea_default = defineTool20({
   name: "update_idea",
   title: "Update idea",
   description: "Edit an existing idea: retitle it, rewrite the note, set the summary or generated prompt, move folders, change tags, priority or favorite state. Only the fields you pass change.",
   inputSchema: {
-    idea_id: z16.string().uuid(),
-    title: z16.string().trim().min(1).max(200).optional(),
-    note: z16.string().trim().optional().describe("Replaces raw_note."),
-    summary: z16.string().trim().optional(),
-    generated_prompt: z16.string().trim().optional().describe("Reusable AI prompt derived from the idea."),
-    folder_id: z16.string().uuid().nullable().optional(),
-    tags: z16.array(z16.string().trim().min(1)).max(12).optional(),
-    priority: z16.enum(["none", "low", "medium", "high"]).optional(),
-    is_favorite: z16.boolean().optional()
+    idea_id: z17.string().uuid(),
+    title: z17.string().trim().min(1).max(200).optional(),
+    note: z17.string().trim().optional().describe("Replaces raw_note."),
+    summary: z17.string().trim().optional(),
+    generated_prompt: z17.string().trim().optional().describe("Reusable AI prompt derived from the idea."),
+    folder_id: z17.string().uuid().nullable().optional(),
+    tags: z17.array(z17.string().trim().min(1)).max(12).optional(),
+    priority: z17.enum(["none", "low", "medium", "high"]).optional(),
+    is_favorite: z17.boolean().optional()
   },
   annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
   handler: async ({ idea_id, note, summary, ...rest }, ctx) => {
@@ -761,8 +812,8 @@ var update_idea_default = defineTool19({
 });
 
 // src/lib/mcp/tools/whoami.ts
-import { defineTool as defineTool20 } from "npm:@lovable.dev/mcp-js@1.0.0";
-var whoami_default = defineTool20({
+import { defineTool as defineTool21 } from "npm:@lovable.dev/mcp-js@1.0.0";
+var whoami_default = defineTool21({
   name: "whoami",
   title: "Who am I",
   description: "Confirm which vault account this connection is acting as, plus a quick size summary of the vault. Useful for verifying the connection works.",
@@ -799,6 +850,7 @@ var mcp_default = defineMcp({
     "This is the signed-in user's personal second brain: saved ideas, notes, captured links and transcripts, folders, tags, todos and important dates.",
     "Start a session with `get_instructions` and follow the user's standing rules, then use `recall_context` before answering anything that depends on what they already captured or decided.",
     "Use `search_ideas` / `get_idea` to read, `create_idea` and `capture_url` to save new material, `update_idea` to refine, and `create_todo` for actions.",
+    "When the user wants to build, spec or act on something they saved rather than just read it, call `build_prompt` \u2014 it turns a saved idea or transcript into a brief you can work from. You do the building; this vault supplies the material and the brief.",
     "Reuse the user's existing folders and tags (`list_folders`, `list_tags`) instead of inventing new vocabulary. Confirm before calling `delete_idea`."
   ].join(" "),
   auth: auth.oauth.issuer({
@@ -816,6 +868,7 @@ var mcp_default = defineMcp({
     delete_idea_default,
     capture_url_default,
     summarize_text_default,
+    build_prompt_default,
     list_folders_default,
     create_folder_default,
     list_tags_default,

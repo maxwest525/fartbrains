@@ -35,6 +35,7 @@ Legend: ✅ done · 🟡 partial · ❌ absent · n/a not applicable
 | Capability | In repo | Tests pass | Provider configured | Live execution verified | Auth'd UI verified | Evidence / notes |
 |---|:--:|:--:|:--:|:--:|:--:|---|
 | Governed tool gateway — list/describe/execute | 🟡 | ❌ | ✅ | ✅ | n/a | MCP server, 20 tools, OAuth, RLS-scoped, AI tools inherit the quota guard. **This is the product's entire integration surface** — a subscriber points their session at it and their agent does the rest. **Missing the three-operation shape**: all 20 schemas are exposed at once rather than list → describe → execute, which is the thing we criticise other servers for |
+| `build_prompt` on the integration surface | ✅ | ❌ | ✅ | ❌ | n/a | The product's actual output — idea/transcript → ready-to-use prompt — is now an MCP tool. The chain existed but was reachable only from an idea detail page, so a connected agent could read the vault and never get the one artifact worth shipping |
 | MCP write path carries project + source context | ❌ | ❌ | ✅ | ❌ | n/a | `create_idea` / `capture_url` write mutable rows with no project, source or version. For an agent pushing repo material up, they need to write a `source_version` scoped to a `project` |
 | Workspace scoping before ranking | ✅ | ✅ | ✅ | ✅ | ✅ | RLS on every user-owned table; verified two-account |
 | Credentials server-side only | ✅ | ❌ | ✅ | ✅ | n/a | No service-role key in client or MCP path |

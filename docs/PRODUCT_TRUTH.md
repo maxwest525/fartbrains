@@ -7,10 +7,22 @@ multitenancy, and every tenant is isolated from every other. Multitenancy is not
 teams: it means many separate customers, not many people inside one account.
 
 ## The promise
-1. Put anything in — a thought, a link, a reel, a repo, a folder.
+1. Put anything in — a thought, a link, a reel, a repo.
 2. It becomes durable, structured, attributable knowledge.
-3. Find it, ask it, or hand it to an agent that builds from it.
+3. Ask for a prompt, and your own agent builds from it.
 4. It stays yours, and you can see exactly what it knows and why.
+
+## We do not build anything
+That is the load-bearing sentence. Fartbrains ships **a prompt**, not code.
+
+You save a reel of someone explaining an SEO tactic, or showing off their
+personal CEO agent. Today that is a bookmark you never open again. Here it
+becomes a brief good enough that the agent already sitting in your project can
+build the thing.
+
+The chain is: capture → transcribe → summarize → **prompt**. The last step is the
+product; the rest is what makes it good. Whoever holds the filesystem does the
+building, and that is never us.
 
 ## The differentiator
 Today, giving an AI access to your knowledge means installing a pile of plugins
