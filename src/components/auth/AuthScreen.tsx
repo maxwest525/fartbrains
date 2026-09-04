@@ -26,6 +26,13 @@ const normalizePhone = (raw: string): string => {
   return digits ? `+${digits}` : "";
 };
 
+/** Post-auth landing URL, preserving a validated ?next= relative path. */
+const authRedirect = (): string => {
+  const raw = new URLSearchParams(window.location.search).get("next");
+  const next = raw && raw.startsWith("/") && !raw.startsWith("//") ? raw : "/";
+  return `${window.location.origin}${next}`;
+};
+
 const isValidE164 = (v: string) => /^\+[1-9]\d{7,14}$/.test(v);
 
 export const AuthScreen = () => {
@@ -39,6 +46,22 @@ export const AuthScreen = () => {
   const [otpSent, setOtpSent] = useState(false);
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
+
+  // Honor a ?next= redirect (used by the MCP OAuth consent flow) once signed in.
+  useEffect(() => {
+    const raw = new URLSearchParams(window.location.search).get("next");
+    const next = raw && raw.startsWith("/") && !raw.startsWith("//") ? raw : null;
+    if (!next) return;
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_e, session) => {
+      if (session) window.location.replace(next);
+    });
+    void supabase.auth.getSession().then(({ data }) => {
+      if (data.session) window.location.replace(next);
+    });
+    return () => subscription.unsubscribe();
+  }, []);
+
+
 
   // Prefill last-used identifier so returning users can jump straight to password/PIN.
   const [rememberedEmail, setRememberedEmail] = useState<string | null>(null);
@@ -93,7 +116,7 @@ export const AuthScreen = () => {
         }
         const { error } = await supabase.auth.signInWithOtp({
           email: trimmed,
-          options: { emailRedirectTo: `${window.location.origin}/` },
+          options: { emailRedirectTo: authRedirect() },
         });
         if (error) throw error;
         rememberSuccess();
@@ -146,7 +169,7 @@ export const AuthScreen = () => {
           const { error } = await supabase.auth.signUp({
             email: trimmed,
             password,
-            options: { emailRedirectTo: `${window.location.origin}/` },
+            options: { emailRedirectTo: authRedirect() },
           });
           if (error) throw error;
           try { localStorage.setItem(WELCOME_PENDING_KEY, "1"); } catch { /* ignore */ }
