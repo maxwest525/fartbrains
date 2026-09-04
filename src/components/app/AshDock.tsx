@@ -28,6 +28,9 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { useSyncedDraft } from "@/hooks/useSyncedDraft";
+
+const DRAFT_KEY = "ash-composer-draft-v1";
 import { Button } from "@/components/ui/button";
 
 type Chip = { id: string; label: string; prefill: string };
@@ -104,7 +107,9 @@ export const AshDock = ({ className }: { className?: string }) => {
   const { data: folders = [] } = useFolders();
   const createIdea = useCreateIdea();
   const voice = useVoiceCapture({ maxSeconds: 180 });
-  const [text, setText] = useState("");
+  // Composer draft syncs through the account so an unfinished thought started on
+  // the phone is waiting in the desktop app (and back again).
+  const { value: text, setValue: setText } = useSyncedDraft("composer", DRAFT_KEY);
   const [composerH, setComposerH] = useState<number>(() => {
     try {
       const v = Number(localStorage.getItem(HEIGHT_KEY));

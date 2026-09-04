@@ -311,6 +311,31 @@
         "no live provider call has been made; the STT client code is untested against a real gateway",
         "cache correctness is unproven until the migration is applied"
       ]
+    },
+    {
+      "n": 15,
+      "task": "Review the MCP server added on main; merge main",
+      "evidence": [
+        "MCP auth model verified: OAuth issuer, RLS-scoped, no service-role key, AI tools inherit guardAiRequest",
+        "2 real bugs fixed: hard delete bypassing Trash, and trashed items resurfacing in 4 read tools",
+        "list_tags unbounded fetch bounded",
+        "Vite plugin regenerated the deployed bundle from source; tsc, 93 tests, build, eslint all pass"
+      ],
+      "files": [
+        "src/lib/mcp/tools/delete-idea.ts",
+        "src/lib/mcp/tools/search-ideas.ts",
+        "src/lib/mcp/tools/recall-context.ts",
+        "src/lib/mcp/tools/get-idea.ts",
+        "src/lib/mcp/tools/list-tags.ts",
+        "supabase/functions/mcp/index.ts (regenerated)",
+        "src/App.tsx"
+      ],
+      "db_changes": "none; merged main's user_drafts migration (RLS correct)",
+      "remaining_risks": [
+        "MCP reads now REQUIRE the trash migration to be applied before deploy, or they error",
+        "the generated mcp function is outside the shared CORS pinning",
+        "recall_context pulls up to 300 rows including extracted_text"
+      ]
     }
   ],
   "next": "Remaining P1s: durable capture jobs, Import Center, server-side search + pagination, semantic retrieval with citations, email verification enforcement, accessibility pass"

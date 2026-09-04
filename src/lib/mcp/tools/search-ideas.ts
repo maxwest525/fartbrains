@@ -22,6 +22,8 @@ export default defineTool({
       let q = supabase
         .from("ideas")
         .select("id, title, ai_summary, raw_note, tags, folder_id, source_type, source_url, is_favorite, priority, created_at, updated_at")
+        // Something the user deleted must not come back through the agent.
+        .is("deleted_at", null)
         .order("updated_at", { ascending: false })
         .limit(limit ?? 15);
 

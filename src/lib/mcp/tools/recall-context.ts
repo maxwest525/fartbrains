@@ -49,6 +49,8 @@ export default defineTool({
         supabase
           .from("ideas")
           .select("id, title, raw_note, ai_summary, extracted_text, tags, folder_id, updated_at")
+          // Trashed items must never be fed back as context.
+          .is("deleted_at", null)
           .order("updated_at", { ascending: false })
           .limit(300),
         supabase
