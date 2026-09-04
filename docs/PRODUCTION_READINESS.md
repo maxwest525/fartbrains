@@ -41,9 +41,10 @@
 - [ ] Clear the 29 lint errors.
 
 ### Waiting on the owner (code and config are ready)
-- [ ] Deploy edge functions — `docs/DEPLOYMENT.md`. Until this runs, Supabase is
-      still serving the old functions: sharing, quotas, usage accounting and the
-      transcription rework are merged but not live.
+- [x] Deploy edge functions — **done 2026-09-04**, all 32 live and spot-checked
+      with curl (see `docs/QA_MATRIX.md`). **Exception: the `mcp` function only
+      deploys on Publish**, so the live MCP is still the pre-fix build — its
+      `delete_idea` hard-deletes and its reads do not exclude trashed items.
 - [ ] Run `docs/rls-two-account-test.sql` with two real accounts.
 - [ ] Work through `docs/STRIPE_SETUP.md` in test mode.
 
