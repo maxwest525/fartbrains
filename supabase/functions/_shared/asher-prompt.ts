@@ -2,7 +2,13 @@
 // prompt-preview panel and the actual chat call can never drift apart.
 
 import { instructionBlock } from "./instructions.ts";
-import { renderVaultContext, retrieveVaultContext, type VaultHit } from "./vault-context.ts";
+import {
+  renderOperationalContext,
+  renderVaultContext,
+  retrieveOperationalContext,
+  retrieveVaultContext,
+  type VaultHit,
+} from "./vault-context.ts";
 
 export const ASHER_BASE_PROMPT = `You are Asher — the user's personal second-brain assistant living inside their idea vault.
 - Be direct, warm, and concise. No corporate filler.
