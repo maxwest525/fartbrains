@@ -23,9 +23,12 @@ wordmark watermark in the footer.
 - Amber (`#f2a53c`) is kept as the single accent; upstream is monochrome.
 - The template is Next.js and depends on `motion`. This app is Vite, so the
   scroll-reveal is a small `Reveal` component built on `IntersectionObserver`
-  plus a CSS transition — same effect, no new dependency.
+  plus a CSS transition — same effect, without adding Framer Motion.
 - Upstream's background and section videos are replaced by this product's own
-  live pieces: the drift canvas, the mutation panel, the cluster
-  constellation, the loop diagram and the inline SVG micro-visuals.
+  live pieces: a three.js drift field behind the hero, a `3d-force-graph`
+  constellation for the clusters, the mutation panel, the loop diagram and the
+  inline SVG micro-visuals. `three` and `3d-force-graph` are the two
+  dependencies this page does add; both are imported dynamically so they stay
+  out of the app bundle.
 - Fonts load from Google Fonts at runtime from the landing page only, rather
   than through `next/font`.
