@@ -25,6 +25,10 @@ export const EXPORT_TABLES = [
   "calendar_events",
   "event_gifts",
   "user_instructions",
+  // Unsaved composer and jot text. It is the customer's writing even though
+  // they have not pressed save, so an export that omitted it would be missing
+  // whatever they were in the middle of.
+  "user_drafts",
 ] as const;
 
 export type ExportTable = (typeof EXPORT_TABLES)[number];
@@ -52,6 +56,7 @@ export const ORDER_KEY: Record<ExportTable, string> = {
   calendar_events: "id",
   event_gifts: "id",
   user_instructions: "user_id",
+  user_drafts: "user_id",
 };
 
 export type AccountExport = {
