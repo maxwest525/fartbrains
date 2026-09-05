@@ -547,9 +547,14 @@ const ClusterField = () => {
 
     size();
     draw();
+    // The canvas sits inside a scroll-revealed grid, so its box is not final
+    // on mount — observe it rather than sizing once.
+    const ro = new ResizeObserver(size);
+    ro.observe(canvas);
     window.addEventListener("resize", size);
     return () => {
       cancelAnimationFrame(raf);
+      ro.disconnect();
       window.removeEventListener("resize", size);
     };
   }, []);
@@ -915,24 +920,89 @@ const USE_CASES: UseCase[] = [
     viz: "cluster",
   },
 ];
+/* ------------------------------ scroll reveal ------------------------------ *
+ * Asme plays each section in on first intersection. Framer Motion does this
+ * upstream; an IntersectionObserver plus a CSS transition is the same effect
+ * without adding a dependency, and it degrades to a plain fade under reduced
+ * motion because the transform is dropped in CSS.
+ * -------------------------------------------------------------------------- */
+
+type RevealProps = {
+  children: React.ReactNode;
+  className?: string;
+  y?: number;
+  x?: number;
+  delay?: number;
+  as?: "div" | "section" | "article" | "header" | "footer" | "h2" | "p";
+};
+
+const Reveal = ({ children, className = "", y = 0, x = 0, delay = 0, as = "div" }: RevealProps) => {
+  const ref = useRef<HTMLElement | null>(null);
+  const [seen, setSeen] = useState(false);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    if (REDUCED()) {
+      setSeen(true);
+      return;
+    }
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const e of entries) {
+          if (e.isIntersecting) {
+            setSeen(true);
+            io.disconnect();
+          }
+        }
+      },
+      { rootMargin: "-80px" },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+
+  const Tag = as as keyof JSX.IntrinsicElements;
+  return (
+    <Tag
+      ref={ref as never}
+      className={`rv ${seen ? "in" : ""} ${className}`}
+      style={
+        {
+          "--rv-x": `${x}px`,
+          "--rv-y": `${y}px`,
+          "--rv-delay": `${delay}ms`,
+        } as React.CSSProperties
+      }
+    >
+      {children}
+    </Tag>
+  );
+};
+
+/** Italic serif accent, set in Instrument Serif — Asme's emphasis device. */
+const S = ({ children, className = "" }: { children: React.ReactNode; className?: string }) => (
+  <em className={`serif ${className}`}>{children}</em>
+);
 
 const Catalogue = () => (
   <>
-    {CATALOGUE.map((g) => (
+    {CATALOGUE.map((g, gi) => (
       <div className="cat-group" key={g.id}>
-        <div className="cat-head">
+        <Reveal className="cat-head" y={24} delay={0}>
           <h3>{g.title}</h3>
           <p>{g.blurb}</p>
-        </div>
+        </Reveal>
         <div className="cat-grid">
-          {g.items.map((f) => (
-            <article className="cat-card" key={f.name}>
+          {g.items.map((f, i) => (
+            <Reveal as="article" className="cat-card glass" key={f.name} y={28} delay={Math.min(i, 5) * 60}>
               <MicroViz kind={f.viz} />
               <h4>{f.name}</h4>
               <p className="cat-does">{f.does}</p>
-            </article>
+            </Reveal>
           ))}
         </div>
+        {gi < CATALOGUE.length - 1 ? <div className="rule" aria-hidden /> : null}
       </div>
     ))}
   </>
@@ -940,25 +1010,71 @@ const Catalogue = () => (
 
 const UseCases = () => (
   <div className="uc-grid">
-    {USE_CASES.map((u) => (
-      <article className="uc-card" key={u.who + u.saw}>
-        <div className="uc-top">
+    {USE_CASES.map((u, i) => (
+      <Reveal as="article" className="uc-card glass" key={u.who + u.saw} y={44} delay={(i % 2) * 120}>
+        <div className="uc-media">
           <MicroViz kind={u.viz} />
-          <span className="uc-who">{u.who}</span>
+          <div className="uc-scrim" aria-hidden />
         </div>
-        <p className="uc-saw">{u.saw}</p>
-        <p className="uc-note">✱ {u.note}</p>
-        <p className="uc-got">{u.got}</p>
-      </article>
+        <div className="uc-body">
+          <div className="uc-top">
+            <p className="mini-label">{u.who}</p>
+            <span className="uc-arrow glass" aria-hidden>
+              ↗
+            </span>
+          </div>
+          <p className="uc-saw">{u.saw}</p>
+          <p className="uc-note">✱ {u.note}</p>
+          <p className="uc-got">{u.got}</p>
+        </div>
+      </Reveal>
     ))}
   </div>
 );
 
 /* --------------------------------- page --------------------------------- */
 
+const NAV_LINKS: [string, string][] = [
+  ["#mutation", "The mutation"],
+  ["#philosophy", "The wall"],
+  ["#clusters", "Clusters"],
+  ["#cases", "Use cases"],
+  ["#everything", "Everything"],
+  ["#pricing", "Pricing"],
+];
+
+const FOOTER_COLUMNS: { heading: string; links: [string, string][] }[] = [
+  {
+    heading: "Product",
+    links: [
+      ["#mutation", "The mutation"],
+      ["#everything", "Everything it does"],
+      ["#pricing", "Pricing"],
+      ["#cases", "Use cases"],
+    ],
+  },
+  {
+    heading: "How it works",
+    links: [
+      ["#philosophy", "The wall"],
+      ["#loop", "The loop"],
+      ["#clusters", "Clusters"],
+    ],
+  },
+  {
+    heading: "Yours",
+    links: [
+      ["#pricing", "Export & delete"],
+      ["#pricing", "One private brain"],
+      ["#pricing", "Share one thing"],
+    ],
+  },
+];
+
 const Landing = ({ onEnter }: { onEnter?: () => void }) => {
   const [scrolled, setScrolled] = useState(false);
   const [lost, setLost] = useState(0);
+  const [wish, setWish] = useState("");
 
   const onCatch = useCallback(() => {
     document.getElementById("mutation")?.scrollIntoView({
@@ -996,651 +1112,764 @@ const Landing = ({ onEnter }: { onEnter?: () => void }) => {
     };
   }, []);
 
+  // Instrument Serif carries every accent on this page, so it is loaded here
+  // rather than in index.html — the app itself never needs it.
+  useEffect(() => {
+    const link = document.createElement("link");
+    link.rel = "stylesheet";
+    link.href =
+      "https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap";
+    document.head.appendChild(link);
+    return () => {
+      link.remove();
+    };
+  }, []);
+
   return (
-    <div className="fb-root">
+    <div className="fb-root asme">
       <style>{CSS}</style>
 
-      <nav className={`nav ${scrolled ? "is-stuck" : ""}`}>
-        <div className="wrap nav-in">
-          <span className="brand">
-            <i />
-            Fart Brains
-          </span>
-          <div className="nav-links label">
-            <a href="#mutation">the mutation</a>
-            <a href="#wall">the wall</a>
-            <a href="#clusters">clusters</a>
-            <a href="#loop">the loop</a>
-            <a href="#everything">everything</a><a href="#pricing">pricing</a>
-          </div>
-          <button type="button" className="btn sm" onClick={onEnter}>
-            Start free
-          </button>
-        </div>
-      </nav>
-
-      <header className="hero">
+      {/* ------------------------------- hero ------------------------------- */}
+      <header className="hero" id="top">
         <DriftField onCatch={onCatch} onLost={setLost} />
-        <div className="wrap hero-in">
-          <p className="label">
+        <div className="hero-veil" aria-hidden />
+
+        <div className={`navbar-wrap ${scrolled ? "is-stuck" : ""}`}>
+          <nav className="navbar glass">
+            <div className="nav-left">
+              <a href="#top" className="brand" aria-label="Fart Brains home">
+                <i aria-hidden />
+                <span>Fart Brains</span>
+              </a>
+              <div className="nav-links">
+                {NAV_LINKS.map(([href, label]) => (
+                  <a key={href + label} href={href}>
+                    {label}
+                  </a>
+                ))}
+              </div>
+            </div>
+            <div className="nav-right">
+              <button type="button" className="nav-plain" onClick={onEnter}>
+                Sign in
+              </button>
+              <button type="button" className="btn amber sm" onClick={onEnter}>
+                Start free
+              </button>
+            </div>
+          </nav>
+        </div>
+
+        <div className="hero-in">
+          <p className="eyebrow">
             <span className="on">●</span> every play you scrolled past is still gone
           </p>
+
           <h1>
-            The tools you actually need <span className="amber">aren't for sale.</span>
+            The tools you actually need <S>aren&rsquo;t for sale</S>.
           </h1>
+
+          <form
+            className="wish glass"
+            onSubmit={(e) => {
+              e.preventDefault();
+              onCatch();
+            }}
+          >
+            <span className="wish-mark" aria-hidden>
+              ✱
+            </span>
+            <input
+              value={wish}
+              onChange={(e) => setWish(e.target.value)}
+              placeholder="I want this, but with multi-tenancy and automated provisioning"
+              aria-label="Your one line"
+              spellCheck={false}
+            />
+            <button type="submit" aria-label="See what that makes" className="wish-go">
+              →
+            </button>
+          </form>
+
           <p className="lede">
-            Somebody explains exactly how they did it — the strategy, the order, the reason it works. It's a
-            47-second reel or a 22-minute talk, and by Thursday it's gone. There's no product to buy that does
-            what they described. Fart Brains catches it, and one line from you turns it into something that
-            has never existed.
+            Somebody explains exactly how they did it — the strategy, the order, the reason it works. It&rsquo;s
+            a 47-second reel or a 22-minute talk, and by Thursday it&rsquo;s gone. There&rsquo;s no product to
+            buy that does what they described. Fart Brains catches it, and one line from you turns it into
+            something that has never existed.
           </p>
-          <p className="hero-note">✱ "I want this, but with multi-tenancy and automated provisioning."</p>
+
           <div className="hero-cta">
-            <button type="button" className="btn" onClick={onEnter}>
+            <button type="button" className="btn amber" onClick={onEnter}>
               Start free
             </button>
-            <a className="btn ghost" href="#mutation">
+            <a className="btn glass" href="#mutation">
               See what that makes
             </a>
           </div>
-          <div className="hud">
-            <span>gone while you read this <b>{lost}</b></span>
-            <span>you'll never know which <b>—</b></span>
-          </div>
-          <p className="hint">↑ nobody counts these. that's what a brain fart is.</p>
+        </div>
+
+        <div className="hero-foot">
+          <span className="hud glass">
+            gone while you read this <b>{lost}</b>
+          </span>
+          <span className="hud glass">
+            you&rsquo;ll never know which <b>—</b>
+          </span>
+          <span className="hud-hint">nobody counts these. that&rsquo;s what a brain fart is.</span>
         </div>
       </header>
 
-      <section id="mutation">
-        <div className="wrap">
-          <div className="sec-head">
-            <p className="label">01 / the mutation</p>
-            <h2>Their mechanism. Your one line. Something that didn't exist.</h2>
-            <p>
-              The source gives you a mechanism that already works, explained by the person who ran it. Your
-              note is the mutation — the part they never said, because they weren't building your thing. Edit
-              the note and watch what gets attributed to you.
-            </p>
-          </div>
-          <MutationPanel />
+      {/* ------------------------------- about ------------------------------ */}
+      <section className="about">
+        <div className="glow-top" aria-hidden />
+        <div className="wrap center">
+          <Reveal as="p" className="mini-label" y={20}>
+            What did they potentially lose?
+          </Reveal>
+          <Reveal as="h2" className="statement" y={40} delay={100}>
+            A mechanism somebody <S>gave away</S> for free,
+            <br className="br" /> and the one product it would have <S>become</S> in your hands.
+          </Reveal>
         </div>
       </section>
 
-      <section id="wall">
+      {/* ----------------------------- the mutation ------------------------- */}
+      <section id="mutation" className="featured">
         <div className="wrap">
-          <div className="sec-head">
-            <p className="label">02 / the wall</p>
-            <h2>Your AI can't open the reel. You can.</h2>
-            <p>
-              The plays live on platforms that don't let agents in. Hand that link to any assistant and it
-              hits a wall. Hit share on your phone and it's already inside — transcribed, tagged and filed
-              before the screen locks.
-            </p>
-          </div>
-          <div className="wall">
-            <div className="wall-col">
-              <p className="mini-label">an agent, given the link</p>
-              <pre className="wall-term">
+          <Reveal className="featured-head" y={30}>
+            <div className="frame-card glass">
+              <p className="mini-label">01 / the mutation</p>
+              <p>
+                Their mechanism already works — explained by the person who ran it. Your note is the part they
+                never said, because they weren&rsquo;t building your thing. Edit the note; watch what gets
+                attributed to you.
+              </p>
+            </div>
+            <a href="#everything" className="btn glass frame-btn">
+              Everything it does
+            </a>
+          </Reveal>
+          <Reveal className="featured-panel" y={60} delay={120}>
+            <MutationPanel />
+          </Reveal>
+        </div>
+      </section>
+
+      {/* ---------------------------- philosophy ---------------------------- */}
+      <section id="philosophy" className="philosophy">
+        <div className="wrap">
+          <Reveal as="h2" className="big" y={40}>
+            The wall <S className="dimmer">×</S> the loop
+          </Reveal>
+
+          <div className="phil-grid">
+            <Reveal className="phil-media" x={-40} delay={100}>
+              <div className="wall-col">
+                <p className="mini-label">an agent, given the link</p>
+                <pre className="wall-term">
 {"$ fetch https://instagram.com/p/…\n"}
 <span className="err">{"net::ERR_CONNECTION_RESET"}</span>
 {"\n$ curl -sL https://instagram.com/p/…\n"}
 <span className="dim">{"621 KB of JavaScript shell\nno caption, no transcript, no og tags"}</span>
-              </pre>
-              <p className="cc-why">That's a real attempt, not an illustration.</p>
-            </div>
-            <div className="wall-col">
-              <p className="mini-label out-label">you, hitting share</p>
-              <pre className="wall-term">
+                </pre>
+              </div>
+              <div className="wall-col">
+                <p className="mini-label out-label">you, hitting share</p>
+                <pre className="wall-term">
 {"share sheet → Fart Brains\n"}
 <span className="ok">{"✓ transcribed        2.1s\n✓ action items       3\n✓ references         2 followed\n✓ filed              #llm-optimization"}</span>
 {"\n"}
 <span className="dim">{"done before the screen locked"}</span>
-              </pre>
-              <p className="cc-why">Anyone can summarize a web page. Almost nobody can get in here.</p>
-            </div>
+                </pre>
+              </div>
+            </Reveal>
+
+            <Reveal className="phil-text" x={40} delay={200}>
+              <div>
+                <p className="mini-label">Your AI can&rsquo;t open the reel</p>
+                <p className="body">
+                  The plays live on platforms that don&rsquo;t let agents in. Hand that link to any assistant
+                  and it hits a wall — that terminal is a real attempt, not an illustration. Hit share on your
+                  phone and it&rsquo;s already inside: transcribed, tagged and filed before the screen locks.
+                  Anyone can summarize a web page. Almost nobody can get in here.
+                </p>
+              </div>
+              <div className="rule" aria-hidden />
+              <div>
+                <p className="mini-label">Then it closes</p>
+                <p className="body">
+                  The brief goes to whatever you already work in, over MCP or plain REST. Your agent builds
+                  against its own filesystem — we never touch it — then writes back what it built and what it
+                  decided. That lands as new material, so the next brief never re-proposes what you already
+                  shipped.
+                </p>
+              </div>
+            </Reveal>
           </div>
         </div>
       </section>
 
-      <section id="clusters">
+      {/* ------------------------------- loop ------------------------------- */}
+      <section id="loop" className="loop-band">
         <div className="wrap">
-          <div className="sec-head">
-            <p className="label">03 / the clusters</p>
-            <h2>It connected the dots and built the scaffolding.</h2>
-            <p>
+          <Reveal className="frame plain" y={50}>
+            <LoopDiagram />
+          </Reveal>
+          <div className="loop-legend">
+            {[
+              ["capture", "Share sheet, URL, voice or paste. Transcribed and filed on its own."],
+              ["brief", "What the source does, what to build, how it changes for your stack, how to verify."],
+              ["build", "Your agent, your repo, your keys. Nothing of ours on your machine."],
+              ["write-back", "What shipped comes home, so it learns from what you did, not what you watched."],
+            ].map(([b, s], i) => (
+              <Reveal key={b} y={24} delay={i * 80}>
+                <b>{b}</b>
+                <span>{s}</span>
+              </Reveal>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ----------------------------- clusters ----------------------------- */}
+      <section id="clusters" className="clusters">
+        <div className="glow-center" aria-hidden />
+        <div className="wrap">
+          <Reveal className="band-head" y={30}>
+            <p className="mini-label">The pile does this on its own</p>
+            <h2 className="big">
+              It connected the dots and built the <S>scaffolding</S>.
+            </h2>
+            <p className="body wide">
               Sixteen things you saved months apart, sitting next to each other. It reads across them, finds
               the through-line, and stands up the infrastructure — a business, a solution, or the opportunity
               you already walked past once. Not a reading list. The thing, scaffolded.
             </p>
-          </div>
-          <ClusterField />
+          </Reveal>
+          <Reveal className="frame plain" y={60} delay={120}>
+            <ClusterField />
+          </Reveal>
         </div>
       </section>
 
-      <section id="loop">
+      {/* ------------------------------ services ---------------------------- */}
+      <section id="cases" className="services">
+        <div className="glow-center" aria-hidden />
         <div className="wrap">
-          <div className="sec-head">
-            <p className="label">04 / the loop</p>
-            <h2>Your agent builds it, then tells the brain what it did.</h2>
-            <p>
-              The brief goes to whatever you already work in, over MCP or plain REST. Your agent builds
-              against its own filesystem — we never touch it — then writes back what it built and what it
-              decided. That lands as new material, so the next brief never re-proposes what you already
-              shipped.
-            </p>
-          </div>
-          <div className="loop-wrap">
-            <LoopDiagram />
-            <div className="loop-legend">
-              <div>
-                <b>capture</b>
-                <span>Share sheet, URL, voice or paste. Transcribed and filed on its own.</span>
-              </div>
-              <div>
-                <b>brief</b>
-                <span>What the source does, what to build, how it changes for your stack, how to verify.</span>
-              </div>
-              <div>
-                <b>build</b>
-                <span>Your agent, your repo, your keys. Nothing of ours on your machine.</span>
-              </div>
-              <div>
-                <b>write-back</b>
-                <span>What shipped comes home, so it learns from what you did, not just what you watched.</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section id="cases">
-        <div className="wrap">
-          <div className="sec-head">
-            <p className="label">05 / who this is for</p>
-            <h2>Same move, different room.</h2>
-            <p>
-              Every one of these started as something somebody else explained, once, to nobody in
-              particular. The line underneath is what the person actually walked away with.
-            </p>
-          </div>
+          <Reveal className="services-head" y={30}>
+            <h2 className="big">Same move, different room.</h2>
+            <p className="mini-label right-label">Six of them</p>
+          </Reveal>
           <UseCases />
         </div>
       </section>
 
-      <section id="everything">
+      {/* ----------------------------- everything --------------------------- */}
+      <section id="everything" className="everything">
         <div className="wrap">
-          <div className="sec-head">
-            <p className="label">06 / everything it does</p>
-            <h2>What did they potentially lose?</h2>
-            <p>
-              Thirty-six answers to that question.
+          <Reveal className="band-head" y={30}>
+            <p className="mini-label">Everything it does</p>
+            <h2 className="big">
+              Thirty-six answers to <S>that question</S>.
+            </h2>
+            <p className="body wide">
+              What did they potentially lose? Once for every capability in here.
             </p>
-          </div>
+          </Reveal>
           <Catalogue />
         </div>
       </section>
 
-      <section id="pricing">
+      {/* ------------------------------ pricing ----------------------------- */}
+      <section id="pricing" className="pricing">
+        <div className="glow-top" aria-hidden />
         <div className="wrap">
-          <div className="sec-head">
-            <p className="label">07 / pricing</p>
-            <h2>Free forever, or nine dollars.</h2>
-            <p>
+          <Reveal className="band-head" y={30}>
+            <p className="mini-label">Pricing</p>
+            <h2 className="big">
+              Free forever, or <S>nine dollars</S>.
+            </h2>
+            <p className="body wide">
               The free plan is real and permanent, not a trial with a countdown. Export everything or delete
               the account whenever you want, on either plan.
             </p>
-          </div>
+          </Reveal>
+
           <div className="plans">
-            <div className="plan">
+            <Reveal className="plan glass" y={40}>
               <p className="mini-label">Free</p>
-              <p className="price">$0<span>/month</span></p>
+              <p className="price">
+                $0<span>/month</span>
+              </p>
               <ul>
                 <li>Unlimited saves, folders, tags, reminders</li>
                 <li>Full search and share links</li>
                 <li>50 AI actions a month</li>
                 <li>Full export and account deletion</li>
               </ul>
-              <button type="button" className="btn ghost full" onClick={onEnter}>
+              <button type="button" className="btn glass full" onClick={onEnter}>
                 Start free
               </button>
               <p className="fine">
-                Saving a popular video usually costs nothing — cached and caption-based transcripts don't
+                Saving a popular video usually costs nothing — cached and caption-based transcripts don&rsquo;t
                 count against it.
               </p>
-            </div>
-            <div className="plan featured">
+            </Reveal>
+
+            <Reveal className="plan glass featured-plan" y={40} delay={120}>
               <p className="mini-label out-label">Pro</p>
-              <p className="price">$9<span>/month</span></p>
+              <p className="price">
+                $9<span>/month</span>
+              </p>
               <ul>
                 <li>Everything in Free</li>
                 <li>1,000 AI actions a month</li>
                 <li>Longer transcripts, bigger pages</li>
                 <li>Priority support</li>
               </ul>
-              <button type="button" className="btn full" onClick={onEnter}>
+              <button type="button" className="btn amber full" onClick={onEnter}>
                 Try Pro free for 14 days
               </button>
-              <p className="fine">No card required. $90 a year if you'd rather — two months free.</p>
-            </div>
+              <p className="fine">No card required. $90 a year if you&rsquo;d rather — two months free.</p>
+            </Reveal>
           </div>
+
           <div className="promises">
-            <div>
-              <b>One brain, yours.</b>
-              <span>No teams, no shared folders, no workspace. One account is one private brain.</span>
-            </div>
-            <div>
-              <b>Share exactly one thing.</b>
-              <span>A read-only link to a single item, revocable any time. The recipient sees nothing else.</span>
-            </div>
-            <div>
-              <b>Leave whenever.</b>
-              <span>Export to JSON or Markdown, or delete the account outright. Both are one click.</span>
-            </div>
+            {[
+              ["One brain, yours.", "No teams, no shared folders, no workspace. One account is one private brain."],
+              ["Share exactly one thing.", "A read-only link to a single item, revocable any time. The recipient sees nothing else."],
+              ["Leave whenever.", "Export to JSON or Markdown, or delete the account outright. Both are one click."],
+            ].map(([b, s], i) => (
+              <Reveal key={b} y={24} delay={i * 80}>
+                <b>{b}</b>
+                <span>{s}</span>
+              </Reveal>
+            ))}
           </div>
         </div>
       </section>
 
-      <section className="close">
+      {/* ------------------------------- footer ----------------------------- */}
+      <footer className="site-foot">
+        <div className="glow-top" aria-hidden />
         <div className="wrap">
-          <h2>You can't miss what you can't remember.</h2>
-          <button type="button" className="btn" onClick={onEnter}>
-            Start free
-          </button>
-          <div className="foot">
-            <span>fart brains</span>
-            <span>web · installable · windows desktop</span>
+          <div className="foot-top">
+            <div className="foot-brand">
+              <a href="#top" className="brand" aria-label="Fart Brains home">
+                <i aria-hidden />
+                <span>Fart Brains</span>
+              </a>
+              <p>
+                You can&rsquo;t miss what you can&rsquo;t <S>remember</S>. Catch it, mutate it, ship it.
+              </p>
+              <button type="button" className="btn amber" onClick={onEnter}>
+                Start free
+              </button>
+            </div>
+
+            <div className="foot-cols">
+              {FOOTER_COLUMNS.map((col) => (
+                <div key={col.heading}>
+                  <p className="mini-label">{col.heading}</p>
+                  <ul>
+                    {col.links.map(([href, label]) => (
+                      <li key={href + label}>
+                        <a href={href}>{label}</a>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <p className="watermark" aria-hidden>
+            Fart Brains
+          </p>
+
+          <div className="foot-bottom">
+            <p>© 2026 Fart Brains. All rights reserved.</p>
+            <p>web · installable · windows desktop</p>
           </div>
         </div>
-      </section>
+      </footer>
     </div>
   );
 };
 
 export default Landing;
 
-/* -------------------------------- styles -------------------------------- */
+/* -------------------------------- styles -------------------------------- *
+ * Asme (MIT, MohammadShehadeh/hirael) recast for Fart Brains: pure black,
+ * liquid-glass surfaces, Instrument Serif accents — with amber kept as the
+ * single accent on calls to action and the note the user writes.
+ * ------------------------------------------------------------------------ */
 
 const CSS = `
-:root {
-    color-scheme: dark;
-    /* Direction A palette, now carrying the whole page */
-    --bg: #06080a;
-    --panel: #0b0f12;
-    --panel-2: #0e1417;
-    --ink: #d9e2dd;
-    --ink-2: #b9c6c0;
-    --dim: #6e7f78;
-    --faint: #46534e;
-    --amber: #f2a53c;
-    --green: #63e6a0;
-    --rule: rgba(217,226,221,.12);
-    --rule-2: rgba(217,226,221,.06);
-    --sp: clamp(16px, 4vw, 44px);
-    --max: 1200px;
-  }
-  * { box-sizing: border-box; }
-  html { scroll-behavior: smooth; }
-  body {
-    margin: 0; background: var(--bg); color: var(--ink);
-    font-family: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
-    -webkit-font-smoothing: antialiased; overflow-x: hidden;
-  }
-  /* The page mounts inside the app shell, so the wrapper carries its own
-     ground — otherwise the app's fixed aurora shows through everything. */
-  .fb-root {
-    position: relative;
-    z-index: 1;
-    min-height: 100vh;
-    background: var(--bg);
-    color: var(--ink);
-    font-family: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
-    overflow-x: hidden;
-  }
-  a { color: inherit; text-decoration: none; }
-  button { font: inherit; color: inherit; cursor: pointer; background: none; border: 0; }
-  .mono { font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, monospace; }
-  .wrap { max-width: var(--max); margin: 0 auto; padding-left: var(--sp); padding-right: var(--sp); }
-  .label {
-    font-family: "IBM Plex Mono", monospace; font-size: 11.5px; letter-spacing: .14em;
-    text-transform: uppercase; color: var(--dim); margin: 0;
-  }
-  .label .on { color: var(--green); }
-  .amber { color: var(--amber); }
-
-  /* ---------- placeholder marker: these blocks are the ones to swap for templates ---------- */
-  .slot { position: relative; }
-  .slot::before {
-    content: attr(data-slot);
-    position: absolute; top: -9px; left: 0; z-index: 3;
-    font-family: "IBM Plex Mono", monospace; font-size: 10px; letter-spacing: .12em;
-    text-transform: uppercase; color: var(--faint);
-    background: var(--bg); padding: 0 8px;
-  }
-
-  /* ---------- nav ---------- */
-  .nav {
-    position: sticky; top: 0; z-index: 40; background: rgba(6,8,10,.86);
-    backdrop-filter: blur(10px); border-bottom: 1px solid var(--rule-2);
-  }
-  .nav-in { display: flex; align-items: center; gap: 18px; padding-top: 13px; padding-bottom: 13px; }
-  .brand { display: inline-flex; align-items: center; gap: 10px; font-weight: 700; letter-spacing: -0.02em; margin-right: auto; }
-  .brand i { width: 11px; height: 11px; border-radius: 50%; background: var(--amber); box-shadow: 0 0 12px rgba(242,165,60,.8); }
-  .nav-links { display: none; gap: 22px; }
-  @media (min-width: 900px) { .nav-links { display: flex; } }
-  .nav-links a:hover { color: var(--ink); }
-  .btn {
-    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-    background: var(--amber); color: #10130f; font-weight: 700; font-size: 14px;
-    padding: 11px 18px; border-radius: 2px; min-height: 42px; white-space: nowrap;
-    transition: filter .18s, transform .18s;
-  }
-  .btn:hover { filter: brightness(1.08); transform: translateY(-1px); }
-  .btn.sm { padding: 8px 14px; min-height: 36px; font-size: 13px; }
-  .btn.ghost { background: transparent; color: var(--ink); border: 1px solid var(--rule); font-weight: 500; }
-  .btn.ghost:hover { border-color: var(--amber); }
-
-  /* ---------- 1. hero + drift field (animation C, restyled) ---------- */
-  .hero { position: relative; padding: clamp(34px, 6vw, 76px) 0 clamp(28px, 4vw, 52px); min-height: clamp(520px, 74vh, 720px); }
-  .hero-in { max-width: 100%; }
-  @media (min-width: 900px) { .hero-in .label, .hero h1, .hero p.lede, .hero-cta, .hud, .hint { max-width: 52%; } }
-  #drift {
-    position: absolute; inset: 0; width: 100%; height: 100%;
-    z-index: 0; cursor: crosshair;
-  }
-  .hero-in { position: relative; z-index: 2; pointer-events: none; }
-  .hero-in a, .hero-in button { pointer-events: auto; }
-  .hero h1 {
-    font-size: clamp(34px, 6.4vw, 76px); line-height: 1.0; letter-spacing: -0.04em;
-    font-weight: 700; margin: 18px 0 0; max-width: 17ch; text-wrap: balance;
-  }
-  .hero p.lede { color: var(--dim); max-width: 54ch; margin: 18px 0 0; font-size: clamp(15px,2vw,17px); line-height: 1.6; }
-  .hero-cta { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 26px; }
-  .hud { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 30px; font-family: "IBM Plex Mono", monospace; font-size: 11.5px; }
-  .hud span { border: 1px solid var(--rule); padding: 6px 12px; color: var(--dim); background: rgba(6,8,10,.7); }
-  .hud b { color: var(--amber); font-variant-numeric: tabular-nums; font-weight: 500; }
-  .hint { margin: 14px 0 0; font-size: 12.5px; color: var(--faint); font-family: "IBM Plex Mono", monospace; }
-
-  /* ---------- 2. console (animation A) ---------- */
-  section { padding-top: clamp(44px, 7vw, 92px); }
-  .sec-head { display: grid; gap: 12px; margin-bottom: 24px; }
-  .sec-head h2 { font-size: clamp(24px, 3.6vw, 38px); letter-spacing: -0.035em; margin: 0; font-weight: 700; text-wrap: balance; }
-  .sec-head p { margin: 0; color: var(--dim); max-width: 60ch; line-height: 1.6; font-size: 15.5px; }
-
-  .console { border: 1px solid var(--rule); background: var(--panel); }
-  .console-in { display: flex; align-items: center; gap: 10px; padding: 14px 16px; border-bottom: 1px solid var(--rule); }
-  .console-in .caret { color: var(--green); font-family: "IBM Plex Mono", monospace; }
-  .console-in input {
-    flex: 1; min-width: 0; background: none; border: 0; outline: none; color: var(--ink);
-    font-family: "IBM Plex Mono", monospace; font-size: 14px;
-  }
-  .console-in input::placeholder { color: var(--faint); }
-  .console-body { display: grid; grid-template-columns: 1fr; }
-  @media (min-width: 900px) { .console-body { grid-template-columns: 268px 1fr; } }
-  .stages { padding: 16px; display: grid; gap: 1px; align-content: start; border-bottom: 1px solid var(--rule); }
-  @media (min-width: 900px) { .stages { border-bottom: 0; border-right: 1px solid var(--rule); } }
-  .stage {
-    display: grid; grid-template-columns: 16px 1fr auto; gap: 10px; align-items: center;
-    padding: 8px 4px; font-family: "IBM Plex Mono", monospace; font-size: 12.5px; color: var(--dim);
-  }
-  .stage .tick { color: #35423d; }
-  .stage.run { color: var(--ink); } .stage.run .tick { color: var(--amber); animation: blink .7s steps(2) infinite; }
-  .stage.done { color: var(--ink); } .stage.done .tick { color: var(--green); }
-  .stage .ms { font-size: 11px; color: var(--faint); font-variant-numeric: tabular-nums; }
-  @keyframes blink { 50% { opacity: .2; } }
-  .out { padding: 18px; min-height: 300px; }
-  .out .empty { color: var(--faint); font-size: 13px; font-family: "IBM Plex Mono", monospace; }
-  .card { border: 1px solid var(--rule); background: var(--panel-2); padding: 17px; }
-  .card h3 { margin: 0 0 5px; font-size: 18px; letter-spacing: -0.02em; }
-  .card .src { font-family: "IBM Plex Mono", monospace; font-size: 11.5px; color: var(--dim); word-break: break-all; }
-  .card ul { margin: 14px 0 0; padding-left: 17px; display: grid; gap: 7px; font-size: 13.5px; line-height: 1.55; color: var(--ink-2); }
-  .tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 15px; }
-  .tag { font-family: "IBM Plex Mono", monospace; font-size: 11px; padding: 3px 9px; border: 1px solid rgba(242,165,60,.4); color: var(--amber); }
-  .card-meta { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 15px; padding-top: 13px; border-top: 1px solid var(--rule); font-family: "IBM Plex Mono", monospace; font-size: 11px; color: var(--dim); }
-  .card-meta strong { color: var(--green); font-weight: 500; }
-  .wish-row { background: rgba(242,165,60,.04); }
-  .wish-caret { color: var(--amber) !important; }
-  #c-wish { color: var(--amber); }
-  .blend { display: grid; gap: 7px; }
-  .blend-row {
-    display: grid; grid-template-columns: 150px 1fr; gap: 12px; align-items: baseline;
-    font-size: 12.5px; line-height: 1.5; animation: blendin .4s cubic-bezier(.2,.8,.2,1) both;
-  }
-  @media (max-width: 640px) { .blend-row { grid-template-columns: 1fr; gap: 2px; } }
-  @keyframes blendin { from { opacity: 0; transform: translateX(-6px); } }
-  .blend-tag {
-    font-family: "IBM Plex Mono", monospace; font-size: 10.5px; letter-spacing: .1em;
-    text-transform: uppercase; color: var(--amber);
-  }
-  .blend-val { color: var(--ink-2); }
-  .mini-label { font-family: "IBM Plex Mono", monospace; font-size: 10.5px; letter-spacing: .13em; text-transform: uppercase; color: var(--faint); margin: 16px 0 8px; }
-  .mini-label.out-label { color: var(--amber); }
-  .evidence { display: grid; gap: 6px; }
-  .ev-row { display: grid; grid-template-columns: 74px 1fr; gap: 10px; font-size: 12.5px; color: var(--ink-2); line-height: 1.45; }
-  .ev-loc { font-family: "IBM Plex Mono", monospace; color: var(--green); font-variant-numeric: tabular-nums; }
-  .prompt {
-    margin: 0; padding: 14px; border: 1px solid rgba(242,165,60,.35); background: rgba(242,165,60,.05);
-    font-family: "IBM Plex Mono", monospace; font-size: 12.5px; line-height: 1.65; color: var(--ink);
-    white-space: pre-wrap; overflow-x: auto;
-  }
-
-  /* ---------- 3. app tour (animation B, restyled) ---------- */
-  .srcrow { display: grid; grid-template-columns: 18px 1fr; gap: 10px; padding: 8px 4px; font-size: 12.5px; color: var(--dim); align-items: start; }
-  .srcrow .num { font-family: "IBM Plex Mono", monospace; color: var(--amber); }
-  .srcrow .dom { color: var(--ink-2); display: block; }
-  .srcrow .snip { color: var(--faint); font-size: 11.5px; line-height: 1.45; }
-  .srcrow.pending { opacity: .35; }
-  .report { font-size: 13.5px; line-height: 1.65; color: var(--ink-2); }
-  .report h4 { margin: 0 0 10px; font-size: 16px; color: var(--ink); letter-spacing: -0.02em; }
-  .report p { margin: 0 0 11px; }
-  .cite { font-family: "IBM Plex Mono", monospace; font-size: 10.5px; color: var(--amber); vertical-align: super; }
-  .report .append { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--rule); font-family: "IBM Plex Mono", monospace; font-size: 11px; color: var(--dim); }
-
-  .cluster-wrap { position: relative; border: 1px solid var(--rule); background: var(--panel); overflow: hidden; }
-  #constellation { display: block; width: 100%; height: clamp(340px, 52vw, 480px); }
-  .cluster-tabs { position: absolute; left: 14px; top: 14px; display: flex; flex-wrap: wrap; gap: 6px; }
-  .cluster-tabs button {
-    font-family: "IBM Plex Mono", monospace; font-size: 11.5px; padding: 6px 11px;
-    border: 1px solid var(--rule); background: rgba(6,8,10,.8); color: var(--dim);
-  }
-  .cluster-tabs button[aria-selected="true"] { color: #10130f; background: var(--amber); border-color: var(--amber); }
-  .cluster-card {
-    position: absolute; right: 14px; bottom: 14px; left: 14px;
-    border: 1px solid var(--rule); background: rgba(11,15,18,.96); backdrop-filter: blur(6px);
-    padding: 16px; display: grid; gap: 10px;
-  }
-  @media (min-width: 900px) { .cluster-card { left: auto; width: 460px; } }
-  .cc-head { display: flex; align-items: center; gap: 9px; font-family: "IBM Plex Mono", monospace; font-size: 11px; color: var(--dim); }
-  .cc-dot { width: 9px; height: 9px; border-radius: 50%; }
-  .cc-items { display: flex; flex-wrap: wrap; gap: 5px; }
-  .cc-items span { font-size: 11px; color: var(--ink-2); border: 1px solid var(--rule); padding: 3px 8px; }
-  .cc-title { font-family: "IBM Plex Mono", monospace; font-size: 10.5px; letter-spacing: .12em; text-transform: uppercase; color: var(--amber); margin: 2px 0 0; }
-  .cc-build { margin: 0; font-size: 14px; line-height: 1.55; color: var(--ink); }
-  .cc-why { margin: 0; font-size: 12.5px; line-height: 1.5; color: var(--dim); }
-
-  .triage { display: grid; gap: 14px; grid-template-columns: 1fr; align-items: stretch; }
-  @media (min-width: 900px) { .triage { grid-template-columns: 1fr 24px 1fr 24px 1fr; } }
-  .tri-step { border: 1px solid var(--rule); padding: 20px; background: var(--panel); }
-  .tri-step.featured { border-color: rgba(242,165,60,.5); background: linear-gradient(180deg, rgba(242,165,60,.06), transparent 70%), var(--panel); }
-  .tri-step p:last-child { margin: 0; font-size: 13.5px; color: var(--ink-2); line-height: 1.55; }
-  .tri-step .mini-label { margin-top: 0; }
-  .tri-arrow { display: none; align-items: center; justify-content: center; color: var(--faint); font-family: "IBM Plex Mono", monospace; }
-  @media (min-width: 900px) { .tri-arrow { display: flex; } }
-
-  .attach { display: grid; gap: 1px; background: var(--rule-2); border: 1px solid var(--rule); grid-template-columns: 1fr; }
-  @media (min-width: 820px) { .attach { grid-template-columns: 1fr 1.2fr; } }
-  .attach-col { background: var(--bg); padding: 20px; }
-  .attach-col ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 10px; font-size: 14px; line-height: 1.5; }
-  .attach-col li { padding-left: 24px; position: relative; color: var(--dim); }
-  .attach-col li::before { position: absolute; left: 0; font-family: "IBM Plex Mono", monospace; }
-  .bad li::before { content: "×"; color: #e5624a; }
-  .good li::before { content: "→"; color: var(--green); }
-  .good li { color: var(--ink-2); }
-  .attach-code { margin-top: 18px; font-size: 12px; }
-
-  .app { border: 1px solid var(--rule); background: var(--panel); }
-  .tabs { display: flex; overflow-x: auto; border-bottom: 1px solid var(--rule); background: var(--panel-2); }
-  .tabs button {
-    padding: 12px 16px; font-size: 13px; color: var(--dim); white-space: nowrap;
-    border-bottom: 2px solid transparent;
-  }
-  .tabs button[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--amber); }
-  .app-body { display: grid; grid-template-columns: 1fr; min-height: 340px; }
-  @media (min-width: 660px) { .app-body { grid-template-columns: 158px 1fr; } }
-  .side { display: none; padding: 12px; border-right: 1px solid var(--rule); gap: 1px; align-content: start; }
-  @media (min-width: 660px) { .side { display: grid; } }
-  .side button {
-    display: flex; justify-content: space-between; gap: 8px; padding: 8px 10px;
-    font-size: 13px; color: var(--dim); text-align: left; width: 100%;
-  }
-  .side button[aria-current="true"] { background: rgba(242,165,60,.12); color: var(--ink); }
-  .side .n { font-family: "IBM Plex Mono", monospace; font-size: 11px; font-variant-numeric: tabular-nums; }
-  .main { padding: 14px; display: grid; gap: 10px; align-content: start; }
-  .note { border: 1px solid var(--rule); padding: 13px 14px; display: grid; gap: 7px; cursor: pointer; transition: border-color .18s; background: rgba(255,255,255,.015); }
-  .note:hover { border-color: rgba(242,165,60,.5); }
-  .note h4 { margin: 0; font-size: 14.5px; font-weight: 600; }
-  .note p { margin: 0; font-size: 13px; color: var(--dim); line-height: 1.5; }
-  .note-meta { display: flex; flex-wrap: wrap; gap: 8px; font-family: "IBM Plex Mono", monospace; font-size: 10.5px; color: var(--dim); }
-  .chip { border: 1px solid var(--rule); padding: 2px 8px; }
-  .chip.a { color: var(--amber); border-color: rgba(242,165,60,.4); }
-  .chip.g { color: var(--green); border-color: rgba(99,230,160,.4); }
-  .chat { display: grid; gap: 9px; }
-  .bub { max-width: 82%; padding: 10px 13px; font-size: 13.5px; line-height: 1.5; }
-  .bub.me { justify-self: end; background: var(--amber); color: #10130f; }
-  .bub.ai { border: 1px solid var(--rule); background: var(--panel-2); }
-  .think { font-family: "IBM Plex Mono", monospace; font-size: 11px; color: var(--faint); border-left: 2px solid var(--rule); padding: 6px 0 6px 10px; display: grid; gap: 4px; }
-  .graph { display: block; width: 100%; height: 300px; }
-  .cal { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; }
-  .cal div { aspect-ratio: 1; border: 1px solid var(--rule); font-family: "IBM Plex Mono", monospace; font-size: 11px; color: var(--dim); padding: 5px; position: relative; }
-  .cal div.has::after { content: ""; position: absolute; left: 5px; bottom: 5px; width: 5px; height: 5px; border-radius: 50%; background: var(--green); }
-  .cal div.today { border-color: var(--amber); color: var(--ink); }
-  .gift { display: grid; gap: 8px; }
-  .gift-row { display: flex; align-items: center; gap: 10px; border: 1px solid var(--rule); padding: 10px 12px; font-size: 13px; }
-  .gift-row .price { margin-left: auto; font-family: "IBM Plex Mono", monospace; color: var(--dim); font-variant-numeric: tabular-nums; }
-  .gift-row .box { width: 14px; height: 14px; border: 1px solid var(--rule); display: grid; place-items: center; font-size: 10px; color: var(--green); }
-  .pad { display: grid; gap: 10px; }
-  .pad .todo { display: flex; gap: 10px; align-items: center; font-size: 13.5px; padding: 8px 0; border-bottom: 1px solid var(--rule-2); }
-  .pad .todo .box { width: 14px; height: 14px; border: 1px solid var(--rule); display: grid; place-items: center; font-size: 10px; color: var(--green); flex: none; }
-  .pad .todo.done { color: var(--faint); text-decoration: line-through; }
-  .jot { border: 1px solid var(--rule); padding: 12px; font-family: "IBM Plex Mono", monospace; font-size: 12.5px; color: var(--ink-2); line-height: 1.6; background: var(--panel-2); white-space: pre-wrap; }
-
-  /* ---------- 4. full inventory ---------- */
-  .inv { display: grid; gap: 1px; background: var(--rule-2); border: 1px solid var(--rule); grid-template-columns: 1fr; }
-  @media (min-width: 700px) { .inv { grid-template-columns: 1fr 1fr; } }
-  @media (min-width: 1020px) { .inv { grid-template-columns: repeat(3, 1fr); } }
-  .inv-col { background: var(--bg); padding: 20px; display: grid; gap: 3px; align-content: start; }
-  .inv-col h3 {
-    font-family: "IBM Plex Mono", monospace; font-size: 11.5px; letter-spacing: .14em;
-    text-transform: uppercase; margin: 0 0 12px; font-weight: 500;
-    display: flex; align-items: center; gap: 8px;
-  }
-  .inv-col h3::before { content: ""; width: 8px; height: 8px; border-radius: 50%; }
-  .inv-ok h3 { color: var(--green); } .inv-ok h3::before { background: var(--green); }
-  .inv-warn h3 { color: var(--amber); } .inv-warn h3::before { background: var(--amber); }
-  .inv-no h3 { color: #e5624a; } .inv-no h3::before { background: #e5624a; }
-  .inv-item { display: grid; gap: 3px; padding: 9px 0; border-bottom: 1px solid var(--rule-2); }
-  .inv-item:last-child { border-bottom: 0; }
-  .inv-item b { font-size: 14px; font-weight: 600; }
-  .inv-item span { font-size: 12.5px; color: var(--dim); line-height: 1.5; }
-  .count { font-family: "IBM Plex Mono", monospace; font-size: 12px; color: var(--dim); }
-
-  .plans { display: grid; gap: 16px; grid-template-columns: 1fr; }
-  @media (min-width: 760px) { .plans { grid-template-columns: 1fr 1fr; } }
-  .plan { border: 1px solid var(--rule); padding: 24px; display: grid; gap: 0; align-content: start; background: var(--panel); }
-  .plan.featured { border-color: rgba(242,165,60,.55); background: linear-gradient(180deg, rgba(242,165,60,.06), transparent 60%), var(--panel); }
-  .plan .mini-label { margin-top: 0; }
-  .price { font-size: 42px; font-weight: 700; letter-spacing: -0.04em; margin: 0 0 18px; font-variant-numeric: tabular-nums; }
-  .price span { font-size: 15px; font-weight: 400; color: var(--dim); letter-spacing: 0; }
-  .plan ul { margin: 0 0 22px; padding: 0; list-style: none; display: grid; gap: 10px; font-size: 14px; color: var(--ink-2); line-height: 1.45; }
-  .plan li { padding-left: 22px; position: relative; }
-  .plan li::before { content: "→"; position: absolute; left: 0; color: var(--green); font-family: "IBM Plex Mono", monospace; }
-  .btn.full { width: 100%; }
-  .fine { margin: 14px 0 0; font-size: 12px; color: var(--faint); line-height: 1.5; }
-  .promises { display: grid; gap: 1px; background: var(--rule-2); border: 1px solid var(--rule); margin-top: 16px; grid-template-columns: 1fr; }
-  @media (min-width: 820px) { .promises { grid-template-columns: repeat(3, 1fr); } }
-  .promises > div { background: var(--bg); padding: 18px 20px; display: grid; gap: 5px; }
-  .promises b { font-size: 14px; }
-  .promises span { font-size: 12.5px; color: var(--dim); line-height: 1.5; }
-
-  /* ---------- close ---------- */
-  .close { text-align: center; padding: clamp(52px, 9vw, 110px) 0 clamp(40px,6vw,72px); }
-  .close h2 { font-size: clamp(28px, 5vw, 56px); letter-spacing: -0.04em; margin: 0 0 20px; font-weight: 700; }
-  .foot { border-top: 1px solid var(--rule); padding: 22px 0 40px; color: var(--faint); font-size: 12.5px; font-family: "IBM Plex Mono", monospace; display: flex; flex-wrap: wrap; gap: 12px; justify-content: space-between; }
-  .note-box { border: 1px dashed var(--rule); padding: 16px 18px; margin-top: 30px; color: var(--dim); font-size: 13.5px; line-height: 1.65; }
-  .note-box b { color: var(--ink); }
-
-  @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
-  :focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
-/* ---------- hero fusion canvas ---------- */
-#fusion { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 0; }
-.hero-note {
-  margin: 26px 0 0; padding: 14px 16px; border-left: 2px solid var(--amber);
-  background: rgba(242,165,60,.05); max-width: 52ch;
-  font-family: "IBM Plex Mono", monospace; font-size: 13px; line-height: 1.6; color: var(--amber);
+html.fb-landing, html.fb-landing body, html.fb-landing #root {
+  height: auto !important; min-height: 100%; max-width: none !important;
+  width: auto !important; overflow: visible !important;
+  border-radius: 0 !important; box-shadow: none !important;
+  transform: none !important; scroll-behavior: smooth; background: #000;
 }
+html.fb-landing body { padding-right: 0 !important; }
+html.fb-landing body::before { display: none !important; }
+
+.fb-root {
+  --bg: #000;
+  --ink: #fff;
+  --ink-70: rgba(255,255,255,.7);
+  --ink-50: rgba(255,255,255,.5);
+  --ink-40: rgba(255,255,255,.4);
+  --ink-20: rgba(255,255,255,.2);
+  --ink-10: rgba(255,255,255,.1);
+  --card: #0a0a0a;
+  --amber: #f2a53c;
+  --green: #63e6a0;
+  --sans: Inter, ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --serif: "Instrument Serif", Georgia, serif;
+  --mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, monospace;
+
+  position: relative; z-index: 1; min-height: 100vh;
+  background: var(--bg); color: var(--ink);
+  font-family: var(--sans);
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+.fb-root ::selection { background: rgba(242,165,60,.3); color: #fff; }
+.fb-root * { box-sizing: border-box; }
+.fb-root h1, .fb-root h2, .fb-root h3, .fb-root h4, .fb-root p, .fb-root ul { margin: 0; }
+.fb-root ul { padding: 0; list-style: none; }
+.fb-root a { color: inherit; text-decoration: none; }
+
+.serif { font-family: var(--serif); font-style: italic; font-weight: 400; color: var(--amber); }
+.serif.dimmer { color: var(--ink-40); }
+
+/* --- Asme's liquid glass --- */
+.glass {
+  background: rgba(255,255,255,.01);
+  background-blend-mode: luminosity;
+  backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+  border: none;
+  box-shadow: inset 0 1px 1px rgba(255,255,255,.1);
+  position: relative; overflow: hidden;
+}
+.glass::before {
+  content: ''; position: absolute; inset: 0; border-radius: inherit;
+  padding: 1.4px;
+  background: linear-gradient(180deg,
+    rgba(255,255,255,.45) 0%, rgba(255,255,255,.15) 20%,
+    rgba(255,255,255,0) 40%, rgba(255,255,255,0) 60%,
+    rgba(255,255,255,.15) 80%, rgba(255,255,255,.45) 100%);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor; mask-composite: exclude;
+  pointer-events: none; z-index: 2;
+}
+.glow-top { position: absolute; inset: 0; pointer-events: none;
+  background: radial-gradient(ellipse at top, rgba(255,255,255,.035) 0%, transparent 70%); }
+.glow-center { position: absolute; inset: 0; pointer-events: none;
+  background: radial-gradient(ellipse at center, rgba(255,255,255,.025) 0%, transparent 60%); }
+
+/* --- scroll reveal --- */
+.rv { opacity: 0; transform: translate(var(--rv-x, 0), var(--rv-y, 0));
+  transition: opacity .8s cubic-bezier(.16,1,.3,1) var(--rv-delay, 0ms),
+              transform .8s cubic-bezier(.16,1,.3,1) var(--rv-delay, 0ms); }
+.rv.in { opacity: 1; transform: none; }
+@media (prefers-reduced-motion: reduce) {
+  .rv { opacity: 1; transform: none; transition: none; }
+  .fb-root * { animation: none !important; }
+}
+
+.fb-root section[id], .fb-root header[id] { scroll-margin-top: 104px; }
+.wrap { width: 100%; max-width: 1180px; margin: 0 auto; padding: 0 24px; position: relative; z-index: 1; }
+.wrap.center { text-align: center; max-width: 1000px; }
+.rule { height: 1px; background: var(--ink-10); border: 0; }
+
+.mini-label { font-size: 11px; letter-spacing: .16em; text-transform: uppercase;
+  color: var(--ink-40); font-weight: 500; }
+.mini-label.out-label { color: var(--amber); }
+.body { font-size: 16px; line-height: 1.7; color: var(--ink-50); }
+.body.wide { max-width: 640px; margin-top: 20px; }
+
+/* --- buttons --- */
+.btn { display: inline-flex; align-items: center; justify-content: center;
+  border: 0; cursor: pointer; border-radius: 999px; padding: 14px 30px;
+  font: inherit; font-size: 14px; font-weight: 500; color: var(--ink);
+  transition: background-color .2s, color .2s, transform .2s; }
+.btn.sm { padding: 9px 20px; font-size: 13px; }
+.btn.full { width: 100%; margin-top: 24px; }
+.btn.amber { background: var(--amber); color: #000; font-weight: 600; }
+.btn.amber:hover { background: #ffb954; }
+.btn.glass:hover { background: rgba(255,255,255,.06); }
+
+/* ------------------------------- navbar -------------------------------- */
+.navbar-wrap { position: fixed; top: 0; left: 0; right: 0; z-index: 40; padding: 20px 24px;
+  transition: padding .3s ease; }
+.navbar-wrap.is-stuck { padding: 12px 24px; }
+.navbar { max-width: 1100px; margin: 0 auto; border-radius: 999px;
+  display: flex; align-items: center; justify-content: space-between; gap: 20px;
+  padding: 10px 12px 10px 22px; }
+.nav-left { display: flex; align-items: center; gap: 34px; min-width: 0; }
+.brand { display: inline-flex; align-items: center; gap: 10px; font-weight: 600; font-size: 16px;
+  letter-spacing: -.01em; white-space: nowrap; }
+.brand i { width: 9px; height: 9px; border-radius: 50%; background: var(--amber);
+  box-shadow: 0 0 12px rgba(242,165,60,.8); animation: pulse 3.2s ease-in-out infinite; }
+@keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .35; } }
+.nav-links { display: none; align-items: center; gap: 26px; }
+.nav-links a { font-size: 13px; font-weight: 500; color: var(--ink-50); transition: color .2s; }
+.nav-links a:hover { color: var(--ink); }
+.nav-right { display: flex; align-items: center; gap: 10px; }
+.nav-plain { background: none; border: 0; cursor: pointer; font: inherit; font-size: 13px;
+  font-weight: 500; color: var(--ink-70); padding: 8px 4px; transition: color .2s; }
+.nav-plain:hover { color: var(--ink); }
+@media (min-width: 1000px) { .nav-links { display: flex; } }
+
+/* -------------------------------- hero --------------------------------- */
+.hero { position: relative; min-height: 100svh; display: flex; flex-direction: column;
+  overflow: hidden; padding-bottom: 40px; }
+.hero canvas { position: absolute !important; inset: 0; width: 100% !important; height: 100% !important;
+  z-index: 0; opacity: .5; }
+.hero-veil { position: absolute; inset: 0; z-index: 1; pointer-events: none;
+  background: radial-gradient(ellipse at 50% 42%, rgba(0,0,0,.55) 0%, rgba(0,0,0,.82) 45%, #000 78%),
+              radial-gradient(ellipse at top, rgba(255,255,255,.04) 0%, transparent 60%); }
+.hero-in { position: relative; z-index: 10; flex: 1; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; text-align: center; gap: 26px;
+  padding: 140px 24px 24px; max-width: 1000px; margin: 0 auto; }
+.eyebrow { font-size: 11px; letter-spacing: .18em; text-transform: uppercase; color: var(--ink-40);
+  display: inline-flex; align-items: center; gap: 9px; }
+.eyebrow .on { color: var(--green); font-size: 8px; animation: pulse 2.4s ease-in-out infinite; }
+.hero h1 { font-family: var(--serif); font-weight: 400; font-style: normal;
+  font-size: clamp(44px, 8.4vw, 108px); line-height: 1.03; letter-spacing: -.02em; }
+.hero h1 .serif { color: var(--amber); }
+.wish { display: flex; align-items: center; gap: 12px; width: 100%; max-width: 620px;
+  border-radius: 999px; padding: 6px 6px 6px 22px; }
+.wish-mark { color: var(--amber); font-size: 13px; flex: none; }
+.wish input { flex: 1; min-width: 0; background: none; border: 0; outline: none;
+  font: inherit; font-family: var(--mono); font-size: 13px; color: var(--ink); padding: 12px 0; }
+.wish input::placeholder { color: rgba(255,255,255,.35); }
+.wish-go { flex: none; width: 42px; height: 42px; border-radius: 999px; border: 0; cursor: pointer;
+  background: var(--amber); color: #000; font-size: 18px; line-height: 1;
+  display: grid; place-items: center; transition: background-color .2s; z-index: 3; }
+.wish-go:hover { background: #ffb954; }
+.lede { max-width: 620px; font-size: 15px; line-height: 1.7; color: var(--ink-50); }
+.hero-cta { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; }
+.hero-cta .btn.glass { border-radius: 999px; }
+.hero-foot { position: relative; z-index: 10; display: flex; flex-wrap: wrap; gap: 10px;
+  align-items: center; justify-content: center; padding: 0 24px; }
+.hud { border-radius: 999px; padding: 9px 18px; font-family: var(--mono); font-size: 11px;
+  color: var(--ink-50); }
+.hud b { color: var(--amber); font-weight: 500; }
+.hud-hint { font-family: var(--mono); font-size: 11px; color: rgba(255,255,255,.25);
+  width: 100%; text-align: center; margin-top: 6px; }
+
+/* -------------------------------- about -------------------------------- */
+.about { position: relative; overflow: hidden; padding: 140px 0 60px; }
+.statement { margin-top: 30px; font-size: clamp(28px, 4.4vw, 60px); line-height: 1.13;
+  letter-spacing: -.02em; font-weight: 400; }
+.br { display: none; }
+@media (min-width: 860px) { .br { display: inline; } }
+
+/* ------------------------------ featured ------------------------------- */
+.featured { padding: 40px 0 110px; overflow: hidden; }
+.frame { position: relative; border-radius: 28px; overflow: hidden; background: var(--card);
+  box-shadow: inset 0 1px 1px rgba(255,255,255,.1); }
+.frame.plain { padding: 20px; }
+.featured-head { display: flex; flex-direction: column; gap: 20px; margin-bottom: 28px; }
+.frame-card { max-width: 560px; border-radius: 20px; padding: 24px; }
+.frame-card p:last-child { margin-top: 12px; font-size: 14px; line-height: 1.65; color: var(--ink-70); }
+.frame-btn { align-self: flex-start; border-radius: 999px; }
+@media (min-width: 860px) {
+  .featured-head { flex-direction: row; align-items: flex-end; justify-content: space-between; }
+  .frame-btn { align-self: auto; }
+}
+
+/* ------------------------------ philosophy ----------------------------- */
+.philosophy { padding: 110px 0; overflow: hidden; }
+.big { font-size: clamp(30px, 5vw, 68px); line-height: 1.06; letter-spacing: -.025em; font-weight: 400; }
+.philosophy .big { margin-bottom: 64px; }
+.phil-grid { display: grid; grid-template-columns: 1fr; gap: 40px; }
+@media (min-width: 900px) { .phil-grid { grid-template-columns: 1fr 1fr; gap: 56px; } }
+.phil-media { display: grid; gap: 16px; align-content: start; }
+.wall-col { border-radius: 20px; background: #070707; padding: 20px;
+  box-shadow: inset 0 1px 1px rgba(255,255,255,.07); }
+.wall-term { font-family: var(--mono); font-size: 11.5px; line-height: 1.85; margin: 12px 0 0;
+  white-space: pre-wrap; word-break: break-word; color: var(--ink-50); }
+.wall-term .err { color: #ff6b6b; }
+.wall-term .ok { color: var(--green); }
+.wall-term .dim { color: rgba(255,255,255,.3); }
+.phil-text { display: flex; flex-direction: column; justify-content: center; gap: 34px; }
+.phil-text .body { margin-top: 14px; }
+
+/* -------------------------------- loop --------------------------------- */
+.loop-band { padding: 20px 0 110px; overflow: hidden; }
+.loop-band svg { width: 100%; height: auto; display: block; }
+.loop-legend { display: grid; grid-template-columns: 1fr; gap: 26px; margin-top: 44px; }
+@media (min-width: 720px) { .loop-legend { grid-template-columns: repeat(4, 1fr); } }
+.loop-legend b { display: block; font-size: 11px; letter-spacing: .16em; text-transform: uppercase;
+  color: var(--amber); font-weight: 500; margin-bottom: 10px; }
+.loop-legend span { font-size: 13.5px; line-height: 1.65; color: var(--ink-50); }
+
+/* ------------------------------- clusters ------------------------------ */
+.clusters { position: relative; padding: 110px 0; overflow: hidden; }
+.band-head { margin-bottom: 52px; }
+.band-head .big { margin-top: 20px; }
+.clusters canvas { width: 100% !important; display: block; border-radius: 12px; }
+
+/* ------------------------------- services ------------------------------ */
+.services { position: relative; padding: 110px 0; overflow: hidden; }
+.services-head { display: flex; align-items: flex-end; justify-content: space-between;
+  gap: 20px; margin-bottom: 56px; }
+.right-label { display: none; }
+@media (min-width: 720px) { .right-label { display: block; } }
+.uc-grid { display: grid; grid-template-columns: 1fr; gap: 24px; }
+@media (min-width: 860px) { .uc-grid { grid-template-columns: 1fr 1fr; gap: 28px; } }
+.uc-card { border-radius: 24px; overflow: hidden; display: flex; flex-direction: column; }
+.uc-media { position: relative; aspect-ratio: 16 / 7; background: #070707;
+  display: grid; place-items: center; overflow: hidden; }
+.uc-media svg { width: 62%; max-width: 260px; height: auto; }
+.uc-scrim { position: absolute; inset: 0;
+  background: linear-gradient(to top, rgba(0,0,0,.45), transparent); pointer-events: none; }
+.uc-body { padding: 26px 26px 30px; display: flex; flex-direction: column; gap: 12px; }
+.uc-top { display: flex; align-items: center; justify-content: space-between; }
+.uc-arrow { width: 34px; height: 34px; border-radius: 999px; display: grid; place-items: center;
+  font-size: 14px; color: var(--ink-70); }
+.uc-saw { font-size: 19px; line-height: 1.35; letter-spacing: -.01em; color: var(--ink); }
+.uc-note { font-family: var(--mono); font-size: 12.5px; line-height: 1.6; color: var(--amber);
+  padding-left: 12px; border-left: 1px solid rgba(242,165,60,.4); }
+.uc-got { font-size: 14px; line-height: 1.65; color: var(--ink-50); }
+
+/* ------------------------------ everything ----------------------------- */
+.everything { padding: 110px 0; overflow: hidden; }
+.cat-group { margin-bottom: 12px; }
+.cat-head { margin: 56px 0 28px; }
+.cat-head h3 { font-family: var(--serif); font-style: italic; font-weight: 400;
+  font-size: clamp(24px, 3vw, 36px); letter-spacing: -.01em; color: var(--ink); }
+.cat-head p { margin-top: 10px; font-size: 14.5px; line-height: 1.65; color: var(--ink-50);
+  max-width: 620px; }
+.cat-grid { display: grid; grid-template-columns: 1fr; gap: 16px; }
+@media (min-width: 620px) { .cat-grid { grid-template-columns: 1fr 1fr; } }
+@media (min-width: 960px) { .cat-grid { grid-template-columns: repeat(3, 1fr); } }
+.cat-card { border-radius: 18px; padding: 22px; display: flex; flex-direction: column; gap: 12px; }
+.cat-card svg { width: 100%; max-width: 190px; height: auto; }
+.cat-card h4 { font-size: 15px; font-weight: 600; letter-spacing: -.01em; color: var(--ink); }
+.cat-does { font-size: 13.5px; line-height: 1.6; color: var(--ink-50); }
+.cat-group .rule { margin-top: 44px; }
+
+/* ------------------------------- pricing ------------------------------- */
+.pricing { position: relative; padding: 110px 0; overflow: hidden; }
+.plans { display: grid; grid-template-columns: 1fr; gap: 22px; }
+@media (min-width: 800px) { .plans { grid-template-columns: 1fr 1fr; gap: 26px; } }
+.plan { border-radius: 24px; padding: 32px; display: flex; flex-direction: column; }
+.plan.featured-plan { box-shadow: inset 0 1px 1px rgba(242,165,60,.35); }
+.price { font-family: var(--serif); font-size: 60px; line-height: 1.1; margin: 14px 0 22px; }
+.price span { font-family: var(--sans); font-size: 14px; color: var(--ink-40); margin-left: 6px; }
+.plan ul { display: grid; gap: 12px; }
+.plan li { font-size: 14px; line-height: 1.5; color: var(--ink-70); padding-left: 20px;
+  position: relative; }
+.plan li::before { content: '·'; position: absolute; left: 6px; color: var(--amber); }
+.plan .btn { margin-top: auto; }
+.fine { margin-top: 16px; font-size: 12px; line-height: 1.6; color: var(--ink-40); }
+.promises { display: grid; grid-template-columns: 1fr; gap: 26px; margin-top: 56px;
+  padding-top: 44px; border-top: 1px solid var(--ink-10); }
+@media (min-width: 800px) { .promises { grid-template-columns: repeat(3, 1fr); gap: 36px; } }
+.promises b { display: block; font-size: 15px; font-weight: 600; margin-bottom: 10px; }
+.promises span { font-size: 13.5px; line-height: 1.65; color: var(--ink-50); }
+
+/* -------------------------------- footer ------------------------------- */
+.site-foot { position: relative; overflow: hidden; border-top: 1px solid var(--ink-10);
+  padding: 90px 0 40px; }
+.foot-top { display: flex; flex-direction: column; gap: 48px; justify-content: space-between; }
+@media (min-width: 860px) { .foot-top { flex-direction: row; } }
+.foot-brand { max-width: 340px; }
+.foot-brand p { margin: 20px 0 26px; font-size: 14px; line-height: 1.7; color: var(--ink-50); }
+.foot-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 36px; }
+@media (min-width: 640px) { .foot-cols { grid-template-columns: repeat(3, 1fr); gap: 60px; } }
+.foot-cols ul { display: grid; gap: 12px; margin-top: 16px; }
+.foot-cols a { font-size: 13.5px; color: var(--ink-70); transition: color .2s; }
+.foot-cols a:hover { color: var(--ink); }
+.watermark { margin-top: 70px; text-align: center; user-select: none;
+  font-family: var(--serif); font-style: italic; line-height: .9; letter-spacing: -.03em;
+  font-size: 19vw; color: rgba(255,255,255,.045); white-space: nowrap; }
+.foot-bottom { display: flex; flex-direction: column; gap: 12px; align-items: center;
+  justify-content: space-between; margin-top: 32px; padding-top: 28px;
+  border-top: 1px solid var(--ink-10); font-size: 12px; color: var(--ink-40); }
+@media (min-width: 640px) { .foot-bottom { flex-direction: row; } }
+
+/* ---- interactive pieces (mutation, clusters, micro visuals) ----
+ * These keep the console detailing they were drawn with; the legacy tokens
+ * below map that vocabulary onto the black/glass palette. */
+.fb-root {
+  --panel: #0a0a0a; --panel-2: #070707;
+  --rule: rgba(255,255,255,.12); --rule-2: rgba(255,255,255,.07);
+  --ink-2: rgba(255,255,255,.72); --dim: rgba(255,255,255,.45);
+  --faint: rgba(255,255,255,.26);
+}
+.fb-root :focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
 
 /* ---------- the mutation ---------- */
-.mut-tabs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+.mut-tabs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 18px; }
 .mut-tabs button {
-  padding: 9px 15px; border: 1px solid var(--rule); font-size: 13px; color: var(--dim);
-  background: rgba(255,255,255,.015); transition: color .2s, border-color .2s, background .2s;
+  padding: 9px 18px; border: 1px solid var(--rule); border-radius: 999px; font: inherit;
+  font-size: 13px; color: var(--dim); cursor: pointer; background: rgba(255,255,255,.02);
+  transition: color .2s, border-color .2s, background .2s;
 }
 .mut-tabs button:hover { color: var(--ink); }
-.mut-tabs button[aria-selected="true"] { background: var(--amber); border-color: var(--amber); color: #10130f; font-weight: 600; }
-.mut { border: 1px solid var(--rule); background: var(--panel); }
+.mut-tabs button[aria-selected="true"] { background: var(--amber); border-color: var(--amber); color: #000; font-weight: 600; }
+.mut { border: 1px solid var(--rule); border-radius: 20px; background: var(--panel); overflow: hidden; }
 .mut-grid { display: grid; grid-template-columns: 1fr; }
 @media (min-width: 940px) { .mut-grid { grid-template-columns: minmax(0,.85fr) minmax(0,1.15fr); } }
-.mut-left { padding: 20px; border-bottom: 1px solid var(--rule); }
+.mut-left { padding: 24px; border-bottom: 1px solid var(--rule); }
 @media (min-width: 940px) { .mut-left { border-bottom: 0; border-right: 1px solid var(--rule); } }
-.mut-src { font-family: "IBM Plex Mono", monospace; font-size: 11.5px; color: var(--dim); margin: 0 0 12px; }
+.mut-src { font-family: var(--mono); font-size: 11.5px; color: var(--dim); margin: 0 0 14px; }
 .mut-said { margin: 0; padding: 0; list-style: none; display: grid; gap: 9px; }
-.mut-said li { padding-left: 20px; position: relative; font-size: 13.5px; line-height: 1.5; color: var(--ink-2); }
+.mut-said li { padding-left: 20px; position: relative; font-size: 13.5px; line-height: 1.55; color: var(--ink-2); }
 .mut-said li::before { content: "·"; position: absolute; left: 6px; color: var(--dim); }
-.mut-noterow { display: flex; align-items: center; gap: 10px; padding: 13px 16px; border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule); background: rgba(242,165,60,.05); }
-.mut-noterow .caret { color: var(--amber); font-family: "IBM Plex Mono", monospace; }
-.mut-noterow input {
-  flex: 1; min-width: 0; background: none; border: 0; outline: none; color: var(--amber);
-  font-family: "IBM Plex Mono", monospace; font-size: 13.5px;
-}
-.mut-right { padding: 20px; display: grid; gap: 14px; align-content: start; }
-.mut-out h3 { margin: 0 0 6px; font-size: 19px; letter-spacing: -0.02em; }
-.mut-out p { margin: 0; font-size: 14px; line-height: 1.55; color: var(--ink-2); }
-.mut-never {
-  display: inline-flex; align-items: center; gap: 8px; align-self: start;
-  font-family: "IBM Plex Mono", monospace; font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase;
-  color: var(--green); border: 1px solid rgba(99,230,160,.4); padding: 4px 10px;
-}
-.mut-diagram { width: 100%; height: auto; display: block; background: var(--panel-2); border: 1px solid var(--rule); }
-.mut-parts { display: grid; gap: 7px; }
-.mut-part { display: grid; grid-template-columns: 118px 1fr; gap: 12px; font-size: 12.5px; line-height: 1.5; }
+.mut-noterow { display: flex; align-items: center; gap: 10px; padding: 14px 20px;
+  border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule); background: rgba(242,165,60,.06); }
+.mut-noterow .caret { color: var(--amber); font-family: var(--mono); }
+.mut-noterow input { flex: 1; min-width: 0; background: none; border: 0; outline: none; color: var(--amber);
+  font-family: var(--mono); font-size: 13.5px; }
+.mut-right { padding: 24px; display: grid; gap: 16px; align-content: start; }
+.mut-out h3 { margin: 0 0 8px; font-size: 20px; letter-spacing: -.02em; font-weight: 500; }
+.mut-out p { margin: 0; font-size: 14px; line-height: 1.6; color: var(--ink-2); }
+.mut-never { display: inline-flex; align-items: center; gap: 8px; align-self: start; border-radius: 999px;
+  font-family: var(--mono); font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase;
+  color: var(--green); border: 1px solid rgba(99,230,160,.4); padding: 5px 12px; }
+.mut-diagram { width: 100%; height: auto; display: block; background: var(--panel-2);
+  border: 1px solid var(--rule); border-radius: 14px; }
+.mut-parts { display: grid; gap: 8px; }
+.mut-part { display: grid; grid-template-columns: 118px 1fr; gap: 12px; font-size: 12.5px; line-height: 1.55; }
 @media (max-width: 620px) { .mut-part { grid-template-columns: 1fr; gap: 2px; } }
-.mut-part b { font-family: "IBM Plex Mono", monospace; font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--amber); font-weight: 500; }
+.mut-part b { font-family: var(--mono); font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase;
+  color: var(--amber); font-weight: 500; }
 .mut-part span { color: var(--ink-2); }
 
-/* ---------- the wall ---------- */
-.wall { display: grid; gap: 1px; background: var(--rule-2); border: 1px solid var(--rule); grid-template-columns: 1fr; }
-@media (min-width: 820px) { .wall { grid-template-columns: 1fr 1fr; } }
-.wall-col { background: var(--bg); padding: 20px; display: grid; gap: 12px; align-content: start; }
-.wall-term {
-  font-family: "IBM Plex Mono", monospace; font-size: 12px; line-height: 1.7;
-  background: var(--panel-2); border: 1px solid var(--rule); padding: 14px; white-space: pre-wrap; overflow-x: auto;
-}
-.wall-term .err { color: #e5624a; }
-.wall-term .ok { color: var(--green); }
-.wall-term .dim { color: var(--faint); }
-
-/* ---------- the loop ---------- */
-.loop-wrap { border: 1px solid var(--rule); background: var(--panel); padding: clamp(16px,3vw,28px); }
-.loop-svg { width: 100%; height: auto; display: block; max-width: 720px; margin: 0 auto; }
-.loop-legend { display: grid; gap: 10px; margin-top: 18px; grid-template-columns: 1fr; }
-@media (min-width: 760px) { .loop-legend { grid-template-columns: repeat(4, 1fr); } }
-.loop-legend div { display: grid; gap: 4px; }
-.loop-legend b { font-family: "IBM Plex Mono", monospace; font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--amber); font-weight: 500; }
-.loop-legend span { font-size: 12.5px; color: var(--dim); line-height: 1.5; }
+/* ---------- clusters ---------- */
+.cluster-wrap { position: relative; border-radius: 20px; background: var(--panel); overflow: hidden;
+  box-shadow: inset 0 1px 1px rgba(255,255,255,.1); }
+.cluster-wrap canvas { display: block; width: 100%; height: clamp(340px, 52vw, 480px); }
+.cluster-tabs { position: absolute; left: 16px; top: 16px; display: flex; flex-wrap: wrap; gap: 6px; z-index: 2; }
+.cluster-tabs button { font-family: var(--mono); font-size: 11.5px; padding: 7px 13px; border-radius: 999px;
+  border: 1px solid var(--rule); background: rgba(0,0,0,.75); color: var(--dim); cursor: pointer; }
+.cluster-tabs button[aria-selected="true"] { color: #000; background: var(--amber); border-color: var(--amber); }
+.cluster-card { position: absolute; right: 16px; bottom: 16px; left: 16px; z-index: 2; border-radius: 16px;
+  border: 1px solid var(--rule); background: rgba(8,8,8,.94); backdrop-filter: blur(8px);
+  padding: 18px; display: grid; gap: 10px; }
+@media (min-width: 900px) { .cluster-card { left: auto; width: 460px; } }
+.cc-head { display: flex; align-items: center; gap: 9px; font-family: var(--mono); font-size: 11px; color: var(--dim); }
+.cc-dot { width: 9px; height: 9px; border-radius: 50%; }
+.cc-items { display: flex; flex-wrap: wrap; gap: 5px; }
+.cc-items span { font-size: 11px; color: var(--ink-2); border: 1px solid var(--rule); border-radius: 999px; padding: 3px 9px; }
+.cc-title { font-family: var(--mono); font-size: 10.5px; letter-spacing: .12em; text-transform: uppercase;
+  color: var(--amber); margin: 2px 0 0; }
+.cc-build { margin: 0; font-size: 14px; line-height: 1.6; color: var(--ink); }
+.cc-why { margin: 0; font-size: 12.5px; line-height: 1.5; color: var(--dim); }
 
 /* ---------- micro visuals ---------- */
+/* ---------- micro visuals ---------- */
 .viz { width: 120px; height: 64px; display: block; overflow: visible; }
-.viz-slot { fill: none; stroke: rgba(217,226,221,.18); stroke-width: 1; }
-.viz-long { fill: rgba(217,226,221,.16); }
+.viz-slot { fill: none; stroke: rgba(255,255,255,.18); stroke-width: 1; }
+.viz-long { fill: rgba(255,255,255,.16); }
 .viz-short { fill: var(--amber); opacity: 0; animation: vShort 3.2s infinite; }
 .viz-short.s1 { animation-delay: .25s; } .viz-short.s2 { animation-delay: .5s; }
 @keyframes vShort { 0%,12% { opacity: 0; transform: translateX(-4px);} 30%,80% { opacity: 1; transform: none;} 100% { opacity: 0; } }
@@ -1652,26 +1881,26 @@ const CSS = `
 @keyframes vBlock { 0% { transform: translateX(0);} 40% { transform: translateX(30px);} 55% { transform: translateX(24px);} 100% { transform: translateX(0);} }
 .viz-through { fill: var(--green); animation: vThru 3s infinite; }
 @keyframes vThru { 0% { transform: translateX(0); } 55%,100% { transform: translateX(72px); } }
-.viz-t { font-family: "IBM Plex Mono", monospace; font-size: 12px; }
+.viz-t { font-family: var(--mono); font-size: 12px; }
 .viz-t.err { fill: #e5624a; } .viz-t.ok { fill: var(--green); }
 .viz-t.cite { fill: var(--amber); font-size: 10px; }
 .viz-bar { fill: var(--amber); opacity: .8; animation: vBar 1.1s infinite ease-in-out; transform-origin: center; }
 .viz-bar.b1 { animation-delay: .1s; } .viz-bar.b2 { animation-delay: .2s; }
 .viz-bar.b3 { animation-delay: .3s; } .viz-bar.b4 { animation-delay: .4s; }
 @keyframes vBar { 0%,100% { transform: scaleY(.3); } 50% { transform: scaleY(1); } }
-.viz-line { fill: rgba(217,226,221,.5); opacity: 0; animation: vShort 3.2s infinite; }
+.viz-line { fill: rgba(255,255,255,.5); opacity: 0; animation: vShort 3.2s infinite; }
 .viz-line.l1 { animation-delay: .2s; } .viz-line.l2 { animation-delay: .4s; }
 .viz-tag { fill: none; stroke: var(--amber); stroke-width: 1; opacity: 0; animation: vTag 3.4s infinite; }
 .viz-tag.t1 { animation-delay: .3s; } .viz-tag.t2 { animation-delay: .6s; }
 @keyframes vTag { 0% { opacity: 0; transform: translateX(10px);} 20%,85% { opacity: 1; transform: none;} 100% { opacity: 0; } }
-.viz-node { fill: rgba(217,226,221,.45); }
+.viz-node { fill: rgba(255,255,255,.45); }
 .viz-node.hot { fill: var(--amber); }
 .viz-node.dim { fill: rgba(242,165,60,.45); }
-.viz-node-box { fill: none; stroke: rgba(217,226,221,.3); stroke-width: 1; }
+.viz-node-box { fill: none; stroke: rgba(255,255,255,.3); stroke-width: 1; }
 .viz-edge { stroke: var(--amber); stroke-width: 1; stroke-dasharray: 80; stroke-dashoffset: 80; animation: vDraw 3s infinite; }
 .viz-edge.e1 { animation-delay: .25s; } .viz-edge.e2 { animation-delay: .5s; }
 @keyframes vDraw { 0% { stroke-dashoffset: 80; } 35%,85% { stroke-dashoffset: 0; } 100% { stroke-dashoffset: 0; opacity: 0; } }
-.viz-src { fill: none; stroke: rgba(217,226,221,.25); stroke-width: 1; opacity: 0; animation: vTag 3.6s infinite; }
+.viz-src { fill: none; stroke: rgba(255,255,255,.25); stroke-width: 1; opacity: 0; animation: vTag 3.6s infinite; }
 .viz-src.c1 { animation-delay: .3s; } .viz-src.c2 { animation-delay: .6s; }
 .viz-t.cite.c1 { animation-delay: .3s; } .viz-t.cite.c2 { animation-delay: .6s; }
 .viz-pull { fill: var(--amber); animation: vPull 3.6s infinite ease-in-out; }
@@ -1691,39 +1920,13 @@ const CSS = `
 @keyframes vPing { 0% { transform: scale(1); opacity: .8; transform-origin: 60px 32px; } 100% { transform: scale(2.4); opacity: 0; transform-origin: 60px 32px; } }
 .viz-shield { fill: none; stroke: var(--green); stroke-width: 1.3; stroke-dasharray: 180; stroke-dashoffset: 180; animation: vShield 3.4s infinite; }
 @keyframes vShield { 0% { stroke-dashoffset: 180; } 40%,88% { stroke-dashoffset: 0; } 100% { stroke-dashoffset: 0; opacity: .5; } }
-.viz-lock, .viz-lock-arc { fill: none; stroke: rgba(217,226,221,.55); stroke-width: 1.2; }
-.viz-cell { fill: rgba(217,226,221,.14); }
+.viz-lock, .viz-lock-arc { fill: none; stroke: rgba(255,255,255,.55); stroke-width: 1.2; }
+.viz-cell { fill: rgba(255,255,255,.14); }
 .viz-cell.on { fill: var(--amber); animation: vCell 2.6s infinite; }
 @keyframes vCell { 0%,100% { opacity: .35; } 50% { opacity: 1; } }
-.viz-box { fill: none; stroke: rgba(217,226,221,.3); stroke-width: 1; }
+.viz-box { fill: none; stroke: rgba(255,255,255,.3); stroke-width: 1; }
 .viz-tick { fill: none; stroke: var(--green); stroke-width: 1.6; stroke-linecap: round; stroke-dasharray: 14; stroke-dashoffset: 14; animation: vTick 3.4s infinite; }
 .viz-tick.k1 { animation-delay: .35s; } .viz-tick.k2 { animation-delay: .7s; }
 @keyframes vTick { 0%,10% { stroke-dashoffset: 14; } 28%,88% { stroke-dashoffset: 0; } 100% { stroke-dashoffset: 14; } }
 
-/* ---------- catalogue ---------- */
-.cat-group { margin-top: clamp(34px, 5vw, 60px); }
-.cat-head { border-top: 1px solid var(--rule); padding-top: 18px; margin-bottom: 20px; }
-.cat-head h3 { margin: 0 0 6px; font-size: clamp(19px, 2.4vw, 24px); letter-spacing: -0.025em; }
-.cat-head p { margin: 0; color: var(--dim); font-size: 14px; line-height: 1.5; max-width: 62ch; }
-.cat-grid { display: grid; gap: 1px; background: var(--rule-2); border: 1px solid var(--rule); grid-template-columns: 1fr; }
-@media (min-width: 680px) { .cat-grid { grid-template-columns: 1fr 1fr; } }
-@media (min-width: 1040px) { .cat-grid { grid-template-columns: repeat(3, 1fr); } }
-.cat-card { background: var(--bg); padding: 18px; display: grid; gap: 8px; align-content: start; }
-.cat-card h4 { margin: 6px 0 0; font-size: 15.5px; letter-spacing: -0.01em; }
-.cat-does { margin: 0; font-size: 13px; line-height: 1.5; color: var(--dim); }
-.cat-lost {
-  margin: 4px 0 0; padding-left: 12px; border-left: 2px solid rgba(229,98,74,.6);
-  font-size: 13px; line-height: 1.5; color: var(--ink-2);
-}
-
-/* ---------- use cases ---------- */
-.uc-grid { display: grid; gap: 1px; background: var(--rule-2); border: 1px solid var(--rule); grid-template-columns: 1fr; }
-@media (min-width: 720px) { .uc-grid { grid-template-columns: 1fr 1fr; } }
-@media (min-width: 1060px) { .uc-grid { grid-template-columns: repeat(3, 1fr); } }
-.uc-card { background: var(--bg); padding: 20px; display: grid; gap: 9px; align-content: start; }
-.uc-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-.uc-who { font-family: "IBM Plex Mono", monospace; font-size: 10.5px; letter-spacing: .12em; text-transform: uppercase; color: var(--dim); }
-.uc-saw { margin: 0; font-size: 15px; font-weight: 600; line-height: 1.4; letter-spacing: -0.01em; }
-.uc-note { margin: 0; font-family: "IBM Plex Mono", monospace; font-size: 12.5px; line-height: 1.5; color: var(--amber); }
-.uc-got { margin: 2px 0 0; font-size: 13.5px; line-height: 1.55; color: var(--ink-2); padding-left: 12px; border-left: 2px solid rgba(99,230,160,.55); }
 `;
