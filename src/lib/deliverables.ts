@@ -103,18 +103,26 @@ const rewriteLine = (
   rewriter: (m: RegExpMatchArray) => string | null,
 ): string => {
   let n = -1;
-  return raw
-    .split("\n")
-    .map((line) => {
-      const m = line.match(LINE_RE);
-      if (!m) return line;
-      n += 1;
-      if (n !== index) return line;
-      const next = rewriter(m);
-      return next === null ? "__DELETE__" : next;
-    })
-    .filter((l) => l !== "__DELETE__")
-    .join("\n");
+  const kept: string[] = [];
+  for (const line of raw.split("\n")) {
+    const m = line.match(LINE_RE);
+    if (!m) {
+      kept.push(line);
+      continue;
+    }
+    n += 1;
+    if (n !== index) {
+      kept.push(line);
+      continue;
+    }
+    // A rewriter returning null means "drop this row". Dropping it here
+    // rather than marking it with a sentinel string and filtering afterwards:
+    // the sentinel was "__DELETE__", so a note containing that as a plain
+    // line lost it on every toggle or edit.
+    const next = rewriter(m);
+    if (next !== null) kept.push(next);
+  }
+  return kept.join("\n");
 };
 
 export const toggleDeliverable = (raw: string, index: number): string =>
