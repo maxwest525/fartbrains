@@ -528,9 +528,10 @@ const Index = () => {
   if (forceLanding || (!entered && !user)) {
     return (
       // The landing page owns the whole screen, so its fallback is a matching
-      // dark ground rather than null — otherwise the app's aurora flashes
-      // through for the moment before the chunk lands.
-      <Suspense fallback={<div className="min-h-dvh bg-[#06080a]" />}>
+      // ground rather than null — otherwise the app's aurora flashes through
+      // for the moment before the chunk lands. Black, to match the landing
+      // page's own --bg; update both together if that changes.
+      <Suspense fallback={<div className="min-h-dvh bg-black" />}>
         <Landing
           onEnter={() => {
             markEnteredVault();
