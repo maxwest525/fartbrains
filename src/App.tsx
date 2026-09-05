@@ -1,3 +1,4 @@
+import { Suspense, lazy } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -12,20 +13,25 @@ import { useLandingActive } from "@/lib/landingMode";
 import Index from "./pages/Index.tsx";
 import Auth from "./pages/Auth.tsx";
 
-import Unsubscribe from "./pages/Unsubscribe.tsx";
-import PromptRules from "./pages/PromptRules.tsx";
-import Profile from "./pages/Profile.tsx";
-import Instructions from "./pages/Instructions.tsx";
-import ResetPassword from "./pages/ResetPassword.tsx";
-import SharedIdea from "./pages/SharedIdea.tsx";
-import Share from "./pages/Share";
-import Connect from "./pages/Connect";
-import Privacy from "./pages/Privacy.tsx";
-import Terms from "./pages/Terms.tsx";
-import Dashboard from "./pages/Dashboard.tsx";
-import SyncAccount from "./pages/SyncAccount.tsx";
-import OAuthConsent from "./pages/OAuthConsent.tsx";
-import NotFound from "./pages/NotFound.tsx";
+/* Settings screens, legal pages, the share receiver and the shared-idea view
+   are not on the path of a normal visit, so they are split out. Index and
+   Auth stay eager: splitting the first screen only adds a round trip to the
+   thing everyone loads. */
+const Unsubscribe = lazy(() => import("./pages/Unsubscribe"));
+const PromptRules = lazy(() => import("./pages/PromptRules"));
+const Profile = lazy(() => import("./pages/Profile"));
+const Instructions = lazy(() => import("./pages/Instructions"));
+const ResetPassword = lazy(() => import("./pages/ResetPassword"));
+const SharedIdea = lazy(() => import("./pages/SharedIdea"));
+const Share = lazy(() => import("./pages/Share"));
+const Connect = lazy(() => import("./pages/Connect"));
+const Privacy = lazy(() => import("./pages/Privacy"));
+const Terms = lazy(() => import("./pages/Terms"));
+const Dashboard = lazy(() => import("./pages/Dashboard"));
+const SyncAccount = lazy(() => import("./pages/SyncAccount"));
+const OAuthConsent = lazy(() => import("./pages/OAuthConsent"));
+const NotFound = lazy(() => import("./pages/NotFound"));
+
 
 
 const queryClient = new QueryClient();
@@ -53,6 +59,7 @@ const App = () => (
       <TooltipProvider>
         <AppChrome />
         <BrowserRouter>
+          <Suspense fallback={null}>
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/home" element={<Navigate to="/" replace />} />
@@ -77,6 +84,7 @@ const App = () => (
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
+          </Suspense>
         </BrowserRouter>
       </TooltipProvider>
     </QueryClientProvider>
