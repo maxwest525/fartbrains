@@ -38,19 +38,91 @@ export function isBlockedIPv4(ip: string): boolean {
     inRange("169.254.0.0", 16) ||
     inRange("0.0.0.0", 8) ||
     inRange("100.64.0.0", 10) ||
-    n === 0xffffffff
+    inRange("192.0.0.0", 24) ||   // IETF protocol assignments
+    inRange("198.18.0.0", 15) ||  // benchmarking
+    inRange("224.0.0.0", 4) ||    // multicast
+    inRange("240.0.0.0", 4)       // reserved, includes 255.255.255.255
   );
 }
 
-/** True if the IPv6 string is loopback / link-local / unique-local. */
-export function isBlockedIPv6(ip: string): boolean {
-  const lower = ip.toLowerCase().replace(/^\[|\]$/g, "");
-  if (lower === "::1" || lower === "::") return true;
-  if (lower.startsWith("fe80:") || lower.startsWith("fc") || lower.startsWith("fd")) return true;
-  if (lower.startsWith("::ffff:")) {
-    const v4 = lower.slice(7);
-    if (/^\d+\.\d+\.\d+\.\d+$/.test(v4)) return isBlockedIPv4(v4);
+/**
+ * Expand an IPv6 address to its eight 16-bit groups.
+ *
+ * Needed because the checks below cannot be done on the text: the WHATWG URL
+ * parser rewrites whatever was typed into its own canonical form, so
+ * `[::ffff:127.0.0.1]` arrives as `[::ffff:7f00:1]` and a prefix match against
+ * the dotted spelling never fires. Returns null for anything unparseable,
+ * which callers treat as "not provably public".
+ */
+export function expandIPv6(raw: string): number[] | null {
+  let text = raw.toLowerCase().replace(/^\[|\]$/g, "");
+  if (text.includes("%")) text = text.slice(0, text.indexOf("%")); // zone id
+  if (!text || /[^0-9a-f:.]/.test(text)) return null;
+
+  // A trailing dotted quad occupies the last two groups.
+  const dotted = text.match(/(\d+\.\d+\.\d+\.\d+)$/);
+  if (dotted) {
+    const octets = dotted[1].split(".").map(Number);
+    if (octets.some((o) => !Number.isInteger(o) || o < 0 || o > 255)) return null;
+    text =
+      text.slice(0, -dotted[1].length) +
+      ((octets[0] << 8) | octets[1]).toString(16) +
+      ":" +
+      ((octets[2] << 8) | octets[3]).toString(16);
   }
+
+  const halves = text.split("::");
+  if (halves.length > 2) return null;
+  const parse = (part: string): number[] | null => {
+    if (part === "") return [];
+    const out: number[] = [];
+    for (const g of part.split(":")) {
+      if (g === "" || g.length > 4) return null;
+      const v = Number.parseInt(g, 16);
+      if (!Number.isInteger(v) || v < 0 || v > 0xffff) return null;
+      out.push(v);
+    }
+    return out;
+  };
+
+  const head = parse(halves[0]);
+  if (head === null) return null;
+  if (halves.length === 1) return head.length === 8 ? head : null;
+  const tail = parse(halves[1]);
+  if (tail === null) return null;
+  const fill = 8 - head.length - tail.length;
+  if (fill < 0) return null;
+  return [...head, ...Array(fill).fill(0), ...tail];
+}
+
+/**
+ * True if the IPv6 string is loopback, unspecified, link-local, unique-local,
+ * or carries an IPv4 address that is itself blocked.
+ *
+ * The mapped and compatible forms matter as much as the native ones:
+ * `[::ffff:169.254.169.254]` is the cloud metadata endpoint wearing a
+ * different spelling, and the parser hands it over as `[::ffff:a9fe:a9fe]`.
+ */
+export function isBlockedIPv6(ip: string): boolean {
+  const g = expandIPv6(ip);
+  if (g === null) return true; // unparseable: refuse rather than guess
+
+  const embeddedV4 = () =>
+    [(g[6] >> 8) & 0xff, g[6] & 0xff, (g[7] >> 8) & 0xff, g[7] & 0xff].join(".");
+
+  // ::/128 unspecified and ::1/128 loopback.
+  if (g.slice(0, 7).every((x) => x === 0) && (g[7] === 0 || g[7] === 1)) return true;
+  // ::ffff:0:0/96 — IPv4-mapped.
+  if (g.slice(0, 5).every((x) => x === 0) && g[5] === 0xffff) return isBlockedIPv4(embeddedV4());
+  // ::/96 — deprecated IPv4-compatible.
+  if (g.slice(0, 6).every((x) => x === 0)) return isBlockedIPv4(embeddedV4());
+  // 64:ff9b::/96 — NAT64, which forwards to whatever IPv4 it embeds.
+  if (g[0] === 0x64 && g[1] === 0xff9b && g.slice(2, 6).every((x) => x === 0)) {
+    return isBlockedIPv4(embeddedV4());
+  }
+  // fe80::/10 link-local, fc00::/7 unique-local.
+  if ((g[0] & 0xffc0) === 0xfe80) return true;
+  if ((g[0] & 0xfe00) === 0xfc00) return true;
   return false;
 }
 
