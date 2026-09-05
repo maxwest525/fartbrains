@@ -93,6 +93,35 @@ export function requireAuth(ctx: ToolContext): string {
   return userId;
 }
 
+/**
+ * Confirms an idea exists and is not in Trash, for tools that reach it by id.
+ *
+ * Trash means gone to the person who put it there: the app hides it, search
+ * skips it, and a share link stops resolving. An agent holding an id from an
+ * earlier turn is the one caller that can still reach past that, so the tools
+ * which take an `idea_id` check here rather than trusting the id.
+ *
+ * RLS already scopes the row to its owner, so a missing row and someone else's
+ * row are the same answer — which is also why the message says only that it
+ * was not found.
+ */
+export async function requireLiveIdea(
+  supabase: ReturnType<typeof supabaseForUser>,
+  ideaId: string,
+): Promise<{ error: string } | null> {
+  const { data, error } = await supabase
+    .from("ideas")
+    .select("id, deleted_at")
+    .eq("id", ideaId)
+    .maybeSingle();
+  if (error) return { error: error.message };
+  if (!data) return { error: "Idea not found" };
+  if ((data as { deleted_at: string | null }).deleted_at) {
+    return { error: "That idea is in the Trash. Restore it in the app first." };
+  }
+  return null;
+}
+
 export const textResult = (text: string) => ({ content: [{ type: "text" as const, text }] });
 
 export const jsonResult = (data: unknown) => ({

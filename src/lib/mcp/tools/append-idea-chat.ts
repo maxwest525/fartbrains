@@ -1,6 +1,6 @@
 import { defineTool } from "@lovable.dev/mcp-js";
 import { z } from "zod";
-import { errorResult, jsonResult, requireAuth, supabaseForUser } from "../supabase";
+import { errorResult, jsonResult, requireAuth, requireLiveIdea, supabaseForUser } from "../supabase";
 
 export default defineTool({
   name: "append_idea_chat",
@@ -17,6 +17,10 @@ export default defineTool({
     try {
       const userId = requireAuth(ctx);
       const supabase = supabaseForUser(ctx);
+      // Writing into a trashed idea's thread succeeds silently: nothing in the
+      // app renders it, so the agent reports progress the user cannot see.
+      const dead = await requireLiveIdea(supabase, idea_id);
+      if (dead) return errorResult(dead.error);
       const { data, error } = await supabase
         .from("idea_chats")
         .insert({ user_id: userId, idea_id, role, content })

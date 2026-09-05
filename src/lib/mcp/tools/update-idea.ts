@@ -33,10 +33,13 @@ export default defineTool({
         .from("ideas")
         .update(patch)
         .eq("id", idea_id)
+        // A trashed idea matches nothing, so an edit to one reports not found
+        // rather than succeeding into a note the user can no longer see.
+        .is("deleted_at", null)
         .select()
         .maybeSingle();
       if (error) return errorResult(error.message);
-      if (!data) return errorResult("Idea not found");
+      if (!data) return errorResult("Idea not found, or it is in the Trash.");
       return jsonResult({ idea: data });
     } catch (e) {
       return errorResult(e instanceof Error ? e.message : "Update failed");
