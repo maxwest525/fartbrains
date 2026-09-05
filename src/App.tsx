@@ -19,6 +19,7 @@ import Instructions from "./pages/Instructions.tsx";
 import ResetPassword from "./pages/ResetPassword.tsx";
 import SharedIdea from "./pages/SharedIdea.tsx";
 import Share from "./pages/Share";
+import Connect from "./pages/Connect";
 import Privacy from "./pages/Privacy.tsx";
 import Terms from "./pages/Terms.tsx";
 import Dashboard from "./pages/Dashboard.tsx";
@@ -60,6 +61,7 @@ const App = () => (
 
             <Route path="/unsubscribe" element={<Unsubscribe />} />
             <Route path="/settings/prompt-rules" element={<PromptRules />} />
+            <Route path="/settings/connect" element={<Connect />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/settings/instructions" element={<Instructions />} />
