@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { setLandingActive } from "@/lib/landingMode";
+import heroGraph from "@/assets/hero-graph.jpg";
 
 /* ------------------------------------------------------------------ *
  * Fart Brains — landing page.
@@ -1420,25 +1421,13 @@ const Landing = ({ onEnter }: { onEnter?: () => void }) => {
     };
   }, []);
 
-  // Instrument Serif carries every accent on this page, so it is loaded here
-  // rather than in index.html — the app itself never needs it.
-  useEffect(() => {
-    const link = document.createElement("link");
-    link.rel = "stylesheet";
-    link.href =
-      "https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap";
-    document.head.appendChild(link);
-    return () => {
-      link.remove();
-    };
-  }, []);
-
   return (
     <div className="fb-root asme">
       <style>{CSS}</style>
 
       {/* ------------------------------- hero ------------------------------- */}
       <header className="hero" id="top">
+        <div className="hero-image" aria-hidden style={{ backgroundImage: `url(${heroGraph})` }} />
         <DriftField onCatch={onCatch} onLost={setLost} />
         <div className="hero-veil" aria-hidden />
 
@@ -1936,9 +1925,17 @@ html.fb-landing body::before { display: none !important; }
 /* -------------------------------- hero --------------------------------- */
 .hero { position: relative; min-height: 100svh; display: flex; flex-direction: column;
   overflow: hidden; padding-bottom: 40px; }
-.drift { position: absolute; inset: 0; z-index: 0; }
+/* The hero background is the product itself - a real graph view, shot on a
+ * phone - where Asme runs a video. It is dimmed and pushed slightly out of
+ * focus so it reads as depth behind the headline rather than as a screenshot
+ * competing with it. */
+.hero-image { position: absolute; inset: 0; z-index: 0;
+  background-size: cover; background-position: center 34%;
+  opacity: .62; filter: blur(18px) saturate(1.35); transform: scale(1.12); }
+@media (min-width: 900px) { .hero-image { background-position: center 44%; opacity: .55; } }
+.drift { position: absolute; inset: 0; z-index: 1; }
 .drift canvas { display: block; width: 100%; height: 100%; }
-.hero-veil { position: absolute; inset: 0; z-index: 1; pointer-events: none;
+.hero-veil { position: absolute; inset: 0; z-index: 2; pointer-events: none;
   background: radial-gradient(ellipse at 50% 42%, rgba(0,0,0,.55) 0%, rgba(0,0,0,.82) 45%, #000 78%),
               radial-gradient(ellipse at top, rgba(255,255,255,.04) 0%, transparent 60%); }
 .hero-in { position: relative; z-index: 10; flex: 1; display: flex; flex-direction: column;
