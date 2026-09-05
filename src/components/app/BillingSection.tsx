@@ -7,6 +7,7 @@ import {
   useSubscription,
 } from "@/hooks/useSubscription";
 import { STATUS_LABEL, isEntitled, statusMessage } from "@/lib/entitlements";
+import { AiUsageMeter } from "./AiUsageMeter";
 
 /**
  * Billing. Shows the real subscription row, never a local flag — the server is
@@ -57,6 +58,8 @@ export const BillingSection = () => {
       {message && (
         <p className="text-[12px] text-muted-foreground mt-2 leading-snug">{message}</p>
       )}
+
+      <AiUsageMeter />
 
       {status === "canceled" || status === "free" ? (
         <>
