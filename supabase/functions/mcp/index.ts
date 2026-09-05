@@ -81,6 +81,15 @@ function requireAuth(ctx) {
   if (!userId) throw new Error("Not authenticated");
   return userId;
 }
+async function requireLiveIdea(supabase, ideaId) {
+  const { data, error } = await supabase.from("ideas").select("id, deleted_at").eq("id", ideaId).maybeSingle();
+  if (error) return { error: error.message };
+  if (!data) return { error: "Idea not found" };
+  if (data.deleted_at) {
+    return { error: "That idea is in the Trash. Restore it in the app first." };
+  }
+  return null;
+}
 var textResult = (text) => ({ content: [{ type: "text", text }] });
 var jsonResult = (data) => ({
   content: [{ type: "text", text: JSON.stringify(data, null, 2) }],
@@ -106,6 +115,8 @@ var append_idea_chat_default = defineTool({
     try {
       const userId = requireAuth(ctx);
       const supabase = supabaseForUser(ctx);
+      const dead = await requireLiveIdea(supabase, idea_id);
+      if (dead) return errorResult(dead.error);
       const { data, error } = await supabase.from("idea_chats").insert({ user_id: userId, idea_id, role, content }).select("id, role, created_at").maybeSingle();
       if (error) return errorResult(error.message);
       return jsonResult({ message: data });
@@ -520,6 +531,8 @@ var get_idea_chat_default = defineTool10({
     try {
       requireAuth(ctx);
       const supabase = supabaseForUser(ctx);
+      const dead = await requireLiveIdea(supabase, idea_id);
+      if (dead) return errorResult(dead.error);
       const { data, error } = await supabase.from("idea_chats").select("role, content, created_at").eq("idea_id", idea_id).order("created_at", { ascending: true }).limit(limit ?? 50);
       if (error) return errorResult(error.message);
       return jsonResult({ idea_id, messages: data ?? [] });
@@ -936,9 +949,9 @@ var update_idea_default = defineTool20({
       if (summary !== void 0) patch.ai_summary = summary;
       if (Object.keys(patch).length === 0) return errorResult("Nothing to update");
       patch.updated_at = (/* @__PURE__ */ new Date()).toISOString();
-      const { data, error } = await supabase.from("ideas").update(patch).eq("id", idea_id).select().maybeSingle();
+      const { data, error } = await supabase.from("ideas").update(patch).eq("id", idea_id).is("deleted_at", null).select().maybeSingle();
       if (error) return errorResult(error.message);
-      if (!data) return errorResult("Idea not found");
+      if (!data) return errorResult("Idea not found, or it is in the Trash.");
       return jsonResult({ idea: data });
     } catch (e) {
       return errorResult(e instanceof Error ? e.message : "Update failed");

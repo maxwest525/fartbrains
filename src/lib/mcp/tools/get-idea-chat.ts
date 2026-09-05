@@ -1,6 +1,6 @@
 import { defineTool } from "@lovable.dev/mcp-js";
 import { z } from "zod";
-import { errorResult, jsonResult, requireAuth, supabaseForUser } from "../supabase";
+import { errorResult, jsonResult, requireAuth, requireLiveIdea, supabaseForUser } from "../supabase";
 
 export default defineTool({
   name: "get_idea_chat",
@@ -16,6 +16,10 @@ export default defineTool({
     try {
       requireAuth(ctx);
       const supabase = supabaseForUser(ctx);
+      // idea_chats rows outlive the Trash flag on their idea, so reading them
+      // by id would hand back a conversation the user has deleted.
+      const dead = await requireLiveIdea(supabase, idea_id);
+      if (dead) return errorResult(dead.error);
       const { data, error } = await supabase
         .from("idea_chats")
         .select("role, content, created_at")
