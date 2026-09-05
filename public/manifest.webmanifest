@@ -1,7 +1,7 @@
 {
   "name": "Fart Brains",
   "short_name": "Fart Brains",
-  "description": "Capture, organize, and recall personal ideas with AI.",
+  "description": "Capture reels, videos, articles and half-formed notes \u2014 and hand your own AI agent a brief it can build from.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
