@@ -763,6 +763,41 @@ var recall_context_default = defineTool16({
 // src/lib/mcp/tools/search-ideas.ts
 import { defineTool as defineTool17 } from "npm:@lovable.dev/mcp-js@1.0.0";
 import { z as z14 } from "npm:zod@^3.25.76";
+
+// src/lib/searchTerm.ts
+function escapeLike(raw) {
+  return raw.replace(/([\\%_])/g, "\\$1");
+}
+function likeFilterValue(raw) {
+  const trimmed = raw.trim();
+  if (!trimmed) return null;
+  const escaped = escapeLike(trimmed).replace(/["\\]/g, (c) => `\\${c}`);
+  return `"%${escaped}%"`;
+}
+
+// src/lib/mcp/tools/search-ideas.ts
+var LIST_FIELDS = [
+  "id",
+  "title",
+  "ai_summary",
+  "raw_note",
+  "tags",
+  "folder_id",
+  "source_type",
+  "source_url",
+  "is_favorite",
+  "priority",
+  "created_at",
+  "updated_at"
+];
+function toListItem(row) {
+  const out = {};
+  for (const f of LIST_FIELDS) out[f] = row[f] ?? null;
+  return out;
+}
+function isMissingFunction(error) {
+  return error.code === "PGRST202" || /Could not find the function/i.test(error.message ?? "");
+}
 var search_ideas_default = defineTool17({
   name: "search_ideas",
   title: "Search ideas",
@@ -783,17 +818,31 @@ var search_ideas_default = defineTool17({
       if (folder_id) q = q.eq("folder_id", folder_id);
       if (favorites_only) q = q.eq("is_favorite", true);
       if (tag) q = q.contains("tags", [tag]);
+      if (query?.trim()) {
+        const { data: data2, error: error2 } = await supabase.rpc("search_ideas", {
+          q: query,
+          folder: folder_id ?? null,
+          tag: tag ?? null,
+          favorites_only: favorites_only ?? false,
+          max_results: limit ?? 15
+        });
+        if (!error2) {
+          const rows = data2 ?? [];
+          return jsonResult({ count: rows.length, ranked: true, ideas: rows.map(toListItem) });
+        }
+        if (!isMissingFunction(error2)) return errorResult(error2.message);
+      }
       if (query) {
-        const safe = query.replace(/[%,()]/g, " ").trim();
-        if (safe) {
+        const value = likeFilterValue(query);
+        if (value) {
           q = q.or(
-            ["title", "raw_note", "ai_summary", "extracted_text"].map((c) => `${c}.ilike.%${safe}%`).join(",")
+            ["title", "raw_note", "ai_summary", "extracted_text"].map((c) => `${c}.ilike.${value}`).join(",")
           );
         }
       }
       const { data, error } = await q;
       if (error) return errorResult(error.message);
-      return jsonResult({ count: data?.length ?? 0, ideas: data ?? [] });
+      return jsonResult({ count: data?.length ?? 0, ranked: false, ideas: data ?? [] });
     } catch (e) {
       return errorResult(e instanceof Error ? e.message : "Search failed");
     }

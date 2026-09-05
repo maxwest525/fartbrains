@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { likeFilterValue } from "@/lib/searchTerm";
 import { toast } from "sonner";
 import { triggerExtractReferences } from "@/hooks/useIdeaReferences";
 import { maybeSyncIdeaToAmosByFolder } from "@/lib/amosFolderSync";
@@ -126,10 +127,19 @@ export function useIdeas(filter: IdeaFilter, pageSize: number = IDEAS_PAGE_SIZE)
         // Keep the search scoped to the active folder when one is provided,
         // so users don't lose context by typing in the search bar.
         if (filter.folderId) q = q.eq("folder_id", filter.folderId);
-        const term = `%${filter.query.trim()}%`;
-        q = q.or(
-          `title.ilike.${term},raw_note.ilike.${term},extracted_text.ilike.${term},ai_summary.ilike.${term}`
-        );
+        const value = likeFilterValue(filter.query);
+        if (value) {
+          // Quoted and wildcard-escaped: an unescaped comma or bracket here
+          // is read as or() syntax rather than as text. See lib/searchTerm.
+          q = q.or(
+            [
+              `title.ilike.${value}`,
+              `raw_note.ilike.${value}`,
+              `extracted_text.ilike.${value}`,
+              `ai_summary.ilike.${value}`,
+            ].join(","),
+          );
+        }
       }
 
       // Optional source-type facet (e.g. "Transcript only").
