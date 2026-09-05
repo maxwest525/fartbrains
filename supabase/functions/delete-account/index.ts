@@ -29,10 +29,24 @@ const json = (body: unknown, status = 200) =>
 /** How recently the customer must have proved who they are. */
 const RECENT_AUTH_SECONDS = 15 * 60;
 
-// Deleted oldest-dependency-last. Most of these cascade from auth.users anyway,
-// but deleting explicitly means a missing ON DELETE CASCADE cannot silently
-// leave a customer's private rows behind after they asked us to remove them.
-const OWNED_TABLES = [
+// Deleted dependents-first. Most of these cascade from auth.users anyway, but
+// deleting explicitly means a missing ON DELETE CASCADE cannot silently leave a
+// customer's private rows behind after they asked us to remove them.
+//
+// That reasoning only holds if the list is complete, and it was not: drafts,
+// captured sources and their versions and chunks, projects, jobs and the
+// subscription row were all absent, so the tables holding the most content in
+// the product were exactly the ones trusting the cascade this list exists to
+// distrust. A test derives the owned set from the migrations and fails when a
+// new table is neither listed here nor deliberately excluded.
+//
+// Tables that do not exist in a given environment are skipped, not failed —
+// several of these ship in migrations that may not be applied yet.
+export const OWNED_TABLES = [
+  // Derived rows first, so a delete never trips a foreign key on its way out.
+  "evidence_spans",
+  "source_chunks",
+  "source_versions",
   "idea_shares",
   "idea_references",
   "idea_reminders",
@@ -40,11 +54,17 @@ const OWNED_TABLES = [
   "event_gifts",
   "calendar_events",
   "todos",
+  "user_drafts",
   "user_instructions",
   "push_subscriptions",
   "ai_usage_events",
+  "transcription_jobs",
+  "jobs",
+  "sources",
   "ideas",
+  "projects",
   "folders",
+  "subscriptions",
   "profiles",
 ] as const;
 

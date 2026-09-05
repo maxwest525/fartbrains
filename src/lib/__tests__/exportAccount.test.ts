@@ -96,7 +96,7 @@ describe("export scope", () => {
   it("covers every user-owned content table", () => {
     for (const t of [
       "ideas", "folders", "idea_chats", "idea_references",
-      "idea_reminders", "todos", "calendar_events", "user_instructions",
+      "idea_reminders", "todos", "calendar_events", "user_instructions", "user_drafts",
     ]) {
       expect(EXPORT_TABLES).toContain(t);
     }
