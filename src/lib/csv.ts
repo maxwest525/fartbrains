@@ -38,7 +38,7 @@ export const toCsv = <T,>(rows: readonly T[], columns: readonly CsvColumn<T>[]):
     lines.push(columns.map((c) => escapeCell(c.value(row))).join(","));
   }
   // Leading BOM keeps Excel happy with UTF-8 content.
-  return `﻿${lines.join("\r\n")}`;
+  return `\uFEFF${lines.join("\r\n")}`;
 };
 
 export const downloadCsv = (filename: string, csv: string): void => {

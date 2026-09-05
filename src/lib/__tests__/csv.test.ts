@@ -3,7 +3,7 @@ import { csvFilename, toCsv } from "../csv";
 
 const one = (value: unknown) =>
   toCsv([{ v: value }], [{ header: "V", value: (r: { v: unknown }) => r.v }])
-    .replace("﻿", "")
+    .replace("\uFEFF", "")
     .split("\r\n")[1];
 
 describe("escaping", () => {
@@ -59,7 +59,7 @@ describe("formula injection", () => {
   });
 
   it("escapes a dangerous header too", () => {
-    const csv = toCsv([], [{ header: "=1+1", value: () => "" }]).replace("﻿", "");
+    const csv = toCsv([], [{ header: "=1+1", value: () => "" }]).replace("\uFEFF", "");
     expect(csv.split("\r\n")[0]).toBe("'=1+1");
   });
 
@@ -72,8 +72,8 @@ describe("formula injection", () => {
 describe("shape", () => {
   it("starts with a BOM and separates rows with CRLF", () => {
     const csv = toCsv([{ a: "1" }], [{ header: "A", value: (r: { a: string }) => r.a }]);
-    expect(csv.startsWith("﻿")).toBe(true);
-    expect(csv).toBe("﻿A\r\n1");
+    expect(csv.startsWith("\uFEFF")).toBe(true);
+    expect(csv).toBe("\uFEFFA\r\n1");
   });
 
   it("names the file with today's date", () => {
