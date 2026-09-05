@@ -1,5 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, lazy, Suspense } from "react";
 import { useSearchParams } from "react-router-dom";
+const GraphPage = lazy(() => import("@/components/app/GraphPage").then((m) => ({ default: m.GraphPage })));
+const CalendarPage = lazy(() => import("@/components/app/CalendarPage").then((m) => ({ default: m.CalendarPage })));
+const TrashView = lazy(() => import("@/components/app/TrashView").then((m) => ({ default: m.TrashView })));
+const Landing = lazy(() => import("@/pages/Landing"));
 import { Search, X, Inbox, Folder, Star, Clock, CalendarDays, Settings as SettingsIcon, LogOut } from "lucide-react";
 import { MaterialIcon } from "@/components/ui/MaterialIcon";
 import { Input } from "@/components/ui/input";
@@ -14,15 +18,11 @@ import { ComposeIdea } from "@/components/app/ComposeIdea";
 import { MobileTabBar } from "@/components/app/MobileTabBar";
 import { SettingsSheet } from "@/components/app/SettingsSheet";
 import { FoldersPage } from "@/components/app/FoldersPage";
-import { CalendarPage } from "@/components/app/CalendarPage";
-import { GraphPage } from "@/components/app/GraphPage";
 import { AlarmOverlay } from "@/components/app/AlarmOverlay";
 import { AshDock } from "@/components/app/AshDock";
 import { DesktopScratchpad } from "@/components/app/DesktopScratchpad";
-import { TrashView } from "@/components/app/TrashView";
 import { OnboardingFlow } from "@/components/app/OnboardingFlow";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
-import Landing from "@/pages/Landing";
 import { hasEnteredVault, markEnteredVault } from "@/lib/entry";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useAuth } from "@/hooks/useAuth";
@@ -359,7 +359,9 @@ const Shell = () => {
 
         {/* Calendar page — full-width when active */}
         {showCalendar && (
-          <CalendarPage onBack={isMobile ? () => setView("ideas") : undefined} />
+          <Suspense fallback={null}>
+            <CalendarPage onBack={isMobile ? () => setView("ideas") : undefined} />
+          </Suspense>
         )}
 
         {/* Graph page — Obsidian-style brain map. Tapping a node opens the
@@ -367,10 +369,12 @@ const Shell = () => {
             and "Back" returns to the exact same view. */}
         {showGraph && (
           <div className="relative flex-1 min-h-0 flex">
-            <GraphPage
-              onOpenIdea={(id) => setSelectedId(id)}
-              onBack={() => setView("ideas")}
-            />
+            <Suspense fallback={null}>
+              <GraphPage
+                onOpenIdea={(id) => setSelectedId(id)}
+                onBack={() => setView("ideas")}
+              />
+            </Suspense>
             {selectedId && (
               <div
                 className="absolute inset-0 z-30 glass-card-strong rounded-none"
@@ -420,7 +424,11 @@ const Shell = () => {
           </div>
         )}
 
-        {showTrash && <TrashView />}
+        {showTrash && (
+          <Suspense fallback={null}>
+            <TrashView />
+          </Suspense>
+        )}
 
         {/* Browse view — flat list of ideas (Recents, Favorites, Folder-filtered, Search). */}
         {!showTrash && !showFolders && !showCalendar && !showGraph && !showDetailOnly && filter.kind !== "all" && (
@@ -519,13 +527,19 @@ const Index = () => {
 
   if (forceLanding || (!entered && !user)) {
     return (
-      <Landing
-        onEnter={() => {
-          markEnteredVault();
-          setEntered(true);
-          if (forceLanding) setParams({}, { replace: true });
-        }}
-      />
+      // The landing page owns the whole screen, so its fallback is a matching
+      // ground rather than null — otherwise the app's aurora flashes through
+      // for the moment before the chunk lands. Black, to match the landing
+      // page's own --bg; update both together if that changes.
+      <Suspense fallback={<div className="min-h-dvh bg-black" />}>
+        <Landing
+          onEnter={() => {
+            markEnteredVault();
+            setEntered(true);
+            if (forceLanding) setParams({}, { replace: true });
+          }}
+        />
+      </Suspense>
     );
   }
 
