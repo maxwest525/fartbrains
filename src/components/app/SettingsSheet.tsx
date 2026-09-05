@@ -17,6 +17,7 @@ import { ThemeToggle, useTheme } from "@/hooks/useTheme";
 import { AppLockSection } from "@/components/app/AppLockSection";
 import { DataPrivacySection } from "@/components/app/DataPrivacySection";
 import { BillingSection } from "@/components/app/BillingSection";
+import { CrashLogSection } from "@/components/app/CrashLogSection";
 
 type Props = {
   open: boolean;
@@ -225,6 +226,7 @@ export const SettingsSheet = ({ open, onOpenChange }: Props) => {
               </div>
               <ChevronRight className="h-4 w-4 text-muted-foreground" />
             </Link>
+            <CrashLogSection />
             <Link
               to="/settings/instructions"
               onClick={() => onOpenChange(false)}

@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { Sparkles, Loader2, AlertTriangle, Inbox, Folder as FolderIcon, CheckCircle2, XCircle, ArrowRight, Plus, FileText, X, Wand2, Copy, Instagram, Music2, Youtube, Link2, Globe, Send } from "lucide-react";
 import { ensureMarkFolderId } from "@/lib/amosFolderSync";
+import { isAmosOwner } from "@/lib/amosOwner";
+import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
 import { useDuplicateUrl } from "@/hooks/useDuplicateUrl";
 import { useUrlCheck } from "@/hooks/useUrlCheck";
@@ -119,6 +121,10 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
   const [saving, setSaving] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [sendingToMark, setSendingToMark] = useState(false);
+  /* "Mark" is one person's own marketing project and the button mirrors the
+     idea to their private endpoint, so it exists only for that account. */
+  const { user } = useAuth();
+  const showMark = isAmosOwner(user?.email);
 
   // URL preview step: after extraction, hold the readable text + suggested title
   // so the user can review (and tweak the title) before committing to save.
@@ -1098,6 +1104,7 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
               )}
             </Button>
           </div>
+          {showMark && (
           <Button
             type="button"
             variant="outline"
@@ -1115,6 +1122,7 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
               </>
             )}
           </Button>
+          )}
         </div>
       )}
 
@@ -1174,6 +1182,7 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
               </>
             )}
           </Button>
+          {showMark && (
           <Button
             type="button"
             variant="outline"
@@ -1191,6 +1200,7 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
               </>
             )}
           </Button>
+          )}
         </div>
       )}
       </div>

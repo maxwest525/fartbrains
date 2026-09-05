@@ -1,8 +1,13 @@
 /**
  * Fire-and-forget mirror of newly created ideas to the AMOS Idea Inbox.
  * Never awaited by callers, never throws, never surfaces errors to the UI.
- * Safe to remove later — only called from useCreateIdea's onSuccess.
+ *
+ * This posts note content to a private endpoint belonging to one person's own
+ * system. Callers are expected to have checked `isAmosOwner`; the
+ * `amosConfigured` guard below is a second lock, so that a build with no
+ * owner configured cannot make this request at all however it is called.
  */
+import { amosConfigured } from "./amosOwner";
 const AMOS_IDEAS_URL = "https://amos-api-1050773626662.us-central1.run.app/api/ideas";
 const FALLBACK_SOURCE_URL = "https://fartbrains.lovable.app";
 
@@ -13,6 +18,7 @@ export function syncIdeaToAmos(idea: {
   extracted_text?: string | null;
   source_url?: string | null;
 }): void {
+  if (!amosConfigured()) return;
   try {
     const title =
       (idea.title?.trim() ||

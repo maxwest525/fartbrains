@@ -29,6 +29,31 @@ export const EXPORT_TABLES = [
 
 export type ExportTable = (typeof EXPORT_TABLES)[number];
 
+/**
+ * Rows fetched per request. PostgREST caps every response at the project's
+ * `db-max-rows` (1000 by default) and says nothing when it truncates, so an
+ * unpaged `select("*")` silently drops everything past the cap. We page until
+ * a short page comes back.
+ */
+export const EXPORT_PAGE_SIZE = 1000;
+
+/**
+ * Stable sort key per table. Paging without an ORDER BY is undefined — the
+ * same row can appear on two pages while another appears on none — and
+ * `user_instructions` is keyed by `user_id` rather than `id`.
+ */
+export const ORDER_KEY: Record<ExportTable, string> = {
+  ideas: "id",
+  folders: "id",
+  idea_chats: "id",
+  idea_references: "id",
+  idea_reminders: "id",
+  todos: "id",
+  calendar_events: "id",
+  event_gifts: "id",
+  user_instructions: "user_id",
+};
+
 export type AccountExport = {
   version: number;
   exportedAt: string;
@@ -52,14 +77,31 @@ export function stripSecrets<T extends Record<string, unknown>>(row: T): T {
   return out as T;
 }
 
+/** Every row of one table, paged. Throws rather than returning a partial export. */
+export async function fetchAllRows(table: ExportTable): Promise<unknown[]> {
+  const out: unknown[] = [];
+  for (let from = 0; ; from += EXPORT_PAGE_SIZE) {
+    const { data: rows, error } = await supabase
+      .from(table)
+      .select("*")
+      .order(ORDER_KEY[table], { ascending: true })
+      .range(from, from + EXPORT_PAGE_SIZE - 1);
+    if (error) throw new Error(`Couldn't export ${table}: ${error.message}`);
+    const page = rows ?? [];
+    for (const r of page) out.push(stripSecrets(r as Record<string, unknown>));
+    // A page shorter than the request is the last one. A full page might still
+    // be the last, in which case the next request returns zero rows and stops.
+    if (page.length < EXPORT_PAGE_SIZE) break;
+  }
+  return out;
+}
+
 /** Pulls every owner-scoped row the customer is entitled to. */
 export async function buildAccountExport(): Promise<AccountExport> {
   const data: Record<string, unknown[]> = {};
 
   for (const table of EXPORT_TABLES) {
-    const { data: rows, error } = await supabase.from(table).select("*");
-    if (error) throw new Error(`Couldn't export ${table}: ${error.message}`);
-    data[table] = (rows ?? []).map((r) => stripSecrets(r as Record<string, unknown>));
+    data[table] = await fetchAllRows(table);
   }
 
   return { version: EXPORT_VERSION, exportedAt: new Date().toISOString(), data };

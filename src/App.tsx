@@ -10,6 +10,7 @@ import { IdeaCreatedFx } from "@/components/app/IdeaCreatedFx";
 import { DesktopWindowControls } from "@/components/app/DesktopWindowControls";
 import { InstallAppPrompt } from "@/components/app/InstallAppPrompt";
 import { useLandingActive } from "@/lib/landingMode";
+import { installCrashReporting } from "@/lib/installCrashReporting";
 import Index from "./pages/Index.tsx";
 import Auth from "./pages/Auth.tsx";
 
@@ -51,6 +52,10 @@ const AppChrome = () => {
     </>
   );
 };
+
+// Installed at module scope so it is listening before the first render, which
+// is where a crash is most likely.
+installCrashReporting();
 
 const App = () => (
   <ErrorBoundary>
