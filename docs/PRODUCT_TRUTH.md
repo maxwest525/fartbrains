@@ -36,6 +36,39 @@ injected wholesale into a prompt.
 
 That is the product. The second brain is what makes it worth connecting to.
 
+## Positioning copy — the canonical source
+
+Any surface that describes the product to a stranger pulls from here: the
+landing page, meta tags, the manifest, App Store text, an ad. They drifted
+once already — the meta description sold "a private idea vault" months after
+the product became something you connect an agent to — so this section exists
+so the next writer does not have to reconstruct the pitch from scratch.
+
+**One line:** Save the reel, get the build brief.
+
+**The paragraph:** You save a reel of someone explaining an SEO tactic, or
+showing off their personal CEO agent. Today that is a bookmark you never open
+again. Here it becomes a brief good enough that the agent already sitting in
+your project builds the thing.
+
+**The proof:** one endpoint you point your own AI session at. Nothing installed,
+nothing running on your machine.
+
+**Lead with the reel, not the vault.** Capture, folders and search are real and
+they are how the material gets good — but they are the middle of the chain, not
+the thing worth paying for. The last step is the product.
+
+**Do not say** "private idea vault", "notes app", "second brain" as the headline
+noun, or anything implying we build the software. We do not build anything. The
+customer's agent builds; we supply the material and the brief.
+
+**Do say** what happens to the thing they already do — saving reels they never
+reopen — and what they get out the other end.
+
+Privacy is a supporting claim, not the pitch. It is true and it matters, but
+"nobody else can read it" describes a diary. The reason to pay is that the reel
+becomes something buildable.
+
 ## What it is
 - A private knowledge store with immutable sources and compiled knowledge on top
 - Attachable to a customer's own projects, repos and folders
