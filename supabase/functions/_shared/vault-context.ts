@@ -1,6 +1,7 @@
 // Lightweight keyword/overlap retrieval over the user's vault of ideas.
 // No embeddings needed: scores title/tags/note/summary term overlap and recency.
 
+import { fenceContent } from "./untrusted.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.95.0";
 
 export type VaultHit = {
@@ -132,13 +133,18 @@ export async function retrieveVaultContext(opts: {
 
 export function renderVaultContext(hits: VaultHit[]): string {
   if (hits.length === 0) return "";
+  // Titles and tags are fenced along with the snippets: a title is just the
+  // first line of a captured page, so it is no more trustworthy than the body.
+  const body = hits
+    .map(
+      (h, i) =>
+        `${i + 1}. ${h.title}${h.tags.length ? ` [${h.tags.join(", ")}]` : ""}${h.reason ? `\n   (why: ${h.reason})` : ""}\n   ${h.snippet || "(no body)"}`,
+    )
+    .join("\n");
   return [
     "## Relevant context retrieved from the user's vault",
     "Use these only when they help. Cite them by title when you lean on one. Never invent vault content.",
-    ...hits.map(
-      (h, i) =>
-        `${i + 1}. ${h.title}${h.tags.length ? ` [${h.tags.join(", ")}]` : ""}${h.reason ? `\n   (why: ${h.reason})` : ""}\n   ${h.snippet || "(no body)"}`,
-    ),
+    fenceContent(body),
   ].join("\n");
 }
 
@@ -191,6 +197,9 @@ export async function retrieveOperationalContext(userId: string): Promise<Operat
 }
 
 export function renderOperationalContext(ctx: OperationalContext): string {
+  // Todo titles and event notes are user-authored, but they are still content
+  // rather than direction — and a todo can be created by an agent acting on a
+  // captured page, which is how someone else's text reaches this list.
   const blocks: string[] = [];
   if (ctx.todos.length > 0) {
     const open = ctx.todos.filter((t) => !t.done);
@@ -198,10 +207,16 @@ export function renderOperationalContext(ctx: OperationalContext): string {
     blocks.push(
       [
         "## The user's to-do list (live)",
-        open.length
-          ? open.map((t) => `- [ ] ${t.title}${t.due_at ? ` (due ${t.due_at})` : ""}`).join("\n")
-          : "- (nothing open)",
-        done.length ? `Recently completed: ${done.map((t) => t.title).join("; ")}` : "",
+        fenceContent(
+          [
+            open.length
+              ? open.map((t) => `- [ ] ${t.title}${t.due_at ? ` (due ${t.due_at})` : ""}`).join("\n")
+              : "- (nothing open)",
+            done.length ? `Recently completed: ${done.map((t) => t.title).join("; ")}` : "",
+          ]
+            .filter(Boolean)
+            .join("\n"),
+        ),
       ]
         .filter(Boolean)
         .join("\n"),
@@ -211,9 +226,13 @@ export function renderOperationalContext(ctx: OperationalContext): string {
     blocks.push(
       [
         "## The user's calendar events",
-        ...ctx.events.map(
-          (e) =>
-            `- ${e.name} (${e.event_type}${e.month && e.day ? `, ${e.month}/${e.day}` : ""})${e.notes ? ` — ${e.notes}` : ""}`,
+        fenceContent(
+          ctx.events
+            .map(
+              (e) =>
+                `- ${e.name} (${e.event_type}${e.month && e.day ? `, ${e.month}/${e.day}` : ""})${e.notes ? ` — ${e.notes}` : ""}`,
+            )
+            .join("\n"),
         ),
       ].join("\n"),
     );
