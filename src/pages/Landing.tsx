@@ -321,67 +321,224 @@ const DriftField = ({ onCatch, onLost }: { onCatch: (text: string) => void; onLo
 /* ------------------------------ diagrams ------------------------------ */
 
 const MONO = "IBM Plex Mono, monospace";
+const SANS = "Inter, ui-sans-serif, system-ui, sans-serif";
 
-const LoopsDiagram = () => (
-  <svg className="mut-diagram" viewBox="0 0 460 210" role="img" aria-label="A builder loop wrapped by a critic loop, with a disagreement protocol and arbitration">
-    <defs>
-      <marker id="ar" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
-        <path d="M0,0 L6,3 L0,6 z" fill="#6e7f78" />
-      </marker>
-    </defs>
-    <ellipse cx="150" cy="108" rx="94" ry="58" fill="none" stroke="#f2a53c" strokeWidth="1.2" />
-    <ellipse cx="150" cy="108" rx="128" ry="84" fill="none" stroke="#63e6a0" strokeWidth="1.2" strokeDasharray="5 5" />
-    {([
-      [150, 56, "observe"],
-      [220, 108, "act"],
-      [150, 160, "check"],
-      [80, 108, "repeat"],
-    ] as [number, number, string][]).map(([x, y, label]) => (
-      <g key={label}>
-        <circle cx={x} cy={y} r="4.5" fill="#f2a53c" />
-        <text x={x} y={y - 10} textAnchor="middle" fill="#b9c6c0" fontSize="10" fontFamily={MONO}>{label}</text>
-      </g>
-    ))}
-    <text x="150" y="112" textAnchor="middle" fill="#6e7f78" fontSize="10" fontFamily={MONO}>builder loop</text>
-    <text x="150" y="18" textAnchor="middle" fill="#63e6a0" fontSize="10" fontFamily={MONO}>critic loop · from your note</text>
-    <line x1="280" y1="108" x2="328" y2="108" stroke="#6e7f78" strokeWidth="1" markerEnd="url(#ar)" />
-    <rect x="332" y="64" width="116" height="34" fill="none" stroke="#f2a53c" strokeWidth="1" />
-    <text x="390" y="85" textAnchor="middle" fill="#f2a53c" fontSize="10" fontFamily={MONO}>disagreement</text>
-    <rect x="332" y="118" width="116" height="34" fill="none" stroke="#63e6a0" strokeWidth="1" />
-    <text x="390" y="139" textAnchor="middle" fill="#63e6a0" fontSize="10" fontFamily={MONO}>arbitration → you</text>
-    <text x="390" y="172" textAnchor="middle" fill="#6e7f78" fontSize="9" fontFamily={MONO}>neither of these was said</text>
-  </svg>
+/* Shared defs for the three mutation diagrams: one arrowhead per colour, the
+ * soft fills the cards sit on, and the glow under an accented node. */
+const DiagramDefs = () => (
+  <defs>
+    <marker id="mk-dim" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto">
+      <path d="M0.5,1 L6,3.5 L0.5,6" fill="none" stroke="rgba(255,255,255,.45)" strokeWidth="1.2"
+        strokeLinecap="round" strokeLinejoin="round" />
+    </marker>
+    <marker id="mk-green" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto">
+      <path d="M0.5,1 L6,3.5 L0.5,6" fill="none" stroke="#63e6a0" strokeWidth="1.2"
+        strokeLinecap="round" strokeLinejoin="round" />
+    </marker>
+    <linearGradient id="fill-amber" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stopColor="rgba(242,165,60,.07)" />
+      <stop offset="100%" stopColor="rgba(242,165,60,.02)" />
+    </linearGradient>
+    <linearGradient id="fill-green" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stopColor="rgba(99,230,160,.14)" />
+      <stop offset="100%" stopColor="rgba(99,230,160,.04)" />
+    </linearGradient>
+    <linearGradient id="fill-neutral" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stopColor="rgba(255,255,255,.07)" />
+      <stop offset="100%" stopColor="rgba(255,255,255,.025)" />
+    </linearGradient>
+    <radialGradient id="node-glow">
+      <stop offset="0%" stopColor="rgba(242,165,60,.55)" />
+      <stop offset="100%" stopColor="rgba(242,165,60,0)" />
+    </radialGradient>
+  </defs>
 );
 
+type CardTone = "amber" | "green" | "neutral";
+
+const TONE: Record<CardTone, { fill: string; stroke: string; ink: string }> = {
+  amber: { fill: "url(#fill-amber)", stroke: "rgba(242,165,60,.55)", ink: "#f2a53c" },
+  green: { fill: "url(#fill-green)", stroke: "rgba(99,230,160,.55)", ink: "#63e6a0" },
+  neutral: { fill: "url(#fill-neutral)", stroke: "rgba(255,255,255,.16)", ink: "#ffffff" },
+};
+
+/** A rounded panel with a title and an optional second line, on the 8px grid. */
+const DCard = ({
+  x, y, w, h, tone = "neutral", title, sub, mono, rx = 10,
+}: {
+  x: number; y: number; w: number; h: number; tone?: CardTone;
+  title: string; sub?: string; mono?: boolean; rx?: number;
+}) => {
+  const t = TONE[tone];
+  const cx = x + w / 2;
+  return (
+    <g>
+      <rect x={x} y={y} width={w} height={h} rx={rx} fill={t.fill} stroke={t.stroke} strokeWidth="1" />
+      <text x={cx} y={sub ? y + h / 2 - 2 : y + h / 2 + 4} textAnchor="middle" fill={t.ink}
+        fontSize="12" fontFamily={mono ? MONO : SANS} fontWeight="500">
+        {title}
+      </text>
+      {sub ? (
+        <text x={cx} y={y + h / 2 + 14} textAnchor="middle" fill="rgba(255,255,255,.45)"
+          fontSize="10.5" fontFamily={SANS}>
+          {sub}
+        </text>
+      ) : null}
+    </g>
+  );
+};
+
+/** Small caption set under a diagram, in the page's label voice. */
+const DNote = ({ x, y, children, anchor = "middle" }: {
+  x: number; y: number; children: string; anchor?: "start" | "middle" | "end";
+}) => (
+  <text x={x} y={y} textAnchor={anchor} fill="rgba(255,255,255,.38)" fontSize="10.5"
+    fontFamily={SANS} letterSpacing=".02em">
+    {children}
+  </text>
+);
+
+/** A label riding on an edge, over a knocked-out plate so the line reads through. */
+const DEdgeLabel = ({ x, y, children, w }: { x: number; y: number; children: string; w: number }) => (
+  <g>
+    <rect x={x - w / 2} y={y - 8} width={w} height={16} rx={8} fill="#0a0a0a" />
+    <text x={x} y={y + 3.5} textAnchor="middle" fill="rgba(255,255,255,.55)" fontSize="10"
+      fontFamily={SANS}>
+      {children}
+    </text>
+  </g>
+);
+
+const LoopsDiagram = () => {
+  const cx = 138;
+  const cy = 116;
+  const nodes: [number, number, string][] = [
+    [cx, cy - 52, "observe"],
+    [cx + 76, cy, "act"],
+    [cx, cy + 52, "check"],
+    [cx - 76, cy, "repeat"],
+  ];
+  return (
+    <svg className="mut-diagram" viewBox="0 0 480 232" role="img"
+      aria-label="A builder loop wrapped by a critic loop that the note added, feeding a disagreement protocol and an arbitration step">
+      <DiagramDefs />
+
+      {/* the critic loop the note asked for — dashed, and it turns */}
+      <ellipse className="dg-orbit" cx={cx} cy={cy} rx="108" ry="80" fill="none"
+        stroke="rgba(99,230,160,.55)" strokeWidth="1.2" strokeDasharray="4 7" strokeLinecap="round" />
+      {/* annotated from the corner, so the caption never crosses the ring */}
+      <text x="8" y="16" fill="#63e6a0" fontSize="11" fontFamily={SANS} fontWeight="500">
+        critic loop
+      </text>
+      <text x="8" y="30" fill="rgba(255,255,255,.4)" fontSize="10" fontFamily={SANS}>
+        from your note
+      </text>
+
+      {/* the loop the talk described */}
+      <ellipse cx={cx} cy={cy} rx="76" ry="52" fill="url(#fill-amber)"
+        stroke="rgba(242,165,60,.5)" strokeWidth="1" />
+      <text x={cx} y={cy + 4} textAnchor="middle" fill="rgba(255,255,255,.4)" fontSize="10.5" fontFamily={SANS}>
+        builder loop
+      </text>
+
+      {nodes.map(([x, y, label], i) => {
+        // The top and bottom nodes take their label above; the side ones take
+        // theirs outboard, so no label crosses the ring it sits on.
+        const side = y === cy;
+        const dx = side ? (x > cx ? 12 : -12) : 0;
+        return (
+          <g key={label}>
+            <circle className="dg-pulse" style={{ animationDelay: `${i * 0.45}s` }} cx={x} cy={y} r="11" fill="url(#node-glow)" />
+            <circle cx={x} cy={y} r="3.5" fill="#f2a53c" />
+            <text x={x + dx} y={side ? y + 4 : y - 12} textAnchor={side ? (x > cx ? "start" : "end") : "middle"}
+              fill="rgba(255,255,255,.72)" fontSize="10.5" fontFamily={SANS}>
+              {label}
+            </text>
+          </g>
+        );
+      })}
+
+      {/* what only exists once the two loops disagree */}
+      <line x1="256" y1={cy} x2="302" y2={cy} stroke="rgba(255,255,255,.28)" strokeWidth="1"
+        markerEnd="url(#mk-dim)" />
+      <DEdgeLabel x={279} y={cy - 17} w={78}>they disagree</DEdgeLabel>
+
+      <DCard x={312} y={62} w={152} h={44} tone="amber" title="disagreement protocol" sub="rounds · who wins · stop" />
+      <DCard x={312} y={124} w={152} h={44} tone="green" title="arbitration" sub="escalates only on a repeat" />
+
+      <DNote x={388} y={192}>neither of these was said</DNote>
+    </svg>
+  );
+};
+
+const ROUTES = [
+  "/cheapest-ai-second-brain-reddit",
+  "/fart-brains-reviews-reddit",
+  "/affordable-app-reviews-youtube",
+  "/is-it-worth-it-quora",
+  "/budget-note-app-linkedin",
+];
+
 const RoutesDiagram = () => (
-  <svg className="mut-diagram" viewBox="0 0 460 210" role="img" aria-label="A prerender step feeding ten static interceptor routes">
-    <rect x="14" y="86" width="102" height="44" fill="none" stroke="#63e6a0" strokeWidth="1.2" />
-    <text x="65" y="105" textAnchor="middle" fill="#63e6a0" fontSize="10" fontFamily={MONO}>prerender</text>
-    <text x="65" y="119" textAnchor="middle" fill="#6e7f78" fontSize="9" fontFamily={MONO}>not in the reel</text>
-    {["/cheapest-ai-second-brain-reddit", "/fart-brains-reviews-reddit", "/affordable-app-reviews-youtube", "/is-it-worth-it-quora", "/budget-note-app-linkedin"].map((slug, i) => (
-      <g key={slug}>
-        <line x1="116" y1="108" x2="192" y2={30 + i * 37} stroke="#f2a53c" strokeWidth="0.9" opacity="0.45" />
-        <rect x="192" y={18 + i * 37} width="252" height="24" fill="none" stroke="#f2a53c" strokeWidth="0.9" />
-        <text x="202" y={34 + i * 37} fill="#b9c6c0" fontSize="10" fontFamily={MONO}>{slug}</text>
-      </g>
-    ))}
-    <text x="230" y="202" textAnchor="middle" fill="#6e7f78" fontSize="9" fontFamily={MONO}>+ 5 more · platform name last, every time</text>
+  <svg className="mut-diagram" viewBox="0 0 480 232" role="img"
+    aria-label="A prerender step, which the reel never mentioned, serving ten static interceptor routes">
+    <DiagramDefs />
+
+    <DCard x={14} y={90} w={110} h={52} tone="green" title="prerender" sub="not in the reel" />
+
+    {ROUTES.map((slug, i) => {
+      const y = 30 + i * 34;
+      // Pills hug their slug rather than all stretching to one width.
+      const w = Math.round(28 + slug.length * 6.32);
+      return (
+        <g key={slug}>
+          <path d={`M124,116 C160,116 160,${y + 12} 190,${y + 12}`} fill="none"
+            stroke="rgba(242,165,60,.3)" strokeWidth="1" />
+          <rect x="190" y={y} width={w} height="24" rx="12" fill="url(#fill-amber)"
+            stroke="rgba(242,165,60,.4)" strokeWidth="1" />
+          <text x="204" y={y + 16} fill="rgba(255,255,255,.8)" fontSize="10.5" fontFamily={MONO}>
+            {slug}
+          </text>
+        </g>
+      );
+    })}
+
+    <DNote x={69} y={162}>serves static HTML</DNote>
+    <DNote x={240} y={216} anchor="start">+ 5 more · platform name last, every time</DNote>
   </svg>
 );
 
 const TenancyDiagram = () => (
-  <svg className="mut-diagram" viewBox="0 0 460 210" role="img" aria-label="One control plane provisioning four isolated tenants">
-    <rect x="150" y="16" width="164" height="36" fill="none" stroke="#63e6a0" strokeWidth="1.2" />
-    <text x="232" y="38" textAnchor="middle" fill="#63e6a0" fontSize="10" fontFamily={MONO}>control plane · provision()</text>
-    {Array.from({ length: 4 }, (_, i) => (
-      <g key={i}>
-        <line x1="232" y1="52" x2={70 + i * 108} y2="98" stroke="#6e7f78" strokeWidth="0.9" opacity="0.55" />
-        <rect x={22 + i * 108} y="98" width="96" height="62" fill="none" stroke="#f2a53c" strokeWidth="1" />
-        <text x={70 + i * 108} y="124" textAnchor="middle" fill="#b9c6c0" fontSize="10" fontFamily={MONO}>tenant {i + 1}</text>
-        <text x={70 + i * 108} y="140" textAnchor="middle" fill="#6e7f78" fontSize="9" fontFamily={MONO}>quota · rls</text>
-      </g>
-    ))}
-    <text x="230" y="188" textAnchor="middle" fill="#6e7f78" fontSize="9" fontFamily={MONO}>one database · row-level isolation · noisy-neighbour limits</text>
+  <svg className="mut-diagram" viewBox="0 0 480 232" role="img"
+    aria-label="One control plane provisioning four isolated tenants over a single database">
+    <DiagramDefs />
+
+    <DCard x={164} y={20} w={152} h={46} tone="green" title="control plane" sub="provision()" />
+
+    {Array.from({ length: 4 }, (_, i) => {
+      const x = 16 + i * 116;
+      const cx = x + 50;
+      return (
+        <g key={i}>
+          <path d={`M240,66 C240,96 ${cx},96 ${cx},126`} fill="none"
+            stroke="rgba(255,255,255,.2)" strokeWidth="1" markerEnd="url(#mk-dim)" />
+          <rect x={x} y="126" width="100" height="62" rx="12" fill="url(#fill-amber)"
+            stroke="rgba(242,165,60,.4)" strokeWidth="1" />
+          <text x={cx} y="152" textAnchor="middle" fill="rgba(255,255,255,.85)" fontSize="12"
+            fontFamily={SANS} fontWeight="500">
+            tenant {i + 1}
+          </text>
+          <rect x={cx - 34} y="160" width="68" height="18" rx="9" fill="rgba(0,0,0,.35)"
+            stroke="rgba(242,165,60,.3)" strokeWidth="1" />
+          <text x={cx} y="172.5" textAnchor="middle" fill="#f2a53c" fontSize="9.5" fontFamily={MONO}>
+            quota · rls
+          </text>
+        </g>
+      );
+    })}
+
+    <DEdgeLabel x={240} y={92} w={78}>provisions</DEdgeLabel>
+    <DNote x={240} y={214}>one database · row-level isolation · noisy-neighbour limits</DNote>
   </svg>
 );
 
@@ -1901,7 +2058,12 @@ html.fb-landing body::before { display: none !important; }
 .cc-build { margin: 0; font-size: 14px; line-height: 1.6; color: var(--ink); }
 .cc-why { margin: 0; font-size: 12.5px; line-height: 1.5; color: var(--dim); }
 
-/* ---------- micro visuals ---------- */
+/* ---------- mutation diagrams ---------- */
+.dg-orbit { animation: dgOrbit 9s linear infinite; }
+@keyframes dgOrbit { to { stroke-dashoffset: -110; } }
+.dg-pulse { animation: dgPulse 3.2s ease-in-out infinite; }
+@keyframes dgPulse { 0%, 100% { opacity: .2; } 50% { opacity: .95; } }
+
 /* ---------- micro visuals ---------- */
 .viz { width: 120px; height: 64px; display: block; overflow: visible; }
 .viz-slot { fill: none; stroke: rgba(255,255,255,.18); stroke-width: 1; }
