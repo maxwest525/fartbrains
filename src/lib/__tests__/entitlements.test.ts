@@ -131,3 +131,42 @@ describe("parity with the server", () => {
     expect(list("PAID_ONLY")).toEqual([...PAID_ONLY]);
   });
 });
+
+/**
+ * The enforcement point.
+ *
+ * `_shared/ai-guard.ts` is what actually refuses a paid request. It used to
+ * carry a third copy of the entitled-status rule — recognising only "active"
+ * and "trialing" — so a customer in dunning was metered at the free tier's 50
+ * actions while `billing.ts`, this file, and the message on their billing
+ * screen all still said they had access. The existing parity test compared
+ * only two of the three copies, so nothing caught it.
+ */
+describe("parity with the thing that enforces it", () => {
+  const guard = readFileSync(
+    resolve(__dirname, "../../../supabase/functions/_shared/ai-guard.ts"),
+    "utf8",
+  );
+
+  it("decides entitlement by calling billing.ts, not by its own status list", () => {
+    expect(guard).toMatch(/import \{[^}]*isEntitled[^}]*\} from "\.\/billing\.ts"/);
+    expect(guard).toMatch(/if \(!isEntitled\(status\)\) return "free";/);
+  });
+
+  it("meters every entitled status, so none silently falls back to free", () => {
+    const plans = guard.match(/export type Plan = ([^;]+);/)![1];
+    for (const status of ALL.filter(isEntitled)) {
+      expect(plans).toContain(`"${status}"`);
+    }
+  });
+
+  it("gives every entitled status the paid allowance, not the free one", () => {
+    const block = guard.match(/PLAN_LIMITS: Record<Plan, Limits> = \{([\s\S]*?)\n\};/)![1];
+    const free = block.match(/free: \{ perMinute: \d+, perHour: \d+, perMonth: (\d+)/)![1];
+    for (const status of ALL.filter(isEntitled)) {
+      const row = block.match(new RegExp(`${status}: \\{[^}]*perMonth: ([\\d_]+)`));
+      expect(row, `${status} has no limits row`).not.toBeNull();
+      expect(row![1]).not.toBe(free);
+    }
+  });
+});

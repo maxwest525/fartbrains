@@ -21,13 +21,19 @@
  * saying "change both together" is not a mechanism.
  */
 
-export type Plan = "free" | "trialing" | "active";
+/**
+ * Mirrors the guard's plans, past_due included. A customer in dunning keeps
+ * the paid allowance, so a meter that showed them the free tier's 50 would be
+ * telling them they had run out while the server was still serving them.
+ */
+export type Plan = "free" | "trialing" | "active" | "past_due";
 
 /** Weighted actions allowed per calendar month, by plan. */
 export const MONTHLY_LIMIT: Record<Plan, number> = {
   free: 50,
   trialing: 1_000,
   active: 1_000,
+  past_due: 1_000,
 };
 
 /** Operations that cost more than one action. Anything absent costs 1. */

@@ -13,7 +13,9 @@ import { monthStart, summarize, weighted, type Plan, type UsageSummary } from "@
 export function useAiUsage() {
   const { data: subscription } = useSubscription();
   const status = subscription?.status;
-  const plan: Plan = status === "active" || status === "trialing" ? status : "free";
+  // past_due keeps the paid allowance while dunning runs, matching the guard.
+  const plan: Plan =
+    status === "active" || status === "trialing" || status === "past_due" ? status : "free";
 
   return useQuery<UsageSummary>({
     queryKey: ["ai-usage", plan],
