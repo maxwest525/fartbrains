@@ -175,17 +175,22 @@
 
 
 
+  /* Inter for everything, with Instrument Serif kept for display accents.
+     This is the pairing the marketing template uses, applied site-wide so the
+     product and the page it sells are set in the same face. */
   h1, h2, h3, .font-display {
-    font-family: "Space Grotesk", "Inter", system-ui, sans-serif;
-    letter-spacing: -0.02em;
+    font-family: "Inter", system-ui, sans-serif;
+    letter-spacing: -0.025em;
   }
 
   html { -webkit-text-size-adjust: 100%; }
 }
 
 @layer utilities {
-  .font-display { font-family: "Space Grotesk", "Inter", system-ui, sans-serif; }
-  .font-mono-ui { font-family: "JetBrains Mono", "Google Sans Code", ui-monospace, monospace; }
+  .font-display { font-family: "Inter", system-ui, sans-serif; letter-spacing: -0.025em; }
+  /* The display accent: Instrument Serif, italic, as the template sets it. */
+  .font-accent { font-family: "Instrument Serif", Georgia, serif; font-style: italic; font-weight: 400; }
+  .font-mono-ui { font-family: "IBM Plex Mono", ui-monospace, monospace; }
 
   /* Brand gradient used by the wordmark mark and active nav pill. */
   /* Brand gradient — driven by tokens so changing --primary/--accent reskins. */

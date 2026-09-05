@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { motion, MotionConfig, type MotionProps } from "motion/react";
 import { setLandingActive } from "@/lib/landingMode";
 import heroGraph from "@/assets/hero-graph.jpg";
 
@@ -1350,63 +1351,32 @@ const USE_CASES: UseCase[] = [
   },
 ];
 /* ------------------------------ scroll reveal ------------------------------ *
- * Asme plays each section in on first intersection. Framer Motion does this
- * upstream; an IntersectionObserver plus a CSS transition is the same effect
- * without adding a dependency, and it degrades to a plain fade under reduced
- * motion because the transform is dropped in CSS.
+ * The template's own entrance, lifted from its primitives.tsx: fade plus an
+ * optional slide, played once when the element crosses into view. The root
+ * MotionConfig runs reducedMotion="user", which drops the transforms for
+ * anyone who asks for that and leaves a plain fade.
  * -------------------------------------------------------------------------- */
 
-type RevealProps = {
-  children: React.ReactNode;
-  className?: string;
-  y?: number;
-  x?: number;
-  delay?: number;
-  as?: "div" | "section" | "article" | "header" | "footer" | "h2" | "p";
+type RevealOptions = { x?: number; y?: number; duration?: number; delay?: number };
+
+const reveal = ({ x = 0, y = 0, duration = 0.7, delay = 0 }: RevealOptions = {}): MotionProps => ({
+  initial: { opacity: 0, x, y },
+  whileInView: { opacity: 1, x: 0, y: 0 },
+  viewport: { once: true, margin: "-100px" },
+  transition: { duration, delay, ease: [0.16, 1, 0.3, 1] },
+});
+
+/** A card that lifts as the pointer crosses it. */
+const LIFT: MotionProps = {
+  whileHover: { y: -5 },
+  transition: { type: "spring", stiffness: 300, damping: 26 },
 };
 
-const Reveal = ({ children, className = "", y = 0, x = 0, delay = 0, as = "div" }: RevealProps) => {
-  const ref = useRef<HTMLElement | null>(null);
-  const [seen, setSeen] = useState(false);
-
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    if (REDUCED()) {
-      setSeen(true);
-      return;
-    }
-    const io = new IntersectionObserver(
-      (entries) => {
-        for (const e of entries) {
-          if (e.isIntersecting) {
-            setSeen(true);
-            io.disconnect();
-          }
-        }
-      },
-      { rootMargin: "-80px" },
-    );
-    io.observe(el);
-    return () => io.disconnect();
-  }, []);
-
-  const Tag = as as keyof JSX.IntrinsicElements;
-  return (
-    <Tag
-      ref={ref as never}
-      className={`rv ${seen ? "in" : ""} ${className}`}
-      style={
-        {
-          "--rv-x": `${x}px`,
-          "--rv-y": `${y}px`,
-          "--rv-delay": `${delay}ms`,
-        } as React.CSSProperties
-      }
-    >
-      {children}
-    </Tag>
-  );
+/** Asme's button feel: scale up under the pointer, press down on tap. */
+const PRESS: MotionProps = {
+  whileHover: { scale: 1.04 },
+  whileTap: { scale: 0.96 },
+  transition: { type: "spring", stiffness: 400, damping: 28 },
 };
 
 /** Italic serif accent, set in Instrument Serif — Asme's emphasis device. */
@@ -1418,17 +1388,17 @@ const Catalogue = () => (
   <>
     {CATALOGUE.map((g, gi) => (
       <div className="cat-group" key={g.id}>
-        <Reveal className="cat-head" y={24} delay={0}>
+        <motion.div className="cat-head" {...reveal({y: 24})}>
           <h3>{g.title}</h3>
           <p>{g.blurb}</p>
-        </Reveal>
+        </motion.div>
         <div className="cat-grid">
           {g.items.map((f, i) => (
-            <Reveal as="article" className="cat-card glass" key={f.name} y={28} delay={Math.min(i, 5) * 60}>
+            <motion.article className="cat-card glass" key={f.name} {...LIFT} {...reveal({y: 28, delay: Math.min(i, 5) * 0.06})}>
               <MicroViz kind={f.viz} />
               <h4>{f.name}</h4>
               <p className="cat-does">{f.does}</p>
-            </Reveal>
+            </motion.article>
           ))}
         </div>
         {gi < CATALOGUE.length - 1 ? <div className="rule" aria-hidden /> : null}
@@ -1440,7 +1410,7 @@ const Catalogue = () => (
 const UseCases = () => (
   <div className="uc-grid">
     {USE_CASES.map((u, i) => (
-      <Reveal as="article" className="uc-card glass" key={u.who + u.saw} y={44} delay={(i % 2) * 120}>
+      <motion.article className="uc-card glass" key={u.who + u.saw} {...LIFT} {...reveal({y: 44, delay: (i % 2) * 0.12})}>
         <div className="uc-media">
           <MicroViz kind={u.viz} />
           <div className="uc-scrim" aria-hidden />
@@ -1456,7 +1426,7 @@ const UseCases = () => (
           <p className="uc-note">✱ {u.note}</p>
           <p className="uc-got">{u.got}</p>
         </div>
-      </Reveal>
+      </motion.article>
     ))}
   </div>
 );
@@ -1542,6 +1512,7 @@ const Landing = ({ onEnter }: { onEnter?: () => void }) => {
   }, []);
 
   return (
+    <MotionConfig reducedMotion="user">
     <div className="fb-root asme">
       <style>{CSS}</style>
 
@@ -1570,9 +1541,9 @@ const Landing = ({ onEnter }: { onEnter?: () => void }) => {
               <button type="button" className="nav-plain" onClick={onEnter}>
                 Sign in
               </button>
-              <button type="button" className="btn amber sm" onClick={onEnter}>
+              <motion.button type="button" className="btn amber sm" onClick={onEnter} {...PRESS}>
                 Start free
-              </button>
+              </motion.button>
             </div>
           </nav>
         </div>
@@ -1603,9 +1574,9 @@ const Landing = ({ onEnter }: { onEnter?: () => void }) => {
               aria-label="Your one line"
               spellCheck={false}
             />
-            <button type="submit" aria-label="See what that makes" className="wish-go">
+            <motion.button type="submit" aria-label="See what that makes" className="wish-go" {...PRESS}>
               →
-            </button>
+            </motion.button>
           </form>
 
           <p className="lede">
@@ -1616,12 +1587,12 @@ const Landing = ({ onEnter }: { onEnter?: () => void }) => {
           </p>
 
           <div className="hero-cta">
-            <button type="button" className="btn amber" onClick={onEnter}>
+            <motion.button type="button" className="btn amber" onClick={onEnter} {...PRESS}>
               Start free
-            </button>
-            <a className="btn glass" href="#mutation">
+            </motion.button>
+            <motion.a className="btn glass" href="#mutation" {...PRESS}>
               See what that makes
-            </a>
+            </motion.a>
           </div>
         </div>
 
@@ -1640,20 +1611,20 @@ const Landing = ({ onEnter }: { onEnter?: () => void }) => {
       <section className="about">
         <div className="glow-top" aria-hidden />
         <div className="wrap center">
-          <Reveal as="p" className="mini-label" y={20}>
+          <motion.p className="mini-label" {...reveal({y: 20})}>
             What did they potentially lose?
-          </Reveal>
-          <Reveal as="h2" className="statement" y={40} delay={100}>
+          </motion.p>
+          <motion.h2 className="statement" {...reveal({y: 40, delay: 0.1})}>
             A mechanism somebody <S>gave away</S> for free,
             <br className="br" /> and the one product it would have <S>become</S> in your hands.
-          </Reveal>
+          </motion.h2>
         </div>
       </section>
 
       {/* ----------------------------- the mutation ------------------------- */}
       <section id="mutation" className="featured">
         <div className="wrap">
-          <Reveal className="featured-head" y={30}>
+          <motion.div className="featured-head" {...reveal({y: 30})}>
             <div className="frame-card glass">
               <p className="mini-label">01 / the mutation</p>
               <p>
@@ -1662,25 +1633,25 @@ const Landing = ({ onEnter }: { onEnter?: () => void }) => {
                 attributed to you.
               </p>
             </div>
-            <a href="#everything" className="btn glass frame-btn">
+            <motion.a href="#everything" className="btn glass frame-btn" {...PRESS}>
               Everything it does
-            </a>
-          </Reveal>
-          <Reveal className="featured-panel" y={60} delay={120}>
+            </motion.a>
+          </motion.div>
+          <motion.div className="featured-panel" {...reveal({y: 60, delay: 0.12})}>
             <MutationPanel />
-          </Reveal>
+          </motion.div>
         </div>
       </section>
 
       {/* ---------------------------- philosophy ---------------------------- */}
       <section id="philosophy" className="philosophy">
         <div className="wrap">
-          <Reveal as="h2" className="big" y={40}>
+          <motion.h2 className="big" {...reveal({y: 40})}>
             The wall <S className="dimmer">×</S> the loop
-          </Reveal>
+          </motion.h2>
 
           <div className="phil-grid">
-            <Reveal className="phil-media" x={-40} delay={100}>
+            <motion.div className="phil-media" {...reveal({x: -40, delay: 0.1})}>
               <div className="wall-col">
                 <p className="mini-label">an agent, given the link</p>
                 <pre className="wall-term">
@@ -1699,9 +1670,9 @@ const Landing = ({ onEnter }: { onEnter?: () => void }) => {
 <span className="dim">{"done before the screen locked"}</span>
                 </pre>
               </div>
-            </Reveal>
+            </motion.div>
 
-            <Reveal className="phil-text" x={40} delay={200}>
+            <motion.div className="phil-text" {...reveal({x: 40, delay: 0.2})}>
               <div>
                 <p className="mini-label">Your AI can&rsquo;t open the reel</p>
                 <p className="body">
@@ -1721,7 +1692,7 @@ const Landing = ({ onEnter }: { onEnter?: () => void }) => {
                   shipped.
                 </p>
               </div>
-            </Reveal>
+            </motion.div>
           </div>
         </div>
       </section>
@@ -1729,9 +1700,9 @@ const Landing = ({ onEnter }: { onEnter?: () => void }) => {
       {/* ------------------------------- loop ------------------------------- */}
       <section id="loop" className="loop-band">
         <div className="wrap">
-          <Reveal className="frame plain" y={50}>
+          <motion.div className="frame plain" {...reveal({y: 50})}>
             <LoopDiagram />
-          </Reveal>
+          </motion.div>
           <div className="loop-legend">
             {[
               ["capture", "Share sheet, URL, voice or paste. Transcribed and filed on its own."],
@@ -1739,10 +1710,10 @@ const Landing = ({ onEnter }: { onEnter?: () => void }) => {
               ["build", "Your agent, your repo, your keys. Nothing of ours on your machine."],
               ["write-back", "What shipped comes home, so it learns from what you did, not what you watched."],
             ].map(([b, s], i) => (
-              <Reveal key={b} y={24} delay={i * 80}>
+              <motion.div key={b} {...reveal({y: 24, delay: i * 0.08})}>
                 <b>{b}</b>
                 <span>{s}</span>
-              </Reveal>
+              </motion.div>
             ))}
           </div>
         </div>
@@ -1752,7 +1723,7 @@ const Landing = ({ onEnter }: { onEnter?: () => void }) => {
       <section id="clusters" className="clusters">
         <div className="glow-center" aria-hidden />
         <div className="wrap">
-          <Reveal className="band-head" y={30}>
+          <motion.div className="band-head" {...reveal({y: 30})}>
             <p className="mini-label">The pile does this on its own</p>
             <h2 className="big">
               It connected the dots and built the <S>scaffolding</S>.
@@ -1762,10 +1733,10 @@ const Landing = ({ onEnter }: { onEnter?: () => void }) => {
               the through-line, and stands up the infrastructure — a business, a solution, or the opportunity
               you already walked past once. Not a reading list. The thing, scaffolded.
             </p>
-          </Reveal>
-          <Reveal className="frame plain" y={60} delay={120}>
+          </motion.div>
+          <motion.div className="frame plain" {...reveal({y: 60, delay: 0.12})}>
             <ClusterField />
-          </Reveal>
+          </motion.div>
         </div>
       </section>
 
@@ -1773,10 +1744,10 @@ const Landing = ({ onEnter }: { onEnter?: () => void }) => {
       <section id="cases" className="services">
         <div className="glow-center" aria-hidden />
         <div className="wrap">
-          <Reveal className="services-head" y={30}>
+          <motion.div className="services-head" {...reveal({y: 30})}>
             <h2 className="big">Same move, different room.</h2>
             <p className="mini-label right-label">Six of them</p>
-          </Reveal>
+          </motion.div>
           <UseCases />
         </div>
       </section>
@@ -1784,7 +1755,7 @@ const Landing = ({ onEnter }: { onEnter?: () => void }) => {
       {/* ----------------------------- everything --------------------------- */}
       <section id="everything" className="everything">
         <div className="wrap">
-          <Reveal className="band-head" y={30}>
+          <motion.div className="band-head" {...reveal({y: 30})}>
             <p className="mini-label">Everything it does</p>
             <h2 className="big">
               Thirty-six answers to <S>that question</S>.
@@ -1792,7 +1763,7 @@ const Landing = ({ onEnter }: { onEnter?: () => void }) => {
             <p className="body wide">
               What did they potentially lose? Once for every capability in here.
             </p>
-          </Reveal>
+          </motion.div>
           <Catalogue />
         </div>
       </section>
@@ -1801,7 +1772,7 @@ const Landing = ({ onEnter }: { onEnter?: () => void }) => {
       <section id="pricing" className="pricing">
         <div className="glow-top" aria-hidden />
         <div className="wrap">
-          <Reveal className="band-head" y={30}>
+          <motion.div className="band-head" {...reveal({y: 30})}>
             <p className="mini-label">Pricing</p>
             <h2 className="big">
               Free forever, or <S>nine dollars</S>.
@@ -1810,10 +1781,10 @@ const Landing = ({ onEnter }: { onEnter?: () => void }) => {
               The free plan is real and permanent, not a trial with a countdown. Export everything or delete
               the account whenever you want, on either plan.
             </p>
-          </Reveal>
+          </motion.div>
 
           <div className="plans">
-            <Reveal className="plan glass" y={40}>
+            <motion.div className="plan glass" {...reveal({y: 40})}>
               <p className="mini-label">Free</p>
               <p className="price">
                 $0<span>/month</span>
@@ -1824,16 +1795,16 @@ const Landing = ({ onEnter }: { onEnter?: () => void }) => {
                 <li>50 AI actions a month</li>
                 <li>Full export and account deletion</li>
               </ul>
-              <button type="button" className="btn glass full" onClick={onEnter}>
+              <motion.button type="button" className="btn glass full" onClick={onEnter} {...PRESS}>
                 Start free
-              </button>
+              </motion.button>
               <p className="fine">
                 Saving a popular video usually costs nothing — cached and caption-based transcripts don&rsquo;t
                 count against it.
               </p>
-            </Reveal>
+            </motion.div>
 
-            <Reveal className="plan glass featured-plan" y={40} delay={120}>
+            <motion.div className="plan glass featured-plan" {...reveal({y: 40, delay: 0.12})}>
               <p className="mini-label out-label">Pro</p>
               <p className="price">
                 $9<span>/month</span>
@@ -1844,11 +1815,11 @@ const Landing = ({ onEnter }: { onEnter?: () => void }) => {
                 <li>Longer transcripts, bigger pages</li>
                 <li>Priority support</li>
               </ul>
-              <button type="button" className="btn amber full" onClick={onEnter}>
+              <motion.button type="button" className="btn amber full" onClick={onEnter} {...PRESS}>
                 Try Pro free for 14 days
-              </button>
+              </motion.button>
               <p className="fine">No card required. $90 a year if you&rsquo;d rather — two months free.</p>
-            </Reveal>
+            </motion.div>
           </div>
 
           <div className="promises">
@@ -1857,10 +1828,10 @@ const Landing = ({ onEnter }: { onEnter?: () => void }) => {
               ["Share exactly one thing.", "A read-only link to a single item, revocable any time. The recipient sees nothing else."],
               ["Leave whenever.", "Export to JSON or Markdown, or delete the account outright. Both are one click."],
             ].map(([b, s], i) => (
-              <Reveal key={b} y={24} delay={i * 80}>
+              <motion.div key={b} {...reveal({y: 24, delay: i * 0.08})}>
                 <b>{b}</b>
                 <span>{s}</span>
-              </Reveal>
+              </motion.div>
             ))}
           </div>
         </div>
@@ -1879,9 +1850,9 @@ const Landing = ({ onEnter }: { onEnter?: () => void }) => {
               <p>
                 You can&rsquo;t miss what you can&rsquo;t <S>remember</S>. Catch it, mutate it, ship it.
               </p>
-              <button type="button" className="btn amber" onClick={onEnter}>
+              <motion.button type="button" className="btn amber" onClick={onEnter} {...PRESS}>
                 Start free
-              </button>
+              </motion.button>
             </div>
 
             <div className="foot-cols">
@@ -1911,6 +1882,7 @@ const Landing = ({ onEnter }: { onEnter?: () => void }) => {
         </div>
       </footer>
     </div>
+    </MotionConfig>
   );
 };
 
@@ -1988,14 +1960,7 @@ html.fb-landing body::before { display: none !important; }
   background: radial-gradient(ellipse at center, rgba(255,255,255,.025) 0%, transparent 60%); }
 
 /* --- scroll reveal --- */
-.rv { opacity: 0; transform: translate(var(--rv-x, 0), var(--rv-y, 0));
-  transition: opacity .8s cubic-bezier(.16,1,.3,1) var(--rv-delay, 0ms),
-              transform .8s cubic-bezier(.16,1,.3,1) var(--rv-delay, 0ms); }
-.rv.in { opacity: 1; transform: none; }
-@media (prefers-reduced-motion: reduce) {
-  .rv { opacity: 1; transform: none; transition: none; }
-  .fb-root * { animation: none !important; }
-}
+@media (prefers-reduced-motion: reduce) { .fb-root * { animation: none !important; } }
 
 .fb-root section[id], .fb-root header[id] { scroll-margin-top: 104px; }
 .wrap { width: 100%; max-width: 1152px; margin: 0 auto; padding: 0 24px; position: relative; z-index: 1; }
@@ -2053,11 +2018,19 @@ html.fb-landing body::before { display: none !important; }
   opacity: .6; filter: blur(14px) saturate(1.3); transform: scale(1.1); }
 /* The drift sits over the video, so it is thinned out - the two together
  * should read as one field, not as two effects fighting. */
-.drift { position: absolute; inset: 0; z-index: 1; opacity: .55; }
+.drift { position: absolute; inset: 0; z-index: 1; opacity: .38; }
 .drift canvas { display: block; width: 100%; height: 100%; }
+/* Asme puts no scrim on its hero video - the content sits straight on it,
+ * with only the top glow. This keeps that, and adds just enough of a bottom
+ * fade to carry the video into the section below. Anything heavier and the
+ * video may as well not be there. */
 .hero-veil { position: absolute; inset: 0; z-index: 2; pointer-events: none;
-  background: radial-gradient(ellipse at 50% 42%, rgba(0,0,0,.55) 0%, rgba(0,0,0,.82) 45%, #000 78%),
-              radial-gradient(ellipse at top, rgba(255,255,255,.04) 0%, transparent 60%); }
+  background: radial-gradient(ellipse at top, rgba(255,255,255,.05) 0%, transparent 65%),
+              linear-gradient(to bottom, rgba(0,0,0,.35) 0%, transparent 22%,
+                              transparent 62%, rgba(0,0,0,.55) 88%, #000 100%); }
+/* The headline carries its own contrast instead, so it stays readable on a
+ * bright frame without dimming the whole video. */
+.hero h1, .lede, .eyebrow { text-shadow: 0 2px 24px rgba(0,0,0,.55); }
 .hero-in { position: relative; z-index: 10; flex: 1; display: flex; flex-direction: column;
   align-items: center; justify-content: center; text-align: center; gap: 0;
   padding: 48px 24px; max-width: 1024px; margin: 0 auto; }
