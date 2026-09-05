@@ -4,15 +4,15 @@ import { setLandingActive } from "@/lib/landingMode";
 /* ------------------------------------------------------------------ *
  * Fart Brains — landing page.
  *
- * Positioning comes from docs/PRODUCT_TRUTH.md § "Positioning copy":
- * save the reel, get the build brief. Capture and folders are the middle
- * of the chain, not the pitch.
+ * The pitch: the capabilities worth having are not for sale. Somebody
+ * describes a mechanism once, in a reel or a talk, and it is gone by
+ * Thursday. Caught here, one line of your own intent mutates it into
+ * something that has never existed.
  *
- * Three live demos carry the page, because the product is hard to
- * describe and easy to show:
- *   1. the drift field — ideas escaping, click one to catch it
- *   2. the blend       — a link plus your wish, compiled into your build
- *   3. the clusters    — what a pile of captures assembles into
+ * Three live pieces carry it, because this is easier to show than say:
+ *   1. the drift    — what leaves your head while you scroll
+ *   2. the mutation — their mechanism + your note = a new thing
+ *   3. the clusters — what a pile of saves assembles into
  *
  * Self-contained on purpose: no app design tokens, no shadcn, no new
  * dependencies, so restyling the app never restyles the marketing page.
@@ -25,25 +25,94 @@ const REDUCED = () =>
 /* ------------------------------ content ------------------------------ */
 
 const DRIFTING = [
-  "the app idea from the shower",
-  "that guy's name",
-  "why v2 was better",
-  "the fix you had while driving",
-  "podcast tangent @ 34:20",
-  "a better opening line",
-  "the cheaper way to do it",
+  "the SEO play from that reel",
+  "how they did multi-tenancy",
+  "the hooks-and-loops talk",
+  "why their onboarding converts",
+  "the pricing thing at 34:20",
+  "that scraper nobody pays for",
+  "the cold open that worked",
   "what the client actually meant",
-  "the perfect title",
-  "the thing you were going to tell her",
+  "the architecture from the podcast",
+  "the one you had in the shower",
 ];
 
-const STAGES = [
-  { label: "transcribe what they said", ms: 880 },
-  { label: "extract what they DID", ms: 610 },
-  { label: "follow every link mentioned", ms: 540 },
-  { label: "research your platforms", ms: 930 },
-  { label: "apply your twist", ms: 340 },
-  { label: "write YOUR version", ms: 420 },
+type Mutation = {
+  id: string;
+  label: string;
+  source: string;
+  said: string[];
+  note: string;
+  title: string;
+  summary: string;
+  parts: [string, string][];
+  diagram: "routes" | "loops" | "tenancy";
+};
+
+const MUTATIONS: Mutation[] = [
+  {
+    id: "loops",
+    label: "A talk on how agents work",
+    source: "conference talk · 22 min · transcribed",
+    said: [
+      "An agent is a loop: observe, act, check the result, go again.",
+      "Hooks are where you interrupt the loop to enforce something.",
+      "Most failures are a loop that never checks its own output.",
+    ],
+    note: "I want this, plus a second one wrapped around it that challenges its ideas",
+    title: "A self-critiquing agent architecture",
+    summary:
+      "The talk described one loop. Your note put a second loop around it, so the brief has to solve everything that only exists once two loops disagree — none of which was in the source.",
+    parts: [
+      ["from the talk", "The builder loop: observe → act → check → repeat, with hooks at the act boundary."],
+      ["from your note", "A critic loop that reads the builder's output and argues against it before anything lands."],
+      ["neither said this", "A disagreement protocol — who wins, how many rounds, and the stop condition when they deadlock."],
+      ["neither said this", "Arbitration: escalate to you only when the critic blocks twice on the same claim."],
+    ],
+    diagram: "loops",
+  },
+  {
+    id: "routes",
+    label: "A 47-second SEO reel",
+    source: "instagram reel · 47s · transcribed",
+    said: [
+      "Register brandnamereviews.com and link it from the main site.",
+      "Put the platform name at the end of the title and the URL slug.",
+      "Use “cheap” in titles — nobody does, and it wins the click.",
+    ],
+    note: "but for fartbrains.app, and it has to survive our stack",
+    title: "Ten interceptor routes and the pipeline that makes them visible",
+    summary:
+      "Three tactics from a stranger, aimed at your repo. The last line is the one that matters, and the reel could not have known it.",
+    parts: [
+      ["from the reel", "Slug and title pattern with the platform name last, across ten routes."],
+      ["from the reel", "A reviews microsite carrying video reviews with full transcripts."],
+      ["from your note", "Priced at $9 and written in your voice, not a generic template."],
+      ["neither said this", "A prerender step first — your SPA serves an empty shell to every crawler these tactics target."],
+    ],
+    diagram: "routes",
+  },
+  {
+    id: "tenancy",
+    label: "A founder explaining their setup",
+    source: "podcast · 51 min · transcribed",
+    said: [
+      "Every customer gets their own deployment, provisioned by hand.",
+      "Isolation is the selling point; nobody shares a database.",
+      "Onboarding costs them two days of engineering time.",
+    ],
+    note: "same idea but multi-tenant, and provisioning has to be automatic",
+    title: "A control plane they explicitly said they don't have",
+    summary:
+      "They described the single-tenant version because that's what they built. Your note turns it into a platform, which creates problems the podcast never had to answer.",
+    parts: [
+      ["from the podcast", "Per-customer isolation as the product promise, not an implementation detail."],
+      ["from your note", "One database, row-level isolation, tenant id on every path."],
+      ["neither said this", "Provisioning as an API call, so onboarding is a signup rather than two engineer-days."],
+      ["neither said this", "Per-tenant quotas and noisy-neighbour limits, which only exist once tenants share anything."],
+    ],
+    diagram: "tenancy",
+  },
 ];
 
 type Cluster = {
@@ -58,36 +127,36 @@ type Cluster = {
 
 const CLUSTERS: Cluster[] = [
   {
-    tag: "#open-source",
+    tag: "#llm-optimization",
     n: 16,
     color: "#63e6a0",
+    kind: "a missed opportunity",
+    items: [
+      "Aggressive SEO tactics for LLMs and CTR",
+      "The Reddit keyword hack",
+      "URLs and titles for fan-out queries",
+      "How to rank in AI search results",
+      "AEO analytics and visibility tracking",
+    ],
+    build:
+      "A complete answer-engine program: interceptor routes built on the tactics, structured for fan-out, ranked against the model, measured by the analytics node.",
+    why: "Tactics, mechanism, ranking model and measurement — saved weeks apart by you, never once looked at together.",
+  },
+  {
+    tag: "#open-source",
+    n: 14,
+    color: "#4dc9ff",
     kind: "infrastructure",
     items: [
       "Replacing paid scrapers with Crawl4AI",
       "LLM-ready markdown locally",
       "Self-hosted embeddings",
-      "Agent skills, open weights",
       "Local vector store benchmarks",
+      "Agent skills, open weights",
     ],
     build:
       "Your own ingest pipeline — scrape, convert, embed and store locally, with zero per-page API fees.",
-    why: "Five of these are people solving one slice each. Together they're a full pipeline, and you already have every piece of it.",
-  },
-  {
-    tag: "#seo",
-    n: 23,
-    color: "#4dc9ff",
-    kind: "missed opportunity",
-    items: [
-      "Programmatic SEO at 400 pages",
-      "Optimizing URLs and titles",
-      "AI search and AEO",
-      "Reddit distribution",
-      "Trustindex review widgets",
-    ],
-    build:
-      "An answer-engine play: cluster pages generated from your own data, structured to be quoted by AI search rather than ranked by it.",
-    why: "You saved the old SEO tactics and the AI-search ones in the same month. The overlap is the opportunity — nobody's optimizing for both.",
+    why: "Five people each solving one slice. Together they are the whole pipeline, and you already hold every piece.",
   },
   {
     tag: "#claude-code",
@@ -95,14 +164,14 @@ const CLUSTERS: Cluster[] = [
     color: "#b18cff",
     kind: "a solution",
     items: [
-      "Scaling Claude context",
+      "Scaling context without losing the thread",
       "Building a 2026 agentic OS",
-      "Multimodal video with Claude",
+      "Multimodal video pipelines",
       "Agent skills that compose",
       "The kernel: rigorous engineering",
     ],
     build:
-      "A personal agent OS — your own skills, composed, running against your own brain instead of a marketplace of downloads.",
+      "A personal agent OS: your own skills, composed, running against your own material instead of a marketplace of downloads.",
     why: "Nineteen captures about agents you never revisited. The through-line is that you keep saving other people's setups instead of building one.",
   },
   {
@@ -111,122 +180,24 @@ const CLUSTERS: Cluster[] = [
     color: "#ff6f9c",
     kind: "a business",
     items: [
-      "Omni drone control",
-      "Understanding anything",
       "Social agent swarms",
       "Marketing automation stacks",
       "Lead magnet mining",
+      "Understanding anything",
+      "Omni drone control",
     ],
     build:
-      "One agent that watches your feeds, drafts the posts, and files what it learns back into the brain it came from.",
-    why: "These are twelve separate automations. Chained, they're a loop that feeds itself — which is the thing none of the twelve videos mention.",
+      "One agent that watches your feeds, drafts the work, and files what it learns back into the thing it came from.",
+    why: "Twelve separate automations. Chained, they are a loop that feeds itself, which is the part none of the twelve mention.",
   },
 ];
-
-const SOURCES: [string, string][] = [
-  ["stripe.com/atlas/guides", "Usage pricing grew from 27% to 46% of SaaS contracts between 2023 and 2026."],
-  ["a16z.com/pricing-in-the-age-of-agents", "Per-seat collapses when the seat is an agent that runs a thousand times a day."],
-  ["openviewpartners.com/benchmarks", "Hybrid — a platform fee plus metered usage — retains best at enterprise."],
-  ["paddle.com/resources/metered", "Unpredictable bills are the top cited reason procurement blocks a metered deal."],
-];
-
-const FOLDERS: [string, number][] = [
-  ["Inbox", 4],
-  ["Ideas", 61],
-  ["Marketing", 23],
-  ["Engineering", 38],
-  ["Research", 12],
-  ["Trash", 7],
-];
-
-const NOTES: [string, string, string, string][] = [
-  ["Cold email teardown", "Lead with their problem. One ask per email. Follow up three times.", "youtube", "Marketing"],
-  ["Streaming beats batching", "Stream partial results so the UI never sits blank. Backpressure is the whole game.", "transcript", "Engineering"],
-  ["Forgot-it vending machine", "Sits by the grocery exit, stocks the twelve things people drive back for.", "voice note", "Ideas"],
-  ["Charge for the outcome", "Seat pricing punishes the thing you want more of. Meter the result instead.", "share sheet", "Research"],
-];
-
-/* --------------------------- the blend brief --------------------------- */
-
-type Brief = {
-  subject: string;
-  src: string;
-  kind: string;
-  inputs: [string, string][];
-  prompt: string;
-};
-
-const PLATFORMS = [
-  "instagram", "facebook", "linkedin", "tiktok", "youtube",
-  "twitter", "threads", "reddit", "email", "newsletter", "shopify", "slack", "notion",
-];
-
-/** Builds a brief that visibly follows the wish, so editing it changes the output. */
-function derive(input: string, wish: string): Brief {
-  const text = (input || "").trim();
-  const w = (wish || "").trim();
-  const slug = /^https?:\/\//i.test(text)
-    ? (text.split("/").filter(Boolean).pop() || "capture").replace(/[-_?=&]+/g, " ")
-    : text;
-  const what = slug.replace(/^i /i, "").trim() || "the thing they built";
-
-  const targets = PLATFORMS.filter((t) => new RegExp(`\\b${t}\\b`, "i").test(w)).map(
-    (t) => t.charAt(0).toUpperCase() + t.slice(1),
-  );
-  const forWhat = targets.length ? targets.join(" and ") : "your setup";
-  const voice = /sound like me|my voice|humaniz/i.test(w);
-
-  return {
-    subject: `Your version of ${what}`,
-    src: text || "typed capture",
-    kind: "video · 8 min · transcribed",
-    inputs: [
-      ["what they built", "a pipeline that drafts, humanizes and schedules — for LinkedIn only"],
-      ["what they DID", "5 steps — pull the source, draft, de-slop the copy, queue, post on a cadence"],
-      ["links they mentioned", "2 followed — the scheduler they used, and their prompt gist"],
-      ["what you wished", w || "—"],
-      [
-        "so it researched",
-        targets.length
-          ? `${forWhat} posting limits, formats and what actually gets reach in 2026`
-          : "the platforms and constraints your setup implies",
-      ],
-    ],
-    prompt: [
-      `Build my own version of ${what}, for ${forWhat}.`,
-      "",
-      "The shape that worked for them, kept:",
-      "  1. Pull the source material I point it at.",
-      "  2. Draft in the platform's native format.",
-      "  3. Pass it through a de-slop step so it doesn't read as AI.",
-      "  4. Queue it, and post on a cadence I set.",
-      "",
-      `What has to change for ${forWhat}:`,
-      targets.includes("Instagram")
-        ? "  · Instagram is caption + visual — generate the visual brief too, not just text."
-        : "  · Match each platform's native format rather than reposting one draft everywhere.",
-      targets.includes("Facebook")
-        ? "  · Facebook rewards longer first-person posts; don't reuse the Instagram caption."
-        : "  · Respect each platform's length and link rules.",
-      voice
-        ? "  · Train the voice on my last 30 posts, not on a generic humanizer prompt."
-        : "  · Keep a consistent voice across platforms.",
-      "",
-      "Build it in this project, with my accounts and my scheduler.",
-      "Not their template — mine.",
-    ].join("\n"),
-  };
-}
 
 /* ------------------------------ drift field ------------------------------ */
 
 type Drop = { text: string; w: number; h: number; x: number; dx: number; y: number; v: number; a: number; wob: number };
 
-const DriftField = ({ onCatch }: { onCatch: (text: string) => void }) => {
+const DriftField = ({ onCatch, onLost }: { onCatch: (text: string) => void; onLost: (n: number) => void }) => {
   const ref = useRef<HTMLCanvasElement | null>(null);
-  const [live, setLive] = useState(0);
-  const [caught, setCaught] = useState(0);
-  const [lost, setLost] = useState(0);
 
   useEffect(() => {
     const canvas = ref.current;
@@ -238,8 +209,8 @@ const DriftField = ({ onCatch }: { onCatch: (text: string) => void }) => {
     let h = 0;
     let raf = 0;
     let seed = 0;
-    const bubbles: Drop[] = [];
     let lostCount = 0;
+    const bubbles: Drop[] = [];
 
     const size = () => {
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -255,7 +226,6 @@ const DriftField = ({ onCatch }: { onCatch: (text: string) => void }) => {
       seed++;
       ctx.font = '13px "IBM Plex Mono", monospace';
       const width = ctx.measureText(text).width + 26;
-      // Keep the drift out of the headline column on wide screens.
       const leftEdge = w >= 900 ? w * 0.54 : 12;
       const span = Math.max(1, w - width - leftEdge - 16);
       bubbles.push({
@@ -280,11 +250,11 @@ const DriftField = ({ onCatch }: { onCatch: (text: string) => void }) => {
           b.wob += 0.011;
         }
         const x = b.x + Math.sin(b.wob) * 6;
-        if (b.y < h * 0.3 && !reduced) b.a = Math.max(0, b.a - 0.0038);
+        if (b.y < h * 0.34 && !reduced) b.a = Math.max(0, b.a - 0.004);
         if (b.a <= 0 || b.y < -40) {
           bubbles.splice(i, 1);
           lostCount++;
-          setLost(lostCount);
+          onLost(lostCount);
           continue;
         }
         b.dx = x;
@@ -308,7 +278,6 @@ const DriftField = ({ onCatch }: { onCatch: (text: string) => void }) => {
         ctx.fillText(b.text, x + 13, b.y + b.h / 2);
         ctx.globalAlpha = 1;
       }
-      setLive(bubbles.length);
       if (!reduced) raf = requestAnimationFrame(draw);
     };
 
@@ -320,7 +289,6 @@ const DriftField = ({ onCatch }: { onCatch: (text: string) => void }) => {
         const b = bubbles[i];
         if (px >= b.dx && px <= b.dx + b.w && py >= b.y && py <= b.y + b.h) {
           bubbles.splice(i, 1);
-          setCaught((c) => c + 1);
           onCatch(b.text);
           return;
         }
@@ -336,150 +304,154 @@ const DriftField = ({ onCatch }: { onCatch: (text: string) => void }) => {
     const timer = reduced ? 0 : window.setInterval(() => { if (bubbles.length < 7) spawn(); }, 2000);
     canvas.addEventListener("click", onClick);
     window.addEventListener("resize", size);
+    const ro = new ResizeObserver(size);
+    ro.observe(canvas);
     return () => {
       cancelAnimationFrame(raf);
       if (timer) clearInterval(timer);
+      ro.disconnect();
       canvas.removeEventListener("click", onClick);
       window.removeEventListener("resize", size);
     };
-  }, [onCatch]);
+  }, [onCatch, onLost]);
+
+  return <canvas id="drift" ref={ref} aria-label="Ideas drifting away — click one to catch it" />;
+};
+
+/* ------------------------------ diagrams ------------------------------ */
+
+const MONO = "IBM Plex Mono, monospace";
+
+const LoopsDiagram = () => (
+  <svg className="mut-diagram" viewBox="0 0 460 210" role="img" aria-label="A builder loop wrapped by a critic loop, with a disagreement protocol and arbitration">
+    <defs>
+      <marker id="ar" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+        <path d="M0,0 L6,3 L0,6 z" fill="#6e7f78" />
+      </marker>
+    </defs>
+    <ellipse cx="150" cy="108" rx="94" ry="58" fill="none" stroke="#f2a53c" strokeWidth="1.2" />
+    <ellipse cx="150" cy="108" rx="128" ry="84" fill="none" stroke="#63e6a0" strokeWidth="1.2" strokeDasharray="5 5" />
+    {([
+      [150, 56, "observe"],
+      [220, 108, "act"],
+      [150, 160, "check"],
+      [80, 108, "repeat"],
+    ] as [number, number, string][]).map(([x, y, label]) => (
+      <g key={label}>
+        <circle cx={x} cy={y} r="4.5" fill="#f2a53c" />
+        <text x={x} y={y - 10} textAnchor="middle" fill="#b9c6c0" fontSize="10" fontFamily={MONO}>{label}</text>
+      </g>
+    ))}
+    <text x="150" y="112" textAnchor="middle" fill="#6e7f78" fontSize="10" fontFamily={MONO}>builder loop</text>
+    <text x="150" y="18" textAnchor="middle" fill="#63e6a0" fontSize="10" fontFamily={MONO}>critic loop · from your note</text>
+    <line x1="280" y1="108" x2="328" y2="108" stroke="#6e7f78" strokeWidth="1" markerEnd="url(#ar)" />
+    <rect x="332" y="64" width="116" height="34" fill="none" stroke="#f2a53c" strokeWidth="1" />
+    <text x="390" y="85" textAnchor="middle" fill="#f2a53c" fontSize="10" fontFamily={MONO}>disagreement</text>
+    <rect x="332" y="118" width="116" height="34" fill="none" stroke="#63e6a0" strokeWidth="1" />
+    <text x="390" y="139" textAnchor="middle" fill="#63e6a0" fontSize="10" fontFamily={MONO}>arbitration → you</text>
+    <text x="390" y="172" textAnchor="middle" fill="#6e7f78" fontSize="9" fontFamily={MONO}>neither of these was said</text>
+  </svg>
+);
+
+const RoutesDiagram = () => (
+  <svg className="mut-diagram" viewBox="0 0 460 210" role="img" aria-label="A prerender step feeding ten static interceptor routes">
+    <rect x="14" y="86" width="102" height="44" fill="none" stroke="#63e6a0" strokeWidth="1.2" />
+    <text x="65" y="105" textAnchor="middle" fill="#63e6a0" fontSize="10" fontFamily={MONO}>prerender</text>
+    <text x="65" y="119" textAnchor="middle" fill="#6e7f78" fontSize="9" fontFamily={MONO}>not in the reel</text>
+    {["/cheapest-ai-second-brain-reddit", "/fart-brains-reviews-reddit", "/affordable-app-reviews-youtube", "/is-it-worth-it-quora", "/budget-note-app-linkedin"].map((slug, i) => (
+      <g key={slug}>
+        <line x1="116" y1="108" x2="192" y2={30 + i * 37} stroke="#f2a53c" strokeWidth="0.9" opacity="0.45" />
+        <rect x="192" y={18 + i * 37} width="252" height="24" fill="none" stroke="#f2a53c" strokeWidth="0.9" />
+        <text x="202" y={34 + i * 37} fill="#b9c6c0" fontSize="10" fontFamily={MONO}>{slug}</text>
+      </g>
+    ))}
+    <text x="230" y="202" textAnchor="middle" fill="#6e7f78" fontSize="9" fontFamily={MONO}>+ 5 more · platform name last, every time</text>
+  </svg>
+);
+
+const TenancyDiagram = () => (
+  <svg className="mut-diagram" viewBox="0 0 460 210" role="img" aria-label="One control plane provisioning four isolated tenants">
+    <rect x="150" y="16" width="164" height="36" fill="none" stroke="#63e6a0" strokeWidth="1.2" />
+    <text x="232" y="38" textAnchor="middle" fill="#63e6a0" fontSize="10" fontFamily={MONO}>control plane · provision()</text>
+    {Array.from({ length: 4 }, (_, i) => (
+      <g key={i}>
+        <line x1="232" y1="52" x2={70 + i * 108} y2="98" stroke="#6e7f78" strokeWidth="0.9" opacity="0.55" />
+        <rect x={22 + i * 108} y="98" width="96" height="62" fill="none" stroke="#f2a53c" strokeWidth="1" />
+        <text x={70 + i * 108} y="124" textAnchor="middle" fill="#b9c6c0" fontSize="10" fontFamily={MONO}>tenant {i + 1}</text>
+        <text x={70 + i * 108} y="140" textAnchor="middle" fill="#6e7f78" fontSize="9" fontFamily={MONO}>quota · rls</text>
+      </g>
+    ))}
+    <text x="230" y="188" textAnchor="middle" fill="#6e7f78" fontSize="9" fontFamily={MONO}>one database · row-level isolation · noisy-neighbour limits</text>
+  </svg>
+);
+
+/* ----------------------------- the mutation ----------------------------- */
+
+const MutationPanel = () => {
+  const [active, setActive] = useState(0);
+  const m = MUTATIONS[active];
+  const [note, setNote] = useState(m.note);
+
+  useEffect(() => {
+    setNote(MUTATIONS[active].note);
+  }, [active]);
+
+  // The note is the only line the source could never contain, so edits to it
+  // are what the output attributes back to you.
+  const parts = useMemo(
+    () =>
+      m.parts.map(([tag, text]) =>
+        tag === "from your note" ? (["from your note", note.trim() || "—"] as [string, string]) : ([tag, text] as [string, string]),
+      ),
+    [note, m],
+  );
 
   return (
     <>
-      <canvas id="drift" ref={ref} aria-label="Ideas drifting away — click one to catch it" />
-      <div className="hud">
-        <span>drifting <b>{live}</b></span>
-        <span>caught <b>{caught}</b></span>
-        <span>lost forever <b>{lost}</b></span>
+      <div className="mut-tabs" role="tablist" aria-label="Sources">
+        {MUTATIONS.map((x, i) => (
+          <button key={x.id} type="button" role="tab" aria-selected={i === active} onClick={() => setActive(i)}>
+            {x.label}
+          </button>
+        ))}
+      </div>
+
+      <div className="mut">
+        <div className="mut-noterow">
+          <span className="caret">✱</span>
+          <input value={note} onChange={(e) => setNote(e.target.value)} aria-label="What you want instead" />
+        </div>
+        <div className="mut-grid">
+          <div className="mut-left">
+            <p className="mut-src">{m.source}</p>
+            <p className="mini-label">what they described</p>
+            <ul className="mut-said">
+              {m.said.map((s) => (
+                <li key={s}>{s}</li>
+              ))}
+            </ul>
+          </div>
+          <div className="mut-right">
+            <span className="mut-never">nobody ships this</span>
+            <div className="mut-out">
+              <h3>{m.title}</h3>
+              <p>{m.summary}</p>
+            </div>
+            {m.diagram === "loops" && <LoopsDiagram />}
+            {m.diagram === "routes" && <RoutesDiagram />}
+            {m.diagram === "tenancy" && <TenancyDiagram />}
+            <div className="mut-parts">
+              {parts.map(([tag, text], i) => (
+                <div className="mut-part" key={`${tag}-${i}`}>
+                  <b>{tag}</b>
+                  <span>{text}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
       </div>
     </>
-  );
-};
-
-/* ------------------------------ the blend ------------------------------ */
-
-const BlendConsole = ({ seeded }: { seeded: { text: string; nonce: number } }) => {
-  const [url, setUrl] = useState("https://youtu.be/i-automated-my-linkedin-posts");
-  const [wish, setWish] = useState("but for Instagram and Facebook, and it has to sound like me");
-  const [state, setState] = useState<string[]>(() => STAGES.map(() => "idle"));
-  const [brief, setBrief] = useState<Brief | null>(null);
-  const timers = useRef<number[]>([]);
-  const token = useRef(0);
-
-  const run = useCallback((sourceUrl: string, sourceWish: string) => {
-    timers.current.forEach(clearTimeout);
-    timers.current = [];
-    const mine = ++token.current;
-    const result = derive(sourceUrl, sourceWish);
-
-    if (REDUCED()) {
-      setState(STAGES.map(() => "done"));
-      setBrief(result);
-      return;
-    }
-
-    setBrief(null);
-    const next = STAGES.map(() => "idle");
-    setState([...next]);
-    let i = 0;
-    const step = () => {
-      if (mine !== token.current) return;
-      if (i >= STAGES.length) {
-        setBrief(result);
-        return;
-      }
-      next[i] = "run";
-      setState([...next]);
-      timers.current.push(
-        window.setTimeout(() => {
-          if (mine !== token.current) return;
-          next[i] = "done";
-          i++;
-          setState([...next]);
-          step();
-        }, STAGES[i].ms),
-      );
-    };
-    step();
-  }, []);
-
-  useEffect(() => {
-    run(url, wish);
-    return () => timers.current.forEach(clearTimeout);
-    // Only on mount: later runs are driven by the buttons and the drift field.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // A caught idea from the hero becomes the next thing blended.
-  useEffect(() => {
-    if (!seeded.nonce) return;
-    setUrl(seeded.text);
-    run(seeded.text, wish);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [seeded.nonce]);
-
-  return (
-    <div className="console">
-      <div className="console-in">
-        <span className="caret">›</span>
-        <input
-          value={url}
-          onChange={(e) => setUrl(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && run(url, wish)}
-          aria-label="Paste a link, or share one in"
-        />
-      </div>
-      <div className="console-in wish-row">
-        <span className="caret wish-caret">✱</span>
-        <input
-          id="c-wish"
-          value={wish}
-          onChange={(e) => setWish(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && run(url, wish)}
-          aria-label="What you wish you had"
-        />
-        <button type="button" className="btn sm" onClick={() => run(url, wish)}>
-          Build mine
-        </button>
-      </div>
-      <div className="console-body">
-        <div className="stages">
-          {STAGES.map((s, i) => (
-            <div key={s.label} className={`stage ${state[i] === "run" ? "run" : state[i] === "done" ? "done" : ""}`}>
-              <span className="tick">{state[i] === "done" ? "✓" : state[i] === "run" ? "▮" : "·"}</span>
-              <span>{s.label}</span>
-              <span className="ms">{state[i] === "done" ? `${s.ms}ms` : ""}</span>
-            </div>
-          ))}
-        </div>
-        <div className="out">
-          {!brief ? (
-            <p className="empty">working…</p>
-          ) : (
-            <article className="card">
-              <h3>{brief.subject}</h3>
-              <div className="src">{brief.kind} · {brief.src}</div>
-              <p className="mini-label">blended from</p>
-              <div className="blend">
-                {brief.inputs.map(([tag, val], i) => (
-                  <div className="blend-row" key={tag} style={{ animationDelay: `${i * 90}ms` }}>
-                    <span className="blend-tag">{tag}</span>
-                    <span className="blend-val">{val}</span>
-                  </div>
-                ))}
-              </div>
-              <p className="mini-label out-label">↓ your custom build — not their template</p>
-              <pre className="prompt">{brief.prompt}</pre>
-              <div className="card-meta">
-                <span>pushed to <strong>your project</strong></span>
-                <span>not a downloaded markdown</span>
-                <span>kept in your library</span>
-              </div>
-            </article>
-          )}
-        </div>
-      </div>
-    </div>
   );
 };
 
@@ -505,7 +477,18 @@ const ClusterField = () => {
     let w = 0;
     let h = 0;
     let raf = 0;
-    let nodes: CNode[] = [];
+
+    const nodes: CNode[] = CLUSTERS.flatMap((cl, ci) =>
+      Array.from({ length: cl.n }, () => ({
+        c: ci,
+        x: Math.random() * 400,
+        y: Math.random() * 300,
+        hx: 0,
+        hy: 0,
+        r: 2 + Math.random() * 4,
+        ph: Math.random() * 6.28,
+      })),
+    );
 
     const layout = () => {
       const cols = w < 640 ? 2 : 4;
@@ -528,18 +511,6 @@ const ClusterField = () => {
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       layout();
     };
-
-    nodes = CLUSTERS.flatMap((cl, ci) =>
-      Array.from({ length: cl.n }, () => ({
-        c: ci,
-        x: Math.random() * 400,
-        y: Math.random() * 300,
-        hx: 0,
-        hy: 0,
-        r: 2 + Math.random() * 4,
-        ph: Math.random() * 6.28,
-      })),
-    );
 
     const draw = () => {
       layout();
@@ -587,16 +558,10 @@ const ClusterField = () => {
 
   return (
     <div className="cluster-wrap">
-      <canvas id="constellation" ref={ref} aria-label="Your saved ideas, grouped into clusters" />
+      <canvas id="constellation" ref={ref} aria-label="Your saved material, grouped into clusters" />
       <div className="cluster-tabs" role="tablist">
         {CLUSTERS.map((c, i) => (
-          <button
-            key={c.tag}
-            type="button"
-            role="tab"
-            aria-selected={i === active}
-            onClick={() => setActive(i)}
-          >
+          <button key={c.tag} type="button" role="tab" aria-selected={i === active} onClick={() => setActive(i)}>
             {c.tag} · {c.n}
           </button>
         ))}
@@ -604,7 +569,7 @@ const ClusterField = () => {
       <div className="cluster-card">
         <div className="cc-head">
           <span className="cc-dot" style={{ background: cl.color }} />
-          <span>{cl.tag} cluster · {cl.n} links</span>
+          <span>{cl.tag} · {cl.n} saves</span>
         </div>
         <div className="cc-items">
           {cl.items.map((t) => (
@@ -619,265 +584,48 @@ const ClusterField = () => {
   );
 };
 
-/* ---------------------------- deep research ---------------------------- */
+/* ------------------------------- the loop ------------------------------- */
 
-const ResearchPanel = () => {
-  const [question, setQuestion] = useState("what actually drives SaaS pricing in 2026");
-  const [shown, setShown] = useState(0);
-  const [report, setReport] = useState<string | null>(null);
-  const timers = useRef<number[]>([]);
-  const token = useRef(0);
-
-  const run = useCallback((q: string) => {
-    timers.current.forEach(clearTimeout);
-    timers.current = [];
-    const mine = ++token.current;
-    if (REDUCED()) {
-      setShown(SOURCES.length);
-      setReport(q);
-      return;
-    }
-    setReport(null);
-    setShown(0);
-    for (let i = 1; i <= SOURCES.length; i++) {
-      timers.current.push(
-        window.setTimeout(() => {
-          if (mine === token.current) setShown(i);
-        }, i * 620),
-      );
-    }
-    timers.current.push(
-      window.setTimeout(() => {
-        if (mine === token.current) setReport(q);
-      }, SOURCES.length * 620 + 900),
-    );
-  }, []);
-
-  useEffect(() => {
-    run(question);
-    return () => timers.current.forEach(clearTimeout);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  return (
-    <div className="console">
-      <div className="console-in">
-        <span className="caret">?</span>
-        <input
-          value={question}
-          onChange={(e) => setQuestion(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && run(question)}
-          aria-label="Research question"
-        />
-        <button type="button" className="btn sm" onClick={() => run(question)}>
-          Research
-        </button>
-      </div>
-      <div className="console-body">
-        <div className="stages">
-          {SOURCES.map(([domain, snippet], i) => (
-            <div className={`srcrow ${i < shown ? "" : "pending"}`} key={domain}>
-              <span className="num">[{i + 1}]</span>
-              <div>
-                <span className="dom">{domain}</span>
-                {i < shown && <span className="snip">{snippet}</span>}
-              </div>
-            </div>
-          ))}
-        </div>
-        <div className="out">
-          {!report ? (
-            <p className="empty">{shown < SOURCES.length ? "searching the web…" : "synthesizing…"}</p>
-          ) : (
-            <div className="report">
-              <h4>Deep research — {report}</h4>
-              <p>
-                Seat pricing is being abandoned where the user is an agent rather than a person; usage now
-                appears in roughly half of new contracts<span className="cite">[1]</span>. The mechanism is
-                simple — a seat that runs a thousand times a day stops being a seat
-                <span className="cite">[2]</span>.
-              </p>
-              <p>
-                The retained pattern is hybrid: a platform fee for predictability plus metered usage for
-                expansion<span className="cite">[3]</span>. Pure metering is what procurement blocks, because
-                an unpredictable bill cannot be approved in advance<span className="cite">[4]</span>.
-              </p>
-              <div className="append">
-                appended to the item as “## Deep research — {report}” · 4 sources saved alongside it
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-};
-
-/* ------------------------------- app tour ------------------------------- */
-
-type Panel = "vault" | "ash" | "graph" | "cal" | "pad";
-
-const AppTour = () => {
-  const [panel, setPanel] = useState<Panel>("vault");
-  const [folder, setFolder] = useState("Ideas");
-
-  const graph = useMemo(
-    () => ({
-      nodes: [
-        [70, 80, "pricing"],
-        [190, 50, "positioning"],
-        [300, 110, "cold email"],
-        [140, 180, "streaming"],
-        [285, 215, "backpressure"],
-        [62, 235, "vending"],
-      ] as [number, number, string][],
-      edges: [[0, 1], [1, 2], [3, 4], [0, 2], [1, 3]] as [number, number][],
-    }),
-    [],
-  );
-
-  return (
-    <div className="app">
-      <div className="tabs" role="tablist">
-        {([
-          ["vault", "Library"],
-          ["ash", "Ask"],
-          ["graph", "Connections"],
-          ["cal", "Calendar"],
-          ["pad", "Scratchpad"],
-        ] as [Panel, string][]).map(([id, label]) => (
-          <button key={id} type="button" role="tab" aria-selected={panel === id} onClick={() => setPanel(id)}>
-            {label}
-          </button>
-        ))}
-      </div>
-      <div className="app-body">
-        <div className="side">
-          {FOLDERS.map(([name, n]) => (
-            <button key={name} type="button" aria-current={folder === name} onClick={() => setFolder(name)}>
-              <span>{name}</span>
-              <span className="n">{n}</span>
-            </button>
-          ))}
-        </div>
-        <div className="main">
-          {panel === "vault" &&
-            NOTES.map(([title, body, src, tag]) => (
-              <article className="note" key={title} onClick={() => setPanel("ash")}>
-                <h4>{title}</h4>
-                <p>{body}</p>
-                <div className="note-meta">
-                  <span className="chip a">{tag}</span>
-                  <span className="chip">from {src}</span>
-                  <span className="chip g">summarized</span>
-                </div>
-              </article>
-            ))}
-
-          {panel === "ash" && (
-            <div className="chat">
-              <div className="bub me">what did I decide about pricing again?</div>
-              <div className="think">
-                <div>› searching 134 ideas…</div>
-                <div>› 3 matches · 2 in Research</div>
-                <div>› reading “Charge for the outcome”</div>
-              </div>
-              <div className="bub ai">
-                Three notes touch it. The clearest is “Charge for the outcome” from March — seat pricing
-                punishes the thing you want more of, so meter the result. Two weeks later you argued against
-                yourself: metered bills are unpredictable, which kills enterprise deals. You never resolved it.
-              </div>
-              <div className="bub me">save that as a new idea</div>
-              <div className="bub ai">
-                Saved to Research as “Pricing: the unresolved argument”, linked to both sources.
-              </div>
-            </div>
-          )}
-
-          {panel === "graph" && (
-            <>
-              <svg className="graph" viewBox="0 0 420 300" role="img" aria-label="Ideas connected to one another">
-                {graph.edges.map(([a, b]) => (
-                  <line
-                    key={`${a}-${b}`}
-                    x1={graph.nodes[a][0]}
-                    y1={graph.nodes[a][1]}
-                    x2={graph.nodes[b][0]}
-                    y2={graph.nodes[b][1]}
-                    stroke="rgba(242,165,60,.4)"
-                    strokeWidth="1"
-                  />
-                ))}
-                {graph.nodes.map(([x, y, label], i) => (
-                  <g key={label}>
-                    <circle cx={x} cy={y} r={i < 2 ? 7 : 5} fill={i < 2 ? "#63e6a0" : "#f2a53c"} />
-                    <text x={x + 11} y={y + 4} fill="#6e7f78" fontSize="11" fontFamily="IBM Plex Mono, monospace">
-                      {label}
-                    </text>
-                  </g>
-                ))}
-              </svg>
-              <p className="count">134 ideas · 61 links · cross-pollination found 4 pairs you hadn't connected</p>
-            </>
-          )}
-
-          {panel === "cal" && (
-            <>
-              <div className="cal">
-                {Array.from({ length: 28 }, (_, i) => i + 1).map((d) => (
-                  <div key={d} className={d === 17 ? "has today" : [4, 9, 23].includes(d) ? "has" : undefined}>
-                    {d}
-                  </div>
-                ))}
-              </div>
-              <p className="count">17th — Mum's birthday · gift list attached</p>
-              <div className="gift">
-                {([["Pottery class voucher", "£65", true], ["The Lehman Trilogy tickets", "£110", false], ["Espresso tamper", "£28", false]] as [string, string, boolean][]).map(
-                  ([name, price, bought]) => (
-                    <div className="gift-row" key={name}>
-                      <span className="box">{bought ? "✓" : ""}</span>
-                      <span>{name}</span>
-                      <span className="price">{price}</span>
-                    </div>
-                  ),
-                )}
-              </div>
-            </>
-          )}
-
-          {panel === "pad" && (
-            <>
-              <div className="pad">
-                {([["Reply to the pricing thread", true], ["Draft the cold email sequence", false], ["Ask about onboarding", false]] as [string, boolean][]).map(
-                  ([task, done]) => (
-                    <div className={`todo${done ? " done" : ""}`} key={task}>
-                      <span className="box">{done ? "✓" : ""}</span>
-                      <span>{task}</span>
-                    </div>
-                  ),
-                )}
-                <div className="jot">
-                  {"jot pad — syncs as you type\n\nvending machine idea: the margin is the\nconvenience, not the goods. check if\nanyone's done it at airports."}
-                </div>
-              </div>
-              <p className="count">desktop only — sits in a resizable column beside the library</p>
-            </>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-};
+const LoopDiagram = () => (
+  <svg className="loop-svg" viewBox="0 0 640 250" role="img" aria-label="Capture, brief, build, write-back, repeat">
+    <defs>
+      <marker id="lar" markerWidth="9" markerHeight="9" refX="7" refY="3.5" orient="auto">
+        <path d="M0,0 L7,3.5 L0,7 z" fill="#f2a53c" />
+      </marker>
+      <marker id="lgr" markerWidth="9" markerHeight="9" refX="7" refY="3.5" orient="auto">
+        <path d="M0,0 L7,3.5 L0,7 z" fill="#63e6a0" />
+      </marker>
+    </defs>
+    {([
+      [90, 66, "capture", "the reel you scrolled past"],
+      [420, 66, "brief", "mechanism + your note"],
+      [420, 178, "build", "your agent, your repo"],
+      [90, 178, "write-back", "what it built, decided"],
+    ] as [number, number, string, string][]).map(([x, y, label, sub]) => (
+      <g key={label}>
+        <rect x={x - 84} y={y - 26} width="168" height="52" fill="none" stroke="#f2a53c" strokeWidth="1.2" />
+        <text x={x} y={y - 3} textAnchor="middle" fill="#d9e2dd" fontSize="13" fontFamily="IBM Plex Sans, sans-serif" fontWeight="600">{label}</text>
+        <text x={x} y={y + 14} textAnchor="middle" fill="#6e7f78" fontSize="9" fontFamily={MONO}>{sub}</text>
+      </g>
+    ))}
+    <line x1="176" y1="66" x2="330" y2="66" stroke="#f2a53c" strokeWidth="1" markerEnd="url(#lar)" />
+    <line x1="420" y1="92" x2="420" y2="146" stroke="#f2a53c" strokeWidth="1" markerEnd="url(#lar)" />
+    <line x1="334" y1="178" x2="180" y2="178" stroke="#f2a53c" strokeWidth="1" markerEnd="url(#lar)" />
+    <line x1="90" y1="152" x2="90" y2="98" stroke="#63e6a0" strokeWidth="1" strokeDasharray="4 4" markerEnd="url(#lgr)" />
+    <text x="255" y="52" textAnchor="middle" fill="#6e7f78" fontSize="9" fontFamily={MONO}>seconds</text>
+    <text x="255" y="196" textAnchor="middle" fill="#6e7f78" fontSize="9" fontFamily={MONO}>your repo, your keys</text>
+    <text x="320" y="234" textAnchor="middle" fill="#63e6a0" fontSize="11" fontFamily={MONO}>every trip round makes the next brief sharper</text>
+  </svg>
+);
 
 /* --------------------------------- page --------------------------------- */
 
 const Landing = ({ onEnter }: { onEnter?: () => void }) => {
   const [scrolled, setScrolled] = useState(false);
-  const [seeded, setSeeded] = useState({ text: "", nonce: 0 });
+  const [lost, setLost] = useState(0);
 
-  const onCatch = useCallback((text: string) => {
-    setSeeded((s) => ({ text, nonce: s.nonce + 1 }));
-    document.getElementById("capture")?.scrollIntoView({
+  const onCatch = useCallback(() => {
+    document.getElementById("mutation")?.scrollIntoView({
       behavior: REDUCED() ? "auto" : "smooth",
       block: "start",
     });
@@ -895,16 +643,18 @@ const Landing = ({ onEnter }: { onEnter?: () => void }) => {
   // while mounted and hides the app chrome.
   useEffect(() => {
     setLandingActive(true);
-    document.documentElement.classList.add("fb-landing");
+    // route-wide is the app's own opt-out of the phone-frame shell (see
+    // index.css); fb-landing unlocks the scroll lock the shell also applies.
+    document.documentElement.classList.add("fb-landing", "route-wide");
     return () => {
       setLandingActive(false);
-      document.documentElement.classList.remove("fb-landing");
+      document.documentElement.classList.remove("fb-landing", "route-wide");
     };
   }, []);
 
   useEffect(() => {
     const prev = document.title;
-    document.title = "Fart Brains — save the reel, get the build brief";
+    document.title = "Fart Brains — the tools you need aren't for sale";
     return () => {
       document.title = prev;
     };
@@ -914,17 +664,17 @@ const Landing = ({ onEnter }: { onEnter?: () => void }) => {
     <div className="fb-root">
       <style>{CSS}</style>
 
-      <nav className="nav">
+      <nav className={`nav ${scrolled ? "is-stuck" : ""}`}>
         <div className="wrap nav-in">
           <span className="brand">
             <i />
             Fart Brains
           </span>
           <div className="nav-links label">
-            <a href="#capture">the blend</a>
+            <a href="#mutation">the mutation</a>
+            <a href="#wall">the wall</a>
             <a href="#clusters">clusters</a>
-            <a href="#research">research</a>
-            <a href="#rebuild">rebuild</a>
+            <a href="#loop">the loop</a>
             <a href="#pricing">pricing</a>
           </div>
           <button type="button" className="btn sm" onClick={onEnter}>
@@ -934,166 +684,143 @@ const Landing = ({ onEnter }: { onEnter?: () => void }) => {
       </nav>
 
       <header className="hero">
+        <DriftField onCatch={onCatch} onLost={setLost} />
         <div className="wrap hero-in">
           <p className="label">
-            external brain drive · <span className="on">● connected</span> · yours alone
+            <span className="on">●</span> every play you scrolled past is still gone
           </p>
           <h1>
-            You saw it work for them. <span className="amber">Get your own version.</span>
+            The tools you actually need <span className="amber">aren't for sale.</span>
           </h1>
           <p className="lede">
-            A video goes past: someone's built a thing that writes their LinkedIn posts, humanizes them, and
-            schedules them. You think <em>damn, I want that for Instagram and Facebook</em>. Share the link,
-            say that out loud, and you get your own custom build — not their template, not a downloaded
-            markdown. Yours.
+            Somebody explains exactly how they did it — the strategy, the order, the reason it works. It's a
+            47-second reel or a 22-minute talk, and by Thursday it's gone. There's no product to buy that does
+            what they described. Fart Brains catches it, and one line from you turns it into something that
+            has never existed.
           </p>
+          <p className="hero-note">✱ "I want this, but with multi-tenancy and automated provisioning."</p>
           <div className="hero-cta">
             <button type="button" className="btn" onClick={onEnter}>
               Start free
             </button>
-            <a className="btn ghost" href="#capture">
-              See it work
+            <a className="btn ghost" href="#mutation">
+              See what that makes
             </a>
           </div>
-          <DriftField onCatch={onCatch} />
-          <p className="hint">↑ hit share on a reel and it lands here. click one to see what it becomes.</p>
+          <div className="hud">
+            <span>gone while you read this <b>{lost}</b></span>
+            <span>you'll never know which <b>—</b></span>
+          </div>
+          <p className="hint">↑ nobody counts these. that's what a brain fart is.</p>
         </div>
       </header>
 
-      <section id="capture">
+      <section id="mutation">
         <div className="wrap">
           <div className="sec-head">
-            <p className="label">01 / the blend</p>
-            <h2>A link, plus the thing you wished. That's the whole input.</h2>
+            <p className="label">01 / the mutation</p>
+            <h2>Their mechanism. Your one line. Something that didn't exist.</h2>
             <p>
-              It transcribes what they said, extracts what they actually <em>did</em>, follows every link they
-              mentioned, researches the gaps, and folds in your twist — the “but for Instagram” part. What
-              comes out is a build for your situation, aimed at your project. Change the wish and the whole
-              thing changes with it.
+              The source gives you a mechanism that already works, explained by the person who ran it. Your
+              note is the mutation — the part they never said, because they weren't building your thing. Edit
+              the note and watch what gets attributed to you.
             </p>
           </div>
-          <BlendConsole seeded={seeded} />
+          <MutationPanel />
+        </div>
+      </section>
+
+      <section id="wall">
+        <div className="wrap">
+          <div className="sec-head">
+            <p className="label">02 / the wall</p>
+            <h2>Your AI can't open the reel. You can.</h2>
+            <p>
+              The plays live on platforms that don't let agents in. Hand that link to any assistant and it
+              hits a wall. Hit share on your phone and it's already inside — transcribed, tagged and filed
+              before the screen locks.
+            </p>
+          </div>
+          <div className="wall">
+            <div className="wall-col">
+              <p className="mini-label">an agent, given the link</p>
+              <pre className="wall-term">
+{"$ fetch https://instagram.com/p/…\n"}
+<span className="err">{"net::ERR_CONNECTION_RESET"}</span>
+{"\n$ curl -sL https://instagram.com/p/…\n"}
+<span className="dim">{"621 KB of JavaScript shell\nno caption, no transcript, no og tags"}</span>
+              </pre>
+              <p className="cc-why">That's a real attempt, not an illustration.</p>
+            </div>
+            <div className="wall-col">
+              <p className="mini-label out-label">you, hitting share</p>
+              <pre className="wall-term">
+{"share sheet → Fart Brains\n"}
+<span className="ok">{"✓ transcribed        2.1s\n✓ action items       3\n✓ references         2 followed\n✓ filed              #llm-optimization"}</span>
+{"\n"}
+<span className="dim">{"done before the screen locked"}</span>
+              </pre>
+              <p className="cc-why">Anyone can summarize a web page. Almost nobody can get in here.</p>
+            </div>
+          </div>
         </div>
       </section>
 
       <section id="clusters">
         <div className="wrap">
           <div className="sec-head">
-            <p className="label">02 / the cluster</p>
+            <p className="label">03 / the clusters</p>
             <h2>It connected the dots and built the scaffolding.</h2>
             <p>
-              Sixteen things you saved months apart, sitting next to each other. Your brain drive reads across
-              them, finds the through-line, and stands up the infrastructure — a business, a solution, or the
-              opportunity you already walked past once. You don't get a reading list. You get the thing,
-              scaffolded, ready to build.
+              Sixteen things you saved months apart, sitting next to each other. It reads across them, finds
+              the through-line, and stands up the infrastructure — a business, a solution, or the opportunity
+              you already walked past once. Not a reading list. The thing, scaffolded.
             </p>
           </div>
           <ClusterField />
         </div>
       </section>
 
-      <section id="research">
+      <section id="loop">
         <div className="wrap">
           <div className="sec-head">
-            <p className="label">03 / ask it anything</p>
-            <h2>Ask in your words. Not the file's.</h2>
+            <p className="label">04 / the loop</p>
+            <h2>Your agent builds it, then tells the brain what it did.</h2>
             <p>
-              You don't remember the title, the folder, or what you called it — you remember roughly what it
-              was about. Ask that. It searches across everything you've saved, answers in a straight line, and
-              shows the source behind every claim. When your own library doesn't cover it, it goes out to the
-              web and brings back the rest, cited.
+              The brief goes to whatever you already work in, over MCP or plain REST. Your agent builds
+              against its own filesystem — we never touch it — then writes back what it built and what it
+              decided. That lands as new material, so the next brief never re-proposes what you already
+              shipped.
             </p>
           </div>
-          <ResearchPanel />
-        </div>
-      </section>
-
-      <section id="attach">
-        <div className="wrap">
-          <div className="sec-head">
-            <p className="label">04 / point it at anything</p>
-            <h2>One brain. Aim it at whatever you're working on.</h2>
-            <p>
-              Connect your own AI and it works with everything you've saved — your research, your transcripts,
-              your half-finished thinking — inside the project you're already in. No plugin zoo, nothing new on
-              your machine, and a record of everything it read.
-            </p>
-          </div>
-          <div className="attach">
-            <div className="attach-col">
-              <p className="mini-label">without it</p>
-              <ul className="bad">
-                <li>Re-explaining context you already wrote down</li>
-                <li>Pasting the same notes in again and again</li>
-                <li>A different plugin for every tool you use</li>
-                <li>No idea what it read or did</li>
-              </ul>
-            </div>
-            <div className="attach-col">
-              <p className="mini-label out-label">with it</p>
-              <ul className="good">
-                <li>It already knows what you saved</li>
-                <li>One connection, set up once</li>
-                <li>Nothing of ours on your machine</li>
-                <li>A record of everything it read</li>
-              </ul>
-              <pre className="prompt attach-code">
-                {"connect your AI to:\n  https://fartbrains.app/mcp\n\nthat's the whole setup."}
-              </pre>
+          <div className="loop-wrap">
+            <LoopDiagram />
+            <div className="loop-legend">
+              <div>
+                <b>capture</b>
+                <span>Share sheet, URL, voice or paste. Transcribed and filed on its own.</span>
+              </div>
+              <div>
+                <b>brief</b>
+                <span>What the source does, what to build, how it changes for your stack, how to verify.</span>
+              </div>
+              <div>
+                <b>build</b>
+                <span>Your agent, your repo, your keys. Nothing of ours on your machine.</span>
+              </div>
+              <div>
+                <b>write-back</b>
+                <span>What shipped comes home, so it learns from what you did, not just what you watched.</span>
+              </div>
             </div>
           </div>
-        </div>
-      </section>
-
-      <section id="rebuild">
-        <div className="wrap">
-          <div className="sec-head">
-            <p className="label">05 / rebuild, don't install</p>
-            <h2>Someone recommends an MCP server. You don't have to trust it.</h2>
-            <p>
-              Send it here instead. Your brain reads what the thing actually does, triages whether you need all
-              of it or one function of it, and then — unless it's genuinely complex — writes you your own
-              version from scratch. You get the capability. You don't get a stranger's code running next to
-              your keys.
-            </p>
-          </div>
-          <div className="triage">
-            <div className="tri-step">
-              <p className="mini-label">1 · read</p>
-              <p>What does it actually do, what does it touch, and what does it send out? Stated plainly, before anything runs.</p>
-            </div>
-            <div className="tri-arrow" aria-hidden="true">→</div>
-            <div className="tri-step">
-              <p className="mini-label">2 · triage</p>
-              <p>You wanted one function out of forty. That's the only part worth having, and it's a hundred lines.</p>
-            </div>
-            <div className="tri-arrow" aria-hidden="true">→</div>
-            <div className="tri-step featured">
-              <p className="mini-label out-label">3 · rebuild</p>
-              <p>Your own implementation, in your own project, matching your conventions. Same capability, none of the supply chain.</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section id="library">
-        <div className="wrap">
-          <div className="sec-head">
-            <p className="label">06 / your library</p>
-            <h2>Findable in a year, not just this week.</h2>
-            <p>
-              Folders, tags and search that works on half a remembered word. Ideas that come back to find you.
-              And a map of how the things you saved connect to each other.
-            </p>
-          </div>
-          <AppTour />
         </div>
       </section>
 
       <section id="pricing">
         <div className="wrap">
           <div className="sec-head">
-            <p className="label">07 / pricing</p>
+            <p className="label">05 / pricing</p>
             <h2>Free forever, or nine dollars.</h2>
             <p>
               The free plan is real and permanent, not a trial with a countdown. Export everything or delete
@@ -1114,8 +841,8 @@ const Landing = ({ onEnter }: { onEnter?: () => void }) => {
                 Start free
               </button>
               <p className="fine">
-                Saving a popular video usually costs nothing at all — cached and caption-based transcripts
-                don't count against it.
+                Saving a popular video usually costs nothing — cached and caption-based transcripts don't
+                count against it.
               </p>
             </div>
             <div className="plan featured">
@@ -1144,7 +871,7 @@ const Landing = ({ onEnter }: { onEnter?: () => void }) => {
             </div>
             <div>
               <b>Leave whenever.</b>
-              <span>Export to JSON or Markdown, or delete the account outright. Both are one click in settings.</span>
+              <span>Export to JSON or Markdown, or delete the account outright. Both are one click.</span>
             </div>
           </div>
         </div>
@@ -1152,12 +879,12 @@ const Landing = ({ onEnter }: { onEnter?: () => void }) => {
 
       <section className="close">
         <div className="wrap">
-          <h2>Stop losing the good ones.</h2>
+          <h2>You can't miss what you can't remember.</h2>
           <button type="button" className="btn" onClick={onEnter}>
             Start free
           </button>
           <div className="foot">
-            <span>fart brains — an external brain drive</span>
+            <span>fart brains</span>
             <span>web · installable · windows desktop</span>
           </div>
         </div>
@@ -1171,6 +898,23 @@ export default Landing;
 /* -------------------------------- styles -------------------------------- */
 
 const CSS = `
+html.fb-landing,
+html.fb-landing body,
+html.fb-landing #root {
+  height: auto !important;
+  min-height: 100%;
+  max-width: none !important;
+  width: auto !important;
+  overflow: visible !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  transform: none !important;
+  scroll-behavior: smooth;
+  background: #06080a;
+}
+html.fb-landing body { padding-right: 0 !important; }
+html.fb-landing body::before { display: none !important; }
+
 :root {
     color-scheme: dark;
     /* Direction A palette, now carrying the whole page */
@@ -1469,4 +1213,70 @@ const CSS = `
 
   @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
   :focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
+/* ---------- hero fusion canvas ---------- */
+#fusion { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 0; }
+.hero-note {
+  margin: 26px 0 0; padding: 14px 16px; border-left: 2px solid var(--amber);
+  background: rgba(242,165,60,.05); max-width: 52ch;
+  font-family: "IBM Plex Mono", monospace; font-size: 13px; line-height: 1.6; color: var(--amber);
+}
+
+/* ---------- the mutation ---------- */
+.mut-tabs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+.mut-tabs button {
+  padding: 9px 15px; border: 1px solid var(--rule); font-size: 13px; color: var(--dim);
+  background: rgba(255,255,255,.015); transition: color .2s, border-color .2s, background .2s;
+}
+.mut-tabs button:hover { color: var(--ink); }
+.mut-tabs button[aria-selected="true"] { background: var(--amber); border-color: var(--amber); color: #10130f; font-weight: 600; }
+.mut { border: 1px solid var(--rule); background: var(--panel); }
+.mut-grid { display: grid; grid-template-columns: 1fr; }
+@media (min-width: 940px) { .mut-grid { grid-template-columns: minmax(0,.85fr) minmax(0,1.15fr); } }
+.mut-left { padding: 20px; border-bottom: 1px solid var(--rule); }
+@media (min-width: 940px) { .mut-left { border-bottom: 0; border-right: 1px solid var(--rule); } }
+.mut-src { font-family: "IBM Plex Mono", monospace; font-size: 11.5px; color: var(--dim); margin: 0 0 12px; }
+.mut-said { margin: 0; padding: 0; list-style: none; display: grid; gap: 9px; }
+.mut-said li { padding-left: 20px; position: relative; font-size: 13.5px; line-height: 1.5; color: var(--ink-2); }
+.mut-said li::before { content: "·"; position: absolute; left: 6px; color: var(--dim); }
+.mut-noterow { display: flex; align-items: center; gap: 10px; padding: 13px 16px; border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule); background: rgba(242,165,60,.05); }
+.mut-noterow .caret { color: var(--amber); font-family: "IBM Plex Mono", monospace; }
+.mut-noterow input {
+  flex: 1; min-width: 0; background: none; border: 0; outline: none; color: var(--amber);
+  font-family: "IBM Plex Mono", monospace; font-size: 13.5px;
+}
+.mut-right { padding: 20px; display: grid; gap: 14px; align-content: start; }
+.mut-out h3 { margin: 0 0 6px; font-size: 19px; letter-spacing: -0.02em; }
+.mut-out p { margin: 0; font-size: 14px; line-height: 1.55; color: var(--ink-2); }
+.mut-never {
+  display: inline-flex; align-items: center; gap: 8px; align-self: start;
+  font-family: "IBM Plex Mono", monospace; font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase;
+  color: var(--green); border: 1px solid rgba(99,230,160,.4); padding: 4px 10px;
+}
+.mut-diagram { width: 100%; height: auto; display: block; background: var(--panel-2); border: 1px solid var(--rule); }
+.mut-parts { display: grid; gap: 7px; }
+.mut-part { display: grid; grid-template-columns: 118px 1fr; gap: 12px; font-size: 12.5px; line-height: 1.5; }
+@media (max-width: 620px) { .mut-part { grid-template-columns: 1fr; gap: 2px; } }
+.mut-part b { font-family: "IBM Plex Mono", monospace; font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--amber); font-weight: 500; }
+.mut-part span { color: var(--ink-2); }
+
+/* ---------- the wall ---------- */
+.wall { display: grid; gap: 1px; background: var(--rule-2); border: 1px solid var(--rule); grid-template-columns: 1fr; }
+@media (min-width: 820px) { .wall { grid-template-columns: 1fr 1fr; } }
+.wall-col { background: var(--bg); padding: 20px; display: grid; gap: 12px; align-content: start; }
+.wall-term {
+  font-family: "IBM Plex Mono", monospace; font-size: 12px; line-height: 1.7;
+  background: var(--panel-2); border: 1px solid var(--rule); padding: 14px; white-space: pre-wrap; overflow-x: auto;
+}
+.wall-term .err { color: #e5624a; }
+.wall-term .ok { color: var(--green); }
+.wall-term .dim { color: var(--faint); }
+
+/* ---------- the loop ---------- */
+.loop-wrap { border: 1px solid var(--rule); background: var(--panel); padding: clamp(16px,3vw,28px); }
+.loop-svg { width: 100%; height: auto; display: block; max-width: 720px; margin: 0 auto; }
+.loop-legend { display: grid; gap: 10px; margin-top: 18px; grid-template-columns: 1fr; }
+@media (min-width: 760px) { .loop-legend { grid-template-columns: repeat(4, 1fr); } }
+.loop-legend div { display: grid; gap: 4px; }
+.loop-legend b { font-family: "IBM Plex Mono", monospace; font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--amber); font-weight: 500; }
+.loop-legend span { font-size: 12.5px; color: var(--dim); line-height: 1.5; }
 `;
