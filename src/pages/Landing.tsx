@@ -1,26 +1,51 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { setLandingActive } from "@/lib/landingMode";
 
 /* ------------------------------------------------------------------ *
  * Fart Brains — landing page.
  *
- * Deliberately self-contained: it does not use the app's design tokens
- * or shadcn primitives, so restyling the app never silently restyles
- * the marketing page (and vice versa). Everything here is hand-rolled
- * CSS + one canvas; no new dependencies.
+ * The argument, in order:
+ *
+ *   1. The thing you need does not exist as a product. Someone explained
+ *      how to build it in a reel you have already forgotten.
+ *   2. Your agent cannot get into that reel. You can — the share sheet is
+ *      a door that HTTP does not have.
+ *   3. What comes back is not a summary. It is a brief your own agent
+ *      builds from, carrying your one line about what you actually want.
+ *
+ * Deliberately self-contained: no app design tokens, no shadcn, so
+ * restyling the app never silently restyles the marketing page. Hand-
+ * rolled CSS and one canvas; no new dependencies.
+ *
+ * Every claim below is checked against what is actually shipped. Where
+ * something is not built, it is not listed — see the note above CAPABILITIES.
  * ------------------------------------------------------------------ */
 
-const NEON = "#8b5cf6";
-const CYAN = "#22d3ee";
-const LIME = "#a3e635";
+const AMBER = "#f2a53c";
 
-/* ---------------------------- neural canvas ---------------------------- */
+/* ------------------------------------------------------------------ *
+ * Hero: the drift field.
+ *
+ * Ideas rise, thin out and vanish. You can catch one, but you will miss
+ * most of them, and the counter only ever counts what was lost — because
+ * the thing about a forgotten idea is that you never learn what it was.
+ * ------------------------------------------------------------------ */
 
-type Node = { x: number; y: number; vx: number; vy: number; r: number };
+const DRIFTING = [
+  "the app idea from the shower",
+  "why the second version was better",
+  "the fix you thought of while driving",
+  "that reel about SEO for LLMs",
+  "the podcast tangent at 34:20",
+  "what the client actually meant",
+  "the cheaper way to do it",
+  "a better opening line",
+];
 
-const NeuralField = () => {
+type Bubble = { text: string; x: number; y: number; w: number; v: number; a: number; wob: number };
+
+const DriftField = ({ onLost }: { onLost: () => void }) => {
   const ref = useRef<HTMLCanvasElement | null>(null);
-  const pointer = useRef({ x: -9999, y: -9999 });
 
   useEffect(() => {
     const canvas = ref.current;
@@ -29,368 +54,531 @@ const NeuralField = () => {
     if (!ctx) return;
 
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    let raf = 0;
-    let nodes: Node[] = [];
     let w = 0;
     let h = 0;
+    let raf = 0;
+    let seed = 0;
+    const bubbles: Bubble[] = [];
 
-    const seed = () => {
+    // On wide screens the copy occupies the left half, so bubbles drift up
+    // the empty right side rather than across the headline and buttons.
+    const bandX = (bw: number) =>
+      w >= 900
+        ? w * 0.52 + Math.random() * Math.max(1, w * 0.44 - bw)
+        : 20 + Math.random() * Math.max(1, w - bw - 40);
+
+    const spawn = () => {
+      const text = DRIFTING[seed % DRIFTING.length];
+      seed += 1;
+      ctx.font = "13px ui-monospace, SFMono-Regular, monospace";
+      const bw = ctx.measureText(text).width + 26;
+      bubbles.push({
+        text,
+        w: bw,
+        x: bandX(bw),
+        y: h + 30,
+        v: 0.26 + Math.random() * 0.28,
+        a: 1,
+        wob: Math.random() * 6.28,
+      });
+    };
+
+    // Seeding is deferred until the canvas has a real height. On mount it is
+    // still inside the app's 430px frame and may measure zero, and bubbles
+    // seeded against a zero height land off-canvas and are culled instantly —
+    // which looks exactly like the animation being broken.
+    let seeded = false;
+
+    const size = () => {
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
       w = canvas.clientWidth;
       h = canvas.clientHeight;
+      if (w <= 0 || h <= 0) return;
       canvas.width = w * dpr;
       canvas.height = h * dpr;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      const count = Math.max(28, Math.min(90, Math.round((w * h) / 16000)));
-      nodes = Array.from({ length: count }, () => ({
-        x: Math.random() * w,
-        y: Math.random() * h,
-        vx: (Math.random() - 0.5) * 0.25,
-        vy: (Math.random() - 0.5) * 0.25,
-        r: 1 + Math.random() * 1.8,
-      }));
+      if (seeded) {
+        // Width changed under us — re-band anything already on screen, or
+        // bubbles seeded at the narrow width keep drifting over the text.
+        for (const b of bubbles) b.x = bandX(b.w);
+      }
+      if (!seeded) {
+        seeded = true;
+        // Spread the first few up the canvas so the field reads as
+        // already-running rather than filling in from the bottom edge.
+        for (let i = 0; i < 4; i++) {
+          spawn();
+          bubbles[i].y = h - 90 - i * (h / 5);
+        }
+      }
     };
 
     const draw = () => {
       ctx.clearRect(0, 0, w, h);
-      const p = pointer.current;
-
-      for (const n of nodes) {
-        n.x += n.vx;
-        n.y += n.vy;
-        if (n.x < 0 || n.x > w) n.vx *= -1;
-        if (n.y < 0 || n.y > h) n.vy *= -1;
-
-        // gentle attraction toward the cursor, so the field "thinks" at you
-        const dx = p.x - n.x;
-        const dy = p.y - n.y;
-        const d2 = dx * dx + dy * dy;
-        if (d2 < 40000 && d2 > 1) {
-          const f = 0.00035;
-          n.vx += dx * f;
-          n.vy += dy * f;
+      for (let i = bubbles.length - 1; i >= 0; i--) {
+        const b = bubbles[i];
+        if (!reduced) {
+          b.y -= b.v;
+          b.wob += 0.012;
+          // Fade out in the upper third, so they dissolve rather than
+          // hitting the top edge and disappearing abruptly.
+          if (b.y < h * 0.36) b.a = Math.max(0, b.a - 0.0038);
         }
-        n.vx = Math.max(-0.9, Math.min(0.9, n.vx * 0.995));
-        n.vy = Math.max(-0.9, Math.min(0.9, n.vy * 0.995));
-      }
-
-      for (let i = 0; i < nodes.length; i++) {
-        for (let j = i + 1; j < nodes.length; j++) {
-          const a = nodes[i];
-          const b = nodes[j];
-          const dist = Math.hypot(a.x - b.x, a.y - b.y);
-          if (dist > 130) continue;
-          ctx.strokeStyle = `rgba(139,92,246,${(1 - dist / 130) * 0.35})`;
-          ctx.lineWidth = 1;
-          ctx.beginPath();
-          ctx.moveTo(a.x, a.y);
-          ctx.lineTo(b.x, b.y);
-          ctx.stroke();
+        if (b.a <= 0 || b.y < -40) {
+          bubbles.splice(i, 1);
+          onLost();
+          continue;
         }
-      }
-
-      for (const n of nodes) {
-        const near = Math.hypot(p.x - n.x, p.y - n.y) < 140;
-        ctx.fillStyle = near ? CYAN : "rgba(226,232,240,0.75)";
+        const x = b.x + Math.sin(b.wob) * 7;
+        const r = 4;
+        ctx.globalAlpha = b.a * 0.9;
         ctx.beginPath();
-        ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2);
+        ctx.moveTo(x + r, b.y);
+        ctx.arcTo(x + b.w, b.y, x + b.w, b.y + 30, r);
+        ctx.arcTo(x + b.w, b.y + 30, x, b.y + 30, r);
+        ctx.arcTo(x, b.y + 30, x, b.y, r);
+        ctx.arcTo(x, b.y, x + b.w, b.y, r);
+        ctx.closePath();
+        ctx.fillStyle = "rgba(242,165,60,.06)";
         ctx.fill();
+        ctx.strokeStyle = "rgba(242,165,60,.34)";
+        ctx.lineWidth = 1;
+        ctx.stroke();
+        ctx.fillStyle = "rgba(217,226,221,.85)";
+        ctx.font = "13px ui-monospace, SFMono-Regular, monospace";
+        ctx.textBaseline = "middle";
+        ctx.fillText(b.text, x + 13, b.y + 15);
+        ctx.globalAlpha = 1;
       }
-
       raf = requestAnimationFrame(draw);
     };
 
-    const onPointer = (e: PointerEvent) => {
-      const rect = canvas.getBoundingClientRect();
-      pointer.current = { x: e.clientX - rect.left, y: e.clientY - rect.top };
-    };
-    const onLeave = () => {
-      pointer.current = { x: -9999, y: -9999 };
-    };
+    // The app's phone frame unlocks after mount, which changes this canvas's
+    // size without firing a window resize — so watch the element itself.
+    // Without this the text renders stretched at the pre-unlock width.
+    const ro = new ResizeObserver(size);
+    ro.observe(canvas);
+    size();
+    draw();
+    const timer = reduced
+      ? undefined
+      : window.setInterval(() => {
+          if (bubbles.length < 7) spawn();
+        }, 2200);
 
-    seed();
-    if (reduced) {
-      draw();
-      cancelAnimationFrame(raf);
-    } else {
-      raf = requestAnimationFrame(draw);
-    }
-    window.addEventListener("resize", seed);
-    window.addEventListener("pointermove", onPointer);
-    window.addEventListener("pointerleave", onLeave);
     return () => {
       cancelAnimationFrame(raf);
-      window.removeEventListener("resize", seed);
-      window.removeEventListener("pointermove", onPointer);
-      window.removeEventListener("pointerleave", onLeave);
+      ro.disconnect();
+      if (timer) window.clearInterval(timer);
     };
-  }, []);
+  }, [onLost]);
 
-  return <canvas ref={ref} className="fb-canvas" aria-hidden="true" />;
+  return <canvas ref={ref} className="fb-drift" aria-hidden="true" />;
 };
 
-/* ------------------------- scroll reveal helper ------------------------- */
+/* ------------------------------------------------------------------ *
+ * The mutation.
+ *
+ * The load-bearing demo. Their mechanism is fixed; your one line is the
+ * variable. Editing the note visibly changes what comes out, because
+ * that is the actual product: not the transcript, the brief built from
+ * the transcript plus what you wanted.
+ * ------------------------------------------------------------------ */
 
-const Reveal = ({
-  children,
-  delay = 0,
-  className = "",
-}: {
-  children: React.ReactNode;
-  delay?: number;
-  className?: string;
-}) => {
-  const ref = useRef<HTMLDivElement | null>(null);
-  const [shown, setShown] = useState(false);
-
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    const io = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setShown(true);
-          io.disconnect();
-        }
-      },
-      { threshold: 0.15 },
-    );
-    io.observe(el);
-    return () => io.disconnect();
-  }, []);
-
-  return (
-    <div
-      ref={ref}
-      className={`fb-reveal ${shown ? "is-in" : ""} ${className}`}
-      style={{ transitionDelay: `${delay}ms` }}
-    >
-      {children}
-    </div>
-  );
+type Source = {
+  id: string;
+  tab: string;
+  src: string;
+  said: string[];
+  note: string;
+  /** Built from the note, so the output changes when the note changes. */
+  build: (note: string) => { title: string; body: string };
 };
 
-/* --------------------------- interactive demo --------------------------- */
-
-const DEMO_STEPS = [
+const SOURCES: Source[] = [
   {
-    label: "Paste a link",
-    input: "https://youtu.be/a-video-you-will-never-rewatch",
-    title: "Cold email teardown",
-    folder: "Marketing",
-    bullets: [
-      "Lead with the recipient's problem, not your product.",
-      "One ask per email — pick the smallest possible yes.",
-      "Follow up 3x; 70% of replies come after the first send.",
+    id: "seo",
+    tab: "A 47-second reel",
+    src: "instagram.com/reel · aggressive SEO for LLMs",
+    said: [
+      "Answer the question in the first 40 words, before any preamble.",
+      "One page per query shape, not one page per keyword.",
+      "Mark up the claim so the model can quote it without reading the page.",
     ],
+    note: "but for our docs site, and it has to survive our stack",
+    build: (note) => ({
+      title: "Query-shape routing for the docs site",
+      body: note.trim()
+        ? `Ten interceptor routes keyed to query shape, the metadata templates, and the prerender step the reel never mentions — adapted to ${note.trim().replace(/^but /i, "")}.`
+        : "The three tactics from the reel, written out in order, with nothing adapted to your stack. Add a note above and it changes.",
+    }),
   },
   {
-    label: "Dump a transcript",
-    input: "so the trick is you never batch the requests, you stream them and…",
-    title: "Streaming > batching",
-    folder: "Engineering",
-    bullets: [
-      "Stream partial results so the UI never sits blank.",
-      "Batching hides latency spikes until they're unfixable.",
-      "Backpressure is the whole game at 10k concurrent.",
+    id: "tenancy",
+    tab: "A podcast episode",
+    src: "22 min · running single-tenant deployments by hand",
+    said: [
+      "One database per customer, provisioned manually on signup.",
+      "Migrations run per tenant, in a loop, with a kill switch.",
+      "Billing reads from a per-tenant usage table, not the app.",
     ],
+    note: "same idea but multi-tenant, provisioning automatic",
+    build: (note) => ({
+      title: "A control plane for what they did by hand",
+      body: note.trim()
+        ? `A provisioning path, row-level isolation and per-tenant quotas — turning a story about hand-provisioning into ${note.trim().replace(/^same idea but /i, "")}.`
+        : "Their manual process, transcribed accurately. Useful, but it is still their process. The note is what makes it yours.",
+    }),
   },
   {
-    label: "Type a shower thought",
-    input: "vending machine but it only sells things you forgot to buy",
-    title: "Forgot-it vending",
-    folder: "Ideas",
-    bullets: [
-      "Sits by the exit of every grocery store.",
-      "Stocks the 12 things people drive back for.",
-      "Margin is the convenience, not the goods.",
+    id: "mcp",
+    tab: "A stranger's recommendation",
+    src: "a thread recommending an MCP server",
+    said: [
+      "Install the server, add it to your client config.",
+      "It exposes eleven tools; you will use one.",
+      "It reads your whole working directory on startup.",
     ],
+    note: "I only want the one function. none of the supply chain.",
+    build: (note) => ({
+      title: "The one function, in your project",
+      body: note.trim()
+        ? `Your own short version of just that capability, living in your repo — ${note.trim()}`
+        : "A faithful description of a package you would be installing into your context and your machine. That is the version without a note.",
+    }),
   },
 ];
 
-const CaptureDemo = () => {
-  const [step, setStep] = useState(0);
-  const [typed, setTyped] = useState("");
-  const [phase, setPhase] = useState<"typing" | "thinking" | "done">("typing");
-  const timers = useRef<number[]>([]);
+const Mutation = () => {
+  const [active, setActive] = useState(0);
+  const source = SOURCES[active];
+  const [note, setNote] = useState(source.note);
 
-  const clearTimers = useCallback(() => {
-    timers.current.forEach(clearTimeout);
-    timers.current = [];
-  }, []);
+  // Switching source swaps in that source's example note, so the panel is
+  // never left showing a note that belongs to a different mechanism.
+  const pick = (i: number) => {
+    setActive(i);
+    setNote(SOURCES[i].note);
+  };
 
-  useEffect(() => {
-    clearTimers();
-    const target = DEMO_STEPS[step].input;
-    setTyped("");
-    setPhase("typing");
-
-    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (reduced) {
-      setTyped(target);
-      setPhase("done");
-      return clearTimers;
-    }
-
-    for (let i = 1; i <= target.length; i++) {
-      timers.current.push(
-        window.setTimeout(() => setTyped(target.slice(0, i)), i * 22),
-      );
-    }
-    const end = target.length * 22;
-    timers.current.push(window.setTimeout(() => setPhase("thinking"), end + 250));
-    timers.current.push(window.setTimeout(() => setPhase("done"), end + 1400));
-    timers.current.push(
-      window.setTimeout(() => setStep((s) => (s + 1) % DEMO_STEPS.length), end + 5200),
-    );
-    return clearTimers;
-  }, [step, clearTimers]);
-
-  const s = DEMO_STEPS[step];
+  const out = useMemo(() => source.build(note), [source, note]);
 
   return (
-    <div className="fb-demo">
-      <div className="fb-demo-tabs" role="tablist" aria-label="Capture examples">
-        {DEMO_STEPS.map((d, i) => (
+    <>
+      <div className="fb-mut-tabs" role="tablist" aria-label="Sources">
+        {SOURCES.map((s, i) => (
           <button
-            key={d.label}
+            key={s.id}
+            type="button"
             role="tab"
-            aria-selected={i === step}
-            className={`fb-demo-tab ${i === step ? "is-active" : ""}`}
-            onClick={() => setStep(i)}
+            aria-selected={i === active}
+            className="fb-mut-tab"
+            onClick={() => pick(i)}
           >
-            {d.label}
+            {s.tab}
           </button>
         ))}
       </div>
 
-      <div className="fb-demo-window">
-        <div className="fb-demo-bar">
-          <span className="fb-dot" style={{ background: "#ff5f57" }} />
-          <span className="fb-dot" style={{ background: "#febc2e" }} />
-          <span className="fb-dot" style={{ background: "#28c840" }} />
-          <span className="fb-demo-title">Fart Brains — Capture</span>
+      <div className="fb-mut">
+        <div className="fb-mut-noterow">
+          <span className="fb-caret" aria-hidden="true">✱</span>
+          <input
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            maxLength={140}
+            aria-label="What you want instead"
+            placeholder="what you actually want — try clearing this"
+          />
         </div>
-
-        <div className="fb-demo-body">
-          <div className="fb-demo-input">
-            <span className="fb-demo-caret-line">{typed}</span>
-            {phase === "typing" && <span className="fb-caret" />}
+        <div className="fb-mut-grid">
+          <div className="fb-mut-left">
+            <p className="fb-mut-src">{source.src}</p>
+            <p className="fb-mini">what they described</p>
+            <ul className="fb-said">
+              {source.said.map((line) => (
+                <li key={line}>{line}</li>
+              ))}
+            </ul>
           </div>
-
-          <div className={`fb-demo-out ${phase === "done" ? "is-in" : ""}`}>
-            {phase === "thinking" ? (
-              <div className="fb-thinking">
-                <span />
-                <span />
-                <span />
-                <em>reading it so you don't have to…</em>
-              </div>
-            ) : phase === "done" ? (
-              <div className="fb-card">
-                <div className="fb-card-head">
-                  <strong>{s.title}</strong>
-                  <span className="fb-chip">{s.folder}</span>
-                </div>
-                <ul>
-                  {s.bullets.map((b) => (
-                    <li key={b}>{b}</li>
-                  ))}
-                </ul>
-                <div className="fb-card-foot">saved · searchable forever</div>
-              </div>
-            ) : (
-              <div className="fb-thinking fb-thinking--idle">&nbsp;</div>
-            )}
+          <div className="fb-mut-right">
+            <p className="fb-mini fb-mini--amber">what you get back</p>
+            <h3>{out.title}</h3>
+            <p className="fb-mut-body">{out.body}</p>
+            <span className="fb-never">your agent builds it — never us</span>
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 };
 
-/* --------------------------------- FAQ --------------------------------- */
+/* ------------------------------------------------------------------ *
+ * What it actually does.
+ *
+ * Every line here was checked against the code before being written.
+ * Three claims from the draft copy were cut rather than softened:
+ *
+ *   - "MCP or REST" — there is no REST API. The endpoint speaks MCP.
+ *   - "Write-back" as an automatic feature — an agent can write back
+ *     with create_idea / update_idea, but nothing does it on its own,
+ *     so it is described as something your agent can do, not something
+ *     that happens.
+ *   - "A Windows build" — electron packager is a devDependency and the
+ *     app runs on the desktop, but no packaged installer ships today.
+ *
+ * If a capability is not here, it is because it is not built. That rule
+ * is the whole reason this list is worth reading.
+ * ------------------------------------------------------------------ */
 
-const FAQS: [string, string][] = [
-  [
-    "Why is it called Fart Brains?",
-    "Because that is what your brain does with a good idea if you don't write it down: releases it into the air, never to be recovered. The name is a reminder, not a joke. Okay, it's mostly a joke.",
-  ],
-  [
-    "Is my stuff private?",
-    "Yes. It's a single-user vault behind your own login. No feed, no sharing, no team workspace, nobody's algorithm reading your half-formed thoughts.",
-  ],
-  [
-    "What can it actually swallow?",
-    "Typed notes, pasted URLs, and pasted transcripts from anywhere — video, podcast, a chat you exported. It extracts the text, summarizes it, and files it.",
-  ],
-  [
-    "Does it run offline / on desktop?",
-    "There's a desktop build alongside the web app, so the vault sits in your dock like a real application instead of tab number forty-one.",
-  ],
+const CAPABILITIES: Array<{ group: string; why: string; items: Array<[string, string]> }> = [
+  {
+    group: "Getting it in",
+    why: "The material is worthless if capturing it costs you anything at all.",
+    items: [
+      ["Share sheet", "Hit share on a reel, a post or a page from any app on your phone."],
+      ["Locked platforms", "Instagram and YouTube get transcribed from the link alone."],
+      ["Voice capture", "Hold the mic, talk, get it back written down."],
+      ["Paste anything", "A URL, a transcript, a wall of text, half a sentence."],
+      ["Duplicate check", "Tells you when you have saved that link before."],
+    ],
+  },
+  {
+    group: "Making it usable",
+    why: "A transcript is not knowledge. The processing is what makes it worth keeping.",
+    items: [
+      ["Summary", "The key points and the claims the source actually makes."],
+      ["Auto-tags and folder", "Tagged and filed on arrival, without you naming anything."],
+      ["References", "The links, tools and citations they mentioned, pulled out."],
+      ["Deep research", "Send an item out to be researched; it comes back with sources."],
+      ["House rules", "Your own instructions, followed by every summary and brief."],
+    ],
+  },
+  {
+    group: "Making it connect",
+    why: "One save is a note. Sixteen related saves are a plan you never wrote down.",
+    items: [
+      ["Related items", "Surfaces the saves that belong with this one."],
+      ["Cross-pollination", "Points at the older idea that belongs with the new one."],
+      ["The graph", "The whole library as a map you can pan and isolate."],
+      ["Ask anything", "Chat with any item months later, and keep the answer."],
+      ["Search", "Half a word you half-remember, and it comes back with its source."],
+    ],
+  },
+  {
+    group: "Turning it into something",
+    why: "This is the part nobody else does. The rest of the market stops at storage.",
+    items: [
+      ["The brief", "Summary, references and your note, compiled into one thing to act on."],
+      ["Your note leads", "What you wanted when you saved it is the primary instruction."],
+      ["Build mode", "Written for a coding agent, with your stack and your other saves in view."],
+      ["A do-not list", "Every brief names what would be unsafe, expensive or wrong to install."],
+      ["Marked improvements", "Anything it adds beyond the source is labelled as such."],
+    ],
+  },
+  {
+    group: "Attaching it to your work",
+    why: "One endpoint, so the brief lands where the building actually happens.",
+    items: [
+      ["21 tools, one endpoint", "No client library, no plugin, nothing installed on your machine."],
+      ["Your agent builds", "It runs on your filesystem, in your project, with your keys."],
+      ["Recall mid-build", "Your agent can pull related saves while it works."],
+      ["It can write back", "Your agent can file what it built, so the next brief knows."],
+      ["Sign-in, not a key", "Connecting signs you in; the endpoint refuses anything else."],
+    ],
+  },
+  {
+    group: "Keeping it yours",
+    why: "One account is one private brain. No feed, no team, no algorithm.",
+    items: [
+      ["Reminders", "Alarms, push and email, so an idea can come find you instead."],
+      ["Projects and to-dos", "Boards, priorities, and the tasks an idea turned into."],
+      ["Share exactly one", "A revocable read-only link to a single item, and nothing else."],
+      ["Trash and restore", "Soft delete with 30-day retention. Deleting is never instant."],
+      ["Export and delete", "JSON or Markdown out. Account deletion behind re-auth."],
+    ],
+  },
 ];
 
-const Faq = () => {
-  const [open, setOpen] = useState<number | null>(0);
-  return (
-    <div className="fb-faq">
-      {FAQS.map(([q, a], i) => (
-        <div key={q} className={`fb-faq-item ${open === i ? "is-open" : ""}`}>
-          <button onClick={() => setOpen(open === i ? null : i)} aria-expanded={open === i}>
-            <span>{q}</span>
-            <em aria-hidden="true">{open === i ? "–" : "+"}</em>
-          </button>
-          <div className="fb-faq-body">
-            <p>{a}</p>
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-};
+/* Scoped to .fb-root so the marketing page and the app never restyle
+   each other. The app paints a fixed aurora behind everything, so the
+   root carries its own opaque ground or it shows through. */
+const CSS = `
+/* Unlock the app's desktop phone frame. #root is 430px wide, overflow
+   hidden, rounded and transformed; body::before paints the aurora behind
+   it. Without this the page renders as a narrow column with the app's
+   background showing down both sides. */
+html.fb-landing,
+html.fb-landing body,
+html.fb-landing #root {
+  height:auto !important; min-height:100%; width:auto !important;
+  max-width:none !important; overflow:visible !important;
+  border-radius:0 !important; box-shadow:none !important;
+  transform:none !important; padding-right:0 !important;
+  scroll-behavior:smooth;
+}
+html.fb-landing body::before,
+html.fb-landing body::after { display:none !important; }
 
-/* -------------------------------- page -------------------------------- */
+.fb-root {
+  --bg:#06080a; --panel:#0b0f12; --panel2:#0e1417;
+  --ink:#d9e2dd; --ink2:#b9c6c0; --dim:#6e7f78; --faint:#46534e;
+  --amber:${AMBER}; --green:#63e6a0; --red:#e5624a;
+  --rule:rgba(217,226,221,.12); --rule2:rgba(217,226,221,.06);
+  --sp:clamp(16px,4vw,44px);
+  position:relative; z-index:1; min-height:100vh;
+  background:var(--bg); color:var(--ink); overflow-x:hidden;
+  font-family:"IBM Plex Sans",ui-sans-serif,system-ui,-apple-system,sans-serif;
+  -webkit-font-smoothing:antialiased;
+}
+.fb-root *{box-sizing:border-box}
+.fb-root a{color:inherit;text-decoration:none}
+.fb-wrap{max-width:1200px;margin:0 auto;padding-left:var(--sp);padding-right:var(--sp)}
+.fb-root section{padding-top:clamp(44px,7vw,92px)}
+.fb-label{font-family:ui-monospace,SFMono-Regular,monospace;font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);margin:0}
+.fb-on{color:var(--green)}
+.fb-amber{color:var(--amber)}
+.fb-mini{font-family:ui-monospace,SFMono-Regular,monospace;font-size:10.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--faint);margin:0 0 8px}
+.fb-mini--amber{color:var(--amber)}
+.fb-caret{color:var(--amber);font-family:ui-monospace,monospace}
 
-const FEATURES = [
-  {
-    k: "01",
-    t: "Catch it in one motion",
-    d: "Paste a link, drop a transcript, or type the thought raw. No form, no folder prompt, no six-field metadata ritual. One box, one keystroke, gone from your head and into the vault.",
-    accent: NEON,
-  },
-  {
-    k: "02",
-    t: "It reads the boring part",
-    d: "The AI pulls the actual substance out of a 40-minute video or a wall of text and leaves you three lines you'd actually reread. The original is kept underneath, in case you don't trust it yet.",
-    accent: CYAN,
-  },
-  {
-    k: "03",
-    t: "Folders that stay shallow",
-    d: "Real folders. Not tags, not a graph you have to garden, not a database with seventeen views. You will find the thing in two clicks because there are only ever two clicks.",
-    accent: LIME,
-  },
-  {
-    k: "04",
-    t: "Search that hits",
-    d: "Type half a word you half-remember. The idea surfaces with its summary, its source, and the date you had it — which is usually the detail that unlocks the rest.",
-    accent: "#f472b6",
-  },
-];
+/* buttons */
+.fb-root .fb-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  background:var(--amber);color:#10130f;font-weight:700;font-size:14px;padding:11px 18px;
+  border:1px solid var(--amber);border-radius:2px;min-height:42px;cursor:pointer;white-space:nowrap;
+  font-family:inherit;transition:filter .18s,transform .18s}
+.fb-root .fb-btn:hover{filter:brightness(1.08);transform:translateY(-1px)}
+.fb-root .fb-btn--sm{padding:8px 14px;min-height:36px;font-size:13px}
+.fb-root .fb-btn--lg{padding:15px 28px;min-height:52px;font-size:16px}
+.fb-root .fb-btn--full{width:100%}
+.fb-root .fb-btn--ghost{background:transparent;color:var(--ink);border-color:var(--rule);font-weight:500}
+.fb-root .fb-btn--ghost:hover{border-color:var(--amber)}
+
+/* nav */
+.fb-nav{position:sticky;top:0;z-index:40;background:rgba(6,8,10,.86);backdrop-filter:blur(10px);border-bottom:1px solid var(--rule2)}
+.fb-nav-in{display:flex;align-items:center;gap:18px;padding-top:13px;padding-bottom:13px}
+.fb-brand{display:inline-flex;align-items:center;gap:10px;font-weight:700;letter-spacing:-.02em;margin-right:auto}
+.fb-brand i{width:11px;height:11px;border-radius:50%;background:var(--amber);box-shadow:0 0 12px rgba(242,165,60,.8)}
+.fb-nav-links{display:none;gap:22px;font-family:ui-monospace,monospace;font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim)}
+@media(min-width:900px){.fb-nav-links{display:flex}}
+.fb-nav-links a:hover{color:var(--ink)}
+
+/* hero */
+.fb-hero{position:relative;padding:clamp(34px,6vw,76px) 0 clamp(28px,4vw,52px);min-height:clamp(520px,74vh,720px)}
+.fb-drift{position:absolute;inset:0;width:100%;height:100%;z-index:0}
+.fb-hero-in{position:relative;z-index:2}
+@media(min-width:900px){.fb-hero-in>*{max-width:54%}}
+.fb-hero h1{font-size:clamp(34px,6.4vw,76px);line-height:1;letter-spacing:-.04em;font-weight:700;margin:18px 0 0;max-width:17ch;text-wrap:balance}
+.fb-lede{color:var(--dim);margin:18px 0 0;font-size:clamp(15px,2vw,17px);line-height:1.6}
+.fb-heronote{margin:26px 0 0;padding:14px 16px;border-left:2px solid var(--amber);background:rgba(242,165,60,.05);
+  font-family:ui-monospace,monospace;font-size:13px;line-height:1.6;color:var(--amber)}
+.fb-cta{display:flex;flex-wrap:wrap;gap:10px;margin-top:26px}
+.fb-hud{display:flex;flex-wrap:wrap;gap:8px;margin-top:30px;font-family:ui-monospace,monospace;font-size:11.5px}
+.fb-hud span{border:1px solid var(--rule);padding:6px 12px;color:var(--dim);background:rgba(6,8,10,.7)}
+.fb-hud b{color:var(--amber);font-variant-numeric:tabular-nums;font-weight:500}
+.fb-hint{margin:14px 0 0;font-size:12.5px;color:var(--faint);font-family:ui-monospace,monospace}
+
+/* section heads */
+.fb-sec-head{display:grid;gap:12px;margin-bottom:24px}
+.fb-sec-head h2{font-size:clamp(24px,3.6vw,38px);letter-spacing:-.035em;margin:0;font-weight:700;text-wrap:balance}
+.fb-sec-head p{margin:0;color:var(--dim);max-width:64ch;line-height:1.6;font-size:15.5px}
+
+/* mutation */
+.fb-mut-tabs{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}
+.fb-root .fb-mut-tab{padding:9px 15px;border:1px solid var(--rule);font-size:13px;color:var(--dim);
+  background:rgba(255,255,255,.015);cursor:pointer;font-family:inherit;transition:color .2s,border-color .2s,background .2s}
+.fb-root .fb-mut-tab:hover{color:var(--ink)}
+.fb-root .fb-mut-tab[aria-selected="true"]{background:var(--amber);border-color:var(--amber);color:#10130f;font-weight:600}
+.fb-mut{border:1px solid var(--rule);background:var(--panel)}
+.fb-mut-noterow{display:flex;align-items:center;gap:10px;padding:13px 16px;border-bottom:1px solid var(--rule);background:rgba(242,165,60,.05)}
+.fb-mut-noterow input{flex:1;min-width:0;background:none;border:0;outline:none;color:var(--amber);
+  font-family:ui-monospace,monospace;font-size:13.5px}
+.fb-mut-noterow input::placeholder{color:var(--faint)}
+.fb-mut-grid{display:grid;grid-template-columns:1fr}
+@media(min-width:940px){.fb-mut-grid{grid-template-columns:minmax(0,.85fr) minmax(0,1.15fr)}}
+.fb-mut-left{padding:20px;border-bottom:1px solid var(--rule)}
+@media(min-width:940px){.fb-mut-left{border-bottom:0;border-right:1px solid var(--rule)}}
+.fb-mut-src{font-family:ui-monospace,monospace;font-size:11.5px;color:var(--dim);margin:0 0 12px}
+.fb-said{margin:0;padding:0;list-style:none;display:grid;gap:9px}
+.fb-said li{padding-left:20px;position:relative;font-size:13.5px;line-height:1.5;color:var(--ink2)}
+.fb-said li::before{content:"·";position:absolute;left:6px;color:var(--dim)}
+.fb-mut-right{padding:20px;display:grid;gap:10px;align-content:start}
+.fb-mut-right h3{margin:0;font-size:19px;letter-spacing:-.02em}
+.fb-mut-body{margin:0;font-size:14px;line-height:1.55;color:var(--ink2)}
+.fb-never{display:inline-flex;align-items:center;align-self:start;justify-self:start;font-family:ui-monospace,monospace;
+  font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--green);
+  border:1px solid rgba(99,230,160,.4);padding:4px 10px}
+
+/* wall */
+.fb-wall{display:grid;gap:1px;background:var(--rule2);border:1px solid var(--rule);grid-template-columns:1fr}
+@media(min-width:820px){.fb-wall{grid-template-columns:1fr 1fr}}
+.fb-wall-col{background:var(--bg);padding:20px;display:grid;gap:12px;align-content:start}
+.fb-term{font-family:ui-monospace,monospace;font-size:12px;line-height:1.7;background:var(--panel2);
+  border:1px solid var(--rule);padding:14px;white-space:pre-wrap;overflow-x:auto;margin:0}
+.fb-err{color:var(--red)} .fb-ok{color:var(--green)} .fb-faint{color:var(--faint)}
+.fb-why{margin:0;font-size:12.5px;line-height:1.5;color:var(--dim)}
+
+/* loop */
+.fb-loop{display:grid;gap:1px;background:var(--rule2);border:1px solid var(--rule);
+  grid-template-columns:1fr;margin:0;padding:0;list-style:none;counter-reset:s}
+@media(min-width:820px){.fb-loop{grid-template-columns:repeat(4,1fr)}}
+.fb-loop li{background:var(--bg);padding:20px;display:grid;gap:6px;align-content:start;counter-increment:s}
+.fb-loop b{font-family:ui-monospace,monospace;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--amber);font-weight:500}
+.fb-loop b::before{content:counter(s) " / "}
+.fb-loop span{font-size:13px;color:var(--dim);line-height:1.55}
+
+/* capability catalogue */
+.fb-cat{margin-top:clamp(30px,5vw,54px)}
+.fb-cat-head{border-top:1px solid var(--rule);padding-top:18px;margin-bottom:18px}
+.fb-cat-head h3{margin:0 0 6px;font-size:clamp(19px,2.4vw,24px);letter-spacing:-.025em}
+.fb-cat-head p{margin:0;color:var(--dim);font-size:14px;line-height:1.5;max-width:64ch}
+.fb-cat-grid{display:grid;gap:1px;background:var(--rule2);border:1px solid var(--rule);grid-template-columns:1fr}
+@media(min-width:680px){.fb-cat-grid{grid-template-columns:1fr 1fr}}
+@media(min-width:1040px){.fb-cat-grid{grid-template-columns:repeat(3,1fr)}}
+.fb-cat-card{background:var(--bg);padding:18px;display:grid;gap:6px;align-content:start}
+.fb-cat-card h4{margin:0;font-size:15.5px;letter-spacing:-.01em}
+.fb-cat-card p{margin:0;font-size:13px;line-height:1.5;color:var(--dim)}
+
+/* pricing */
+.fb-plans{display:grid;gap:16px;grid-template-columns:1fr}
+@media(min-width:760px){.fb-plans{grid-template-columns:1fr 1fr}}
+.fb-plan{border:1px solid var(--rule);padding:24px;background:var(--panel);display:grid;align-content:start}
+.fb-plan--featured{border-color:rgba(242,165,60,.55);background:linear-gradient(180deg,rgba(242,165,60,.06),transparent 60%),var(--panel)}
+.fb-price{font-size:42px;font-weight:700;letter-spacing:-.04em;margin:0 0 18px;font-variant-numeric:tabular-nums}
+.fb-price span{font-size:15px;font-weight:400;color:var(--dim);letter-spacing:0}
+.fb-plan ul{margin:0 0 22px;padding:0;list-style:none;display:grid;gap:10px;font-size:14px;color:var(--ink2);line-height:1.45}
+.fb-plan li{padding-left:22px;position:relative}
+.fb-plan li::before{content:"→";position:absolute;left:0;color:var(--green);font-family:ui-monospace,monospace}
+.fb-fine{margin:14px 0 0;font-size:12px;color:var(--faint);line-height:1.5}
+.fb-promises{display:grid;gap:1px;background:var(--rule2);border:1px solid var(--rule);margin-top:16px;grid-template-columns:1fr}
+@media(min-width:820px){.fb-promises{grid-template-columns:repeat(3,1fr)}}
+.fb-promises>div{background:var(--bg);padding:18px 20px;display:grid;gap:5px}
+.fb-promises b{font-size:14px}
+.fb-promises span{font-size:12.5px;color:var(--dim);line-height:1.5}
+
+/* close */
+.fb-close{text-align:center;padding:clamp(52px,9vw,110px) 0 clamp(40px,6vw,72px)}
+.fb-close h2{font-size:clamp(28px,5vw,56px);letter-spacing:-.04em;margin:0 0 24px;font-weight:700;text-wrap:balance}
+.fb-foot{border-top:1px solid var(--rule);padding:22px 0 40px;color:var(--faint);font-size:12.5px;font-family:ui-monospace,monospace}
+.fb-foot-in{display:flex;flex-wrap:wrap;gap:12px;justify-content:space-between}
+.fb-foot a:hover{color:var(--ink)}
+
+@media (prefers-reduced-motion: reduce){.fb-root *,.fb-root *::before,.fb-root *::after{animation:none!important;transition:none!important}}
+.fb-root :focus-visible{outline:2px solid var(--amber);outline-offset:2px}
+`;
+
+/* ------------------------------------------------------------------ *
+ * The page.
+ * ------------------------------------------------------------------ */
 
 const Landing = ({ onEnter }: { onEnter?: () => void }) => {
-  const [scrolled, setScrolled] = useState(false);
+  const [lost, setLost] = useState(0);
+  const bump = useRef(() => setLost((n) => n + 1)).current;
 
-  useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 24);
-    onScroll();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
-
-  // The app shell locks body/#root to the viewport (it's a desktop-style
-  // window). The landing page is a long scrolling document, so it unlocks
-  // page scroll for as long as it's mounted, and hides the app chrome.
+  // The app shell is a 430px desktop "phone frame": #root is fixed-width,
+  // overflow-hidden and transformed, with a fixed aurora painted behind it.
+  // The landing page is a long full-bleed document, so it unlocks that frame
+  // for as long as it is mounted and hides the app chrome.
   useEffect(() => {
     setLandingActive(true);
     document.documentElement.classList.add("fb-landing");
@@ -400,540 +588,262 @@ const Landing = ({ onEnter }: { onEnter?: () => void }) => {
     };
   }, []);
 
-  useEffect(() => {
-    const prev = document.title;
-    document.title = "Fart Brains — the vault for ideas your brain leaks";
-    return () => {
-      document.title = prev;
-    };
-  }, []);
-
   return (
     <div className="fb-root">
       <style>{CSS}</style>
 
-      <header className={`fb-nav ${scrolled ? "is-stuck" : ""}`}>
-        <a className="fb-brand" href="#top">
-          <span className="fb-brand-mark" aria-hidden="true">
-            <span />
+      <nav className="fb-nav">
+        <div className="fb-wrap fb-nav-in">
+          <span className="fb-brand">
+            <i aria-hidden="true" />
+            Fart Brains
           </span>
-          Fart&nbsp;Brains
-        </a>
-        <nav>
-          <a href="#how">How it works</a>
-          <a href="#features">Features</a>
-          <a href="#faq">FAQ</a>
-        </nav>
-        <button type="button" className="fb-btn fb-btn--sm" onClick={onEnter}>
-          Open the vault
-        </button>
-      </header>
-
-      <main id="top">
-        {/* ------------------------------ hero ------------------------------ */}
-        <section className="fb-hero">
-          <NeuralField />
-          <div className="fb-hero-glow" aria-hidden="true" />
-          <div className="fb-hero-inner">
-            <div className="fb-eyebrow">
-              <span className="fb-pulse" aria-hidden="true" /> single-user · private · yours
-            </div>
-
-            <h1 className="fb-h1">
-              Your best ideas
-              <br />
-              <span className="fb-strike">evaporate</span>{" "}
-              <span className="fb-grad">at 2am.</span>
-            </h1>
-
-            <p className="fb-sub">
-              Fart Brains is a private vault that catches the thought the second you have
-              it — typed, pasted, or ripped out of a link — summarizes it, files it, and
-              hands it back the day you actually need it.
-            </p>
-
-            <div className="fb-cta-row">
-              <button type="button" className="fb-btn" onClick={onEnter}>
-                Start hoarding ideas
-                <span aria-hidden="true">→</span>
-              </button>
-              <a href="#how" className="fb-btn fb-btn--ghost">
-                See it work
-              </a>
-            </div>
-
-            <div className="fb-stats">
-              <div>
-                <strong>1</strong>
-                <span>box to capture anything</span>
-              </div>
-              <div>
-                <strong>~3s</strong>
-                <span>link to filed summary</span>
-              </div>
-              <div>
-                <strong>0</strong>
-                <span>people who can read it</span>
-              </div>
-            </div>
+          <div className="fb-nav-links">
+            <a href="#mutation">the mutation</a>
+            <a href="#wall">the wall</a>
+            <a href="#loop">the loop</a>
+            <a href="#everything">everything</a>
+            <a href="#pricing">pricing</a>
           </div>
-
-          <div className="fb-marquee" aria-hidden="true">
-            <div className="fb-marquee-track">
-              {Array.from({ length: 2 }).map((_, dup) => (
-                <span key={dup}>
-                  {[
-                    "shower thought",
-                    "youtube rabbit hole",
-                    "podcast tangent",
-                    "3am voice memo",
-                    "half-read article",
-                    "tiktok you saved and never reopened",
-                    "argument you won in your head",
-                    "the good one you forgot",
-                  ].map((w) => (
-                    <em key={w}>
-                      {w} <i>✦</i>
-                    </em>
-                  ))}
-                </span>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* ------------------------------ how ------------------------------- */}
-        <section id="how" className="fb-section">
-          <Reveal>
-            <p className="fb-kicker">How it works</p>
-            <h2 className="fb-h2">
-              Paste garbage in. <span className="fb-grad">Get a memory out.</span>
-            </h2>
-            <p className="fb-lead">
-              Watch it happen. This is the real flow, just running by itself.
-            </p>
-          </Reveal>
-          <Reveal delay={120}>
-            <CaptureDemo />
-          </Reveal>
-        </section>
-
-        {/* ---------------------------- features ---------------------------- */}
-        <section id="features" className="fb-section">
-          <Reveal>
-            <p className="fb-kicker">What's inside</p>
-            <h2 className="fb-h2">
-              Four things, done properly.
-              <br />
-              <span className="fb-muted">Nothing else, on purpose.</span>
-            </h2>
-          </Reveal>
-
-          <div className="fb-grid">
-            {FEATURES.map((f, i) => (
-              <Reveal key={f.k} delay={i * 90}>
-                <article
-                  className="fb-feature"
-                  style={{ ["--accent" as string]: f.accent }}
-                >
-                  <span className="fb-feature-k">{f.k}</span>
-                  <h3>{f.t}</h3>
-                  <p>{f.d}</p>
-                  <span className="fb-feature-line" aria-hidden="true" />
-                </article>
-              </Reveal>
-            ))}
-          </div>
-        </section>
-
-        {/* ----------------------------- contrast ---------------------------- */}
-        <section className="fb-section">
-          <Reveal>
-            <div className="fb-compare">
-              <div className="fb-compare-col fb-compare-col--bad">
-                <h3>Where ideas go now</h3>
-                <ul>
-                  <li>17 open tabs you're "getting to"</li>
-                  <li>A notes app with 400 untitled files</li>
-                  <li>Saved reels you will never open again</li>
-                  <li>Texting yourself, then losing the thread</li>
-                  <li>Your memory, which is lying to you</li>
-                </ul>
-              </div>
-              <div className="fb-compare-vs" aria-hidden="true">
-                vs
-              </div>
-              <div className="fb-compare-col fb-compare-col--good">
-                <h3>Where they go here</h3>
-                <ul>
-                  <li>One box, any format, three seconds</li>
-                  <li>Summarized down to the part that mattered</li>
-                  <li>Filed in a folder you'd actually name</li>
-                  <li>Findable by half a remembered word</li>
-                  <li>Still there in a year</li>
-                </ul>
-              </div>
-            </div>
-          </Reveal>
-        </section>
-
-        {/* -------------------------------- faq ------------------------------ */}
-        <section id="faq" className="fb-section fb-section--narrow">
-          <Reveal>
-            <p className="fb-kicker">Questions</p>
-            <h2 className="fb-h2">The obvious ones.</h2>
-          </Reveal>
-          <Reveal delay={100}>
-            <Faq />
-          </Reveal>
-        </section>
-
-        {/* ------------------------------- cta ------------------------------- */}
-        <section className="fb-final">
-          <div className="fb-final-glow" aria-hidden="true" />
-          <Reveal>
-            <h2 className="fb-h1 fb-h1--sm">
-              Stop losing the good ones.
-            </h2>
-            <p className="fb-sub">
-              The vault takes about eleven seconds to set up and then quietly saves you
-              from yourself forever.
-            </p>
-            <button type="button" className="fb-btn fb-btn--lg" onClick={onEnter}>
-              Open the vault
-              <span aria-hidden="true">→</span>
-            </button>
-          </Reveal>
-        </section>
-      </main>
-
-      <footer className="fb-footer">
-        <span>Fart Brains — a private idea vault.</span>
-        <span className="fb-footer-links">
-          <button type="button" className="fb-footer-btn" onClick={onEnter}>
+          <button type="button" className="fb-btn fb-btn--sm" onClick={onEnter}>
             Open the vault
           </button>
-          <a href="#top">Back to top</a>
-        </span>
+        </div>
+      </nav>
+
+      <header className="fb-hero">
+        <DriftField onLost={bump} />
+        <div className="fb-wrap fb-hero-in">
+          <p className="fb-label">
+            <span className="fb-on">●</span> every play you scrolled past is still gone
+          </p>
+          <h1>
+            The tools you actually need <span className="fb-amber">aren&rsquo;t for sale.</span>
+          </h1>
+          <p className="fb-lede">
+            Someone explains exactly how they did it — the tactic, the order, the reason it works.
+            It is a 47-second reel or a 22-minute talk, and by Thursday it is gone. There is no
+            product to buy that does the thing they described. Fart Brains catches it, and one line
+            from you turns it into something that did not exist.
+          </p>
+          <p className="fb-heronote">✱ &ldquo;I want this, but with multi-tenancy and automated provisioning.&rdquo;</p>
+          <div className="fb-cta">
+            <button type="button" className="fb-btn" onClick={onEnter}>
+              Open the vault
+            </button>
+            <a className="fb-btn fb-btn--ghost" href="#mutation">
+              See what that makes
+            </a>
+          </div>
+          <div className="fb-hud">
+            <span>
+              gone while you read this <b>{lost}</b>
+            </span>
+            <span>
+              you will never know which <b>—</b>
+            </span>
+          </div>
+          <p className="fb-hint">↑ nobody counts these. that is what a brain fart is.</p>
+        </div>
+      </header>
+
+      <section id="mutation">
+        <div className="fb-wrap">
+          <div className="fb-sec-head">
+            <p className="fb-label">01 / the mutation</p>
+            <h2>Their mechanism. Your one line. Something that did not exist.</h2>
+            <p>
+              The source gives you a mechanism that already works, explained by whoever ran it. Your
+              note is the mutation — the part they never said, because they were not building your
+              thing. Edit the note and watch the output change. Clear it and watch what is left.
+            </p>
+          </div>
+          <Mutation />
+        </div>
+      </section>
+
+      <section id="wall">
+        <div className="fb-wrap">
+          <div className="fb-sec-head">
+            <p className="fb-label">02 / the wall</p>
+            <h2>Your AI cannot open the reel. You can.</h2>
+            <p>
+              The plays live on platforms that do not let agents in. Hand that link to any assistant
+              and it hits a wall. Hit share on your phone and it is already inside.
+            </p>
+          </div>
+          <div className="fb-wall">
+            <div className="fb-wall-col">
+              <p className="fb-mini">an agent, given the link</p>
+              <pre className="fb-term">
+{`$ fetch https://instagram.com/reel/…
+`}<span className="fb-err">net::ERR_CONNECTION_RESET</span>{`
+$ curl -sL https://instagram.com/reel/…
+`}<span className="fb-faint">{`621 KB of JavaScript shell
+no caption, no transcript, no og tags`}</span>
+              </pre>
+              <p className="fb-why">Not an illustration. That is what happens.</p>
+            </div>
+            <div className="fb-wall-col">
+              <p className="fb-mini fb-mini--amber">you, hitting share</p>
+              <pre className="fb-term">
+{`share sheet → Fart Brains
+`}<span className="fb-ok">{`✓ transcribed
+✓ summarized, with the claims kept
+✓ references followed
+✓ filed, tagged, searchable`}</span>{`
+`}<span className="fb-faint">done before the screen locked</span>
+              </pre>
+              <p className="fb-why">Anyone can summarize a web page. Almost nobody gets in here.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="loop">
+        <div className="fb-wrap">
+          <div className="fb-sec-head">
+            <p className="fb-label">03 / the loop</p>
+            <h2>We do not build anything. That is the point.</h2>
+            <p>
+              The brief goes to whatever you already work in, over one endpoint. Your agent builds
+              against its own filesystem — nothing of ours ever runs on your machine — and it can
+              file what it built back here, so the next brief knows what you already shipped.
+            </p>
+          </div>
+          <ol className="fb-loop">
+            <li>
+              <b>capture</b>
+              <span>The reel you scrolled past. Share sheet, link, voice or paste.</span>
+            </li>
+            <li>
+              <b>brief</b>
+              <span>What the source does, what to build, how it changes for your stack, how to verify it worked.</span>
+            </li>
+            <li>
+              <b>build</b>
+              <span>Your agent, your repo, your keys. We never touch the filesystem.</span>
+            </li>
+            <li>
+              <b>back</b>
+              <span>Your agent can file what it built, so the next brief is not a repeat.</span>
+            </li>
+          </ol>
+        </div>
+      </section>
+
+      <section id="everything">
+        <div className="fb-wrap">
+          <div className="fb-sec-head">
+            <p className="fb-label">04 / everything it does</p>
+            <h2>If it is on this list, it is built.</h2>
+            <p>
+              Nothing here is planned, coming soon, or a roadmap item. Three lines from an earlier
+              draft of this page were removed rather than softened, because they described things
+              that do not exist yet.
+            </p>
+          </div>
+          {CAPABILITIES.map((g) => (
+            <div className="fb-cat" key={g.group}>
+              <div className="fb-cat-head">
+                <h3>{g.group}</h3>
+                <p>{g.why}</p>
+              </div>
+              <div className="fb-cat-grid">
+                {g.items.map(([name, does]) => (
+                  <article className="fb-cat-card" key={name}>
+                    <h4>{name}</h4>
+                    <p>{does}</p>
+                  </article>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section id="pricing">
+        <div className="fb-wrap">
+          <div className="fb-sec-head">
+            <p className="fb-label">05 / pricing</p>
+            <h2>Free forever, or nine dollars.</h2>
+            <p>
+              The free plan is permanent, not a trial with a countdown. Export everything or delete
+              the account whenever you want, on either plan.
+            </p>
+          </div>
+          <div className="fb-plans">
+            <div className="fb-plan">
+              <p className="fb-mini">Free</p>
+              <p className="fb-price">
+                $0 <span>/month</span>
+              </p>
+              <ul>
+                <li>Unlimited saves, folders, tags and reminders</li>
+                <li>Full search and share links</li>
+                <li>50 AI actions a month</li>
+                <li>Full export and account deletion</li>
+              </ul>
+              <button type="button" className="fb-btn fb-btn--full" onClick={onEnter}>
+                Start free
+              </button>
+            </div>
+            <div className="fb-plan fb-plan--featured">
+              <p className="fb-mini fb-mini--amber">Pro</p>
+              <p className="fb-price">
+                $9 <span>/month</span>
+              </p>
+              <ul>
+                <li>Everything in Free</li>
+                <li>1,000 AI actions a month</li>
+                <li>Longer transcripts and bigger pages</li>
+                <li>Connect your own agent to the endpoint</li>
+              </ul>
+              <button type="button" className="fb-btn fb-btn--full" onClick={onEnter}>
+                Start free, upgrade later
+              </button>
+              <p className="fb-fine">
+                Billing is not switched on yet — Pro is in setup, and nothing will charge you today.
+                Start on Free and you will keep everything you save.
+              </p>
+            </div>
+          </div>
+          <div className="fb-promises">
+            <div>
+              <b>One brain, yours.</b>
+              <span>No teams, no shared folders, no workspace. One account is one private brain.</span>
+            </div>
+            <div>
+              <b>Share exactly one thing.</b>
+              <span>A read-only link to a single item, revocable any time. The recipient sees nothing else.</span>
+            </div>
+            <div>
+              <b>Leave whenever.</b>
+              <span>Export to JSON or Markdown, or delete the account outright. Both are one click.</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="fb-close">
+        <div className="fb-wrap">
+          <h2>You cannot miss what you cannot remember.</h2>
+          <button type="button" className="fb-btn fb-btn--lg" onClick={onEnter}>
+            Open the vault
+          </button>
+        </div>
+      </section>
+
+      <footer className="fb-foot">
+        <div className="fb-wrap fb-foot-in">
+          <span>Fart Brains</span>
+          <span>
+            <a href="/privacy">privacy</a> · <a href="/terms">terms</a>
+          </span>
+        </div>
       </footer>
     </div>
   );
 };
 
 export default Landing;
-
-/* -------------------------------- styles -------------------------------- */
-
-const CSS = `
-html.fb-landing,
-html.fb-landing body,
-html.fb-landing #root {
-  height: auto !important;
-  min-height: 100%;
-  max-width: none !important;
-  width: auto !important;
-  overflow: visible !important;
-  border-radius: 0 !important;
-  box-shadow: none !important;
-  scroll-behavior: smooth;
-}
-html.fb-landing body::before { display: none !important; }
-
-.fb-root {
-  --ink: #f4f4f5;
-  --dim: #a1a1aa;
-  --edge: rgba(255,255,255,0.10);
-  --bg: #08070d;
-  position: relative;
-  min-height: 100vh;
-  background: var(--bg);
-  color: var(--ink);
-  font-family: Inter, ui-sans-serif, system-ui, -apple-system, sans-serif;
-  overflow-x: hidden;
-  -webkit-font-smoothing: antialiased;
-}
-.fb-root *, .fb-root *::before, .fb-root *::after { box-sizing: border-box; }
-.fb-root a { color: inherit; text-decoration: none; }
-
-/* nav */
-.fb-nav {
-  position: sticky; top: 0; z-index: 50;
-  display: flex; align-items: center; gap: 24px;
-  padding: 16px clamp(16px, 5vw, 56px);
-  transition: background .3s ease, border-color .3s ease, backdrop-filter .3s ease;
-  border-bottom: 1px solid transparent;
-}
-.fb-nav.is-stuck {
-  background: rgba(8,7,13,0.72);
-  backdrop-filter: blur(14px);
-  border-bottom-color: var(--edge);
-}
-.fb-brand {
-  display: inline-flex; align-items: center; gap: 10px;
-  font-family: "Space Grotesk", Inter, sans-serif;
-  font-weight: 700; letter-spacing: -0.02em; font-size: 17px;
-  margin-right: auto;
-}
-.fb-brand-mark {
-  width: 26px; height: 26px; border-radius: 9px;
-  background: linear-gradient(135deg, ${NEON}, ${CYAN});
-  display: grid; place-items: center;
-  box-shadow: 0 0 22px rgba(139,92,246,0.55);
-}
-.fb-brand-mark span {
-  width: 9px; height: 9px; border-radius: 50%;
-  background: #08070d;
-  animation: fb-blink 3.4s ease-in-out infinite;
-}
-@keyframes fb-blink { 0%,92%,100%{transform:scale(1)} 96%{transform:scale(0.35)} }
-.fb-nav nav { display: none; gap: 26px; font-size: 14px; color: var(--dim); }
-.fb-nav nav a:hover { color: var(--ink); }
-@media (min-width: 860px) { .fb-nav nav { display: flex; } }
-
-/* buttons */
-.fb-btn {
-  font: inherit; cursor: pointer;
-  display: inline-flex; align-items: center; gap: 8px;
-  padding: 13px 22px; border-radius: 999px;
-  font-size: 15px; font-weight: 600; white-space: nowrap;
-  color: #0a0a0f;
-  background: linear-gradient(120deg, #ffffff, #d8d4ff);
-  border: 1px solid rgba(255,255,255,0.9);
-  transition: transform .18s ease, box-shadow .25s ease;
-  box-shadow: 0 8px 30px rgba(139,92,246,0.25);
-}
-.fb-btn:hover { transform: translateY(-2px); box-shadow: 0 14px 44px rgba(139,92,246,0.45); }
-.fb-btn:active { transform: translateY(0); }
-.fb-btn--sm { padding: 9px 16px; font-size: 13.5px; }
-.fb-btn--lg { padding: 17px 30px; font-size: 17px; }
-.fb-btn--ghost {
-  background: transparent; color: var(--ink);
-  border: 1px solid var(--edge); box-shadow: none;
-}
-.fb-btn--ghost:hover { border-color: rgba(255,255,255,0.35); box-shadow: none; }
-
-/* hero */
-.fb-hero { position: relative; padding: clamp(56px, 10vw, 120px) clamp(16px,5vw,56px) 0; overflow: hidden; }
-.fb-canvas { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0.55; }
-.fb-hero-glow {
-  position: absolute; left: 50%; top: -140px; transform: translateX(-50%);
-  width: min(1100px, 130vw); height: 620px; pointer-events: none;
-  background: radial-gradient(ellipse at center, rgba(139,92,246,0.30), transparent 62%);
-  filter: blur(20px);
-}
-.fb-hero-inner { position: relative; max-width: 900px; margin: 0 auto; text-align: center; }
-.fb-eyebrow {
-  display: inline-flex; align-items: center; gap: 9px;
-  padding: 7px 15px; border-radius: 999px;
-  border: 1px solid var(--edge); background: rgba(255,255,255,0.04);
-  font-size: 12.5px; letter-spacing: 0.09em; text-transform: uppercase; color: var(--dim);
-}
-.fb-pulse {
-  width: 7px; height: 7px; border-radius: 50%; background: ${LIME};
-  box-shadow: 0 0 0 0 rgba(163,230,53,0.7); animation: fb-pulse 2.2s infinite;
-}
-@keyframes fb-pulse { 70% { box-shadow: 0 0 0 9px rgba(163,230,53,0); } 100% { box-shadow: 0 0 0 0 rgba(163,230,53,0); } }
-
-.fb-h1 {
-  margin: 26px 0 0;
-  font-family: "Space Grotesk", Inter, sans-serif;
-  font-size: clamp(42px, 8.2vw, 92px);
-  line-height: 0.98; letter-spacing: -0.045em; font-weight: 700;
-}
-.fb-h1--sm { font-size: clamp(34px, 6vw, 68px); }
-.fb-strike { position: relative; white-space: nowrap; }
-.fb-strike::after {
-  content: ""; position: absolute; left: -2%; right: -2%; top: 56%; height: 5px;
-  background: linear-gradient(90deg, ${NEON}, ${CYAN});
-  border-radius: 4px; transform-origin: left; animation: fb-strike 1.1s .5s cubic-bezier(.2,.8,.2,1) both;
-}
-@keyframes fb-strike { from { transform: scaleX(0); } to { transform: scaleX(1); } }
-.fb-grad {
-  background: linear-gradient(100deg, ${NEON}, ${CYAN} 45%, ${LIME});
-  -webkit-background-clip: text; background-clip: text; color: transparent;
-}
-.fb-muted { color: var(--dim); }
-.fb-sub {
-  margin: 22px auto 0; max-width: 620px;
-  font-size: clamp(16px, 2.1vw, 19px); line-height: 1.6; color: var(--dim);
-}
-.fb-cta-row { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; margin-top: 34px; }
-.fb-stats {
-  display: flex; flex-wrap: wrap; justify-content: center; gap: clamp(20px, 6vw, 64px);
-  margin-top: 56px; padding-top: 30px; border-top: 1px solid var(--edge);
-}
-.fb-stats div { display: grid; gap: 4px; }
-.fb-stats strong {
-  font-family: "Space Grotesk", Inter, sans-serif; font-size: 30px; letter-spacing: -0.03em;
-}
-.fb-stats span { font-size: 13px; color: var(--dim); }
-
-/* marquee */
-.fb-marquee {
-  position: relative; margin-top: clamp(50px, 8vw, 90px);
-  padding: 14px 0; border-top: 1px solid var(--edge); border-bottom: 1px solid var(--edge);
-  overflow: hidden; -webkit-mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
-  mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
-}
-.fb-marquee-track { display: flex; width: max-content; animation: fb-scroll 42s linear infinite; }
-.fb-marquee-track > span { display: flex; }
-.fb-marquee em {
-  display: inline-flex; align-items: center; gap: 18px; padding: 0 18px;
-  font-style: normal; font-size: 14px; color: var(--dim); white-space: nowrap;
-}
-.fb-marquee i { color: ${NEON}; font-style: normal; }
-@keyframes fb-scroll { to { transform: translateX(-50%); } }
-
-/* sections */
-.fb-section { position: relative; max-width: 1120px; margin: 0 auto; padding: clamp(70px, 11vw, 130px) clamp(16px,5vw,56px); }
-.fb-section--narrow { max-width: 760px; }
-.fb-kicker {
-  margin: 0 0 14px; font-size: 12.5px; letter-spacing: 0.16em; text-transform: uppercase; color: ${NEON};
-}
-.fb-h2 {
-  margin: 0; font-family: "Space Grotesk", Inter, sans-serif;
-  font-size: clamp(30px, 4.6vw, 50px); line-height: 1.06; letter-spacing: -0.035em; font-weight: 700;
-}
-.fb-lead { margin: 16px 0 0; color: var(--dim); font-size: 16.5px; max-width: 520px; }
-
-/* reveal */
-.fb-reveal { opacity: 0; transform: translateY(22px); transition: opacity .7s ease, transform .7s cubic-bezier(.2,.8,.2,1); }
-.fb-reveal.is-in { opacity: 1; transform: none; }
-@media (prefers-reduced-motion: reduce) {
-  .fb-reveal { opacity: 1; transform: none; transition: none; }
-  .fb-marquee-track, .fb-brand-mark span, .fb-pulse, .fb-strike::after { animation: none; }
-}
-
-/* demo */
-.fb-demo { margin-top: 34px; }
-.fb-demo-tabs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
-.fb-demo-tab {
-  padding: 8px 15px; border-radius: 999px; cursor: pointer;
-  font: inherit; font-size: 13.5px; color: var(--dim);
-  background: rgba(255,255,255,0.03); border: 1px solid var(--edge);
-  transition: color .2s, border-color .2s, background .2s;
-}
-.fb-demo-tab:hover { color: var(--ink); }
-.fb-demo-tab.is-active { color: #0a0a0f; background: #fff; border-color: #fff; font-weight: 600; }
-.fb-demo-window {
-  border: 1px solid var(--edge); border-radius: 18px; overflow: hidden;
-  background: linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02));
-  box-shadow: 0 30px 90px rgba(0,0,0,0.55);
-}
-.fb-demo-bar {
-  display: flex; align-items: center; gap: 7px;
-  padding: 11px 14px; border-bottom: 1px solid var(--edge); background: rgba(255,255,255,0.03);
-}
-.fb-dot { width: 10px; height: 10px; border-radius: 50%; }
-.fb-demo-title { margin-left: 12px; font-size: 12.5px; color: var(--dim); }
-.fb-demo-body { padding: clamp(18px, 3vw, 28px); display: grid; gap: 18px; }
-.fb-demo-input {
-  min-height: 56px; padding: 15px 17px; border-radius: 13px;
-  border: 1px solid rgba(139,92,246,0.45); background: rgba(139,92,246,0.07);
-  font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 13.5px;
-  color: var(--ink); word-break: break-all; line-height: 1.6;
-}
-.fb-caret { display: inline-block; width: 8px; height: 15px; margin-left: 2px; vertical-align: -2px; background: ${CYAN}; animation: fb-caret 1s steps(2) infinite; }
-@keyframes fb-caret { 50% { opacity: 0; } }
-.fb-demo-out { min-height: 172px; }
-.fb-thinking { display: flex; align-items: center; gap: 7px; padding: 14px 4px; color: var(--dim); font-size: 14px; }
-.fb-thinking span { width: 7px; height: 7px; border-radius: 50%; background: ${CYAN}; animation: fb-bounce 1s infinite; }
-.fb-thinking span:nth-child(2) { animation-delay: .15s; }
-.fb-thinking span:nth-child(3) { animation-delay: .3s; }
-.fb-thinking em { margin-left: 8px; font-style: italic; }
-.fb-thinking--idle { visibility: hidden; }
-@keyframes fb-bounce { 0%,60%,100% { transform: translateY(0); opacity:.5 } 30% { transform: translateY(-6px); opacity:1 } }
-.fb-card {
-  padding: 18px; border-radius: 14px;
-  border: 1px solid var(--edge); background: rgba(255,255,255,0.04);
-  animation: fb-pop .45s cubic-bezier(.2,.8,.2,1) both;
-}
-@keyframes fb-pop { from { opacity: 0; transform: translateY(10px) scale(.985); } }
-.fb-card-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
-.fb-card-head strong { font-family: "Space Grotesk", Inter, sans-serif; font-size: 17px; }
-.fb-chip {
-  padding: 4px 11px; border-radius: 999px; font-size: 12px;
-  color: ${LIME}; border: 1px solid rgba(163,230,53,0.35); background: rgba(163,230,53,0.08);
-}
-.fb-card ul { margin: 0; padding-left: 18px; list-style: disc; display: grid; gap: 7px; color: var(--dim); font-size: 14.5px; line-height: 1.5; }
-.fb-card-foot { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--edge); font-size: 12.5px; color: #71717a; }
-
-/* features */
-.fb-grid { display: grid; gap: 16px; margin-top: 42px; grid-template-columns: 1fr; }
-@media (min-width: 800px) { .fb-grid { grid-template-columns: 1fr 1fr; } }
-.fb-feature {
-  position: relative; height: 100%; padding: 28px 26px 30px;
-  border: 1px solid var(--edge); border-radius: 18px;
-  background: linear-gradient(180deg, rgba(255,255,255,0.045), rgba(255,255,255,0.012));
-  overflow: hidden; transition: border-color .3s ease, transform .3s ease;
-}
-.fb-feature:hover { border-color: color-mix(in srgb, var(--accent) 55%, transparent); transform: translateY(-3px); }
-.fb-feature-k {
-  font-family: "JetBrains Mono", monospace; font-size: 12px; color: var(--accent); letter-spacing: .1em;
-}
-.fb-feature h3 { margin: 12px 0 10px; font-family: "Space Grotesk", Inter, sans-serif; font-size: 22px; letter-spacing: -0.02em; }
-.fb-feature p { margin: 0; color: var(--dim); font-size: 15px; line-height: 1.62; }
-.fb-feature-line {
-  position: absolute; left: 0; right: 0; bottom: 0; height: 2px;
-  background: linear-gradient(90deg, var(--accent), transparent);
-  transform: scaleX(0); transform-origin: left; transition: transform .45s cubic-bezier(.2,.8,.2,1);
-}
-.fb-feature:hover .fb-feature-line { transform: scaleX(1); }
-
-/* compare */
-.fb-compare {
-  display: grid; gap: 14px; align-items: stretch;
-  grid-template-columns: 1fr;
-  border: 1px solid var(--edge); border-radius: 22px; padding: clamp(20px, 3vw, 34px);
-  background: radial-gradient(120% 130% at 50% 0%, rgba(139,92,246,0.14), transparent 60%);
-}
-@media (min-width: 860px) { .fb-compare { grid-template-columns: 1fr auto 1fr; } }
-.fb-compare-col { padding: 22px; border-radius: 16px; border: 1px solid var(--edge); background: rgba(255,255,255,0.03); }
-.fb-compare-col h3 { margin: 0 0 16px; font-family: "Space Grotesk", Inter, sans-serif; font-size: 19px; }
-.fb-compare-col ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 11px; font-size: 15px; color: var(--dim); }
-.fb-compare-col li { padding-left: 26px; position: relative; line-height: 1.45; }
-.fb-compare-col li::before { position: absolute; left: 0; top: 0; font-size: 15px; }
-.fb-compare-col--bad li::before { content: "✕"; color: #f87171; }
-.fb-compare-col--good li::before { content: "✓"; color: ${LIME}; }
-.fb-compare-col--good { border-color: rgba(163,230,53,0.25); }
-.fb-compare-vs {
-  display: grid; place-items: center; font-family: "Space Grotesk", Inter, sans-serif;
-  color: var(--dim); font-size: 14px; letter-spacing: .2em; text-transform: uppercase;
-}
-
-/* faq */
-.fb-faq { margin-top: 34px; border-top: 1px solid var(--edge); }
-.fb-faq-item { border-bottom: 1px solid var(--edge); }
-.fb-faq-item button {
-  width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 18px;
-  padding: 22px 2px; cursor: pointer; text-align: left;
-  background: none; border: 0; color: var(--ink);
-  font: inherit; font-size: 17px; font-weight: 600;
-  font-family: "Space Grotesk", Inter, sans-serif;
-}
-.fb-faq-item em { font-style: normal; color: ${NEON}; font-size: 22px; line-height: 1; }
-.fb-faq-body { display: grid; grid-template-rows: 0fr; transition: grid-template-rows .35s cubic-bezier(.2,.8,.2,1); }
-.fb-faq-item.is-open .fb-faq-body { grid-template-rows: 1fr; }
-.fb-faq-body p { overflow: hidden; margin: 0; color: var(--dim); font-size: 15.5px; line-height: 1.65; padding-right: 40px; }
-.fb-faq-item.is-open .fb-faq-body p { padding-bottom: 22px; }
-
-/* final */
-.fb-final { position: relative; text-align: center; padding: clamp(80px, 12vw, 150px) clamp(16px,5vw,56px); overflow: hidden; }
-.fb-final-glow {
-  position: absolute; left: 50%; bottom: -260px; transform: translateX(-50%);
-  width: min(900px, 120vw); height: 520px;
-  background: radial-gradient(ellipse at center, rgba(34,211,238,0.22), transparent 65%);
-  filter: blur(10px); pointer-events: none;
-}
-.fb-final .fb-btn { margin-top: 32px; }
-
-/* footer */
-.fb-footer {
-  display: flex; flex-wrap: wrap; gap: 14px; justify-content: space-between;
-  padding: 26px clamp(16px,5vw,56px); border-top: 1px solid var(--edge);
-  font-size: 13.5px; color: #71717a;
-}
-.fb-footer-links { display: flex; gap: 20px; }
-.fb-footer-links a:hover, .fb-footer-btn:hover { color: var(--ink); }
-.fb-footer-btn { font: inherit; cursor: pointer; background: none; border: 0; color: inherit; padding: 0; }
-`;
