@@ -193,6 +193,125 @@ const CLUSTERS: Cluster[] = [
   },
 ];
 
+/* ------------------------------- hero video ------------------------------ *
+ * Asme's hero runs a full-bleed video that fades itself out just before the
+ * clip ends and back in on restart, so the loop never shows a hard cut. This
+ * is that component, ported from the template (hero.tsx) with its timings
+ * intact. Under reduced motion it holds the frame and loops natively with no
+ * crossfade, exactly as upstream does.
+ *
+ * The file is the template's own asset, served from its CDN. Worth
+ * self-hosting before this page carries real traffic.
+ * -------------------------------------------------------------------------- */
+
+const HERO_VIDEO_URL =
+  "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260405_074625_a81f018a-956b-43fb-9aee-4d1508e30e6a.mp4";
+const FADE_MS = 500;
+const FADE_OUT_LEAD_S = 0.55;
+const RESTART_DELAY_MS = 100;
+
+const HeroVideo = () => {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const rafRef = useRef<number | null>(null);
+  const restartTimerRef = useRef<number | null>(null);
+  const hasStartedRef = useRef(false);
+  const isFadingOutRef = useRef(false);
+  const [failed, setFailed] = useState(false);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    const play = () => {
+      const attempt = video.play();
+      if (attempt) attempt.catch(() => {});
+    };
+
+    if (REDUCED()) {
+      video.loop = true;
+      video.style.opacity = "1";
+      play();
+      return;
+    }
+
+    const animateOpacity = (from: number, to: number) => {
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+      const start = performance.now();
+      const step = (now: number) => {
+        const t = Math.min((now - start) / FADE_MS, 1);
+        video.style.opacity = String(from + (to - from) * t);
+        if (t >= 1) rafRef.current = null;
+        else rafRef.current = requestAnimationFrame(step);
+      };
+      rafRef.current = requestAnimationFrame(step);
+    };
+
+    const handleCanPlay = () => {
+      if (hasStartedRef.current) return;
+      hasStartedRef.current = true;
+      play();
+      animateOpacity(0, 1);
+    };
+
+    const handleTimeUpdate = () => {
+      if (isFadingOutRef.current || !Number.isFinite(video.duration)) return;
+      if (video.duration - video.currentTime <= FADE_OUT_LEAD_S) {
+        isFadingOutRef.current = true;
+        animateOpacity(Number.parseFloat(video.style.opacity || "1"), 0);
+      }
+    };
+
+    const handleEnded = () => {
+      video.style.opacity = "0";
+      restartTimerRef.current = window.setTimeout(() => {
+        video.currentTime = 0;
+        play();
+        isFadingOutRef.current = false;
+        animateOpacity(0, 1);
+      }, RESTART_DELAY_MS);
+    };
+
+    video.addEventListener("canplay", handleCanPlay);
+    video.addEventListener("timeupdate", handleTimeUpdate);
+    video.addEventListener("ended", handleEnded);
+    // the first canplay may already have fired before this effect ran
+    if (video.readyState >= 3) handleCanPlay();
+
+    return () => {
+      video.removeEventListener("canplay", handleCanPlay);
+      video.removeEventListener("timeupdate", handleTimeUpdate);
+      video.removeEventListener("ended", handleEnded);
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+      if (restartTimerRef.current) clearTimeout(restartTimerRef.current);
+    };
+  }, []);
+
+  return (
+    <>
+      {/* The video starts transparent and fades in on canplay, so if the CDN is
+       * slow or unreachable there is nothing to see. This layer sits under it
+       * permanently: the hero is never an empty black box. */}
+      <div className="hero-video-fallback" aria-hidden style={{ backgroundImage: `url(${heroGraph})` }} />
+      {failed ? null : (
+        <video
+          ref={videoRef}
+          className="hero-video"
+          src={HERO_VIDEO_URL}
+          poster={heroGraph}
+          muted
+          autoPlay
+          playsInline
+          preload="auto"
+          aria-hidden
+          tabIndex={-1}
+          style={{ opacity: 0 }}
+          onError={() => setFailed(true)}
+        />
+      )}
+    </>
+  );
+};
+
 /* ------------------------------ drift field ------------------------------ *
  * Asme's hero runs a full-bleed video. This one runs a real three.js scene in
  * its place: the things you meant to keep, each a sprite drifting out of the
@@ -706,19 +825,20 @@ const buildGraph = () => {
   const links: GraphLink[] = [];
 
   CLUSTERS.forEach((cl, ci) => {
-    nodes.push({ id: `h${ci}`, c: ci, label: cl.tag, hub: true, val: 9, color: cl.color });
+    nodes.push({ id: `h${ci}`, c: ci, label: cl.tag, hub: true, val: 16, color: cl.color });
     for (let i = 0; i < cl.n; i += 1) {
       const id = `n${ci}-${i}`;
       nodes.push({
         id,
         c: ci,
         label: cl.items[i] ?? undefined,
-        val: i < cl.items.length ? 3.4 : 1.6,
+        val: i < cl.items.length ? 6 : 3,
         color: cl.color,
       });
       links.push({ source: `h${ci}`, target: id, c: ci });
       // a little intra-cluster webbing so it reads as a body, not a star
       if (i > 2) links.push({ source: `n${ci}-${i - 3}`, target: id, c: ci });
+      if (i > 5) links.push({ source: `n${ci}-${i - 6}`, target: id, c: ci });
     }
   });
 
@@ -758,15 +878,15 @@ const ClusterField = () => {
       const g = new ForceGraph3D(holder.current, { controlType: "orbit" })
         .backgroundColor("rgba(0,0,0,0)")
         .graphData(data)
-        .nodeRelSize(2.1)
+        .nodeRelSize(3.2)
         .nodeVal("val")
         .nodeLabel((n: GraphNode) => n.label ?? "")
-        .nodeColor((n: GraphNode) => (n.c === focused ? n.color : dim(n.color, 0.16)))
-        .nodeOpacity(0.92)
+        .nodeColor((n: GraphNode) => (n.c === focused ? n.color : dim(n.color, 0.3)))
+        .nodeOpacity(1)
         .linkColor((l: GraphLink) =>
-          l.c === focused ? dim(CLUSTERS[l.c].color, l.cross ? 0.8 : 0.55) : "rgba(255,255,255,.04)",
+          l.c === focused ? dim(CLUSTERS[l.c].color, l.cross ? 0.3 : 0.6) : "rgba(255,255,255,.09)",
         )
-        .linkWidth((l: GraphLink) => (l.cross ? 1.1 : 0.5))
+        .linkWidth((l: GraphLink) => (l.cross ? 0.4 : 0.8))
         .linkDirectionalParticles((l: GraphLink) => (l.cross && l.c === focused && !reduced ? 2 : 0))
         .linkDirectionalParticleWidth(1.4)
         .linkDirectionalParticleSpeed(0.004)
@@ -776,8 +896,8 @@ const ClusterField = () => {
         .warmupTicks(reduced ? 120 : 0)
         .cooldownTime(reduced ? 0 : 6000);
 
-      g.d3Force("charge")?.strength(-110);
-      g.d3Force("link")?.distance((l: GraphLink) => (l.cross ? 320 : 46));
+      g.d3Force("charge")?.strength(-85);
+      g.d3Force("link")?.distance((l: GraphLink) => (l.cross ? 170 : 40));
 
       const controls = g.controls() as {
         autoRotate: boolean;
@@ -825,7 +945,7 @@ const ClusterField = () => {
           ...members.map((n) => Math.hypot((n.x ?? 0) - mid.x, (n.y ?? 0) - mid.y, (n.z ?? 0) - mid.z)),
         );
         // half of the default 75° field of view, with a little air around it
-        const dist = ((radius + 24) / Math.tan((75 / 2) * (Math.PI / 180))) * 1.85;
+        const dist = ((radius + 24) / Math.tan((75 / 2) * (Math.PI / 180))) * 1.55;
 
         const cam = g.cameraPosition();
         const off = { x: cam.x - mid.x, y: cam.y - mid.y, z: cam.z - mid.z };
@@ -1427,7 +1547,7 @@ const Landing = ({ onEnter }: { onEnter?: () => void }) => {
 
       {/* ------------------------------- hero ------------------------------- */}
       <header className="hero" id="top">
-        <div className="hero-image" aria-hidden style={{ backgroundImage: `url(${heroGraph})` }} />
+        <HeroVideo />
         <DriftField onCatch={onCatch} onLost={setLost} />
         <div className="hero-veil" aria-hidden />
 
@@ -1925,15 +2045,15 @@ html.fb-landing body::before { display: none !important; }
 /* -------------------------------- hero --------------------------------- */
 .hero { position: relative; min-height: 100svh; display: flex; flex-direction: column;
   overflow: hidden; padding-bottom: 40px; }
-/* The hero background is the product itself - a real graph view, shot on a
- * phone - where Asme runs a video. It is dimmed and pushed slightly out of
- * focus so it reads as depth behind the headline rather than as a screenshot
- * competing with it. */
-.hero-image { position: absolute; inset: 0; z-index: 0;
-  background-size: cover; background-position: center 34%;
-  opacity: .62; filter: blur(18px) saturate(1.35); transform: scale(1.12); }
-@media (min-width: 900px) { .hero-image { background-position: center 44%; opacity: .55; } }
-.drift { position: absolute; inset: 0; z-index: 1; }
+.hero-video { position: absolute; inset: 0; z-index: 0; width: 100%; height: 100%;
+  object-fit: cover; object-position: bottom; }
+.hero-video, .hero-video-fallback { filter: saturate(1.15); }
+.hero-video-fallback { position: absolute; inset: 0; z-index: 0;
+  background-size: cover; background-position: center 40%;
+  opacity: .6; filter: blur(14px) saturate(1.3); transform: scale(1.1); }
+/* The drift sits over the video, so it is thinned out - the two together
+ * should read as one field, not as two effects fighting. */
+.drift { position: absolute; inset: 0; z-index: 1; opacity: .55; }
 .drift canvas { display: block; width: 100%; height: 100%; }
 .hero-veil { position: absolute; inset: 0; z-index: 2; pointer-events: none;
   background: radial-gradient(ellipse at 50% 42%, rgba(0,0,0,.55) 0%, rgba(0,0,0,.82) 45%, #000 78%),
