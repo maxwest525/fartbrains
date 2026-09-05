@@ -618,6 +618,342 @@ const LoopDiagram = () => (
   </svg>
 );
 
+/* ------------------------- feature catalogue ------------------------- */
+
+type Viz =
+  | "drop" | "wall" | "wave" | "distill" | "tags" | "links" | "cite"
+  | "cluster" | "merge" | "cycle" | "bell" | "shield" | "hub" | "cal" | "check";
+
+/** Small looping SVGs, one per kind of thing the product does. */
+const MicroViz = ({ kind }: { kind: Viz }) => {
+  switch (kind) {
+    case "drop":
+      return (
+        <svg className="viz" viewBox="0 0 120 64" aria-hidden="true">
+          <rect x="30" y="46" width="60" height="12" rx="2" className="viz-slot" />
+          {[0, 1, 2].map((i) => (
+            <rect key={i} className={`viz-drop d${i}`} x={38 + i * 18} y="4" width="14" height="10" rx="2" />
+          ))}
+        </svg>
+      );
+    case "wall":
+      return (
+        <svg className="viz" viewBox="0 0 120 64" aria-hidden="true">
+          <line x1="60" y1="6" x2="60" y2="58" className="viz-wall" />
+          <circle className="viz-blocked" cx="20" cy="22" r="5" />
+          <circle className="viz-through" cx="20" cy="44" r="5" />
+          <text x="86" y="26" className="viz-t err">×</text>
+          <text x="86" y="48" className="viz-t ok">✓</text>
+        </svg>
+      );
+    case "wave":
+      return (
+        <svg className="viz" viewBox="0 0 120 64" aria-hidden="true">
+          {Array.from({ length: 9 }, (_, i) => (
+            <rect key={i} className={`viz-bar b${i % 5}`} x={8 + i * 7} y="20" width="3" height="24" rx="1.5" />
+          ))}
+          {[0, 1, 2].map((i) => (
+            <rect key={i} className={`viz-line l${i}`} x="78" y={20 + i * 10} width="34" height="3" rx="1.5" />
+          ))}
+        </svg>
+      );
+    case "distill":
+      return (
+        <svg className="viz" viewBox="0 0 120 64" aria-hidden="true">
+          {Array.from({ length: 6 }, (_, i) => (
+            <rect key={i} className="viz-long" x="8" y={8 + i * 8} width="44" height="3" rx="1.5" />
+          ))}
+          {[0, 1, 2].map((i) => (
+            <rect key={i} className={`viz-short s${i}`} x="70" y={20 + i * 10} width="42" height="4" rx="2" />
+          ))}
+        </svg>
+      );
+    case "tags":
+      return (
+        <svg className="viz" viewBox="0 0 120 64" aria-hidden="true">
+          <rect x="8" y="22" width="42" height="20" rx="2" className="viz-slot" />
+          {[0, 1, 2].map((i) => (
+            <rect key={i} className={`viz-tag t${i}`} x={60} y={12 + i * 16} width="52" height="12" rx="6" />
+          ))}
+        </svg>
+      );
+    case "links":
+      return (
+        <svg className="viz" viewBox="0 0 120 64" aria-hidden="true">
+          <circle cx="18" cy="32" r="6" className="viz-node hot" />
+          {[0, 1, 2].map((i) => (
+            <g key={i}>
+              <line className={`viz-edge e${i}`} x1="24" y1="32" x2="96" y2={14 + i * 18} />
+              <circle className={`viz-node n${i}`} cx="102" cy={14 + i * 18} r="4.5" />
+            </g>
+          ))}
+        </svg>
+      );
+    case "cite":
+      return (
+        <svg className="viz" viewBox="0 0 120 64" aria-hidden="true">
+          {[0, 1, 2].map((i) => (
+            <g key={i}>
+              <rect className={`viz-src c${i}`} x="8" y={10 + i * 16} width="56" height="10" rx="2" />
+              <text className={`viz-t cite c${i}`} x="70" y={19 + i * 16}>[{i + 1}]</text>
+            </g>
+          ))}
+          <rect className="viz-short s2" x="86" y="26" width="26" height="4" rx="2" />
+        </svg>
+      );
+    case "cluster":
+      return (
+        <svg className="viz" viewBox="0 0 120 64" aria-hidden="true">
+          {[[22, 14], [98, 18], [16, 48], [104, 46], [60, 8], [58, 56]].map(([x, y], i) => (
+            <circle key={i} className={`viz-pull p${i}`} cx={x} cy={y} r="4" style={{ ["--tx" as string]: `${60 - x}px`, ["--ty" as string]: `${32 - y}px` }} />
+          ))}
+          <circle cx="60" cy="32" r="9" className="viz-core" />
+        </svg>
+      );
+    case "merge":
+      return (
+        <svg className="viz" viewBox="0 0 120 64" aria-hidden="true">
+          <path className="viz-flow f0" d="M6 18 C 40 18, 44 32, 70 32" />
+          <path className="viz-flow f1" d="M6 46 C 40 46, 44 32, 70 32" />
+          <circle cx="8" cy="18" r="4" className="viz-node" />
+          <circle cx="8" cy="46" r="4" className="viz-node hot" />
+          <rect x="74" y="22" width="38" height="20" rx="2" className="viz-new" />
+        </svg>
+      );
+    case "cycle":
+      return (
+        <svg className="viz" viewBox="0 0 120 64" aria-hidden="true">
+          <circle cx="60" cy="32" r="22" className="viz-ring" />
+          <circle className="viz-orbit" r="4" cx="60" cy="10" />
+          {[[60, 8], [82, 32], [60, 56], [38, 32]].map(([x, y], i) => (
+            <circle key={i} cx={x} cy={y} r="3" className="viz-node dim" />
+          ))}
+        </svg>
+      );
+    case "bell":
+      return (
+        <svg className="viz" viewBox="0 0 120 64" aria-hidden="true">
+          <circle cx="60" cy="32" r="10" className="viz-core" />
+          {[0, 1, 2].map((i) => (
+            <circle key={i} className={`viz-ping g${i}`} cx="60" cy="32" r="10" />
+          ))}
+        </svg>
+      );
+    case "shield":
+      return (
+        <svg className="viz" viewBox="0 0 120 64" aria-hidden="true">
+          <path className="viz-shield" d="M60 8 L84 18 V34 C84 46 72 54 60 58 C48 54 36 46 36 34 V18 Z" />
+          <rect className="viz-lock" x="54" y="28" width="12" height="10" rx="2" />
+          <path className="viz-lock-arc" d="M56 28 V24 a4 4 0 0 1 8 0 V28" />
+        </svg>
+      );
+    case "hub":
+      return (
+        <svg className="viz" viewBox="0 0 120 64" aria-hidden="true">
+          <rect x="6" y="24" width="34" height="16" rx="2" className="viz-new" />
+          {[0, 1, 2, 3].map((i) => (
+            <g key={i}>
+              <line className={`viz-edge e${i % 3}`} x1="40" y1="32" x2="92" y2={10 + i * 15} />
+              <rect className="viz-node-box" x="92" y={4 + i * 15} width="22" height="12" rx="2" />
+            </g>
+          ))}
+        </svg>
+      );
+    case "cal":
+      return (
+        <svg className="viz" viewBox="0 0 120 64" aria-hidden="true">
+          <rect x="18" y="10" width="84" height="46" rx="3" className="viz-slot" />
+          {Array.from({ length: 12 }, (_, i) => (
+            <rect key={i} className={`viz-cell ${[3, 7].includes(i) ? "on" : ""}`} x={24 + (i % 4) * 20} y={18 + Math.floor(i / 4) * 13} width="14" height="9" rx="1.5" />
+          ))}
+        </svg>
+      );
+    case "check":
+      return (
+        <svg className="viz" viewBox="0 0 120 64" aria-hidden="true">
+          {[0, 1, 2].map((i) => (
+            <g key={i}>
+              <rect x="18" y={12 + i * 16} width="10" height="10" rx="2" className="viz-box" />
+              <rect x="34" y={15 + i * 16} width="62" height="4" rx="2" className="viz-long" />
+              <path className={`viz-tick k${i}`} d={`M20 ${17 + i * 16} l3 3 l5 -6`} />
+            </g>
+          ))}
+        </svg>
+      );
+    default:
+      return null;
+  }
+};
+
+type Feature = { name: string; does: string; viz: Viz };
+type Group = { id: string; title: string; blurb: string; items: Feature[] };
+
+const CATALOGUE: Group[] = [
+  {
+    id: "in",
+    title: "Getting it in",
+    blurb: "The material is worthless if capturing it costs you anything at all.",
+    items: [
+      { name: "Share sheet", does: "Hit share on a reel, a post, a page — from any app on your phone.", viz: "drop" },
+      { name: "Locked platforms", does: "Instagram, TikTok and YouTube get transcribed from the link alone.", viz: "wall" },
+      { name: "Voice capture", does: "Hold the mic, talk, get it back written down.", viz: "wave" },
+      { name: "Paste anything", does: "A URL, a transcript, a wall of text, a half sentence.", viz: "drop" },
+      { name: "Duplicate check", does: "Tells you when you've saved that link before.", viz: "check" },
+      { name: "Desktop jot pad", does: "A synced scratchpad beside the app on desktop.", viz: "check" },
+    ],
+  },
+  {
+    id: "usable",
+    title: "Making it usable",
+    blurb: "A transcript is not knowledge. The processing is what makes it worth keeping.",
+    items: [
+      { name: "Summary", does: "TL;DR, key points and the source's actual claims.", viz: "distill" },
+      { name: "Action items", does: "What they DID, pulled out as imperatives, separate from the summary.", viz: "check" },
+      { name: "Auto-tags and folder", does: "Tagged and filed on arrival, with a reason and a confidence.", viz: "tags" },
+      { name: "References", does: "Every link, tool and citation they mentioned, extracted.", viz: "links" },
+      { name: "Scrape a URL", does: "Pull any page's readable content into the item.", viz: "drop" },
+      { name: "House rules", does: "Your own instructions, followed by every summary and prompt.", viz: "distill" },
+    ],
+  },
+  {
+    id: "connect",
+    title: "Making it connect",
+    blurb: "One save is a note. Sixteen related saves are a plan you never wrote.",
+    items: [
+      { name: "Related nodes", does: "Surfaces the saves that belong with this one, each with its reason.", viz: "links" },
+      { name: "Clusters", does: "Tags gather into dense groups as the library grows.", viz: "cluster" },
+      { name: "Cross-pollination", does: "Points at the older idea that belongs with the new one.", viz: "merge" },
+      { name: "The graph", does: "The whole library as a map you can pan and isolate.", viz: "cluster" },
+      { name: "Deep research", does: "Real web search and scrape, synthesized into a cited report on the item.", viz: "cite" },
+      { name: "Ask anything", does: "Chat with your own library; answers carry their sources.", viz: "hub" },
+    ],
+  },
+  {
+    id: "build",
+    title: "Turning it into something",
+    blurb: "This is the part nobody else does. The rest of the market stops at storage.",
+    items: [
+      { name: "The prompt", does: "Summary, actions, references, research and your note, compiled into one brief.", viz: "merge" },
+      { name: "Your note is primary", does: "What you wanted when you saved it leads the brief.", viz: "merge" },
+      { name: "Build mode", does: "Written for a coding agent with your stack and your existing material in view.", viz: "cycle" },
+      { name: "Refresh prompt", does: "Regenerate after research, chat or new saves land.", viz: "cycle" },
+      { name: "Prompt studio", does: "Generate and optimize prompts, with suggested rules.", viz: "distill" },
+      { name: "Do-not list", does: "Every brief names what would be unsafe, expensive or wrong to install.", viz: "shield" },
+    ],
+  },
+  {
+    id: "attach",
+    title: "Attaching it to your work",
+    blurb: "One endpoint, read and write, so the brief lands where the building happens.",
+    items: [
+      { name: "MCP or REST", does: "21 tools on one endpoint. No client library, no plugin, nothing installed.", viz: "hub" },
+      { name: "Your agent builds", does: "It runs on your filesystem, in your project, with your keys.", viz: "cycle" },
+      { name: "Write-back", does: "What got built and decided comes home as new material.", viz: "cycle" },
+      { name: "Recall context", does: "Your agent pulls related saves mid-build.", viz: "links" },
+    ],
+  },
+  {
+    id: "keep",
+    title: "Keeping it yours",
+    blurb: "One account is one private brain. No feed, no team, no algorithm.",
+    items: [
+      { name: "Reminders", does: "Alarms, push and email on any item.", viz: "bell" },
+      { name: "Calendar and gifts", does: "Dated items, events, and gift lists with links and prices.", viz: "cal" },
+      { name: "Projects and to-dos", does: "Boards, priorities, and the tasks an idea turned into.", viz: "check" },
+      { name: "Share exactly one", does: "A revocable read-only link to a single item.", viz: "shield" },
+      { name: "Trash and restore", does: "Soft delete with 30-day retention.", viz: "shield" },
+      { name: "Export and delete", does: "JSON or Markdown out; account deletion behind re-auth.", viz: "shield" },
+      { name: "Passcode lock", does: "A device passcode over the app.", viz: "shield" },
+      { name: "Desktop and install", does: "A Windows build and an installable app.", viz: "drop" },
+    ],
+  },
+];
+
+type UseCase = { who: string; saw: string; note: string; got: string; viz: Viz };
+
+const USE_CASES: UseCase[] = [
+  {
+    who: "Marketer",
+    saw: "A 47-second reel on intercepting LLM searches",
+    note: "but for our site, and it has to survive our stack",
+    got: "Ten interceptor routes, the metadata templates, and the prerender step the reel never mentioned.",
+    viz: "merge",
+  },
+  {
+    who: "Founder",
+    saw: "A podcast on running single-tenant deployments",
+    note: "same idea but multi-tenant, provisioning automatic",
+    got: "A control plane, row-level isolation, per-tenant quotas — a platform out of a story about hand-provisioning.",
+    viz: "hub",
+  },
+  {
+    who: "Engineer",
+    saw: "A talk on how agents use hooks and loops",
+    note: "plus a second loop that challenges the first one's ideas",
+    got: "A self-critiquing architecture with a disagreement protocol and an arbitration path.",
+    viz: "cycle",
+  },
+  {
+    who: "Creator",
+    saw: "Someone's LinkedIn post pipeline",
+    note: "but for Instagram and Facebook, in my voice",
+    got: "Your own scheduler, platform-native formats, voice trained on your last thirty posts.",
+    viz: "merge",
+  },
+  {
+    who: "Anyone",
+    saw: "A stranger recommending an MCP server",
+    note: "I only want the one function it has",
+    got: "Your own hundred-line version, in your project, with none of the supply chain.",
+    viz: "shield",
+  },
+  {
+    who: "Operator",
+    saw: "Sixteen things saved months apart",
+    note: "(no note — the pile did this on its own)",
+    got: "The program those sixteen add up to, scaffolded, with the gap between them named.",
+    viz: "cluster",
+  },
+];
+
+const Catalogue = () => (
+  <>
+    {CATALOGUE.map((g) => (
+      <div className="cat-group" key={g.id}>
+        <div className="cat-head">
+          <h3>{g.title}</h3>
+          <p>{g.blurb}</p>
+        </div>
+        <div className="cat-grid">
+          {g.items.map((f) => (
+            <article className="cat-card" key={f.name}>
+              <MicroViz kind={f.viz} />
+              <h4>{f.name}</h4>
+              <p className="cat-does">{f.does}</p>
+            </article>
+          ))}
+        </div>
+      </div>
+    ))}
+  </>
+);
+
+const UseCases = () => (
+  <div className="uc-grid">
+    {USE_CASES.map((u) => (
+      <article className="uc-card" key={u.who + u.saw}>
+        <div className="uc-top">
+          <MicroViz kind={u.viz} />
+          <span className="uc-who">{u.who}</span>
+        </div>
+        <p className="uc-saw">{u.saw}</p>
+        <p className="uc-note">✱ {u.note}</p>
+        <p className="uc-got">{u.got}</p>
+      </article>
+    ))}
+  </div>
+);
+
 /* --------------------------------- page --------------------------------- */
 
 const Landing = ({ onEnter }: { onEnter?: () => void }) => {
@@ -675,7 +1011,7 @@ const Landing = ({ onEnter }: { onEnter?: () => void }) => {
             <a href="#wall">the wall</a>
             <a href="#clusters">clusters</a>
             <a href="#loop">the loop</a>
-            <a href="#pricing">pricing</a>
+            <a href="#everything">everything</a><a href="#pricing">pricing</a>
           </div>
           <button type="button" className="btn sm" onClick={onEnter}>
             Start free
@@ -817,10 +1153,37 @@ const Landing = ({ onEnter }: { onEnter?: () => void }) => {
         </div>
       </section>
 
+      <section id="cases">
+        <div className="wrap">
+          <div className="sec-head">
+            <p className="label">05 / who this is for</p>
+            <h2>Same move, different room.</h2>
+            <p>
+              Every one of these started as something somebody else explained, once, to nobody in
+              particular. The line underneath is what the person actually walked away with.
+            </p>
+          </div>
+          <UseCases />
+        </div>
+      </section>
+
+      <section id="everything">
+        <div className="wrap">
+          <div className="sec-head">
+            <p className="label">06 / everything it does</p>
+            <h2>What did they potentially lose?</h2>
+            <p>
+              Thirty-six answers to that question.
+            </p>
+          </div>
+          <Catalogue />
+        </div>
+      </section>
+
       <section id="pricing">
         <div className="wrap">
           <div className="sec-head">
-            <p className="label">05 / pricing</p>
+            <p className="label">07 / pricing</p>
             <h2>Free forever, or nine dollars.</h2>
             <p>
               The free plan is real and permanent, not a trial with a countdown. Export everything or delete
@@ -898,23 +1261,6 @@ export default Landing;
 /* -------------------------------- styles -------------------------------- */
 
 const CSS = `
-html.fb-landing,
-html.fb-landing body,
-html.fb-landing #root {
-  height: auto !important;
-  min-height: 100%;
-  max-width: none !important;
-  width: auto !important;
-  overflow: visible !important;
-  border-radius: 0 !important;
-  box-shadow: none !important;
-  transform: none !important;
-  scroll-behavior: smooth;
-  background: #06080a;
-}
-html.fb-landing body { padding-right: 0 !important; }
-html.fb-landing body::before { display: none !important; }
-
 :root {
     color-scheme: dark;
     /* Direction A palette, now carrying the whole page */
@@ -938,6 +1284,17 @@ html.fb-landing body::before { display: none !important; }
     margin: 0; background: var(--bg); color: var(--ink);
     font-family: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
     -webkit-font-smoothing: antialiased; overflow-x: hidden;
+  }
+  /* The page mounts inside the app shell, so the wrapper carries its own
+     ground — otherwise the app's fixed aurora shows through everything. */
+  .fb-root {
+    position: relative;
+    z-index: 1;
+    min-height: 100vh;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+    overflow-x: hidden;
   }
   a { color: inherit; text-decoration: none; }
   button { font: inherit; color: inherit; cursor: pointer; background: none; border: 0; }
@@ -1279,4 +1636,94 @@ html.fb-landing body::before { display: none !important; }
 .loop-legend div { display: grid; gap: 4px; }
 .loop-legend b { font-family: "IBM Plex Mono", monospace; font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--amber); font-weight: 500; }
 .loop-legend span { font-size: 12.5px; color: var(--dim); line-height: 1.5; }
+
+/* ---------- micro visuals ---------- */
+.viz { width: 120px; height: 64px; display: block; overflow: visible; }
+.viz-slot { fill: none; stroke: rgba(217,226,221,.18); stroke-width: 1; }
+.viz-long { fill: rgba(217,226,221,.16); }
+.viz-short { fill: var(--amber); opacity: 0; animation: vShort 3.2s infinite; }
+.viz-short.s1 { animation-delay: .25s; } .viz-short.s2 { animation-delay: .5s; }
+@keyframes vShort { 0%,12% { opacity: 0; transform: translateX(-4px);} 30%,80% { opacity: 1; transform: none;} 100% { opacity: 0; } }
+.viz-drop { fill: var(--amber); animation: vDrop 3s infinite ease-in; }
+.viz-drop.d1 { animation-delay: .5s; } .viz-drop.d2 { animation-delay: 1s; }
+@keyframes vDrop { 0% { transform: translateY(0); opacity: 0; } 12% { opacity: 1; } 55% { transform: translateY(36px); opacity: 1; } 70%,100% { transform: translateY(36px); opacity: 0; } }
+.viz-wall { stroke: rgba(229,98,74,.75); stroke-width: 2; stroke-dasharray: 3 3; }
+.viz-blocked { fill: #e5624a; animation: vBlock 3s infinite; }
+@keyframes vBlock { 0% { transform: translateX(0);} 40% { transform: translateX(30px);} 55% { transform: translateX(24px);} 100% { transform: translateX(0);} }
+.viz-through { fill: var(--green); animation: vThru 3s infinite; }
+@keyframes vThru { 0% { transform: translateX(0); } 55%,100% { transform: translateX(72px); } }
+.viz-t { font-family: "IBM Plex Mono", monospace; font-size: 12px; }
+.viz-t.err { fill: #e5624a; } .viz-t.ok { fill: var(--green); }
+.viz-t.cite { fill: var(--amber); font-size: 10px; }
+.viz-bar { fill: var(--amber); opacity: .8; animation: vBar 1.1s infinite ease-in-out; transform-origin: center; }
+.viz-bar.b1 { animation-delay: .1s; } .viz-bar.b2 { animation-delay: .2s; }
+.viz-bar.b3 { animation-delay: .3s; } .viz-bar.b4 { animation-delay: .4s; }
+@keyframes vBar { 0%,100% { transform: scaleY(.3); } 50% { transform: scaleY(1); } }
+.viz-line { fill: rgba(217,226,221,.5); opacity: 0; animation: vShort 3.2s infinite; }
+.viz-line.l1 { animation-delay: .2s; } .viz-line.l2 { animation-delay: .4s; }
+.viz-tag { fill: none; stroke: var(--amber); stroke-width: 1; opacity: 0; animation: vTag 3.4s infinite; }
+.viz-tag.t1 { animation-delay: .3s; } .viz-tag.t2 { animation-delay: .6s; }
+@keyframes vTag { 0% { opacity: 0; transform: translateX(10px);} 20%,85% { opacity: 1; transform: none;} 100% { opacity: 0; } }
+.viz-node { fill: rgba(217,226,221,.45); }
+.viz-node.hot { fill: var(--amber); }
+.viz-node.dim { fill: rgba(242,165,60,.45); }
+.viz-node-box { fill: none; stroke: rgba(217,226,221,.3); stroke-width: 1; }
+.viz-edge { stroke: var(--amber); stroke-width: 1; stroke-dasharray: 80; stroke-dashoffset: 80; animation: vDraw 3s infinite; }
+.viz-edge.e1 { animation-delay: .25s; } .viz-edge.e2 { animation-delay: .5s; }
+@keyframes vDraw { 0% { stroke-dashoffset: 80; } 35%,85% { stroke-dashoffset: 0; } 100% { stroke-dashoffset: 0; opacity: 0; } }
+.viz-src { fill: none; stroke: rgba(217,226,221,.25); stroke-width: 1; opacity: 0; animation: vTag 3.6s infinite; }
+.viz-src.c1 { animation-delay: .3s; } .viz-src.c2 { animation-delay: .6s; }
+.viz-t.cite.c1 { animation-delay: .3s; } .viz-t.cite.c2 { animation-delay: .6s; }
+.viz-pull { fill: var(--amber); animation: vPull 3.6s infinite ease-in-out; }
+.viz-pull.p1 { animation-delay: .12s; } .viz-pull.p2 { animation-delay: .24s; }
+.viz-pull.p3 { animation-delay: .36s; } .viz-pull.p4 { animation-delay: .48s; } .viz-pull.p5 { animation-delay: .6s; }
+@keyframes vPull { 0%,10% { transform: none; opacity: .5; } 55%,75% { transform: translate(var(--tx), var(--ty)); opacity: 1; } 100% { transform: none; opacity: .5; } }
+.viz-core { fill: none; stroke: var(--green); stroke-width: 1.4; }
+.viz-flow { fill: none; stroke: var(--amber); stroke-width: 1.2; stroke-dasharray: 90; stroke-dashoffset: 90; animation: vFlow 3s infinite; }
+.viz-flow.f1 { stroke: var(--green); animation-delay: .3s; }
+@keyframes vFlow { 0% { stroke-dashoffset: 90; } 45%,90% { stroke-dashoffset: 0; } 100% { stroke-dashoffset: 0; opacity: 0; } }
+.viz-new { fill: none; stroke: var(--green); stroke-width: 1.2; opacity: 0; animation: vTag 3s infinite; animation-delay: .8s; }
+.viz-ring { fill: none; stroke: rgba(242,165,60,.35); stroke-width: 1.2; }
+.viz-orbit { fill: var(--green); animation: vOrbit 3.4s linear infinite; transform-origin: 60px 32px; }
+@keyframes vOrbit { to { transform: rotate(360deg); } }
+.viz-ping { fill: none; stroke: var(--amber); stroke-width: 1; opacity: 0; animation: vPing 2.6s infinite; }
+.viz-ping.g1 { animation-delay: .5s; } .viz-ping.g2 { animation-delay: 1s; }
+@keyframes vPing { 0% { transform: scale(1); opacity: .8; transform-origin: 60px 32px; } 100% { transform: scale(2.4); opacity: 0; transform-origin: 60px 32px; } }
+.viz-shield { fill: none; stroke: var(--green); stroke-width: 1.3; stroke-dasharray: 180; stroke-dashoffset: 180; animation: vShield 3.4s infinite; }
+@keyframes vShield { 0% { stroke-dashoffset: 180; } 40%,88% { stroke-dashoffset: 0; } 100% { stroke-dashoffset: 0; opacity: .5; } }
+.viz-lock, .viz-lock-arc { fill: none; stroke: rgba(217,226,221,.55); stroke-width: 1.2; }
+.viz-cell { fill: rgba(217,226,221,.14); }
+.viz-cell.on { fill: var(--amber); animation: vCell 2.6s infinite; }
+@keyframes vCell { 0%,100% { opacity: .35; } 50% { opacity: 1; } }
+.viz-box { fill: none; stroke: rgba(217,226,221,.3); stroke-width: 1; }
+.viz-tick { fill: none; stroke: var(--green); stroke-width: 1.6; stroke-linecap: round; stroke-dasharray: 14; stroke-dashoffset: 14; animation: vTick 3.4s infinite; }
+.viz-tick.k1 { animation-delay: .35s; } .viz-tick.k2 { animation-delay: .7s; }
+@keyframes vTick { 0%,10% { stroke-dashoffset: 14; } 28%,88% { stroke-dashoffset: 0; } 100% { stroke-dashoffset: 14; } }
+
+/* ---------- catalogue ---------- */
+.cat-group { margin-top: clamp(34px, 5vw, 60px); }
+.cat-head { border-top: 1px solid var(--rule); padding-top: 18px; margin-bottom: 20px; }
+.cat-head h3 { margin: 0 0 6px; font-size: clamp(19px, 2.4vw, 24px); letter-spacing: -0.025em; }
+.cat-head p { margin: 0; color: var(--dim); font-size: 14px; line-height: 1.5; max-width: 62ch; }
+.cat-grid { display: grid; gap: 1px; background: var(--rule-2); border: 1px solid var(--rule); grid-template-columns: 1fr; }
+@media (min-width: 680px) { .cat-grid { grid-template-columns: 1fr 1fr; } }
+@media (min-width: 1040px) { .cat-grid { grid-template-columns: repeat(3, 1fr); } }
+.cat-card { background: var(--bg); padding: 18px; display: grid; gap: 8px; align-content: start; }
+.cat-card h4 { margin: 6px 0 0; font-size: 15.5px; letter-spacing: -0.01em; }
+.cat-does { margin: 0; font-size: 13px; line-height: 1.5; color: var(--dim); }
+.cat-lost {
+  margin: 4px 0 0; padding-left: 12px; border-left: 2px solid rgba(229,98,74,.6);
+  font-size: 13px; line-height: 1.5; color: var(--ink-2);
+}
+
+/* ---------- use cases ---------- */
+.uc-grid { display: grid; gap: 1px; background: var(--rule-2); border: 1px solid var(--rule); grid-template-columns: 1fr; }
+@media (min-width: 720px) { .uc-grid { grid-template-columns: 1fr 1fr; } }
+@media (min-width: 1060px) { .uc-grid { grid-template-columns: repeat(3, 1fr); } }
+.uc-card { background: var(--bg); padding: 20px; display: grid; gap: 9px; align-content: start; }
+.uc-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.uc-who { font-family: "IBM Plex Mono", monospace; font-size: 10.5px; letter-spacing: .12em; text-transform: uppercase; color: var(--dim); }
+.uc-saw { margin: 0; font-size: 15px; font-weight: 600; line-height: 1.4; letter-spacing: -0.01em; }
+.uc-note { margin: 0; font-family: "IBM Plex Mono", monospace; font-size: 12.5px; line-height: 1.5; color: var(--amber); }
+.uc-got { margin: 2px 0 0; font-size: 13.5px; line-height: 1.55; color: var(--ink-2); padding-left: 12px; border-left: 2px solid rgba(99,230,160,.55); }
 `;
