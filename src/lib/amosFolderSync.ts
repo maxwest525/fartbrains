@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { syncIdeaToAmos } from "./syncIdeaToAmos";
+import { isAmosOwner } from "./amosOwner";
 
 /**
  * Folder-driven AMOS sync. When an idea lands in the "Mark" folder (either
@@ -7,6 +8,11 @@ import { syncIdeaToAmos } from "./syncIdeaToAmos";
  * Inbox exactly once. The `synced_to_amos` column on `ideas` is the
  * dedupe marker so re-adding the same idea to "Mark" doesn't double-post.
  * Fire-and-forget: never awaited, never throws, never surfaces errors.
+ *
+ * Owner-scoped: every entry point below returns without doing anything unless
+ * the signed-in account is the one this integration belongs to. See
+ * `amosOwner.ts` — the mirror posts note content to a private endpoint, and
+ * nobody else's notes may go there.
  */
 
 const MARK_FOLDER_NAME = "Mark";
@@ -17,6 +23,9 @@ export async function ensureMarkFolderId(): Promise<string | null> {
   try {
     const { data: userData } = await supabase.auth.getUser();
     if (!userData.user) return null;
+    // Checked before the insert, so a customer never finds a folder named
+    // after someone else's project sitting in their vault.
+    if (!isAmosOwner(userData.user.email)) return null;
     const { data: match } = await supabase
       .from("folders")
       .select("id")
@@ -56,6 +65,8 @@ export function maybeSyncIdeaToAmosByFolder(
   if (!ideaId || !folderId) return;
   void (async () => {
     try {
+      const { data: userData } = await supabase.auth.getUser();
+      if (!isAmosOwner(userData.user?.email)) return;
       const markId = await getOrCreateMarkFolderId();
       if (!markId || folderId !== markId) return;
 
