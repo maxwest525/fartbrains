@@ -1,3 +1,4 @@
+import { SupportContact } from "@/components/legal/SupportContact";
 import { LegalPage } from "@/components/legal/LegalPage";
 
 /** DRAFT terms of service. Placeholder text pending legal review. */
@@ -119,7 +120,7 @@ const Terms = () => (
 
     <h2>Contact</h2>
     <p>
-      <em>[add your support email and legal entity / address here]</em>.
+      <SupportContact suffix="The legal entity and registered address are not published yet." />
     </p>
   </LegalPage>
 );

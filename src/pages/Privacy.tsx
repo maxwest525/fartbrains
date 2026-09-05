@@ -1,3 +1,4 @@
+import { SupportContact } from "@/components/legal/SupportContact";
 import { LegalPage } from "@/components/legal/LegalPage";
 
 /**
@@ -136,8 +137,7 @@ const Privacy = () => (
 
     <h2>Contact</h2>
     <p>
-      Questions about privacy, or a request about your data:{" "}
-      <em>[add your support email here]</em>.
+      Questions about privacy, or a request about your data: <SupportContact />
     </p>
   </LegalPage>
 );
