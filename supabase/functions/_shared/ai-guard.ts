@@ -9,6 +9,7 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.95.0";
 import { requireUser, type AuthedUser } from "./user-auth.ts";
+import { isEntitled, type SubscriptionStatus } from "./billing.ts";
 
 export type AiOperation =
   | "summarize"
@@ -29,7 +30,16 @@ export type AiOperation =
   | "transcribe_deliverables"
   | "context_preview";
 
-export type Plan = "free" | "trialing" | "active";
+/**
+ * Plans as this file meters them.
+ *
+ * `past_due` is its own entry rather than a synonym for `active` so the usage
+ * log still says which state a request was served under, but it carries the
+ * paid allowance: billing.ts treats past_due as entitled, and dropping someone
+ * to the free tier the moment a card fails takes their AI away in the same
+ * hour the app tells them their notes are safe and to update their card.
+ */
+export type Plan = "free" | "trialing" | "active" | "past_due";
 
 type Limits = {
   /** Burst guard — repeated clicks and runaway loops. */
@@ -53,6 +63,7 @@ export const PLAN_LIMITS: Record<Plan, Limits> = {
   free: { perMinute: 5, perHour: 30, perMonth: 50, maxInputChars: 60_000 },
   trialing: { perMinute: 15, perHour: 150, perMonth: 1_000, maxInputChars: 300_000 },
   active: { perMinute: 15, perHour: 150, perMonth: 1_000, maxInputChars: 300_000 },
+  past_due: { perMinute: 15, perHour: 150, perMonth: 1_000, maxInputChars: 300_000 },
 };
 
 // Expensive operations count for more than a cheap one: a 20-minute
@@ -110,9 +121,15 @@ const json = (body: unknown, status: number, cors: Record<string, string>) =>
   });
 
 /**
- * Resolve the caller's plan. Billing is not wired yet, so everyone is on the
- * free plan; when subscriptions land this reads the subscription row. Kept in
- * one place so no route grows its own notion of entitlement.
+ * Resolve the caller's plan from their subscription row.
+ *
+ * Entitlement is decided by isEntitled() in billing.ts rather than by a list of
+ * status names kept here. This file used to carry its own copy that recognised
+ * only "active" and "trialing", which meant a customer in dunning was metered
+ * as free — 50 actions instead of 1,000 — while billing.ts, the client
+ * entitlement table and the message on their billing screen all still said
+ * they had access. The enforcement point disagreeing with the thing that
+ * explains it is the worst way for that to be wrong.
  */
 async function resolvePlan(
   client: ReturnType<typeof svc>,
@@ -124,10 +141,11 @@ async function resolvePlan(
     .eq("user_id", userId)
     .maybeSingle();
   if (error || !data) return "free";
-  const status = String((data as { status?: string }).status ?? "");
-  if (status === "active") return "active";
+  const status = String((data as { status?: string }).status ?? "") as SubscriptionStatus;
+  if (!isEntitled(status)) return "free";
   if (status === "trialing") return "trialing";
-  return "free";
+  if (status === "past_due") return "past_due";
+  return "active";
 }
 
 async function weightedCountSince(

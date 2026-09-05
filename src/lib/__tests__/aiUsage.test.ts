@@ -29,6 +29,16 @@ describe("stays in step with the server's guard", () => {
     }
   });
 
+  it("knows every plan the guard meters, so none falls back to the wrong limit", () => {
+    // Iterating the client's own plans would pass while the server had one the
+    // client did not, which is how past_due came to be metered as free here.
+    const plans = /export type Plan = ([^;]+);/.exec(GUARD);
+    expect(plans, "Plan type not found in ai-guard.ts").toBeTruthy();
+    for (const m of plans![1].matchAll(/"(\w+)"/g)) {
+      expect(Object.keys(MONTHLY_LIMIT)).toContain(m[1]);
+    }
+  });
+
   it("has the same weight for every weighted operation", () => {
     const block = /OPERATION_WEIGHT[^=]*=\s*\{([^}]*)\}/s.exec(GUARD);
     expect(block, "OPERATION_WEIGHT not found in ai-guard.ts").toBeTruthy();
