@@ -192,130 +192,198 @@ const CLUSTERS: Cluster[] = [
   },
 ];
 
-/* ------------------------------ drift field ------------------------------ */
+/* ------------------------------ drift field ------------------------------ *
+ * Asme's hero runs a full-bleed video. This one runs a real three.js scene in
+ * its place: the things you meant to keep, each a sprite drifting out of the
+ * dark, past the camera and gone. Fog does the fading, so a phrase is legible
+ * for a moment and then it is not. Click one and it takes you to what it would
+ * have become; miss it and it counts against you.
+ *
+ * three is loaded dynamically — it is far heavier than the rest of the page,
+ * and the hero copy must not wait on it.
+ * -------------------------------------------------------------------------- */
 
-type Drop = { text: string; w: number; h: number; x: number; dx: number; y: number; v: number; a: number; wob: number };
+const DRIFT_NEAR = 60;
+const DRIFT_FAR = -640;
 
 const DriftField = ({ onCatch, onLost }: { onCatch: (text: string) => void; onLost: (n: number) => void }) => {
-  const ref = useRef<HTMLCanvasElement | null>(null);
+  const holder = useRef<HTMLDivElement | null>(null);
+  const onCatchRef = useRef(onCatch);
+  const onLostRef = useRef(onLost);
 
   useEffect(() => {
-    const canvas = ref.current;
-    const ctx = canvas?.getContext("2d");
-    if (!canvas || !ctx) return;
+    onCatchRef.current = onCatch;
+    onLostRef.current = onLost;
+  });
 
-    const reduced = REDUCED();
-    let w = 0;
-    let h = 0;
-    let raf = 0;
-    let seed = 0;
-    let lostCount = 0;
-    const bubbles: Drop[] = [];
+  useEffect(() => {
+    const el = holder.current;
+    if (!el) return;
 
-    const size = () => {
+    let cancelled = false;
+    let teardown: (() => void) | undefined;
+
+    (async () => {
+      const THREE = await import("three");
+      const host = holder.current;
+      if (cancelled || !host) return;
+
+      const reduced = REDUCED();
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
-      w = canvas.clientWidth;
-      h = canvas.clientHeight;
-      canvas.width = w * dpr;
-      canvas.height = h * dpr;
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    };
 
-    const spawn = () => {
-      const text = DRIFTING[seed % DRIFTING.length];
-      seed++;
-      ctx.font = '13px "IBM Plex Mono", monospace';
-      const width = ctx.measureText(text).width + 26;
-      const leftEdge = w >= 900 ? w * 0.54 : 12;
-      const span = Math.max(1, w - width - leftEdge - 16);
-      bubbles.push({
-        text,
-        w: width,
-        h: 28,
-        x: leftEdge + Math.random() * span,
-        dx: 0,
-        y: h + 30,
-        v: 0.26 + Math.random() * 0.28,
-        a: 1,
-        wob: Math.random() * 6.28,
+      /* Each phrase is drawn once into a canvas and used as a sprite map, so the
+       * type stays the page's type rather than becoming geometry. */
+      const label = (text: string) => {
+        const pad = 24;
+        const size = 44;
+        const c = document.createElement("canvas");
+        const g = c.getContext("2d");
+        if (!g) return null;
+        g.font = `500 ${size}px Inter, ui-sans-serif, system-ui, sans-serif`;
+        const w = Math.ceil(g.measureText(text).width) + pad * 2;
+        const h = size + pad * 2;
+        c.width = w * dpr;
+        c.height = h * dpr;
+        g.scale(dpr, dpr);
+        g.font = `500 ${size}px Inter, ui-sans-serif, system-ui, sans-serif`;
+        g.textBaseline = "middle";
+        g.fillStyle = "rgba(255,255,255,.92)";
+        g.fillText(text, pad, h / 2);
+        const tex = new THREE.CanvasTexture(c);
+        tex.colorSpace = THREE.SRGBColorSpace;
+        tex.anisotropy = 4;
+        return { tex, w, h };
+      };
+
+      const scene = new THREE.Scene();
+      scene.fog = new THREE.Fog(0x000000, 120, 620);
+
+      const camera = new THREE.PerspectiveCamera(58, 1, 1, 1200);
+      camera.position.set(0, 0, DRIFT_NEAR + 40);
+
+      const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+      renderer.setPixelRatio(dpr);
+      renderer.setClearColor(0x000000, 0);
+      host.appendChild(renderer.domElement);
+
+      type Drifter = { sprite: InstanceType<typeof THREE.Sprite>; text: string; v: number; spin: number };
+      const drifters: Drifter[] = [];
+
+      const place = (d: Drifter, far: boolean) => {
+        d.sprite.position.set(
+          (Math.random() - 0.5) * 620,
+          (Math.random() - 0.5) * 300,
+          far ? DRIFT_FAR + Math.random() * 120 : DRIFT_FAR + Math.random() * (DRIFT_NEAR - DRIFT_FAR),
+        );
+      };
+
+      DRIFTING.forEach((text, i) => {
+        // two passes, so the field has depth without inventing more copy
+        for (let pass = 0; pass < 3; pass += 1) {
+          const made = label(text);
+          if (!made) return;
+          const mat = new THREE.SpriteMaterial({
+            map: made.tex,
+            transparent: true,
+            opacity: 0,
+            depthWrite: false,
+            fog: true,
+          });
+          const sprite = new THREE.Sprite(mat);
+          const scale = 0.16;
+          sprite.scale.set(made.w * scale, made.h * scale, 1);
+          sprite.userData.text = text;
+          const d: Drifter = { sprite, text, v: 0.32 + Math.random() * 0.3, spin: i };
+          place(d, false);
+          scene.add(sprite);
+          drifters.push(d);
+        }
       });
-    };
 
-    const draw = () => {
-      ctx.clearRect(0, 0, w, h);
-      for (let i = bubbles.length - 1; i >= 0; i--) {
-        const b = bubbles[i];
-        if (!reduced) {
-          b.y -= b.v;
-          b.wob += 0.011;
+      const size = () => {
+        const w = host.clientWidth;
+        const h = host.clientHeight;
+        if (!w || !h) return;
+        renderer.setSize(w, h, false);
+        camera.aspect = w / h;
+        camera.updateProjectionMatrix();
+      };
+      size();
+      const ro = new ResizeObserver(size);
+      ro.observe(host);
+
+      const pointer = new THREE.Vector2();
+      const aim = new THREE.Vector2();
+      const ray = new THREE.Raycaster();
+      const onMove = (e: PointerEvent) => {
+        const r = host.getBoundingClientRect();
+        aim.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
+      };
+      const onClick = (e: PointerEvent) => {
+        const r = host.getBoundingClientRect();
+        pointer.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
+        ray.setFromCamera(pointer, camera);
+        const hit = ray.intersectObjects(drifters.map((d) => d.sprite))[0];
+        if (hit) onCatchRef.current(String(hit.object.userData.text));
+      };
+      host.addEventListener("pointermove", onMove);
+      host.addEventListener("pointerdown", onClick);
+
+      let lost = 0;
+      let raf = 0;
+      const tick = () => {
+        for (const d of drifters) {
+          d.sprite.position.z += d.v;
+          if (d.sprite.position.z > DRIFT_NEAR) {
+            place(d, true);
+            lost += 1;
+            onLostRef.current(lost);
+          }
+          // depth alone reads as flat, so each one sways a little as it comes
+          d.sprite.position.x += Math.sin((performance.now() / 3000) + d.spin) * 0.05;
+          // legible in the middle distance only: it surfaces, then it is gone
+          // before it can crowd the headline
+          const t = (d.sprite.position.z - DRIFT_FAR) / (DRIFT_NEAR - DRIFT_FAR);
+          const mat = d.sprite.material as InstanceType<typeof THREE.SpriteMaterial>;
+          mat.opacity = 0.42 * Math.min(1, t / 0.25) * Math.min(1, (1 - t) / 0.35);
         }
-        const x = b.x + Math.sin(b.wob) * 6;
-        if (b.y < h * 0.34 && !reduced) b.a = Math.max(0, b.a - 0.004);
-        if (b.a <= 0 || b.y < -40) {
-          bubbles.splice(i, 1);
-          lostCount++;
-          onLost(lostCount);
-          continue;
-        }
-        b.dx = x;
-        ctx.globalAlpha = b.a * 0.9;
-        ctx.beginPath();
-        const r = 3;
-        ctx.moveTo(x + r, b.y);
-        ctx.arcTo(x + b.w, b.y, x + b.w, b.y + b.h, r);
-        ctx.arcTo(x + b.w, b.y + b.h, x, b.y + b.h, r);
-        ctx.arcTo(x, b.y + b.h, x, b.y, r);
-        ctx.arcTo(x, b.y, x + b.w, b.y, r);
-        ctx.closePath();
-        ctx.fillStyle = "rgba(242,165,60,.07)";
-        ctx.fill();
-        ctx.strokeStyle = "rgba(242,165,60,.42)";
-        ctx.lineWidth = 1;
-        ctx.stroke();
-        ctx.fillStyle = "rgba(217,226,221,.82)";
-        ctx.font = '13px "IBM Plex Mono", monospace';
-        ctx.textBaseline = "middle";
-        ctx.fillText(b.text, x + 13, b.y + b.h / 2);
-        ctx.globalAlpha = 1;
+        // the field leans away from the pointer, which is what sells the depth
+        pointer.lerp(aim, 0.04);
+        camera.position.x = -pointer.x * 26;
+        camera.position.y = -pointer.y * 14;
+        camera.lookAt(0, 0, -220);
+        renderer.render(scene, camera);
+        raf = requestAnimationFrame(tick);
+      };
+
+      if (reduced) {
+        renderer.render(scene, camera);
+      } else {
+        raf = requestAnimationFrame(tick);
       }
-      if (!reduced) raf = requestAnimationFrame(draw);
-    };
 
-    const onClick = (e: MouseEvent) => {
-      const rect = canvas.getBoundingClientRect();
-      const px = e.clientX - rect.left;
-      const py = e.clientY - rect.top;
-      for (let i = bubbles.length - 1; i >= 0; i--) {
-        const b = bubbles[i];
-        if (px >= b.dx && px <= b.dx + b.w && py >= b.y && py <= b.y + b.h) {
-          bubbles.splice(i, 1);
-          onCatch(b.text);
-          return;
-        }
-      }
-    };
+      teardown = () => {
+        cancelAnimationFrame(raf);
+        ro.disconnect();
+        host.removeEventListener("pointermove", onMove);
+        host.removeEventListener("pointerdown", onClick);
+        drifters.forEach((d) => {
+          const m = d.sprite.material as InstanceType<typeof THREE.SpriteMaterial>;
+          m.map?.dispose();
+          m.dispose();
+        });
+        renderer.dispose();
+        renderer.domElement.remove();
+      };
+    })();
 
-    size();
-    for (let j = 0; j < 4; j++) {
-      spawn();
-      bubbles[j].y = h - 30 - j * 74;
-    }
-    draw();
-    const timer = reduced ? 0 : window.setInterval(() => { if (bubbles.length < 7) spawn(); }, 2000);
-    canvas.addEventListener("click", onClick);
-    window.addEventListener("resize", size);
-    const ro = new ResizeObserver(size);
-    ro.observe(canvas);
     return () => {
-      cancelAnimationFrame(raf);
-      if (timer) clearInterval(timer);
-      ro.disconnect();
-      canvas.removeEventListener("click", onClick);
-      window.removeEventListener("resize", size);
+      cancelled = true;
+      teardown?.();
     };
-  }, [onCatch, onLost]);
+  }, []);
 
-  return <canvas id="drift" ref={ref} aria-label="Ideas drifting away — click one to catch it" />;
+  return <div className="drift" ref={holder} aria-hidden />;
 };
 
 /* ------------------------------ diagrams ------------------------------ */
@@ -380,7 +448,7 @@ const DCard = ({
       </text>
       {sub ? (
         <text x={cx} y={y + h / 2 + 14} textAnchor="middle" fill="rgba(255,255,255,.45)"
-          fontSize="10.5" fontFamily={SANS}>
+          fontSize="11" fontFamily={SANS}>
           {sub}
         </text>
       ) : null}
@@ -392,7 +460,7 @@ const DCard = ({
 const DNote = ({ x, y, children, anchor = "middle" }: {
   x: number; y: number; children: string; anchor?: "start" | "middle" | "end";
 }) => (
-  <text x={x} y={y} textAnchor={anchor} fill="rgba(255,255,255,.38)" fontSize="10.5"
+  <text x={x} y={y} textAnchor={anchor} fill="rgba(255,255,255,.38)" fontSize="11"
     fontFamily={SANS} letterSpacing=".02em">
     {children}
   </text>
@@ -437,7 +505,7 @@ const LoopsDiagram = () => {
       {/* the loop the talk described */}
       <ellipse cx={cx} cy={cy} rx="76" ry="52" fill="url(#fill-amber)"
         stroke="rgba(242,165,60,.5)" strokeWidth="1" />
-      <text x={cx} y={cy + 4} textAnchor="middle" fill="rgba(255,255,255,.4)" fontSize="10.5" fontFamily={SANS}>
+      <text x={cx} y={cy + 4} textAnchor="middle" fill="rgba(255,255,255,.4)" fontSize="11" fontFamily={SANS}>
         builder loop
       </text>
 
@@ -451,7 +519,7 @@ const LoopsDiagram = () => {
             <circle className="dg-pulse" style={{ animationDelay: `${i * 0.45}s` }} cx={x} cy={y} r="11" fill="url(#node-glow)" />
             <circle cx={x} cy={y} r="3.5" fill="#f2a53c" />
             <text x={x + dx} y={side ? y + 4 : y - 12} textAnchor={side ? (x > cx ? "start" : "end") : "middle"}
-              fill="rgba(255,255,255,.72)" fontSize="10.5" fontFamily={SANS}>
+              fill="rgba(255,255,255,.72)" fontSize="11" fontFamily={SANS}>
               {label}
             </text>
           </g>
@@ -496,7 +564,7 @@ const RoutesDiagram = () => (
             stroke="rgba(242,165,60,.3)" strokeWidth="1" />
           <rect x="190" y={y} width={w} height="24" rx="12" fill="url(#fill-amber)"
             stroke="rgba(242,165,60,.4)" strokeWidth="1" />
-          <text x="204" y={y + 16} fill="rgba(255,255,255,.8)" fontSize="10.5" fontFamily={MONO}>
+          <text x="204" y={y + 16} fill="rgba(255,255,255,.8)" fontSize="11" fontFamily={MONO}>
             {slug}
           </text>
         </g>
@@ -530,7 +598,7 @@ const TenancyDiagram = () => (
           </text>
           <rect x={cx - 34} y="160" width="68" height="18" rx="9" fill="rgba(0,0,0,.35)"
             stroke="rgba(242,165,60,.3)" strokeWidth="1" />
-          <text x={cx} y="172.5" textAnchor="middle" fill="#f2a53c" fontSize="9.5" fontFamily={MONO}>
+          <text x={cx} y="172.5" textAnchor="middle" fill="#f2a53c" fontSize="10" fontFamily={MONO}>
             quota · rls
           </text>
         </g>
@@ -612,121 +680,204 @@ const MutationPanel = () => {
   );
 };
 
-/* ----------------------------- the clusters ----------------------------- */
+/* ------------------------------- clusters -------------------------------- *
+ * A real WebGL force graph (3d-force-graph, which wraps three.js and
+ * d3-force-3d). The library and three together are far heavier than the rest
+ * of this page, so they are imported dynamically: the section renders its
+ * frame immediately and the graph drops in when the chunk lands. Under
+ * reduced motion the simulation is warmed up and frozen instead of spinning.
+ * -------------------------------------------------------------------------- */
 
-type CNode = { c: number; x: number; y: number; hx: number; hy: number; r: number; ph: number };
+type GraphNode = {
+  id: string;
+  c: number;
+  label?: string;
+  hub?: boolean;
+  val: number;
+  color: string;
+};
+type GraphLink = { source: string; target: string; c: number; cross?: boolean };
+
+/** One labelled hub per cluster, its saves around it, plus the few edges that
+ *  run between clusters — the through-line the page is actually claiming. */
+const buildGraph = () => {
+  const nodes: GraphNode[] = [];
+  const links: GraphLink[] = [];
+
+  CLUSTERS.forEach((cl, ci) => {
+    nodes.push({ id: `h${ci}`, c: ci, label: cl.tag, hub: true, val: 9, color: cl.color });
+    for (let i = 0; i < cl.n; i += 1) {
+      const id = `n${ci}-${i}`;
+      nodes.push({
+        id,
+        c: ci,
+        label: cl.items[i] ?? undefined,
+        val: i < cl.items.length ? 3.4 : 1.6,
+        color: cl.color,
+      });
+      links.push({ source: `h${ci}`, target: id, c: ci });
+      // a little intra-cluster webbing so it reads as a body, not a star
+      if (i > 2) links.push({ source: `n${ci}-${i - 3}`, target: id, c: ci });
+    }
+  });
+
+  ([[0, 2], [1, 2], [2, 3], [0, 3]] as [number, number][]).forEach(([a, b]) => {
+    links.push({ source: `h${a}`, target: `h${b}`, c: a, cross: true });
+  });
+
+  return { nodes, links };
+};
 
 const ClusterField = () => {
-  const ref = useRef<HTMLCanvasElement | null>(null);
+  const holder = useRef<HTMLDivElement | null>(null);
+  const graphRef = useRef<{ dispose: () => void; focus: (c: number) => void } | null>(null);
   const [active, setActive] = useState(0);
-  const activeRef = useRef(0);
+  const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    activeRef.current = active;
-  }, [active]);
+    const el = holder.current;
+    if (!el) return;
 
-  useEffect(() => {
-    const canvas = ref.current;
-    const ctx = canvas?.getContext("2d");
-    if (!canvas || !ctx) return;
+    let cancelled = false;
+    let cleanup: (() => void) | undefined;
 
-    const reduced = REDUCED();
-    let w = 0;
-    let h = 0;
-    let raf = 0;
+    (async () => {
+      const { default: ForceGraph3D } = await import("3d-force-graph");
+      if (cancelled || !holder.current) return;
 
-    const nodes: CNode[] = CLUSTERS.flatMap((cl, ci) =>
-      Array.from({ length: cl.n }, () => ({
-        c: ci,
-        x: Math.random() * 400,
-        y: Math.random() * 300,
-        hx: 0,
-        hy: 0,
-        r: 2 + Math.random() * 4,
-        ph: Math.random() * 6.28,
-      })),
-    );
+      const reduced = REDUCED();
+      const data = buildGraph();
+      const dim = (hex: string, a: number) => {
+        const n = parseInt(hex.slice(1), 16);
+        return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${a})`;
+      };
 
-    const layout = () => {
-      const cols = w < 640 ? 2 : 4;
-      nodes.forEach((n, i) => {
-        const cx = (w * ((n.c % cols) + 0.5)) / cols;
-        const cy = h * (w < 640 ? (Math.floor(n.c / cols) + 0.5) / 2 : 0.5);
-        const spread = Math.min(w, h) * (n.c === activeRef.current ? 0.17 : 0.1);
-        const a = i * 2.399;
-        n.hx = cx + Math.cos(a) * spread * 0.8;
-        n.hy = cy + Math.sin(a) * spread * 0.8;
-      });
-    };
+      let focused = 0;
 
-    const size = () => {
-      const dpr = Math.min(window.devicePixelRatio || 1, 2);
-      w = canvas.clientWidth;
-      h = canvas.clientHeight;
-      canvas.width = w * dpr;
-      canvas.height = h * dpr;
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      layout();
-    };
+      const g = new ForceGraph3D(holder.current, { controlType: "orbit" })
+        .backgroundColor("rgba(0,0,0,0)")
+        .graphData(data)
+        .nodeRelSize(2.1)
+        .nodeVal("val")
+        .nodeLabel((n: GraphNode) => n.label ?? "")
+        .nodeColor((n: GraphNode) => (n.c === focused ? n.color : dim(n.color, 0.16)))
+        .nodeOpacity(0.92)
+        .linkColor((l: GraphLink) =>
+          l.c === focused ? dim(CLUSTERS[l.c].color, l.cross ? 0.8 : 0.55) : "rgba(255,255,255,.04)",
+        )
+        .linkWidth((l: GraphLink) => (l.cross ? 1.1 : 0.5))
+        .linkDirectionalParticles((l: GraphLink) => (l.cross && l.c === focused && !reduced ? 2 : 0))
+        .linkDirectionalParticleWidth(1.4)
+        .linkDirectionalParticleSpeed(0.004)
+        .linkDirectionalParticleColor(() => "#f2a53c")
+        .showNavInfo(false)
+        .enableNodeDrag(false)
+        .warmupTicks(reduced ? 120 : 0)
+        .cooldownTime(reduced ? 0 : 6000);
 
-    const draw = () => {
-      layout();
-      ctx.clearRect(0, 0, w, h);
-      const act = nodes.filter((n) => n.c === activeRef.current);
-      ctx.strokeStyle = "rgba(242,165,60,.22)";
-      ctx.lineWidth = 1;
-      for (let i = 0; i < act.length; i++) {
-        for (let j = i + 1; j < act.length; j++) {
-          const d = Math.hypot(act[i].x - act[j].x, act[i].y - act[j].y);
-          if (d > 78) continue;
-          ctx.globalAlpha = 1 - d / 78;
-          ctx.beginPath();
-          ctx.moveTo(act[i].x, act[i].y);
-          ctx.lineTo(act[j].x, act[j].y);
-          ctx.stroke();
-        }
-      }
-      ctx.globalAlpha = 1;
-      nodes.forEach((n) => {
-        n.ph += 0.01;
-        n.x += (n.hx + Math.cos(n.ph) * 4 - n.x) * 0.06;
-        n.y += (n.hy + Math.sin(n.ph) * 4 - n.y) * 0.06;
-        const on = n.c === activeRef.current;
-        ctx.globalAlpha = on ? 1 : 0.22;
-        ctx.fillStyle = CLUSTERS[n.c].color;
-        ctx.beginPath();
-        ctx.arc(n.x, n.y, on ? n.r + 1 : n.r, 0, Math.PI * 2);
-        ctx.fill();
-      });
-      ctx.globalAlpha = 1;
-      if (!reduced) raf = requestAnimationFrame(draw);
-    };
+      g.d3Force("charge")?.strength(-110);
+      g.d3Force("link")?.distance((l: GraphLink) => (l.cross ? 320 : 46));
 
-    size();
-    draw();
-    // The canvas sits inside a scroll-revealed grid, so its box is not final
-    // on mount — observe it rather than sizing once.
-    const ro = new ResizeObserver(size);
-    ro.observe(canvas);
-    window.addEventListener("resize", size);
+      const controls = g.controls() as {
+        autoRotate: boolean;
+        autoRotateSpeed: number;
+        enableZoom: boolean;
+        enablePan: boolean;
+      };
+      controls.autoRotate = !reduced;
+      controls.autoRotateSpeed = 0.5;
+      controls.enableZoom = false;
+      controls.enablePan = false;
+
+      const size = () => {
+        const box = holder.current;
+        if (!box) return;
+        g.width(box.clientWidth).height(box.clientHeight);
+      };
+      size();
+      const ro = new ResizeObserver(size);
+      ro.observe(holder.current);
+
+      type Placed = GraphNode & { x?: number; y?: number; z?: number };
+
+      /* zoomToFit frames the cluster but leaves the orbit target at the scene
+       * origin, so auto-rotate then swings the cluster back out of frame. This
+       * fits it and re-targets the orbit on the same centroid. */
+      const focus = (c: number) => {
+        focused = c;
+        // re-read the accessors so the palette follows the selected cluster
+        g.nodeColor(g.nodeColor()).linkColor(g.linkColor()).linkDirectionalParticles(g.linkDirectionalParticles());
+
+        const members = (data.nodes as Placed[]).filter((n) => n.c === c && n.x != null);
+        if (!members.length) return;
+
+        const mid = members.reduce(
+          (a, n) => ({ x: a.x + (n.x ?? 0), y: a.y + (n.y ?? 0), z: a.z + (n.z ?? 0) }),
+          { x: 0, y: 0, z: 0 },
+        );
+        mid.x /= members.length;
+        mid.y /= members.length;
+        mid.z /= members.length;
+
+        const radius = Math.max(
+          40,
+          ...members.map((n) => Math.hypot((n.x ?? 0) - mid.x, (n.y ?? 0) - mid.y, (n.z ?? 0) - mid.z)),
+        );
+        // half of the default 75° field of view, with a little air around it
+        const dist = ((radius + 24) / Math.tan((75 / 2) * (Math.PI / 180))) * 1.85;
+
+        const cam = g.cameraPosition();
+        const off = { x: cam.x - mid.x, y: cam.y - mid.y, z: cam.z - mid.z };
+        const len = Math.hypot(off.x, off.y, off.z) || 1;
+
+        g.cameraPosition(
+          { x: mid.x + (off.x / len) * dist, y: mid.y + (off.y / len) * dist, z: mid.z + (off.z / len) * dist },
+          mid,
+          reduced ? 0 : 900,
+        );
+      };
+
+      // the layout is still settling on mount, so hold the first framing until
+      // the simulation has cooled
+      g.onEngineStop(() => focus(focused));
+
+      graphRef.current = {
+        dispose: () => {
+          ro.disconnect();
+          g._destructor?.();
+        },
+        focus,
+      };
+      cleanup = () => graphRef.current?.dispose();
+      setReady(true);
+    })();
+
     return () => {
-      cancelAnimationFrame(raf);
-      ro.disconnect();
-      window.removeEventListener("resize", size);
+      cancelled = true;
+      cleanup?.();
+      graphRef.current = null;
     };
   }, []);
+
+  useEffect(() => {
+    graphRef.current?.focus(active);
+  }, [active, ready]);
 
   const cl = CLUSTERS[active];
 
   return (
     <div className="cluster-wrap">
-      <canvas id="constellation" ref={ref} aria-label="Your saved material, grouped into clusters" />
-      <div className="cluster-tabs" role="tablist">
-        {CLUSTERS.map((c, i) => (
-          <button key={c.tag} type="button" role="tab" aria-selected={i === active} onClick={() => setActive(i)}>
-            {c.tag} · {c.n}
-          </button>
-        ))}
+      <div className="cluster-stage">
+        <div className="cluster-tabs" role="tablist">
+          {CLUSTERS.map((c, i) => (
+            <button key={c.tag} type="button" role="tab" aria-selected={i === active} onClick={() => setActive(i)}>
+              {c.tag} · {c.n}
+            </button>
+          ))}
+        </div>
+        <div className="cluster-gl" ref={holder} aria-label="Your saved material, grouped into clusters" role="img" />
+        {!ready ? <p className="cluster-loading">building the constellation</p> : null}
+        <p className="cluster-hint">drag to turn it</p>
       </div>
       <div className="cluster-card">
         <div className="cc-head">
@@ -767,15 +918,15 @@ const LoopDiagram = () => (
       <g key={label}>
         <rect x={x - 84} y={y - 26} width="168" height="52" fill="none" stroke="#f2a53c" strokeWidth="1.2" />
         <text x={x} y={y - 3} textAnchor="middle" fill="#d9e2dd" fontSize="13" fontFamily="IBM Plex Sans, sans-serif" fontWeight="600">{label}</text>
-        <text x={x} y={y + 14} textAnchor="middle" fill="#6e7f78" fontSize="9" fontFamily={MONO}>{sub}</text>
+        <text x={x} y={y + 14} textAnchor="middle" fill="#6e7f78" fontSize="10" fontFamily={MONO}>{sub}</text>
       </g>
     ))}
     <line x1="176" y1="66" x2="330" y2="66" stroke="#f2a53c" strokeWidth="1" markerEnd="url(#lar)" />
     <line x1="420" y1="92" x2="420" y2="146" stroke="#f2a53c" strokeWidth="1" markerEnd="url(#lar)" />
     <line x1="334" y1="178" x2="180" y2="178" stroke="#f2a53c" strokeWidth="1" markerEnd="url(#lar)" />
     <line x1="90" y1="152" x2="90" y2="98" stroke="#63e6a0" strokeWidth="1" strokeDasharray="4 4" markerEnd="url(#lgr)" />
-    <text x="255" y="52" textAnchor="middle" fill="#6e7f78" fontSize="9" fontFamily={MONO}>seconds</text>
-    <text x="255" y="196" textAnchor="middle" fill="#6e7f78" fontSize="9" fontFamily={MONO}>your repo, your keys</text>
+    <text x="255" y="52" textAnchor="middle" fill="#6e7f78" fontSize="10" fontFamily={MONO}>seconds</text>
+    <text x="255" y="196" textAnchor="middle" fill="#6e7f78" fontSize="10" fontFamily={MONO}>your repo, your keys</text>
     <text x="320" y="234" textAnchor="middle" fill="#63e6a0" fontSize="11" fontFamily={MONO}>every trip round makes the next brief sharper</text>
   </svg>
 );
@@ -1319,7 +1470,7 @@ const Landing = ({ onEnter }: { onEnter?: () => void }) => {
 
         <div className="hero-in">
           <p className="eyebrow">
-            <span className="on">●</span> every play you scrolled past is still gone
+            <i className="on" aria-hidden /> every play you scrolled past is still gone
           </p>
 
           <h1>
@@ -1339,7 +1490,7 @@ const Landing = ({ onEnter }: { onEnter?: () => void }) => {
             <input
               value={wish}
               onChange={(e) => setWish(e.target.value)}
-              placeholder="I want this, but with multi-tenancy and automated provisioning"
+              placeholder="I want this, but with multi-tenancy"
               aria-label="Your one line"
               spellCheck={false}
             />
@@ -1769,15 +1920,15 @@ html.fb-landing body::before { display: none !important; }
   padding: 10px 12px 10px 24px; }
 .nav-left { display: flex; align-items: center; gap: 34px; min-width: 0; }
 .brand { display: inline-flex; align-items: center; gap: 10px; font-weight: 600; font-size: 16px;
-  letter-spacing: -.01em; white-space: nowrap; }
+  letter-spacing: -.025em; white-space: nowrap; }
 .brand i { width: 9px; height: 9px; border-radius: 50%; background: var(--amber);
   box-shadow: 0 0 12px rgba(242,165,60,.8); animation: pulse 3.2s ease-in-out infinite; }
 @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .35; } }
 .nav-links { display: none; align-items: center; gap: 26px; }
-.nav-links a { font-size: 13px; font-weight: 500; color: var(--ink-50); transition: color .2s; }
+.nav-links a { font-size: 14px; font-weight: 500; color: var(--ink-50); transition: color .2s; }
 .nav-links a:hover { color: var(--ink); }
 .nav-right { display: flex; align-items: center; gap: 10px; }
-.nav-plain { background: none; border: 0; cursor: pointer; font: inherit; font-size: 13px;
+.nav-plain { background: none; border: 0; cursor: pointer; font: inherit; font-size: 14px;
   font-weight: 500; color: var(--ink-70); padding: 8px 4px; transition: color .2s; }
 .nav-plain:hover { color: var(--ink); }
 @media (min-width: 1000px) { .nav-links { display: flex; } }
@@ -1785,8 +1936,8 @@ html.fb-landing body::before { display: none !important; }
 /* -------------------------------- hero --------------------------------- */
 .hero { position: relative; min-height: 100svh; display: flex; flex-direction: column;
   overflow: hidden; padding-bottom: 40px; }
-.hero canvas { position: absolute !important; inset: 0; width: 100% !important; height: 100% !important;
-  z-index: 0; opacity: .5; }
+.drift { position: absolute; inset: 0; z-index: 0; }
+.drift canvas { display: block; width: 100%; height: 100%; }
 .hero-veil { position: absolute; inset: 0; z-index: 1; pointer-events: none;
   background: radial-gradient(ellipse at 50% 42%, rgba(0,0,0,.55) 0%, rgba(0,0,0,.82) 45%, #000 78%),
               radial-gradient(ellipse at top, rgba(255,255,255,.04) 0%, transparent 60%); }
@@ -1798,37 +1949,38 @@ html.fb-landing body::before { display: none !important; }
 .wish { margin-bottom: 24px; }
 .lede { margin-bottom: 32px; }
 .hero-cta { margin-bottom: 8px; }
-.eyebrow { font-size: 11px; letter-spacing: .18em; text-transform: uppercase; color: var(--ink-40);
+.eyebrow { font-size: 12px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-40);
   display: inline-flex; align-items: center; gap: 9px; }
-.eyebrow .on { color: var(--green); font-size: 8px; animation: pulse 2.4s ease-in-out infinite; }
+.eyebrow .on { width: 6px; height: 6px; border-radius: 50%; background: var(--green);
+  box-shadow: 0 0 10px rgba(99,230,160,.7); animation: pulse 2.4s ease-in-out infinite; }
 /* Asme's hero type scale (7xl/8xl/9xl) is sized for a three-word headline it
  * can hold on one line. This one is a sentence, so it stops at the 8xl step
  * and sets on two lines rather than three. */
 .hero h1 { font-family: var(--serif); font-weight: 400; font-style: normal;
-  font-size: 44px; line-height: 1.02; letter-spacing: -.025em; }
-@media (min-width: 640px) { .hero h1 { font-size: 64px; } }
-@media (min-width: 768px) { .hero h1 { font-size: 80px; } }
+  font-size: 36px; line-height: 1; letter-spacing: -.025em; }
+@media (min-width: 640px) { .hero h1 { font-size: 60px; } }
+@media (min-width: 768px) { .hero h1 { font-size: 72px; } }
 @media (min-width: 1024px) { .hero h1 { font-size: 96px; } }
 .hero h1 .serif { color: var(--amber); }
 .wish { display: flex; align-items: center; gap: 12px; width: 100%; max-width: 620px;
   border-radius: 999px; padding: 6px 6px 6px 22px; }
-.wish-mark { color: var(--amber); font-size: 13px; flex: none; }
+.wish-mark { color: var(--amber); font-size: 14px; flex: none; }
 .wish input { flex: 1; min-width: 0; background: none; border: 0; outline: none;
-  font: inherit; font-family: var(--mono); font-size: 13px; color: var(--ink); padding: 12px 0; }
+  font: inherit; font-family: var(--mono); font-size: 14px; color: var(--ink); padding: 12px 0; }
 .wish input::placeholder { color: rgba(255,255,255,.35); }
 .wish-go { flex: none; width: 42px; height: 42px; border-radius: 999px; border: 0; cursor: pointer;
   background: var(--amber); color: #000; font-size: 18px; line-height: 1;
   display: grid; place-items: center; transition: background-color .2s; z-index: 3; }
 .wish-go:hover { background: #ffb954; }
-.lede { max-width: 620px; font-size: 15px; line-height: 1.7; color: var(--ink-50); }
+.lede { max-width: 620px; font-size: 16px; line-height: 1.625; color: var(--ink-50); }
 .hero-cta { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; }
 .hero-cta .btn.glass { border-radius: 999px; }
 .hero-foot { position: relative; z-index: 10; display: flex; flex-wrap: wrap; gap: 10px;
   align-items: center; justify-content: center; padding: 0 24px; }
-.hud { border-radius: 999px; padding: 9px 18px; font-family: var(--mono); font-size: 11px;
+.hud { border-radius: 999px; padding: 10px 20px; font-size: 12px;
   color: var(--ink-50); }
 .hud b { color: var(--amber); font-weight: 500; }
-.hud-hint { font-family: var(--mono); font-size: 11px; color: rgba(255,255,255,.25);
+.hud-hint { font-size: 12px; color: rgba(255,255,255,.25);
   width: 100%; text-align: center; margin-top: 6px; }
 
 /* -------------------------------- about -------------------------------- */
@@ -1850,7 +2002,7 @@ html.fb-landing body::before { display: none !important; }
 .featured-head { display: flex; flex-direction: column; gap: 24px; margin-bottom: 32px; }
 .frame-card { max-width: 560px; border-radius: 16px; padding: 24px; }
 @media (min-width: 768px) { .frame-card { padding: 32px; } }
-.frame-card p:last-child { margin-top: 12px; font-size: 14px; line-height: 1.65; color: var(--ink-70); }
+.frame-card p:last-child { margin-top: 12px; font-size: 14px; line-height: 1.625; color: var(--ink-70); }
 .frame-btn { align-self: flex-start; border-radius: 999px; }
 @media (min-width: 860px) {
   .featured-head { flex-direction: row; align-items: flex-end; justify-content: space-between; }
@@ -1860,7 +2012,7 @@ html.fb-landing body::before { display: none !important; }
 /* ------------------------------ philosophy ----------------------------- */
 .philosophy { padding: 112px 0; overflow: hidden; }
 @media (min-width: 768px) { .philosophy { padding: 160px 0; } }
-.big { font-size: 30px; line-height: 1.06; letter-spacing: -.025em; font-weight: 400; }
+.big { font-size: 30px; line-height: 1.1; letter-spacing: -.025em; font-weight: 400; }
 @media (min-width: 768px) { .big { font-size: 48px; } }
 .philosophy .big { font-size: 48px; margin-bottom: 64px; }
 @media (min-width: 768px) { .philosophy .big { font-size: 72px; margin-bottom: 96px; } }
@@ -1870,7 +2022,7 @@ html.fb-landing body::before { display: none !important; }
 .phil-media { display: grid; gap: 16px; align-content: start; }
 .wall-col { border-radius: 20px; background: #070707; padding: 20px;
   box-shadow: inset 0 1px 1px rgba(255,255,255,.07); }
-.wall-term { font-family: var(--mono); font-size: 11.5px; line-height: 1.85; margin: 12px 0 0;
+.wall-term { font-family: var(--mono); font-size: 12px; line-height: 1.85; margin: 12px 0 0;
   white-space: pre-wrap; word-break: break-word; color: var(--ink-50); }
 .wall-term .err { color: #ff6b6b; }
 .wall-term .ok { color: var(--green); }
@@ -1884,7 +2036,7 @@ html.fb-landing body::before { display: none !important; }
 .loop-band svg { width: 100%; height: auto; display: block; }
 .loop-legend { display: grid; grid-template-columns: 1fr; gap: 32px; margin-top: 48px; }
 @media (min-width: 720px) { .loop-legend { grid-template-columns: repeat(4, 1fr); } }
-.loop-legend b { display: block; font-size: 11px; letter-spacing: .16em; text-transform: uppercase;
+.loop-legend b { display: block; font-size: 12px; letter-spacing: .1em; text-transform: uppercase;
   color: var(--amber); font-weight: 500; margin-bottom: 10px; }
 .loop-legend span { font-size: 14px; line-height: 1.625; color: var(--ink-50); }
 
@@ -1919,7 +2071,7 @@ html.fb-landing body::before { display: none !important; }
   font-size: 14px; color: var(--ink-70); }
 .uc-saw { font-size: 20px; line-height: 1.3; letter-spacing: -.025em; color: var(--ink); }
 @media (min-width: 768px) { .uc-saw { font-size: 24px; } }
-.uc-note { font-family: var(--mono); font-size: 12.5px; line-height: 1.6; color: var(--amber);
+.uc-note { font-size: 14px; line-height: 1.625; color: var(--amber);
   padding-left: 12px; border-left: 1px solid rgba(242,165,60,.4); }
 .uc-got { font-size: 14px; line-height: 1.625; color: var(--ink-50); }
 
@@ -1929,8 +2081,8 @@ html.fb-landing body::before { display: none !important; }
 .cat-group { margin-bottom: 12px; }
 .cat-head { margin: 64px 0 32px; }
 .cat-head h3 { font-family: var(--serif); font-style: italic; font-weight: 400;
-  font-size: clamp(24px, 3vw, 36px); letter-spacing: -.01em; color: var(--ink); }
-.cat-head p { margin-top: 10px; font-size: 14.5px; line-height: 1.65; color: var(--ink-50);
+  font-size: clamp(24px, 3vw, 36px); letter-spacing: -.025em; color: var(--ink); }
+.cat-head p { margin-top: 10px; font-size: 14px; line-height: 1.625; color: var(--ink-50);
   max-width: 620px; }
 .cat-grid { display: grid; grid-template-columns: 1fr; gap: 24px; }
 @media (min-width: 768px) { .cat-grid { gap: 32px; } }
@@ -1939,7 +2091,7 @@ html.fb-landing body::before { display: none !important; }
 .cat-card { border-radius: 24px; padding: 24px; display: flex; flex-direction: column; gap: 12px; }
 @media (min-width: 768px) { .cat-card { padding: 32px; } }
 .cat-card svg { width: 100%; max-width: 190px; height: auto; }
-.cat-card h4 { font-size: 15px; font-weight: 600; letter-spacing: -.01em; color: var(--ink); }
+.cat-card h4 { font-size: 16px; font-weight: 600; letter-spacing: -.025em; color: var(--ink); }
 .cat-does { font-size: 14px; line-height: 1.625; color: var(--ink-50); }
 .cat-group .rule { margin-top: 64px; }
 
@@ -1958,12 +2110,12 @@ html.fb-landing body::before { display: none !important; }
   position: relative; }
 .plan li::before { content: '·'; position: absolute; left: 6px; color: var(--amber); }
 .plan .btn { margin-top: auto; }
-.fine { margin-top: 16px; font-size: 12px; line-height: 1.6; color: var(--ink-40); }
+.fine { margin-top: 16px; font-size: 12px; line-height: 1.625; color: var(--ink-40); }
 .promises { display: grid; grid-template-columns: 1fr; gap: 32px; margin-top: 64px;
   padding-top: 48px; border-top: 1px solid var(--ink-10); }
 @media (min-width: 800px) { .promises { grid-template-columns: repeat(3, 1fr); gap: 48px; } }
-.promises b { display: block; font-size: 15px; font-weight: 600; margin-bottom: 10px; }
-.promises span { font-size: 13.5px; line-height: 1.65; color: var(--ink-50); }
+.promises b { display: block; font-size: 16px; font-weight: 600; margin-bottom: 10px; }
+.promises span { font-size: 14px; line-height: 1.625; color: var(--ink-50); }
 
 /* -------------------------------- footer ------------------------------- */
 .site-foot { position: relative; overflow: hidden; border-top: 1px solid var(--ink-10);
@@ -1977,7 +2129,7 @@ html.fb-landing body::before { display: none !important; }
 @media (min-width: 640px) { .foot-cols { grid-template-columns: repeat(3, 1fr); } }
 @media (min-width: 768px) { .foot-cols { gap: 64px; } }
 .foot-cols ul { display: grid; gap: 12px; margin-top: 16px; }
-.foot-cols a { font-size: 13.5px; color: var(--ink-70); transition: color .2s; }
+.foot-cols a { font-size: 14px; color: var(--ink-70); transition: color .2s; }
 .foot-cols a:hover { color: var(--ink); }
 .watermark { margin-top: 64px; text-align: center; user-select: none;
   font-family: var(--serif); font-style: italic; line-height: 1; letter-spacing: -.025em;
@@ -2003,7 +2155,7 @@ html.fb-landing body::before { display: none !important; }
 .mut-tabs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 18px; }
 .mut-tabs button {
   padding: 9px 18px; border: 1px solid var(--rule); border-radius: 999px; font: inherit;
-  font-size: 13px; color: var(--dim); cursor: pointer; background: rgba(255,255,255,.02);
+  font-size: 14px; color: var(--dim); cursor: pointer; background: rgba(255,255,255,.02);
   transition: color .2s, border-color .2s, background .2s;
 }
 .mut-tabs button:hover { color: var(--ink); }
@@ -2013,50 +2165,57 @@ html.fb-landing body::before { display: none !important; }
 @media (min-width: 940px) { .mut-grid { grid-template-columns: minmax(0,.85fr) minmax(0,1.15fr); } }
 .mut-left { padding: 24px; border-bottom: 1px solid var(--rule); }
 @media (min-width: 940px) { .mut-left { border-bottom: 0; border-right: 1px solid var(--rule); } }
-.mut-src { font-family: var(--mono); font-size: 11.5px; color: var(--dim); margin: 0 0 14px; }
+.mut-src { font-size: 12px; color: var(--dim); margin: 0 0 14px; }
 .mut-said { margin: 0; padding: 0; list-style: none; display: grid; gap: 9px; }
-.mut-said li { padding-left: 20px; position: relative; font-size: 13.5px; line-height: 1.55; color: var(--ink-2); }
+.mut-said li { padding-left: 20px; position: relative; font-size: 14px; line-height: 1.625; color: var(--ink-2); }
 .mut-said li::before { content: "·"; position: absolute; left: 6px; color: var(--dim); }
 .mut-noterow { display: flex; align-items: center; gap: 10px; padding: 14px 20px;
   border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule); background: rgba(242,165,60,.06); }
 .mut-noterow .caret { color: var(--amber); font-family: var(--mono); }
 .mut-noterow input { flex: 1; min-width: 0; background: none; border: 0; outline: none; color: var(--amber);
-  font-family: var(--mono); font-size: 13.5px; }
+  font-family: var(--mono); font-size: 14px; }
 .mut-right { padding: 24px; display: grid; gap: 16px; align-content: start; }
-.mut-out h3 { margin: 0 0 8px; font-size: 20px; letter-spacing: -.02em; font-weight: 500; }
-.mut-out p { margin: 0; font-size: 14px; line-height: 1.6; color: var(--ink-2); }
+.mut-out h3 { margin: 0 0 8px; font-size: 20px; letter-spacing: -.025em; font-weight: 500; }
+.mut-out p { margin: 0; font-size: 14px; line-height: 1.625; color: var(--ink-2); }
 .mut-never { display: inline-flex; align-items: center; gap: 8px; align-self: start; border-radius: 999px;
-  font-family: var(--mono); font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase;
+  font-size: 12px; letter-spacing: .1em; text-transform: uppercase;
   color: var(--green); border: 1px solid rgba(99,230,160,.4); padding: 5px 12px; }
 .mut-diagram { width: 100%; height: auto; display: block; background: var(--panel-2);
   border: 1px solid var(--rule); border-radius: 14px; }
 .mut-parts { display: grid; gap: 8px; }
-.mut-part { display: grid; grid-template-columns: 118px 1fr; gap: 12px; font-size: 12.5px; line-height: 1.55; }
+.mut-part { display: grid; grid-template-columns: 118px 1fr; gap: 12px; font-size: 12px; line-height: 1.625; }
 @media (max-width: 620px) { .mut-part { grid-template-columns: 1fr; gap: 2px; } }
-.mut-part b { font-family: var(--mono); font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase;
+.mut-part b { font-size: 12px; letter-spacing: .1em; text-transform: uppercase;
   color: var(--amber); font-weight: 500; }
 .mut-part span { color: var(--ink-2); }
 
 /* ---------- clusters ---------- */
-.cluster-wrap { position: relative; border-radius: 20px; background: var(--panel); overflow: hidden;
-  box-shadow: inset 0 1px 1px rgba(255,255,255,.1); }
-.cluster-wrap canvas { display: block; width: 100%; height: clamp(340px, 52vw, 480px); }
-.cluster-tabs { position: absolute; left: 16px; top: 16px; display: flex; flex-wrap: wrap; gap: 6px; z-index: 2; }
-.cluster-tabs button { font-family: var(--mono); font-size: 11.5px; padding: 7px 13px; border-radius: 999px;
-  border: 1px solid var(--rule); background: rgba(0,0,0,.75); color: var(--dim); cursor: pointer; }
-.cluster-tabs button[aria-selected="true"] { color: #000; background: var(--amber); border-color: var(--amber); }
-.cluster-card { position: absolute; right: 16px; bottom: 16px; left: 16px; z-index: 2; border-radius: 16px;
-  border: 1px solid var(--rule); background: rgba(8,8,8,.94); backdrop-filter: blur(8px);
-  padding: 18px; display: grid; gap: 10px; }
-@media (min-width: 900px) { .cluster-card { left: auto; width: 460px; } }
-.cc-head { display: flex; align-items: center; gap: 9px; font-family: var(--mono); font-size: 11px; color: var(--dim); }
+.cluster-wrap { display: grid; grid-template-columns: 1fr; gap: 32px; align-items: center; }
+@media (min-width: 960px) { .cluster-wrap { grid-template-columns: minmax(0, 1.15fr) minmax(0, .85fr); gap: 48px; } }
+.cluster-stage { position: relative; border-radius: 24px; background: var(--panel); overflow: hidden;
+  box-shadow: inset 0 1px 1px rgba(255,255,255,.1); padding-top: 64px; }
+.cluster-gl { width: 100%; height: clamp(380px, 46vw, 560px); }
+.cluster-gl canvas { display: block; }
+.cluster-loading { position: absolute; inset: 0; display: grid; place-items: center;
+  font-size: 12px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-40); }
+.cluster-hint { position: absolute; right: 20px; bottom: 16px; font-size: 12px; color: rgba(255,255,255,.25); }
+.cluster-tabs { position: absolute; left: 16px; right: 16px; top: 16px; display: flex; flex-wrap: wrap;
+  gap: 8px; z-index: 2; }
+.cluster-tabs button { font-family: var(--sans); font-size: 12px; padding: 8px 16px; border-radius: 999px;
+  border: 1px solid var(--rule); background: rgba(0,0,0,.6); color: var(--ink-50); cursor: pointer;
+  transition: color .2s, border-color .2s; }
+.cluster-tabs button:hover { color: var(--ink); }
+.cluster-tabs button[aria-selected="true"] { color: #000; background: var(--amber); border-color: var(--amber);
+  font-weight: 500; }
+.cluster-card { display: grid; gap: 16px; align-content: center; }
+.cc-head { display: flex; align-items: center; gap: 10px; font-size: 12px; color: var(--dim); }
 .cc-dot { width: 9px; height: 9px; border-radius: 50%; }
 .cc-items { display: flex; flex-wrap: wrap; gap: 5px; }
-.cc-items span { font-size: 11px; color: var(--ink-2); border: 1px solid var(--rule); border-radius: 999px; padding: 3px 9px; }
-.cc-title { font-family: var(--mono); font-size: 10.5px; letter-spacing: .12em; text-transform: uppercase;
+.cc-items span { font-size: 12px; color: var(--ink-2); border: 1px solid var(--rule); border-radius: 999px; padding: 3px 9px; }
+.cc-title { font-size: 12px; letter-spacing: .1em; text-transform: uppercase;
   color: var(--amber); margin: 2px 0 0; }
-.cc-build { margin: 0; font-size: 14px; line-height: 1.6; color: var(--ink); }
-.cc-why { margin: 0; font-size: 12.5px; line-height: 1.5; color: var(--dim); }
+.cc-build { margin: 0; font-size: 14px; line-height: 1.625; color: var(--ink); }
+.cc-why { margin: 0; font-size: 12px; line-height: 1.5; color: var(--dim); }
 
 /* ---------- mutation diagrams ---------- */
 .dg-orbit { animation: dgOrbit 9s linear infinite; }
@@ -2079,9 +2238,9 @@ html.fb-landing body::before { display: none !important; }
 @keyframes vBlock { 0% { transform: translateX(0);} 40% { transform: translateX(30px);} 55% { transform: translateX(24px);} 100% { transform: translateX(0);} }
 .viz-through { fill: var(--green); animation: vThru 3s infinite; }
 @keyframes vThru { 0% { transform: translateX(0); } 55%,100% { transform: translateX(72px); } }
-.viz-t { font-family: var(--mono); font-size: 12px; }
+.viz-t { font-family: var(--sans); font-size: 12px; }
 .viz-t.err { fill: #e5624a; } .viz-t.ok { fill: var(--green); }
-.viz-t.cite { fill: var(--amber); font-size: 10px; }
+.viz-t.cite { fill: var(--amber); font-size: 12px; }
 .viz-bar { fill: var(--amber); opacity: .8; animation: vBar 1.1s infinite ease-in-out; transform-origin: center; }
 .viz-bar.b1 { animation-delay: .1s; } .viz-bar.b2 { animation-delay: .2s; }
 .viz-bar.b3 { animation-delay: .3s; } .viz-bar.b4 { animation-delay: .4s; }
