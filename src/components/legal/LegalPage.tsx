@@ -11,20 +11,39 @@ type Props = {
 /**
  * Shared shell for the public legal pages.
  *
- * The WIP banner is not decoration: these are unreviewed drafts, and shipping
- * them without saying so would itself be a misleading claim. Remove the banner
- * only when a lawyer has signed the text off.
+ * The banner is not decoration: these are unreviewed drafts, and shipping them
+ * without saying so would itself be a misleading claim. It now says something
+ * more precise than "placeholder", because the pages are no longer placeholders
+ * — they are complete and checked against what the code does. What they are
+ * still missing is a lawyer, and the identity fields only the operator can
+ * supply. Remove the banner when both are done, and the noindex with it.
  */
 export const LegalPage = ({ title, lastUpdated, children }: Props) => {
-  // The site is indexable, but these drafts are not reviewed and must not be
-  // the version of our policy that search engines surface. Remove this once a
-  // lawyer has signed the text off — and remove the banner at the same time.
+  /*
+   * The site is indexable — index.html carries `robots: index,follow` — but
+   * these drafts must not be the version of our policy a search engine
+   * surfaces. Appending a second robots tag does not reliably achieve that:
+   * Google resolves conflicting tags to the most restrictive, but not every
+   * crawler does, and anything reading only the first tag sees "index,follow".
+   *
+   * So the existing tag is rewritten in place and restored on unmount, which
+   * leaves exactly one directive on the page and no ambiguity to resolve.
+   * Remove this once a lawyer has signed the text off — and remove the banner
+   * at the same time.
+   */
   useEffect(() => {
-    const tag = document.createElement("meta");
-    tag.name = "robots";
+    const existing = document.querySelector<HTMLMetaElement>('meta[name="robots"]');
+    const previous = existing?.content ?? null;
+    const tag = existing ?? document.createElement("meta");
+    if (!existing) {
+      tag.name = "robots";
+      document.head.appendChild(tag);
+    }
     tag.content = "noindex,nofollow";
-    document.head.appendChild(tag);
-    return () => { tag.remove(); };
+    return () => {
+      if (previous === null) tag.remove();
+      else tag.content = previous;
+    };
   }, []);
 
   return (
@@ -45,9 +64,11 @@ export const LegalPage = ({ title, lastUpdated, children }: Props) => {
         <div className="text-[13px] leading-snug">
           <p className="font-semibold">Work in progress — draft, not final</p>
           <p className="text-muted-foreground mt-0.5">
-            This is an unreviewed placeholder written to have something in
-            place. It has not been checked by a lawyer and is not legal advice.
-            Do not rely on it, and replace it before taking real customers.
+            This draft is complete and was written to match what the product
+            actually does. It has <strong>not been checked by a lawyer</strong>,
+            it is not legal advice, and anything highlighted below is a fact we
+            have not filled in yet. Have it reviewed before taking real
+            customers.
           </p>
         </div>
       </div>
