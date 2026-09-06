@@ -433,11 +433,11 @@ const Shell = () => {
         {/* Browse view — flat list of ideas (Recents, Favorites, Folder-filtered, Search). */}
         {!showTrash && !showFolders && !showCalendar && !showGraph && !showDetailOnly && filter.kind !== "all" && (
           <div
-            className="w-full flex-1 min-w-0 md:w-[28rem] md:flex-none md:shrink-0 md:border-r border-border flex flex-col min-h-0 bg-transparent md:overflow-hidden overflow-y-auto scroll-momentum touch-pan-y"
+            className="shell-browse-col border-border flex flex-col min-h-0 bg-transparent overflow-y-auto scroll-momentum touch-pan-y"
             style={{ paddingBottom: isMobile ? "calc(var(--ash-dock-h, 0px) + var(--mobile-tabbar-h, 0px) + env(safe-area-inset-bottom) + 1rem)" : "1.5rem" }}
           >
 
-            <div className="md:flex-1 md:min-h-0 md:overflow-hidden">
+            <div className="shell-browse-inner">
               <IdeaList
                 filter={filter}
                 selectedId={selectedId}
