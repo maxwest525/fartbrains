@@ -26,6 +26,7 @@ const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const SharedIdea = lazy(() => import("./pages/SharedIdea"));
 const Share = lazy(() => import("./pages/Share"));
 const Connect = lazy(() => import("./pages/Connect"));
+const Webhooks = lazy(() => import("./pages/Webhooks"));
 const Privacy = lazy(() => import("./pages/Privacy"));
 const Terms = lazy(() => import("./pages/Terms"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
@@ -74,6 +75,7 @@ const App = () => (
             <Route path="/unsubscribe" element={<Unsubscribe />} />
             <Route path="/settings/prompt-rules" element={<PromptRules />} />
             <Route path="/settings/connect" element={<Connect />} />
+            <Route path="/settings/webhooks" element={<Webhooks />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/settings/instructions" element={<Instructions />} />

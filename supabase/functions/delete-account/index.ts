@@ -48,6 +48,7 @@ export const OWNED_TABLES = [
   "source_chunks",
   "source_versions",
   "idea_shares",
+  "folder_webhooks",
   "idea_references",
   "idea_reminders",
   "idea_chats",

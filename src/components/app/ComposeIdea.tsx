@@ -1,8 +1,5 @@
 import { useEffect, useRef, useState } from "react";
 import { Sparkles, Loader2, AlertTriangle, Inbox, Folder as FolderIcon, CheckCircle2, XCircle, ArrowRight, Plus, FileText, X, Wand2, Copy, Instagram, Music2, Youtube, Link2, Globe, Send } from "lucide-react";
-import { ensureMarkFolderId } from "@/lib/amosFolderSync";
-import { isAmosOwner } from "@/lib/amosOwner";
-import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
 import { useDuplicateUrl } from "@/hooks/useDuplicateUrl";
 import { useUrlCheck } from "@/hooks/useUrlCheck";
@@ -120,11 +117,6 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
   const [folder, setFolder] = useState<string>(defaultFolderId ?? NO_FOLDER);
   const [saving, setSaving] = useState(false);
   const [generating, setGenerating] = useState(false);
-  const [sendingToMark, setSendingToMark] = useState(false);
-  /* "Mark" is one person's own marketing project and the button mirrors the
-     idea to their private endpoint, so it exists only for that account. */
-  const { user } = useAuth();
-  const showMark = isAmosOwner(user?.email);
 
   // URL preview step: after extraction, hold the readable text + suggested title
   // so the user can review (and tweak the title) before committing to save.
@@ -514,33 +506,6 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
       setSaving(false);
     }
   };
-
-  /**
-   * Send-to-Mark: save the current draft directly into the "Mark" folder,
-   * which triggers the AMOS Idea Inbox mirror. Works for the URL preview,
-   * note, list, and transcript flows.
-   */
-  const handleSendToMark = async () => {
-    if (sendingToMark || saving || generating || extracting) return;
-    setSendingToMark(true);
-    try {
-      const markId = await ensureMarkFolderId();
-      if (!markId) {
-        toast.error("Couldn't find or create the Mark folder");
-        return;
-      }
-      if (preview) {
-        await handleSavePreview({ folderIdOverride: markId });
-      } else if (usesAiPreview) {
-        await handleGenerateAndSave({ folderIdOverride: markId });
-      } else {
-        await handleSave({ folderIdOverride: markId });
-      }
-    } finally {
-      setSendingToMark(false);
-    }
-  };
-
 
   const handleCreateProject = async ({ name, rawNote }: { name: string; rawNote: string }) => {
     if (saving) return;
@@ -1104,25 +1069,6 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
               )}
             </Button>
           </div>
-          {showMark && (
-          <Button
-            type="button"
-            variant="outline"
-            onClick={handleSendToMark}
-            disabled={generating || saving || sendingToMark || preview.text.trim().length < 20}
-            className="w-full h-11 rounded-xl text-[14px] font-semibold border-primary/40 bg-primary/5 text-primary hover:bg-primary/10 hover:text-primary"
-            title="Save into the Mark folder — also mirrors this idea to AMOS Idea Inbox"
-          >
-            {sendingToMark ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <>
-                <Send className="h-4 w-4 mr-1.5" />
-                Send to Mark
-              </>
-            )}
-          </Button>
-          )}
         </div>
       )}
 
@@ -1182,25 +1128,6 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
               </>
             )}
           </Button>
-          {showMark && (
-          <Button
-            type="button"
-            variant="outline"
-            onClick={handleSendToMark}
-            disabled={saving || generating || extracting || sendingToMark || createIdea.isPending}
-            className="flex-1 h-12 rounded-xl text-[14px] font-semibold border-primary/40 bg-primary/5 text-primary hover:bg-primary/10 hover:text-primary"
-            title="Save into the Mark folder — also mirrors this idea to AMOS Idea Inbox"
-          >
-            {sendingToMark ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <>
-                <Send className="h-4 w-4 mr-1.5" />
-                Mark
-              </>
-            )}
-          </Button>
-          )}
         </div>
       )}
       </div>

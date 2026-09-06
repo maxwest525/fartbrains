@@ -87,6 +87,7 @@ describe("account deletion covers every table that holds a customer's rows", () 
     expect(before("idea_reminders", "ideas")).toBe(true);
     expect(before("event_gifts", "calendar_events")).toBe(true);
     expect(before("ideas", "folders")).toBe(true);
+    expect(before("folder_webhooks", "folders")).toBe(true);
     expect(before("sources", "projects")).toBe(true);
   });
 
