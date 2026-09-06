@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Wordmark } from "@/components/brand/Wordmark";
+import logo from "@/assets/fartbrains-logo.png";
 
 const LINES = [
   { pre: "Welcome", accent: "back." },
@@ -37,9 +37,13 @@ export const WelcomeBackScreen = ({ onDone }: Props) => {
       />
       <div className="relative z-10 w-full max-w-sm mx-6 text-center">
         <div className="glass-card-strong rounded-3xl p-8 text-white flex flex-col items-center gap-6">
-          <Wordmark size="lg" />
+          <img
+            src={logo}
+            alt="FartBrains"
+            className="w-32 h-auto drop-shadow-[0_0_30px_rgba(96,165,250,0.35)]"
+          />
           <div key={step} className="min-h-[88px] flex flex-col items-center justify-center animate-fade-in">
-            <p className="font-display text-[26px] leading-tight font-semibold tracking-tight text-foreground">
+            <p className="font-display text-[26px] leading-tight font-semibold tracking-tight text-[#f8fafc]">
               {line.pre}{" "}
               <span className="bg-gradient-to-r from-[#F2A4AC] via-[#9B72CB] to-[#4285F4] bg-clip-text text-transparent">
                 {line.accent}

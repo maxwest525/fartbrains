@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
-import { Wordmark } from "@/components/brand/Wordmark";
+import logo from "@/assets/fartbrains-logo.png";
 
 type Props = { onDone: () => void; duration?: number };
 
@@ -26,7 +26,11 @@ export const SplashScreen = ({ onDone, duration = 1500 }: Props) => {
         style={{ background: "radial-gradient(900px 600px at 50% 45%, rgba(0,0,0,0) 0%, rgba(0,0,0,0.15) 70%, rgba(0,0,0,0.30) 100%)" }}
       />
       <div className="relative z-10 flex flex-col items-center gap-4 animate-fade-in">
-        <Wordmark size="lg" className="text-[clamp(28px,7vw,44px)]" />
+        <img
+          src={logo}
+          alt="FartBrains"
+          className="w-[min(78vw,420px)] h-auto drop-shadow-[0_0_40px_rgba(96,165,250,0.35)]"
+        />
       </div>
     </main>
   );

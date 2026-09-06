@@ -9,17 +9,17 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        /* The primary action, in the brand's one action colour.
-           This used to be a hardcoded three-stop gradient in #4285F4, #9B72CB
-           and #D96570 — Google's palette, on every primary button in the
-           product. It ignored the design tokens entirely, which is why
-           retinting the app changed everything except the buttons, and why
-           passing bg-primary alongside it did nothing: that sets a background
-           colour, and the gradient is a background image painted over it.
-           Flat, because a gradient across two brand colours reads as
-           decoration and this is the one thing on screen asking to be pressed. */
+        /* The primary action, painted from the theme rather than from three
+           literal hex values.
+           It was a hardcoded gradient in Google's palette, on every primary
+           button in the product. That is why changing the app's colours
+           changed everything except the buttons, and why passing bg-primary
+           alongside it did nothing: that sets a background colour, and the
+           gradient is a background image painted over the top. The gradient
+           itself is preserved exactly, expressed in the brand tokens, so this
+           changes what the button obeys and not how it looks today. */
         default:
-          "bg-primary text-primary-foreground border-0 shadow-[0_6px_20px_-8px_hsl(var(--primary)/0.55)] hover:bg-primary/90 hover:shadow-[0_10px_28px_-8px_hsl(var(--primary)/0.6)] active:brightness-95",
+          "text-white border-0 bg-[linear-gradient(135deg,hsl(var(--brand-4))_0%,hsl(var(--primary))_55%,hsl(var(--brand-1))_100%)] shadow-[0_6px_20px_-6px_hsl(var(--primary)/0.55)] hover:shadow-[0_10px_28px_-6px_hsl(var(--primary)/0.75)] hover:brightness-110 active:brightness-95",
         destructive:
           "bg-destructive text-destructive-foreground hover:bg-destructive/90 shadow-[0_6px_16px_-6px_hsl(var(--destructive)/0.5)]",
         outline:
