@@ -859,6 +859,16 @@ html:not(.dark) .gemini ::selection {
     height: 100dvh;
     margin: 0 auto;
     overflow: hidden;
+    /* The shell inside is laid out against THIS box, not the viewport.
+       Without it, Tailwind's md: fires at a 768px viewport while the frame
+       is still 430px wide, so the browse column takes its desktop width of
+       28rem (448px) — wider than the frame it lives in — and the detail
+       column beside it is clipped to zero by the overflow: hidden above.
+       On a desktop screen the app looked like it had simply lost half of
+       itself. `contain` adds no new containing block here; the transform
+       below already made one. */
+    container-type: inline-size;
+    container-name: appframe;
     border-radius: 28px;
     box-shadow:
       0 30px 80px -20px rgba(0, 0, 0, 0.6),
@@ -895,6 +905,40 @@ html:not(.dark) .gemini ::selection {
     overflow: visible;
   }
 }
+
+/* ------------------------------------------------------------
+   The app shell's two-column layout.
+
+   Driven by the frame's width rather than the viewport's, so the
+   phone frame gets the phone layout and only a frame actually wide
+   enough for two columns gets two. Plain CSS container queries —
+   the same breakpoint Tailwind's md: uses, asked of the right box.
+   ------------------------------------------------------------ */
+.shell-browse-col {
+  width: 100%;
+  flex: 1 1 0%;
+  min-width: 0;
+}
+.shell-browse-inner { min-height: 0; }
+
+@container appframe (min-width: 768px) {
+  .shell-browse-col {
+    width: 28rem;
+    flex: none;
+    flex-shrink: 0;
+    border-right: 1px solid hsl(var(--border));
+    overflow: hidden;
+  }
+  .shell-browse-inner {
+    flex: 1 1 0%;
+    min-height: 0;
+    overflow: hidden;
+  }
+}
+
+/* No container to query against below 768px viewport, where #root is not
+   framed at all. The viewport is the frame, so md: is the right question. */
+@media (min-width: 768px) and (max-width: 767px) { /* intentionally empty */ }
 
 /* Desktop window controls — close / minimize / expand states.
    Toggled via classes on <html> by <DesktopWindowControls />. */
