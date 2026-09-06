@@ -954,6 +954,49 @@ export type Database = {
           title: string
         }[]
       }
+      search_ideas: {
+        Args: {
+          favorites_only?: boolean
+          folder?: string
+          max_results?: number
+          q: string
+          tag?: string
+        }
+        Returns: {
+          ai_summary: string | null
+          created_at: string
+          deleted_at: string | null
+          extracted_text: string | null
+          folder_id: string | null
+          generated_prompt: string | null
+          id: string
+          is_favorite: boolean
+          notify_email: boolean
+          notify_push: boolean
+          pinned_at: string | null
+          priority: Database["public"]["Enums"]["idea_priority"]
+          raw_note: string | null
+          remind_at: string | null
+          reminder_fired_at: string | null
+          search_vector: unknown
+          source_label: string | null
+          source_meta: Json | null
+          source_type: Database["public"]["Enums"]["idea_source_type"]
+          source_url: string | null
+          synced_to_amos: boolean
+          tag_meta: Json | null
+          tags: string[]
+          title: string
+          updated_at: string
+          user_id: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "ideas"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       show_limit: { Args: never; Returns: number }
       show_trgm: { Args: { "": string }; Returns: string[] }
     }

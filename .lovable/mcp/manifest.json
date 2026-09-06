@@ -410,6 +410,53 @@
         "outputSchema": null
       },
       {
+        "name": "build_prompt",
+        "title": "Build a prompt or build brief from a saved idea",
+        "description": "Turn a saved idea — including a captured reel, video or article transcript — into something the calling agent can act on. mode 'build' returns a build brief written for an agent that has the user's project open: mechanism, ordered steps, how to adapt it to their stack, how to verify it, and what not to do. mode 'paste' returns a short prompt for a human to paste into a chat. Pulls in neighbouring saved ideas for continuity. Returns the text without saving anything.",
+        "annotations": {
+          "readOnlyHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "idea_id": {
+              "type": "string",
+              "format": "uuid",
+              "description": "The saved idea to build from. Find it with search_ideas."
+            },
+            "goal": {
+              "type": "string",
+              "maxLength": 2000,
+              "description": "What the user wants out of it — 'build an MVP', 'write a spec', 'turn this into a landing page'. Steers the output; leave empty for a general-purpose one."
+            },
+            "mode": {
+              "type": "string",
+              "enum": [
+                "build",
+                "paste"
+              ],
+              "description": "'build' (default) for a brief you are going to act on yourself. 'paste' for a short prompt the user will paste into a chat elsewhere."
+            },
+            "stack": {
+              "type": "string",
+              "maxLength": 2000,
+              "description": "The project you have open — language, framework, hosting, notable constraints. Supply this whenever you know it; the brief is adapted to it, and without it the brief has to guess."
+            },
+            "use_context": {
+              "type": "boolean",
+              "description": "Include neighbouring saved ideas (same folder, then shared tags) so the brief builds on what the user already decided. Default true."
+            }
+          },
+          "required": [
+            "idea_id"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
         "name": "list_folders",
         "title": "List folders",
         "description": "List the user's vault folders with idea counts, so you can file new ideas in the right place.",
