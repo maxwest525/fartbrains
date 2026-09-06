@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Delete, Lock, ScanFace } from "lucide-react";
 import { cn } from "@/lib/utils";
-import logo from "@/assets/fartbrains-logo.png";
+import { Wordmark } from "@/components/brand/Wordmark";
 
 import { toast } from "sonner";
 import {
@@ -209,11 +209,7 @@ export const PasscodeKeypad = ({ onUnlocked, mode }: Props) => {
           <Lock className="h-8 w-8" strokeWidth={1.8} />
         </div>
       ) : (
-        <img
-          src={logo}
-          alt="FartBrains"
-          className="w-20 h-auto opacity-90 drop-shadow-[0_0_18px_rgba(96,165,250,0.25)]"
-        />
+        <Wordmark size="md" className="opacity-90" />
       )}
 
 

@@ -5,7 +5,7 @@ import remarkGfm from "remark-gfm";
 import { Copy, Check, Link2Off, Loader2, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-import logo from "@/assets/fartbrains-logo.png";
+import { Wordmark } from "@/components/brand/Wordmark";
 
 type SharedIdea = {
   title: string;
@@ -69,8 +69,7 @@ const SharedIdea = () => {
   return (
     <main className="min-h-dvh bg-background text-foreground">
       <header className="border-b border-border/60 px-5 py-3 flex items-center gap-2">
-        <img src={logo} alt="" className="h-7 w-7 rounded-md" />
-        <span className="text-sm font-semibold">Fartbrains</span>
+        <Wordmark size="sm" />
         <span className="ml-auto text-[11px] text-muted-foreground">Shared idea · read only</span>
       </header>
 

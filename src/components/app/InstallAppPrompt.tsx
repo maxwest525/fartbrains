@@ -84,7 +84,7 @@ export const InstallAppPrompt = () => {
       <button
         onClick={handleClick}
         title="Install Fart Brains as a desktop app"
-        className="fixed z-[90] right-4 bottom-[calc(var(--mobile-tabbar-h,72px)+var(--ash-dock-h,0px)+env(safe-area-inset-bottom)+1.25rem)] hidden [html.desktop-expanded_&]:inline-flex md:inline-flex items-center gap-2 h-10 px-4 rounded-full text-sm font-medium text-white bg-gradient-to-br from-fuchsia-500/80 via-violet-500/80 to-cyan-500/80 shadow-[0_0_24px_rgba(168,85,247,0.45)] border border-white/15 backdrop-blur-xl hover:scale-[1.03] active:scale-[0.97] transition"
+        className="fixed z-[90] right-4 bottom-[calc(var(--mobile-tabbar-h,72px)+var(--ash-dock-h,0px)+env(safe-area-inset-bottom)+1.25rem)] hidden [html.desktop-expanded_&]:inline-flex md:inline-flex items-center gap-2 h-10 px-4 rounded-full text-sm font-medium bg-primary/90 text-primary-foreground shadow-[0_0_24px_hsl(var(--primary)/0.35)] border border-primary/30 backdrop-blur-xl hover:scale-[1.03] active:scale-[0.97] transition"
       >
         <Download className="h-4 w-4" />
         Install app
@@ -99,7 +99,7 @@ export const InstallAppPrompt = () => {
             onClick={(e) => e.stopPropagation()}
             className="relative w-full max-w-md rounded-2xl border border-white/10 bg-[#0b0b12]/95 shadow-2xl overflow-hidden"
           >
-            <div className="absolute inset-0 pointer-events-none bg-gradient-to-br from-fuchsia-500/10 via-transparent to-cyan-500/10" />
+            <div className="absolute inset-0 pointer-events-none bg-gradient-to-br from-primary/10 via-transparent to-accent/10" />
             <button
               onClick={() => setOpen(false)}
               className="absolute top-3 right-3 h-8 w-8 rounded-full flex items-center justify-center text-white/60 hover:text-white hover:bg-white/10 transition"
@@ -110,7 +110,7 @@ export const InstallAppPrompt = () => {
 
             <div className="relative p-6">
               <div className="flex items-center gap-3 mb-4">
-                <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-fuchsia-500 to-cyan-500 flex items-center justify-center shadow-lg">
+                <div className="h-10 w-10 rounded-xl bg-primary flex items-center justify-center shadow-lg">
                   <Monitor className="h-5 w-5 text-white" />
                 </div>
                 <div>
@@ -185,7 +185,7 @@ export const InstallAppPrompt = () => {
 
 const Step = ({ n, children }: { n: number; children: React.ReactNode }) => (
   <li className="flex gap-3">
-    <span className="shrink-0 h-6 w-6 rounded-full bg-gradient-to-br from-fuchsia-500 to-cyan-500 text-white text-xs font-semibold flex items-center justify-center">
+    <span className="shrink-0 h-6 w-6 rounded-full bg-primary text-white text-xs font-semibold flex items-center justify-center">
       {n}
     </span>
     <span className="pt-0.5">{children}</span>

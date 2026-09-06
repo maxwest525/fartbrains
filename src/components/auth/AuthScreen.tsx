@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
+import { Wordmark } from "@/components/brand/Wordmark";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Mail, Loader2, CheckCircle2, KeyRound, X, Phone } from "lucide-react";
 import { toast } from "sonner";
-import logo from "@/assets/fartbrains-logo.png";
 
 const LAST_EMAIL_KEY = "iv.auth.lastEmail.v1";
 const LAST_PHONE_KEY = "iv.auth.lastPhone.v1";
@@ -264,12 +264,12 @@ export const AuthScreen = () => {
       <div className="relative z-10 w-full max-w-sm mx-6">
         <div className="glass-card-strong rounded-3xl p-7 text-white">
           <div className="flex flex-col items-center gap-3 mb-6">
-            <img src={logo} alt="FartBrains" className="w-40 h-auto drop-shadow-[0_0_30px_rgba(96,165,250,0.3)]" />
+            <Wordmark size="lg" />
             <div className="text-center">
-              <h1 className="font-display text-[22px] font-semibold tracking-tight text-[#f8fafc]">
+              <h1 className="font-display text-[22px] font-semibold tracking-tight text-foreground">
                 {sent ? "Check your inbox" : otpSent ? "Enter the code" : isSignUp ? "Create your account" : "Sign in"}
               </h1>
-              <p className="mt-1 text-[13px] text-[#f8fafc]/90">
+              <p className="mt-1 text-[13px] text-muted-foreground">
                 {sent
                   ? `We sent a magic link to ${email.trim()}. Tap it to continue.`
                   : otpSent
@@ -289,7 +289,7 @@ export const AuthScreen = () => {
               <Button variant="ghost" onClick={() => setSent(false)} className="text-white/70 hover:text-white">
                 Use a different email
               </Button>
-              <Button onClick={sendMagic} disabled={sending} className="brand-gradient text-white">
+              <Button onClick={sendMagic} disabled={sending}>
                 {sending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Mail className="h-4 w-4 mr-2" />}
                 Resend link
               </Button>
@@ -388,7 +388,7 @@ export const AuthScreen = () => {
                   (mode === "password" && !password) ||
                   (kind === "phone" && mode === "magic" && otpSent && otp.length < 4)
                 }
-                className="h-14 rounded-2xl brand-gradient text-white text-[15px] font-semibold"
+                className="h-14 rounded-2xl text-[15px] font-semibold"
               >
                 {sending ? (
                   <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Working…</>

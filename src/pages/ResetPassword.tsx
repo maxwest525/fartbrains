@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import logo from "@/assets/fartbrains-logo.png";
+import { Wordmark } from "@/components/brand/Wordmark";
 
 const ResetPassword = () => {
   const navigate = useNavigate();
@@ -65,7 +65,7 @@ const ResetPassword = () => {
       <div className="relative z-10 w-full max-w-sm mx-6">
         <div className="glass-card-strong rounded-3xl p-7 text-white">
           <div className="flex flex-col items-center gap-3 mb-6">
-            <img src={logo} alt="FartBrains" className="w-40 h-auto drop-shadow-[0_0_30px_rgba(96,165,250,0.3)]" />
+            <Wordmark size="lg" />
             <div className="text-center">
               <h1 className="font-display text-[22px] font-semibold tracking-tight text-[#f8fafc]">
                 {done ? "Password updated" : "Set a new password"}
