@@ -36,7 +36,7 @@ const h = vi.hoisted(() => {
 vi.mock("@/integrations/supabase/client", () => ({ supabase: h.supabase }));
 vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
 vi.mock("@/hooks/useIdeaReferences", () => ({ triggerExtractReferences: vi.fn() }));
-vi.mock("@/lib/amosFolderSync", () => ({ maybeSyncIdeaToAmosByFolder: vi.fn() }));
+vi.mock("@/hooks/useFolderWebhooks", () => ({ deliverToFolderWebhook: vi.fn() }));
 
 import {
   IDEAS_PAGE_SIZE,
