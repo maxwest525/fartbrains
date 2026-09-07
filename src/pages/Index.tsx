@@ -533,9 +533,9 @@ const Index = () => {
     return (
       // The landing page owns the whole screen, so its fallback is a matching
       // ground rather than null — otherwise the app's aurora flashes through
-      // for the moment before the chunk lands. Black, to match the landing
-      // page's own --bg; update both together if that changes.
-      <Suspense fallback={<div className="min-h-dvh bg-black" />}>
+      // for the moment before the chunk lands. It uses the app's own
+      // --background token, which is what the landing page paints too.
+      <Suspense fallback={<div className="min-h-dvh bg-background" />}>
         <Landing
           onEnter={() => {
             markEnteredVault();
