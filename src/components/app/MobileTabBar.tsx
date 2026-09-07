@@ -12,6 +12,7 @@ type Props = {
   onOpenFolders: () => void;
   onOpenCalendar: () => void;
   onOpenGraph: () => void;
+  onOpenNotes: () => void;
   onOpenSettings: () => void;
 };
 
@@ -28,10 +29,10 @@ const Tab = ({
 }) => (
   <button
     onClick={onClick}
-    className="flex-1 flex flex-col items-center justify-center gap-0.5 h-full press relative"
+    className="flex-1 min-w-0 flex flex-col items-center justify-center gap-0.5 h-full press relative"
     aria-label={label}
   >
-    <span className="relative inline-flex items-center justify-center h-10 w-16">
+    <span className="relative inline-flex items-center justify-center h-10 w-16 max-w-full">
       <MaterialIcon
         name={icon}
         filled={active}
@@ -50,7 +51,7 @@ const Tab = ({
 
     <span
       className={cn(
-        "text-[11px] font-medium tracking-tight transition-colors duration-300",
+        "max-w-full truncate px-0.5 text-[11px] font-medium tracking-tight transition-colors duration-300",
         active ? "text-white" : "text-white/60"
       )}
     >
@@ -63,7 +64,7 @@ const Tab = ({
  * Gemini Glimmer bottom tab bar — frosted glass, Material Symbols Rounded,
  * tonal indicator pill behind the active icon.
  */
-export const MobileTabBar = ({ filter, view, onFilterChange, onOpenFolders, onOpenCalendar, onOpenGraph, onOpenSettings }: Props) => {
+export const MobileTabBar = ({ filter, view, onFilterChange, onOpenFolders, onOpenCalendar, onOpenGraph, onOpenNotes, onOpenSettings }: Props) => {
   const isAll = view === "ideas" && filter.kind === "all";
   const isFolders = view === "folders";
   const isCalendar = view === "calendar";
@@ -108,6 +109,7 @@ export const MobileTabBar = ({ filter, view, onFilterChange, onOpenFolders, onOp
           <Tab active={isGraph} icon="hub" label="Graph" onClick={onOpenGraph} />
           <Tab active={isFolders} icon="folder" label="Folders" onClick={onOpenFolders} />
           <Tab active={isCalendar} icon="calendar_month" label="Calendar" onClick={onOpenCalendar} />
+          <Tab active={false} icon="checklist" label="Notes" onClick={onOpenNotes} />
 
           <Tab active={false} icon="tune" label="Settings" onClick={onOpenSettings} />
         </div>

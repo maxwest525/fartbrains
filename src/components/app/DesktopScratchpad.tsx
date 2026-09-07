@@ -1,13 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import {
-  CheckSquare, ChevronDown, ChevronRight, NotebookPen, Plus, Trash2, Loader2, PanelRight,
+  CheckSquare, ChevronDown, ChevronRight, NotebookPen, PanelRight,
 } from "lucide-react";
-import { toast } from "sonner";
-import { cn } from "@/lib/utils";
-import { useTodos, useCreateTodo, useToggleTodo, useDeleteTodo } from "@/hooks/useTodos";
-import { useCreateIdea, useDeleteIdea, useIdeas } from "@/hooks/useIdeas";
-import { useSyncedDraft } from "@/hooks/useSyncedDraft";
+import { useTodos } from "@/hooks/useTodos";
+import { JotBody, TodoBody } from "@/components/app/scratchpad/panels";
 
 /**
  * Desktop split view (>= 768px): a resizable right-hand column that shows the
@@ -23,7 +20,6 @@ const WIDTH_KEY = "desktop-split-width-v1";
 const RATIO_KEY = "desktop-split-ratio-v1";
 const TODO_OPEN_KEY = "desktop-split-todo-open-v1";
 const JOT_OPEN_KEY = "desktop-split-jot-open-v1";
-const DRAFT_KEY = "desktop-scratchpad-draft-v1";
 
 const MIN_W = 240;
 const MAX_W = 520;
@@ -56,19 +52,10 @@ export const DesktopScratchpad = () => {
   const [ratio, setRatio] = useState(0.5);
   const [todoOpen, setTodoOpen] = useState(true);
   const [jotOpen, setJotOpen] = useState(true);
-  const [todoDraft, setTodoDraft] = useState("");
-  // Jot draft lives on the account so it follows phone <-> desktop.
-  const { value: note, setValue: setNote } = useSyncedDraft("jot", DRAFT_KEY);
   const columnRef = useRef<HTMLDivElement>(null);
 
-  const { data: todos = [], isLoading } = useTodos();
-  const createTodo = useCreateTodo();
-  const toggleTodo = useToggleTodo();
-  const deleteTodo = useDeleteTodo();
-  const createIdea = useCreateIdea();
-  const deleteIdea = useDeleteIdea();
-  const { data: recentIdeas = [] } = useIdeas({ kind: "recent" });
-  const savedJots = recentIdeas.filter((i) => i.source_type === "manual").slice(0, 30);
+  // Only for the open-count badge; the list itself lives in <TodoBody />.
+  const { data: todos = [] } = useTodos();
 
 
   useEffect(() => {
@@ -139,29 +126,7 @@ export const DesktopScratchpad = () => {
     window.addEventListener("pointerup", onUp);
   }, []);
 
-  const addTodo = () => {
-    const value = todoDraft.trim();
-    if (!value) return;
-    createTodo.mutate(value, { onSuccess: () => setTodoDraft("") });
-  };
 
-  const saveNote = async () => {
-    const body = note.trim();
-    if (!body) return;
-    const [firstLine] = body.split("\n");
-    try {
-      await createIdea.mutateAsync({
-        title: firstLine.slice(0, 80) || "Quick note",
-        raw_note: body,
-        source_type: "manual",
-        folder_id: null,
-      });
-      setNote("");
-      toast.success("Saved to your vault");
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Couldn't save note");
-    }
-  };
 
   if (!isDesktop) return null;
 
@@ -227,77 +192,8 @@ export const DesktopScratchpad = () => {
             </button>
           </div>
 
-          {todoOpen && (
-            <div className="flex flex-col min-h-0 flex-1">
-              <div className="flex items-center gap-1.5 p-2">
-                <input
-                  value={todoDraft}
-                  onChange={(e) => setTodoDraft(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      e.preventDefault();
-                      addTodo();
-                    }
-                  }}
-                  placeholder="Something to do…"
-                  className="flex-1 h-8 rounded-lg bg-white/[0.06] border border-white/12 px-2.5 text-[12.5px] text-foreground placeholder:text-foreground/45 outline-none focus:border-primary/60"
-                />
-                <button
-                  onClick={addTodo}
-                  disabled={!todoDraft.trim() || createTodo.isPending}
-                  className="h-8 w-8 inline-flex items-center justify-center rounded-lg border border-primary/40 text-primary hover:bg-primary/10 transition disabled:opacity-40"
-                  aria-label="Add to-do"
-                >
-                  {createTodo.isPending ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Plus className="h-4 w-4" />
-                  )}
-                </button>
-              </div>
+          {todoOpen && <TodoBody />}
 
-              <div className="min-h-0 flex-1 overflow-y-auto px-2 pb-2 space-y-1">
-                {isLoading && (
-                  <p className="text-[12px] text-foreground/60 px-1 py-1.5">Loading…</p>
-                )}
-                {!isLoading && todos.length === 0 && (
-                  <p className="text-[12px] text-foreground/60 px-1 py-1.5">Nothing yet.</p>
-                )}
-                {todos.map((t) => (
-                  <div
-                    key={t.id}
-                    className="group flex items-start gap-2 rounded-lg bg-white/[0.05] border border-white/10 px-2 py-1.5"
-                  >
-                    <button
-                      onClick={() => toggleTodo.mutate({ id: t.id, done: !t.done })}
-                      className={cn(
-                        "mt-0.5 h-4 w-4 shrink-0 rounded-[5px] border transition inline-flex items-center justify-center",
-                        t.done ? "border-primary bg-primary/20 text-primary" : "border-white/30",
-                      )}
-                      aria-label={t.done ? "Mark as not done" : "Mark as done"}
-                    >
-                      {t.done && <CheckSquare className="h-3 w-3" />}
-                    </button>
-                    <span
-                      className={cn(
-                        "flex-1 text-[12.5px] leading-snug break-words",
-                        t.done ? "text-foreground/45 line-through" : "text-foreground/90",
-                      )}
-                    >
-                      {t.title}
-                    </span>
-                    <button
-                      onClick={() => deleteTodo.mutate(t.id)}
-                      className="opacity-0 group-hover:opacity-100 transition text-foreground/50 hover:text-destructive"
-                      aria-label="Delete to-do"
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
         </section>
 
         {/* Split handle between the two panels */}
@@ -328,69 +224,7 @@ export const DesktopScratchpad = () => {
             </button>
           </div>
 
-          {jotOpen && (
-            <div className="flex flex-col min-h-0 flex-1 p-2 gap-1.5">
-              <textarea
-                value={note}
-                onChange={(e) => setNote(e.target.value)}
-                onKeyDown={(e) => {
-                  if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
-                    e.preventDefault();
-                    void saveNote();
-                  }
-                }}
-                placeholder="Jot anything down…"
-                className="h-[96px] shrink-0 w-full resize-none rounded-lg bg-white/[0.06] border border-white/12 px-2.5 py-2 text-[12.5px] leading-relaxed text-foreground placeholder:text-foreground/45 outline-none focus:border-primary/60"
-              />
-              <div className="flex items-center justify-between gap-2">
-                <span className="text-[10.5px] text-foreground/50">Autosaved</span>
-                <button
-                  onClick={() => void saveNote()}
-                  disabled={!note.trim() || createIdea.isPending}
-                  className="h-8 px-2.5 inline-flex items-center gap-1.5 rounded-lg border border-primary/40 text-primary text-[12px] font-semibold hover:bg-primary/10 transition disabled:opacity-40"
-                >
-                  {createIdea.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
-                  Save
-                </button>
-              </div>
-
-              {/* Saved jots */}
-              <p className="text-[10.5px] uppercase tracking-wide text-foreground/45 px-0.5">Saved jots</p>
-              <div className="min-h-0 flex-1 overflow-y-auto space-y-1">
-                {savedJots.length === 0 && (
-                  <p className="text-[12px] text-foreground/55 px-0.5">Nothing saved yet.</p>
-                )}
-                {savedJots.map((idea) => (
-                  <div
-                    key={idea.id}
-                    className="group flex items-start gap-1.5 rounded-lg bg-white/[0.05] border border-white/10 px-2 py-1.5 hover:border-primary/40 transition"
-                  >
-                    <button
-                      onClick={() => setNote(idea.raw_note ?? idea.title)}
-                      className="flex-1 min-w-0 text-left"
-                      title="Load into the jot pad"
-                    >
-                      <span className="block text-[12.5px] text-foreground/90 leading-snug line-clamp-1">{idea.title}</span>
-                      {idea.raw_note && (
-                        <span className="block text-[11.5px] text-foreground/55 leading-snug line-clamp-2">
-                          {idea.raw_note}
-                        </span>
-                      )}
-                    </button>
-                    <button
-                      onClick={() => deleteIdea.mutate(idea.id)}
-                      disabled={deleteIdea.isPending}
-                      className="mt-0.5 shrink-0 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition text-foreground/50 hover:text-destructive disabled:opacity-40"
-                      aria-label={`Delete jot ${idea.title}`}
-                      title="Delete jot"
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
+          {jotOpen && <JotBody />}
 
         </section>
       </div>

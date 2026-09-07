@@ -21,6 +21,7 @@ import { FoldersPage } from "@/components/app/FoldersPage";
 import { AlarmOverlay } from "@/components/app/AlarmOverlay";
 import { AshDock } from "@/components/app/AshDock";
 import { DesktopScratchpad } from "@/components/app/DesktopScratchpad";
+import { MobileNotesSheet } from "@/components/app/MobileNotesSheet";
 import { OnboardingFlow } from "@/components/app/OnboardingFlow";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { hasEnteredVault, markEnteredVault } from "@/lib/entry";
@@ -51,6 +52,7 @@ const Shell = () => {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [searchValue, setSearchValue] = useState("");
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [notesOpen, setNotesOpen] = useState(false);
   const [capture, setCapture] = useState<
     | { kind: "url"; url: string; note?: string }
     | null
@@ -479,14 +481,16 @@ const Shell = () => {
           onOpenFolders={openFoldersPage}
           onOpenCalendar={openCalendarPage}
           onOpenGraph={openGraphPage}
+          onOpenNotes={() => setNotesOpen(true)}
           onOpenSettings={() => setSettingsOpen(true)}
         />
       )}
 
       {view === "ideas" && filter.kind === "all" && selectedId === null && <AshDock />}
 
-      {/* Desktop-only always-on to-do + scratchpad panel */}
+      {/* To-do + jot: a persistent column on desktop, a sheet on the phone. */}
       <DesktopScratchpad />
+      {isMobile && <MobileNotesSheet open={notesOpen} onOpenChange={setNotesOpen} />}
 
       <SettingsSheet open={settingsOpen} onOpenChange={setSettingsOpen} />
       <AlarmOverlay />
