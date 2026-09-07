@@ -7,7 +7,7 @@ import { Minus, X, Square, Copy } from "lucide-react";
  * - Minimize: collapses to a compact taskbar pill at the bottom.
  * - Maximize/Restore: toggles phone-width (430px) vs full-width layout.
  * - Close: hides widget; a taskbar pill lets you reopen it.
- * - Drag: grab the titlebar (empty space or "IdeaVault" label) to reposition
+ * - Drag: grab the titlebar (empty space or "Fart Brains" label) to reposition
  *   the whole widget. Position persists to localStorage and is clamped to
  *   the viewport. Double-click the titlebar to snap back to center.
  *
@@ -159,7 +159,7 @@ export const DesktopWindowControls = () => {
         className="fixed z-[100] left-1/2 -translate-x-1/2 bottom-6 px-4 h-10 rounded-md bg-black/70 backdrop-blur-xl text-white text-sm font-medium shadow-2xl border border-white/15 hover:bg-black/80 transition animate-fade-in"
         aria-label="Reopen widget"
       >
-        Open IdeaVault
+        Open Fart Brains
       </button>
     );
   }
@@ -167,7 +167,7 @@ export const DesktopWindowControls = () => {
   if (mode === "minimized") {
     return (
       <div className="fixed z-[100] left-1/2 -translate-x-1/2 bottom-6 flex items-center h-10 rounded-md bg-black/70 backdrop-blur-xl text-white shadow-2xl border border-white/15 overflow-hidden animate-fade-in">
-        <span className="text-sm font-medium tracking-tight px-4">IdeaVault</span>
+        <span className="text-sm font-medium tracking-tight px-4">Fart Brains</span>
         <WinBtn title="Restore" onClick={() => setMode("open")}>
           <Square className="h-3 w-3" strokeWidth={2} />
         </WinBtn>
@@ -197,7 +197,7 @@ export const DesktopWindowControls = () => {
       title={expanded ? undefined : "Drag to move · double-click to recenter"}
     >
       <span className="text-[11px] font-medium tracking-tight text-white/80 px-3 pointer-events-none">
-        IdeaVault
+        Fart Brains
       </span>
       <WinBtn title="Minimize" onClick={() => setMode("minimized")}>
         <Minus className="h-3.5 w-3.5" strokeWidth={2} />
