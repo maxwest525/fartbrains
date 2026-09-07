@@ -274,6 +274,62 @@ export type Database = {
           },
         ]
       }
+      folder_webhooks: {
+        Row: {
+          created_at: string
+          delivery_count: number
+          enabled: boolean
+          folder_id: string
+          include_note: boolean
+          include_summary: boolean
+          last_delivered_at: string | null
+          last_error: string | null
+          last_status: number | null
+          secret: string
+          updated_at: string
+          url: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          delivery_count?: number
+          enabled?: boolean
+          folder_id: string
+          include_note?: boolean
+          include_summary?: boolean
+          last_delivered_at?: string | null
+          last_error?: string | null
+          last_status?: number | null
+          secret?: string
+          updated_at?: string
+          url: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          delivery_count?: number
+          enabled?: boolean
+          folder_id?: string
+          include_note?: boolean
+          include_summary?: boolean
+          last_delivered_at?: string | null
+          last_error?: string | null
+          last_status?: number | null
+          secret?: string
+          updated_at?: string
+          url?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "folder_webhooks_folder_id_fkey"
+            columns: ["folder_id"]
+            isOneToOne: true
+            referencedRelation: "folders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       folders: {
         Row: {
           created_at: string
