@@ -411,11 +411,22 @@ const Shell = () => {
             style={{ paddingBottom: "calc(var(--ash-dock-h, 0px) + env(safe-area-inset-bottom) + (var(--mobile-tabbar-h, 0px)) + 1.25rem)" }}
           >
 
-            <div className="w-full px-3 sm:px-6 lg:px-10 pt-6 sm:pt-10 pb-4 flex-1 min-h-0 flex flex-col items-center gap-5 sm:gap-6 max-w-3xl mx-auto">
+            <div className="w-full px-3 sm:px-6 lg:px-10 pt-6 sm:pt-10 pb-4 flex-1 min-h-0 flex flex-col min-w-0 gap-5 sm:gap-6 max-w-3xl mx-auto">
 
-              
+              {/* The composer is the capture screen. It was built and imported
+                  but never rendered, so the only thing on this view was the
+                  voice orb — which meant there was no way to paste a link
+                  without hand-writing a ?capture= query string. */}
+              <ComposeIdea
+                defaultFolderId={defaultFolderId}
+                onCreated={(id) => setSelectedId(id)}
+                onOpenExisting={(id) => setSelectedId(id)}
+              />
 
-              <VoiceOrb />
+              {/* Voice is one way in among several, not the whole screen. */}
+              <div className="w-full flex flex-col items-center">
+                <VoiceOrb />
+              </div>
             </div>
 
 
