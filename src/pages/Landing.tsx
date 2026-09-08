@@ -250,7 +250,7 @@ const Landing = ({ onEnter }: { onEnter?: () => void }) => {
 
   useEffect(() => {
     const prev = document.title;
-    document.title = "Fart Brains — a vault for the ideas you keep losing";
+    document.title = "Fart Brains — save the reel, get the build brief";
     return () => {
       document.title = prev;
     };
@@ -296,15 +296,15 @@ const Landing = ({ onEnter }: { onEnter?: () => void }) => {
               every reel you swore you&rsquo;d come back to
             </div>
             <h1 className="mb-[30px] text-[44px] font-bold leading-[1.04] tracking-[-0.035em] sm:text-[62px] md:text-[82px]">
-              A vault for the ideas
+              Save the reel.
               <br />
-              you keep <S>losing</S>.
+              Get the <S>build brief</S>.
             </h1>
             <p className="mb-[42px] max-w-[660px] text-[17px] leading-[1.55] text-muted-foreground sm:text-xl [text-wrap:pretty]">
               Somebody explains exactly how they did it &mdash; the strategy, the order,
-              the reason it works. It&rsquo;s a 47-second reel or a 22-minute talk, and
-              by Thursday it&rsquo;s gone. Fart Brains transcribes it, summarizes it,
-              files it, and hands it back the day you need it.
+              the reason it works. It&rsquo;s a 47-second reel, and by Thursday it&rsquo;s
+              gone. Paste the link. Fart Brains transcribes it, researches around it,
+              files it where it belongs, and hands you a spec you can actually build.
             </p>
             <div className="flex flex-wrap items-center gap-3.5">
               <motion.button
