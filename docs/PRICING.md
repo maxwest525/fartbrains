@@ -153,6 +153,35 @@ Why this shape:
 4. **Failed runs must be provably uncounted.** Needs a run record with a
    terminal state, not a decrement at kickoff.
 
+## Metering coverage as of 2026-09-08
+
+`ai_usage_events` now receives the model and the real token counts the gateway
+reports, via `_shared/ai-cost.ts`. Before this it received nothing: every
+`model`, `input_units`, `output_units` and `estimated_cost` in production is
+NULL, and only four functions reported anything at all — as character and byte
+counts, which cannot be priced.
+
+Recording tokens and the model is unconditional. `estimated_cost` is only filled
+for models in the price table in `ai-cost.ts`, and left NULL otherwise, because
+a wrong cost silently poisons every margin figure derived from it while a NULL
+is merely honest. Recorded tokens let cost be recomputed later at whatever the
+price turns out to have been — which is the point.
+
+Known gaps, so nobody reads a clean table as complete coverage:
+
+- **Streaming responses are not counted.** `ash-chat` and `deep-research` stream,
+  so there is no parsed body to read usage from. Chat is cheap; deep research is
+  not, and it is part of every run. This is the most important remaining hole.
+- **`extract-references` under-reports.** Its per-item URL resolver runs in a
+  module-level helper with no access to the guard, so only the detection pass is
+  counted.
+- **Non-token providers are separate.** Speech-to-text and Apify bill per minute
+  and per actor run, not per token. Neither is in the price table.
+- **Gemini 3 models have no price row yet.** `gemini-3-flash-preview`,
+  `gemini-3.1-flash-lite` and `gemini-3-pro-preview` record tokens with a NULL
+  cost until someone checks the real list price. `compose-output` — the expensive
+  step — is one of them, so the number that matters most is still uncosted.
+
 ## What to measure
 
 - tokens in/out and wall-clock per edge function, tagged with user id and run id

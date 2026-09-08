@@ -1,5 +1,6 @@
 import { ALLOWED_ORIGIN } from "../_shared/cors.ts";
 import { guardAiRequest } from "../_shared/ai-guard.ts";
+import { costFrom } from "../_shared/ai-cost.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.95.0";
 
 // Drafts personal-instruction suggestions by reading patterns out of the user's
@@ -148,6 +149,9 @@ If the user already wrote a rule for a field, keep their wording and only extend
     }
 
     const json = await resp.json();
+    // The gateway reports tokens on every response; record them. Without this
+    // the cost columns stay null and there is no way to price anything.
+    await _guard.record({ success: true, provider: "lovable", ...costFrom(json, "google/gemini-3-pro-preview") });
     const raw = String(json?.choices?.[0]?.message?.content ?? "{}");
     let parsed: Partial<Suggestions> = {};
     try {

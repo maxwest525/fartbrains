@@ -1,5 +1,6 @@
 import { ALLOWED_ORIGIN } from "../_shared/cors.ts";
 import { guardAiRequest } from "../_shared/ai-guard.ts";
+import { costFrom } from "../_shared/ai-cost.ts";
 
 /**
  * OCR and object detection for a captured image.
@@ -99,6 +100,9 @@ Deno.serve(async (req) => {
     }
 
     const data = await resp.json();
+    // The gateway reports tokens on every response; record them. Without this
+    // the cost columns stay null and there is no way to price anything.
+    await _guard.record({ success: true, provider: "lovable", ...costFrom(data, "google/gemini-3-flash-preview") });
     const raw = data?.choices?.[0]?.message?.content ?? "{}";
 
     let text = "";

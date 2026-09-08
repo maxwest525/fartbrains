@@ -1,5 +1,6 @@
 import { ALLOWED_ORIGIN } from "../_shared/cors.ts";
 import { guardAiRequest } from "../_shared/ai-guard.ts";
+import { costFrom } from "../_shared/ai-cost.ts";
 // Related Nodes: hybrid recommender.
 // 1) Prefilter the user's library by tag overlap (Jaccard), shared folder,
 //    and shared idea_references hosts.
@@ -175,6 +176,9 @@ No prose, no markdown fences.`;
     }
 
     const data = await resp.json();
+    // The gateway reports tokens on every response; record them. Without this
+    // the cost columns stay null and there is no way to price anything.
+    await _guard.record({ success: true, provider: "lovable", ...costFrom(data, "google/gemini-2.5-flash-lite") });
     const raw: string = data?.choices?.[0]?.message?.content ?? "";
     const cleaned = raw.replace(/^```json\s*|\s*```$/g, "").trim();
     let parsed: { related?: { id: string; reason: string }[] } = {};

@@ -1,5 +1,6 @@
 import { ALLOWED_ORIGIN } from "../_shared/cors.ts";
 import { guardAiRequest } from "../_shared/ai-guard.ts";
+import { costFrom } from "../_shared/ai-cost.ts";
 import { instructionBlock } from "../_shared/instructions.ts";
 const corsHeaders = {
   "Access-Control-Allow-Origin": ALLOWED_ORIGIN,
@@ -70,6 +71,9 @@ Rules:
     }
 
     const data = await resp.json();
+    // The gateway reports tokens on every response; record them. Without this
+    // the cost columns stay null and there is no way to price anything.
+    await _guard.record({ success: true, provider: "lovable", ...costFrom(data, "google/gemini-2.5-flash-lite") });
     const raw = data?.choices?.[0]?.message?.content ?? "{}";
     let tags: string[] = [];
     let reasoning = "";

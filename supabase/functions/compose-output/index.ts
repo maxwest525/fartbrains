@@ -1,5 +1,6 @@
 import { ALLOWED_ORIGIN } from "../_shared/cors.ts";
 import { guardAiRequest } from "../_shared/ai-guard.ts";
+import { costFrom } from "../_shared/ai-cost.ts";
 import { instructionBlock } from "../_shared/instructions.ts";
 
 /**
@@ -186,6 +187,9 @@ Deno.serve(async (req) => {
     }
 
     const data = await resp.json();
+    // The gateway reports tokens on every response; record them. Without this
+    // the cost columns stay null and there is no way to price anything.
+    await _guard.record({ success: true, provider: "lovable", ...costFrom(data, spec.model) });
     const output = (data?.choices?.[0]?.message?.content ?? "").trim();
     if (!output) return json({ error: "Came back empty" }, 502);
 

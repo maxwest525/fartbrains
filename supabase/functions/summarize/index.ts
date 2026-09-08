@@ -1,5 +1,6 @@
 import { ALLOWED_ORIGIN } from "../_shared/cors.ts";
 import { guardAiRequest } from "../_shared/ai-guard.ts";
+import { costFrom } from "../_shared/ai-cost.ts";
 import { instructionBlock } from "../_shared/instructions.ts";
 const MODEL = "google/gemini-3-flash-preview";
 
@@ -139,12 +140,13 @@ Be concise. Do not invent details that aren't in the source.`;
     const titleMatch = summary.match(/\*\*Suggested title:\*\*\s*(.+)/i);
     const suggestedTitle = titleMatch?.[1]?.trim().replace(/^["']|["']$/g, "") ?? null;
 
+    // Was recording string lengths. Characters are not tokens and cannot be
+    // priced against anything, so this reads the counts the gateway already
+    // sent and falls back to the model we asked for.
     await _guard.record({
       success: true,
       provider: "lovable",
-      model: MODEL,
-      inputUnits: typeof text === "string" ? text.length : 0,
-      outputUnits: summary.length,
+      ...costFrom(data, MODEL),
     });
 
     return new Response(JSON.stringify({ summary, suggestedTitle }), {
