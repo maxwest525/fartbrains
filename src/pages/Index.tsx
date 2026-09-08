@@ -18,7 +18,6 @@ import { MobileTabBar } from "@/components/app/MobileTabBar";
 import { SettingsSheet } from "@/components/app/SettingsSheet";
 import { FoldersPage } from "@/components/app/FoldersPage";
 import { AlarmOverlay } from "@/components/app/AlarmOverlay";
-import { AshDock } from "@/components/app/AshDock";
 import { DesktopScratchpad } from "@/components/app/DesktopScratchpad";
 import { MobileNotesSheet } from "@/components/app/MobileNotesSheet";
 import { OnboardingFlow } from "@/components/app/OnboardingFlow";
@@ -492,10 +491,16 @@ const Shell = () => {
         />
       )}
 
-      {/* Ash rides the browse views, not the capture view. The capture screen
-          already has the composer; a dock that also takes a URL, detects the
-          platform and picks a folder made two composers on one screen. */}
-      {view === "ideas" && filter.kind !== "all" && selectedId === null && <AshDock />}
+      {/* The floating Ash dock is not rendered anywhere.
+          It was a second composer on the capture screen — URL field, platform
+          detection, folder picker, send — and on the browse views it floated
+          over the list and covered the ideas underneath it. A persistent
+          overlay on top of the thing you came to read is the wrong shape for
+          it on any screen.
+          AshDock.tsx and the ash-chat / asher-context functions are untouched;
+          per-idea chat still opens through IdeaChatScreen. What is missing is
+          a home for vault-wide Ask Ash, which needs a deliberate place rather
+          than a dock parked over the content. */}
 
       {/* To-do + jot: a persistent column on desktop, a sheet on the phone. */}
       <DesktopScratchpad />
