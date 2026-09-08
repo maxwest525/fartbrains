@@ -852,39 +852,35 @@ html:not(.dark) .gemini ::selection {
     padding-right: var(--split-reserve, 0px);
     transition: padding-right 220ms cubic-bezier(0.22, 1, 0.36, 1);
   }
-  /* The phone frame is now OPT-IN (html.desktop-phone), not the default.
-     It used to be the other way round, gated on a stored preference — so any
-     browser that had once written "not expanded" was stuck rendering a 430px
-     phone on a 1900px screen forever, with no way to tell that a wider layout
-     existed. A desktop should get the desktop. */
-  html.desktop-phone #root {
+  /* Always on a desktop viewport, framed or not.
+     `container-name: appframe` in particular MUST NOT be conditional: the whole
+     app shell lays itself out with `@container appframe (min-width: 768px)`, and
+     a container query with no matching ancestor never matches — so putting this
+     behind the opt-in frame silently collapsed every desktop back to the phone
+     layout. The transform is load-bearing too; it is the containing block the
+     app's `position: fixed` chrome anchors to. */
+  #root {
     position: relative;
-    width: 430px;
     max-width: 100%;
-    height: 100dvh;
     margin: 0 auto;
-    overflow: hidden;
-    /* The shell inside is laid out against THIS box, not the viewport.
-       Without it, Tailwind's md: fires at a 768px viewport while the frame
-       is still 430px wide, so the browse column takes its desktop width of
-       28rem (448px) — wider than the frame it lives in — and the detail
-       column beside it is clipped to zero by the overflow: hidden above.
-       On a desktop screen the app looked like it had simply lost half of
-       itself. `contain` adds no new containing block here; the transform
-       below already made one. */
     container-type: inline-size;
     container-name: appframe;
-    border-radius: 28px;
-    box-shadow:
-      0 30px 80px -20px rgba(0, 0, 0, 0.6),
-      0 0 0 1px rgba(255, 255, 255, 0.08);
-    /* Establishes a containing block for fixed descendants; also
-       applies the drag offset from <DesktopWindowControls />. */
     transform: translate3d(var(--dw-x, 0px), var(--dw-y, 0px), 0);
     isolation: isolate;
     transform-origin: 50% 100%;
     opacity: 1;
     visibility: visible;
+  }
+
+  /* The phone widget itself is opt-in: only its shape lives here. */
+  html.desktop-phone #root {
+    width: 430px;
+    height: 100dvh;
+    overflow: hidden;
+    border-radius: 28px;
+    box-shadow:
+      0 30px 80px -20px rgba(0, 0, 0, 0.6),
+      0 0 0 1px rgba(255, 255, 255, 0.08);
     transition:
       width 420ms cubic-bezier(0.22, 1, 0.36, 1),
       height 420ms cubic-bezier(0.22, 1, 0.36, 1),
@@ -894,6 +890,7 @@ html:not(.dark) .gemini ::selection {
       opacity 260ms ease,
       visibility 0s linear 0s;
   }
+
   /* No transition while actively dragging — feels 1:1 with the cursor. */
   html.desktop-phone.desktop-dragging #root {
     transition: none;
