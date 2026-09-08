@@ -1,119 +1,151 @@
 # Pricing
 
-Researched 2026-09-08. Sources at the bottom. This replaces the back-of-envelope
-unit economics that were sitting in my head and never written down.
+Researched 2026-09-08. Sources at the bottom. Revised the same day after Max
+ruled out briefs as the unit: the output is whatever the thing should be — an
+MVP, a skill tailored to them from what they saw on Instagram, an `agent.md` —
+and the meter is the **run**.
 
-## What the market actually charges
+## What a run is
+
+**One run = one loop, from an input to a delivered artifact.**
+
+That definition has to be exact, because it is the invoice.
+
+- **Iterations inside a loop are part of the same run.** You look at what came
+  back, say "no, make it a CLI, not a web app", and it goes again — still one
+  run. This is not generosity, it is the only way the product works: if
+  refining costs money, people accept the first output, and the first output
+  is never the good one.
+- **A run that delivers nothing does not count.** Model failure, a dead
+  Instagram link, a scrape that returned an empty page: not billed. A user who
+  suspects the counter is lying stops trusting the counter.
+- **Capture is not a run.** Paste, transcribe, summarize, tag, file, search,
+  ask Ash about your vault — all unmetered, forever, on every tier.
+- **Re-running the same input against a different output type** (you got the
+  spec, now you want the `agent.md`) **is a second run.** It is a second
+  artifact and a second full pass of work.
+
+Runs are countable, they are what the person actually came for, and they are
+where essentially all of the cost sits. That is everything you want in a meter.
+
+## What the market charges
+
+The comparables changed when the output changed. We are no longer next to note
+apps; we are next to tools that produce working artifacts.
 
 | Product | Price | Shape |
 |---|---|---|
-| Reflect | $10/mo | flat, paid-only, no free tier |
-| Mem | $12/mo Pro | free tier capped at 25 notes/mo |
-| Notion AI | $20/user/mo (Business), or $10 base + $10 AI add-on | seat + AI add-on |
-| ChatGPT / Claude / Perplexity / Google AI Pro | $19.99–$20 | flat |
-| ChatGPT Go | $8 | budget anchor |
-| Google AI Plus | $4.99 | budget anchor |
-| GitHub Copilot | $10 individual / $19 seat | flat |
-| Gumloop | free → $37/mo for 10,000 credits | credit-metered |
+| v0 | $20/mo | flat + credits |
+| Cursor | $20/mo | flat, usage beyond |
+| Lovable | $25/mo Pro | message-metered |
+| Replit Core | $25/mo | flat + usage credits |
+| Gumloop | $37/mo for 10,000 credits | credit-metered |
+| Devin | $500/mo entry | ACU-metered |
+| — *for contrast* — | | |
+| Reflect / Mem | $10–12/mo | note apps |
+| ChatGPT / Claude / Perplexity | $19.99–20/mo | flat |
 
-Two things fall out of that table:
+**$20–25 is the builder-tool line.** That is the band to sit in, and it is
+above the note-app line — which is the practical reason the positioning fight
+in `PRODUCT_TRUTH.md` was worth having. Framed as a vault we are a $10 product.
 
-1. **$19–20 is the consumer AI standard.** It is what everyone already pays for
-   one AI subscription, so it is the number a buyer compares us to whether we
-   like it or not.
-2. **Note-app comparables sit *below* it** — $10–12. If we present as a notes
-   app we get priced as one. If we present as "save the reel, get the build
-   brief" we are selling an output, and outputs price against the $20 line.
-   This is a pricing argument for the positioning, not just a marketing one.
+What the market has also settled:
 
-## What the market has learned about *shape*
-
-- Over 60% of AI SaaS now uses some form of credit-based hybrid: a subscription
-  for access, metered credits for consumption. Gartner projects 70% of
-  businesses prefer usage-based over per-seat by 2026.
-- **Expose credits or tasks, never raw tokens** — unless the audience is
-  developers. The credit is an abstraction layer: one credit can be 10 tokens
-  today and 50 tomorrow, and we can swap models underneath without repricing.
-- AI features compress SaaS gross margin from the classic 80–90% down to
-  50–60%, because every call is real compute. Whatever we pick has to be
-  repriceable when inference costs move.
-- A $29–30 tier above the standard tier raises conversion *into the standard
-  tier* by anchoring, even for people who never buy the top one.
+- Over 60% of AI SaaS now runs a hybrid: subscription for access, meter for
+  consumption. Gartner projects 70% of businesses prefer usage-based over
+  per-seat by 2026.
+- **Expose a unit people recognize, not tokens.** "Runs" is already that unit.
+  We do not need a credit abstraction — we have one expensive operation, not a
+  zoo of them. If OCR, agents and long loops later diverge wildly in cost,
+  *that* is when runs become credits, and the migration is a multiplier.
+- AI compresses SaaS gross margin from the classic 80–90% to 50–60%. Whatever
+  we pick has to be repriceable when inference costs move.
+- A tier above the standard one lifts conversion *into* the standard one, even
+  for people who never buy the top.
 
 ## Our cost side
 
-Every AI call in the app today goes through the Lovable AI gateway to Gemini:
+Every AI call goes through the Lovable AI gateway to Gemini:
 `gemini-2.5-flash-lite` (4 functions), `gemini-2.5-flash` (3),
-`gemini-3-flash-preview` (2), `gemini-3.1-flash-lite` (1),
-`gemini-3-pro-preview` (1). That is a cheap fleet, and it matters: the Flash
-tier is what makes an unmetered capture step affordable.
+`gemini-3-flash-preview` (2 — now 3, with `analyze-image`),
+`gemini-3.1-flash-lite` (1), `gemini-3-pro-preview` (1). A cheap fleet, and
+that is what makes unmetered capture affordable.
 
-Rough cost per unit of work (estimated from published token prices, not yet
-measured against real logs — see "What to measure" below):
+Estimated from published token prices — **not yet measured against our logs**:
 
 | Step | Model | Est. cost |
 |---|---|---|
-| Transcribe + summarize + auto-tag one reel | Flash-Lite | ~$0.001 |
+| Capture: transcribe + summarize + auto-tag | Flash-Lite | ~$0.001 |
 | Extract links / scrape / references | Flash-Lite | ~$0.002 |
-| Deep research (multi-hop, several pages) | Flash | ~$0.01–0.02 |
-| Build brief / detailed spec (long output) | 3 Pro | ~$0.05–0.08 |
+| Image OCR + object detection | Flash | ~$0.002 |
 | Ash chat turn over the vault | Flash | ~$0.002 |
+| Deep research (multi-hop, several pages) | Flash | ~$0.01–0.02 |
+| **A full run**, including 2–3 iterations | Flash + 3 Pro | **~$0.15–0.40** |
 
-**Capture is ~a tenth of a cent. A brief is ~a nickel.** The whole cost curve
-lives in one step. That is the single most important fact for pricing this
-product, and it points at exactly one structure.
+Capture is a tenth of a cent. A run is a quarter. **The cost curve is one
+step**, and it is the step we are billing. That alignment is the whole design.
+
+The wide band on a run is real and it is the main risk: an `agent.md` is cheap,
+a working MVP with five iterations is not. See "What has to be true".
 
 ## Recommendation
 
-Meter the brief. Do not meter the capture.
+| Tier | Price | Runs/mo | Everything else |
+|---|---|---|---|
+| **Free** | $0 | **2** | Unlimited capture, transcribe, OCR, tag, file, search, Ash |
+| **Pro** | **$25/mo** ($250/yr) | **50** | + deep research, MCP connect, share targets, all output types |
+| **Studio** | **$75/mo** | **250** | + priority queue, push-to-external-LLM, webhooks, API |
+| Overage | **$10 / 25 runs** | — | Never a hard stop mid-loop |
 
-| Tier | Price | What you get |
-|---|---|---|
-| **Free** | $0 | Unlimited capture, transcribe, summarize, tag, file. **3 briefs/mo.** |
-| **Pro** | **$19/mo** ($190/yr) | Unlimited capture. **100 briefs/mo.** Deep research, Ash over the whole vault, MCP connect, share targets. |
-| **Studio** | **$49/mo** | 500 briefs/mo, priority queue, push-to-external-LLM, webhooks, API. |
-| Extra briefs | $5 per 50 | Overage, never a hard stop mid-loop. |
+Why this shape:
 
-Why this and not the alternatives:
+- **Capture stays free forever, on every tier.** The habit is paste-a-link-and-
+  forget, and a counter on that step kills the habit for a tenth of a cent of
+  saved cost. Mem's 25-note free cap is the mistake to avoid. It also means the
+  free tier is a genuinely useful product, which is what makes the vault worth
+  enough material that the runs are good when someone does upgrade.
+- **Free gets 2 runs, not 0 and not 10.** One run does not prove anything —
+  the first output of anything is disappointing. Two lets someone iterate once
+  and see the loop actually work, which is the moment that sells this.
+- **$25 puts us on the builder line**, next to Lovable and Replit Core, not
+  next to Reflect. 50 runs is roughly 12 a week, which is more than a working
+  person gets through.
+- **Margin at the Pro cap:** 50 runs × $0.40 worst case = $20 against $25.
+  That is 20% margin — **too thin, and it is the number to watch.** At the more
+  likely $0.20 average it is $10 against $25, or 60%. A realistic Pro user
+  running 12 runs a month costs ~$2.50, which is 90%.
+  The cap bounds the tail; the tail is where this model breaks. If measurement
+  shows runs averaging north of $0.30, Pro drops to 35 runs or rises to $29.
+- **Overage instead of a wall.** Hitting a hard stop halfway through the loop
+  you are paying for is the single worst experience this product could have.
+- **$75 anchors $25** and is the natural home for anyone actually shipping.
 
-- **Capture unmetered is the whole product.** The habit is paste-a-link-and-
-  forget. A counter on that step kills the habit, and the step costs a tenth of
-  a cent — metering it buys us nothing and costs us retention. Mem's 25-note
-  free cap is the mistake to avoid.
-- **The brief is the thing worth paying for**, it is the expensive step, and it
-  is a unit a person can actually count. "Briefs" beats "credits" here: we have
-  one expensive operation, not a zoo of them, so the abstraction layer that
-  Gumloop needs is overhead we don't. If we later add OCR, object detection and
-  multi-step loops with wildly different costs, *that* is when we convert
-  briefs into credits — the migration is a rename plus a multiplier.
-- **Margin check at Pro.** 100 briefs at $0.08 = $8 COGS worst case, plus
-  maybe $1 of capture/chat, against $19. That is ~53% gross margin at the cap —
-  the bottom of the compressed band, and only for someone who uses every last
-  brief. Realistically most Pro users will run 10–20 briefs and sit at 90%+.
-  The cap exists to bound the tail, not to be hit.
-- **$49 anchors $19.** Per the anchoring finding, the top tier earns its keep
-  even if few buy it.
-- **Annual at 10 months** is standard and pulls cash forward.
+### What has to be true before this goes live
 
-### What has to be true before we ship this
-
-1. **Measure, don't estimate.** Log tokens in/out per edge-function call and
-   per user for two weeks. Every number in the cost table above is derived from
-   list prices, not from our logs. If a real brief turns out to cost $0.30 the
-   Pro cap has to come down to ~40.
-2. **A brief must be worth $0.19.** At 100/mo the buyer is paying about 19¢ per
-   brief. That is only obviously worth it if the brief is a genuinely detailed,
-   professional spec. The pricing rests on the product quality of one artifact.
-3. **Metering needs a counter in the UI** before the cap is enforced. A cap the
-   user cannot see is a bug report.
+1. **Measure, don't estimate.** Log tokens in/out and wall-clock per edge
+   function, tagged with user and run id, for two weeks. Every cost number
+   above is from list prices. The $0.15–0.40 band on a run is the one that
+   decides whether Pro is 35, 50, or 75 runs.
+2. **A run has to be worth ~50¢.** At the Pro cap that is what a buyer pays per
+   run. A spec is not obviously worth 50¢. A working MVP obviously is. The
+   pricing rests on the run producing a real artifact, which is the same bet
+   the product rests on.
+3. **The counter has to be visible before it is enforced.** Runs remaining,
+   what consumed them, and what a failed run did *not* consume. A cap the user
+   cannot see is a bug report.
+4. **Failed runs must be provably uncounted.** Needs a run record with a
+   terminal state, not a decrement at kickoff.
 
 ## What to measure
 
-- tokens in/out and wall-clock per edge function, tagged with user id
-- briefs generated per user per month (the distribution, not the mean — the
-  cap should sit somewhere past p95)
-- capture → brief conversion: how many captures ever become a brief
-- free → Pro conversion against briefs used in the first week
+- tokens in/out and wall-clock per edge function, tagged with user id and run id
+- **cost per run, by output type** — spec vs `agent.md` vs skill vs MVP. If
+  those diverge by more than ~3×, runs have to become weighted credits.
+- iterations per run (the distribution) — this is the number that decides
+  whether "iterations are free" survives
+- runs per user per month, p50 and p95 — the cap belongs past p95
+- capture → run conversion: how many captures ever become a run
+- free → Pro conversion against runs used in the first week
 
 ## Sources
 
@@ -125,4 +157,3 @@ Why this and not the alternatives:
 - [AI Pricing Guide 2026 — AIVario](https://aivario.com/blog/ai-pricing-guide-2026)
 - [AI Subscription Price Comparison Table 2026 — Aizolo](https://aizolo.com/blog/ai-subscription-price-comparison-table/)
 - [Gumloop Pricing Simplified for 2026 — Lindy](https://www.lindy.ai/blog/gumloop-pricing)
-- [Best AI Note-Taking Apps in 2026 — Techno-Pulse](https://www.techno-pulse.com/2026/04/best-ai-note-taking-apps-in-2026-notion.html)

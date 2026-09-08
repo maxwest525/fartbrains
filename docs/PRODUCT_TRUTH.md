@@ -12,17 +12,29 @@ teams: it means many separate customers, not many people inside one account.
 3. Ask for a prompt, and your own agent builds from it.
 4. It stays yours, and you can see exactly what it knows and why.
 
-## We do not build anything
-That is the load-bearing sentence. Fartbrains ships **a prompt**, not code.
+## We ship the deliverable, not the deployment
+Revised 2026-09-08 by Max. This section used to read "we do not build
+anything — Fartbrains ships a prompt, not code", and that is no longer the
+position. Keeping the old wording here because the distinction it was
+protecting still matters.
+
+Fartbrains ships **whatever the thing should be**. Sometimes that is a spec.
+Sometimes it is a working MVP. Sometimes it is an `agent.md`, or a skill shaped
+around how this particular person works, built out of what they saw on
+Instagram. The output is not one fixed artifact type — picking the right one is
+part of the job.
 
 You save a reel of someone explaining an SEO tactic, or showing off their
 personal CEO agent. Today that is a bookmark you never open again. Here it
-becomes a brief good enough that the agent already sitting in your project can
-build the thing.
+becomes something you can use tomorrow.
 
-The chain is: capture → transcribe → summarize → **prompt**. The last step is the
-product; the rest is what makes it good. Whoever holds the filesystem does the
-building, and that is never us.
+The chain is: capture → transcribe → research → **run**. The last step is the
+product; the rest is what makes it good.
+
+What is still true, and is the part the old sentence was really defending: we
+do not hold the customer's filesystem, we do not deploy to their infrastructure,
+and we do not run their software. We hand over the artifact. Where it lands is
+theirs.
 
 ## The differentiator
 Today, giving an AI access to your knowledge means installing a pile of plugins
@@ -44,23 +56,28 @@ once already — the meta description sold "a private idea vault" months after
 the product became something you connect an agent to — so this section exists
 so the next writer does not have to reconstruct the pitch from scratch.
 
-**One line:** Save the reel, get the build brief.
+**One line:** Save the reel, ship the thing.
 
 **The paragraph:** You save a reel of someone explaining an SEO tactic, or
 showing off their personal CEO agent. Today that is a bookmark you never open
-again. Here it becomes a brief good enough that the agent already sitting in
-your project builds the thing.
+again. Here it gets transcribed, researched, filed, and run out into something
+you can use tomorrow — a working MVP, an agent that does the thing, a skill
+shaped around how you actually work.
 
 **The proof:** one endpoint you point your own AI session at. Nothing installed,
 nothing running on your machine.
 
 **Lead with the reel, not the vault.** Capture, folders and search are real and
 they are how the material gets good — but they are the middle of the chain, not
-the thing worth paying for. The last step is the product.
+the thing worth paying for. The last step is the product, and it is also the
+billing unit: see docs/PRICING.md.
 
 **Do not say** "private idea vault", "notes app", "second brain" as the headline
-noun, or anything implying we build the software. We do not build anything. The
-customer's agent builds; we supply the material and the brief.
+noun. Those describe the middle of the chain and price us against Reflect at $10.
+
+**Do not promise deployment.** We produce the artifact; we do not push it to
+their servers, their app store, or their repo without being asked. "Ship the
+thing" is about the thing existing and working, not about us operating it.
 
 **Do say** what happens to the thing they already do — saving reels they never
 reopen — and what they get out the other end.
