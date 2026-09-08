@@ -18,6 +18,16 @@ import { PROJECT_TAG } from "@/lib/deliverables";
 import { validateOptimizedPrompt, type ValidationResult } from "@/lib/promptValidation";
 import { normalizeExtraction, summarizeKindFor, type NormalizedExtraction } from "@/lib/extractedContent";
 import { classifyInput, type DetectedKind } from "@/lib/inputClassifier";
+import { RunProgress } from "./RunProgress";
+import {
+  begin,
+  complete,
+  createRun,
+  fail,
+  skip,
+  type Run,
+  type RunInput,
+} from "@/lib/runPipeline";
 
 const NO_FOLDER = "__none__";
 
@@ -124,6 +134,12 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
   // so the user can review (and tweak the title) before committing to save.
   const [preview, setPreview] = useState<NormalizedExtraction | null>(null);
   const [extracting, setExtracting] = useState(false);
+  /**
+   * What the capture is doing right now. Held rather than derived from
+   * `extracting` because the point is the stages — which one is running, what
+   * it found — and a boolean cannot carry that.
+   */
+  const [run, setRun] = useState<Run | null>(null);
   const previewRef = useRef<HTMLDivElement>(null);
 
   // When the URL preview card appears, scroll it into view so the Save button
@@ -253,21 +269,33 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
     if (!effectiveUrl) return toast.error("URL required");
 
     setExtracting(true);
-    try {
-      // Auto-detect: route to the right extractor based on platform.
-      //   instagram → transcribe-instagram
-      //   youtube   → transcribe-youtube (audio download + Scribe)
-      //   other     → extract-url (generic readable text)
-      const platform = detectUrlPlatform(effectiveUrl).kind;
-      const fnName =
-        platform === "instagram" ? "transcribe-instagram" :
-        platform === "youtube"   ? "transcribe-youtube"   :
-                                   "extract-url";
-      const normalizedKind =
-        platform === "instagram" ? "instagram" :
-        platform === "youtube"   ? "youtube"   :
-                                   "webpage";
 
+    // Auto-detect: route to the right extractor based on platform.
+    //   instagram → transcribe-instagram
+    //   youtube   → transcribe-youtube (audio download + Scribe)
+    //   other     → extract-url (generic readable text)
+    const platform = detectUrlPlatform(effectiveUrl).kind;
+    const isVideo = platform === "instagram" || platform === "youtube";
+    const fnName =
+      platform === "instagram" ? "transcribe-instagram" :
+      platform === "youtube"   ? "transcribe-youtube"   :
+                                 "extract-url";
+    const normalizedKind =
+      platform === "instagram" ? "instagram" :
+      platform === "youtube"   ? "youtube"   :
+                                 "webpage";
+
+    // One request does the work, but it is not one step, and saying so is the
+    // difference between a spinner and watching the thing happen. `detect` has
+    // genuinely already run — that is what picked the extractor above.
+    const material: RunInput = isVideo ? "video" : "link";
+    const fetchStage = isVideo ? "transcribe" : "extract";
+    let r = createRun(material, "capture");
+    r = complete(begin(r, "detect"), "detect", detectUrlPlatform(effectiveUrl).label);
+    r = begin(r, fetchStage);
+    setRun(r);
+
+    try {
       const { data: ext, error: extErr } = await supabase.functions.invoke(fnName, {
         body: { url: effectiveUrl },
       });
@@ -276,12 +304,24 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
 
       const normalized = normalizeExtraction(normalizedKind, ext, effectiveUrl);
 
+      const words = normalized.text ? normalized.text.trim().split(/\s+/).length : 0;
+      r = complete(r, fetchStage, words ? `${words.toLocaleString()} words` : undefined);
+
+      // On a video run `extract` is still ahead of us. Nothing pulls links out
+      // of a caption yet, so it is skipped rather than quietly marked done —
+      // claiming work we did not do is how a progress display stops being
+      // worth watching.
+      if (isVideo) r = skip(r, "extract", "not yet — links come next");
+      setRun(r);
+
       setPreview(normalized);
       if (!title.trim() && normalized.suggestedTitle) {
         setTitle(normalized.suggestedTitle);
       }
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Couldn't extract content");
+      const message = e instanceof Error ? e.message : "Couldn't extract content";
+      setRun(fail(r, fetchStage, message));
+      toast.error(message);
     } finally {
       setExtracting(false);
     }
@@ -1209,6 +1249,11 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
           className="h-16 rounded-2xl text-[18px] font-medium px-4 placeholder:font-normal placeholder:text-muted-foreground/70"
         />
       ) : null}
+
+      {/* What the capture is doing. Stays up after the preview lands: the record
+          of what actually ran is the reason to trust what came back, and the
+          first thing you want when it is wrong. */}
+      {run && <RunProgress run={run} className="mb-2" />}
 
       {!preview && (
         <div className="flex gap-2">

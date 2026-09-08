@@ -82,7 +82,18 @@ const CATALOG: Record<StageKey, StageSpec> = {
 /** What kind of thing was handed in. Decides which stages are even possible. */
 export type RunInput = "video" | "link" | "image" | "text";
 
-const PLANS: Record<RunInput, StageKey[]> = {
+/**
+ * How far this run goes.
+ *
+ * `capture` is what happens when you paste a link: get the material in, show it
+ * back. `full` carries on through research to an output. They are separate
+ * because capture has to feel instant and the full loop cannot — and because
+ * showing a pending "Building your output" row during a paste would promise
+ * something that is not going to happen on this keystroke.
+ */
+export type RunScope = "capture" | "full";
+
+const FULL: Record<RunInput, StageKey[]> = {
   // The one path: an Instagram reel.
   video: ["detect", "transcribe", "extract", "scrape", "research", "compose"],
   link: ["detect", "extract", "scrape", "research", "compose"],
@@ -92,16 +103,29 @@ const PLANS: Record<RunInput, StageKey[]> = {
   text: ["detect", "research", "compose"],
 };
 
-export const planFor = (input: RunInput): StageKey[] => PLANS[input];
+/** Everything up to and including getting the material in. */
+const CAPTURE_STAGES = new Set<StageKey>(["detect", "transcribe", "read", "extract"]);
 
-export const createRun = (input: RunInput): Run => ({
-  status: "idle",
-  stages: planFor(input).map((key) => ({
-    ...CATALOG[key],
-    required: CATALOG[key].required ?? false,
-    status: "pending" as StageStatus,
-  })),
-});
+export const planFor = (input: RunInput, scope: RunScope = "full"): StageKey[] =>
+  scope === "full" ? FULL[input] : FULL[input].filter((k) => CAPTURE_STAGES.has(k));
+
+export const createRun = (input: RunInput, scope: RunScope = "full"): Run => {
+  const plan = planFor(input, scope);
+  // `compose` carries the required flag in the catalog because in a full run it
+  // is the only stage whose absence means the person got nothing. A capture run
+  // has no compose, so its own last stage inherits that role: a paste whose
+  // transcription failed has delivered nothing either, and must not report
+  // "Done".
+  const lastIsRequired = scope === "capture";
+  return {
+    status: "idle",
+    stages: plan.map((key, i) => ({
+      ...CATALOG[key],
+      required: (CATALOG[key].required ?? false) || (lastIsRequired && i === plan.length - 1),
+      status: "pending" as StageStatus,
+    })),
+  };
+};
 
 const terminal = (s: StageStatus) => s === "done" || s === "skipped" || s === "failed";
 

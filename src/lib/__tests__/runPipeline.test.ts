@@ -166,3 +166,40 @@ describe("timing", () => {
     expect(stage.endedAt).toBe(1400);
   });
 });
+
+describe("capture scope", () => {
+  it("stops at getting the material in", () => {
+    expect(planFor("video", "capture")).toEqual(["detect", "transcribe", "extract"]);
+    expect(planFor("video", "capture")).not.toContain("compose");
+  });
+
+  it("reads an image rather than transcribing it, on capture too", () => {
+    expect(planFor("image", "capture")).toEqual(["detect", "read", "extract"]);
+  });
+
+  it("is just detection for a typed note, because there is nothing to fetch", () => {
+    expect(planFor("text", "capture")).toEqual(["detect"]);
+  });
+
+  it("defaults to the full loop when no scope is given", () => {
+    expect(planFor("video")).toEqual(planFor("video", "full"));
+  });
+
+  it("treats its own last stage as required, so a failed paste is not 'Done'", () => {
+    let run = createRun("video", "capture");
+    run = complete(begin(run, "detect"), "detect");
+    run = complete(begin(run, "transcribe"), "transcribe");
+    run = fail(run, "extract", "caption unavailable");
+    expect(run.status).toBe("failed");
+  });
+
+  it("still tolerates an earlier stage failing", () => {
+    let run = createRun("video", "capture");
+    run = fail(begin(run, "transcribe"), "transcribe", "no audio");
+    expect(run.status).toBe("running");
+    run = complete(begin(run, "detect"), "detect");
+    run = complete(begin(run, "extract"), "extract", "2 links");
+    expect(run.status).toBe("done");
+    expect(softFailures(run).map((s) => s.key)).toEqual(["transcribe"]);
+  });
+});
