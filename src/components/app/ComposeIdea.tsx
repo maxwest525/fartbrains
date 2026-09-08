@@ -888,7 +888,7 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
           not collapse: the detection picks for you, this shows what it picked
           and lets you swipe to something else. Loops in both directions so a
           flick never dead-ends. */}
-      <LoopRow ariaLabel="Capture type" className="gap-1.5 -mx-1 px-1">
+      <LoopRow ariaLabel="Capture type" className="gap-2 -mx-1 px-1">
         {TILES.map((t) => {
           const active = t.key === source;
           const Icon = t.icon;
@@ -902,23 +902,25 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
               }}
               disabled={!t.enabled}
               className={cn(
-                "shrink-0 inline-flex items-center gap-1.5 h-9 px-3.5 rounded-full text-[13px] font-medium border transition-colors press whitespace-nowrap",
+                "shrink-0 w-[88px] h-[76px] rounded-2xl border flex flex-col items-center justify-center gap-1.5 transition-colors press",
                 active
                   ? "bg-primary text-primary-foreground border-primary"
-                  : "glass-pill border-transparent",
+                  : "glass-pill border-white/10",
                 !t.enabled && "opacity-40 cursor-not-allowed",
               )}
             >
-              <Icon className={cn("h-3.5 w-3.5", active ? "" : t.tone)} />
-              {t.label}
-              {!t.enabled && <span className="text-[9px] uppercase tracking-wide">soon</span>}
+              <Icon className={cn("h-5 w-5", active ? "" : t.tone)} />
+              <span className="text-[12.5px] font-medium leading-none">{t.label}</span>
+              {!t.enabled && (
+                <span className="text-[9px] uppercase tracking-wide leading-none opacity-70">soon</span>
+              )}
             </button>
           );
         })}
       </LoopRow>
 
       <div className="composer-glow">
-        <div className="glass-card-strong rounded-[1.25rem] p-3 sm:p-4 space-y-3 text-foreground">
+        <div className="composer-surface rounded-[1.25rem] p-3 sm:p-4 space-y-3">
 
       {needsUrl && (
         <div className="space-y-1.5">
