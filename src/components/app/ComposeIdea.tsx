@@ -10,7 +10,7 @@ import { useFolders, useCreateFolder } from "@/hooks/useFolders";
 import { useCreateIdea } from "@/hooks/useIdeas";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { SourcePicker, isSourceEnabled, type SourceKey } from "./SourcePicker";
+import { SourcePicker, isSourceEnabled, sourceLabel, type SourceKey } from "./SourcePicker";
 import { ProjectComposer } from "./ProjectComposer";
 import { TranscriptCaptureScreen } from "./TranscriptCaptureScreen";
 import { PROJECT_TAG } from "@/lib/deliverables";
@@ -148,6 +148,9 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
   // Inline new-folder UI (triggered from chip).
   /** What the last keystroke or paste looked like, so we can say so. */
   const [autoDetected, setAutoDetected] = useState<DetectedKind | null>(null);
+
+  /** The type picker is a correction, so it stays shut until asked for. */
+  const [pickerOpen, setPickerOpen] = useState(false);
 
   const [newFolderOpen, setNewFolderOpen] = useState(false);
   const [newFolderName, setNewFolderName] = useState("");
@@ -883,7 +886,39 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
   return (
     <div className="composer-rainbow">
       <div className="glass-card-strong rounded-[calc(1.25rem-1.5px)] p-3 sm:p-4 space-y-3 text-white">
-      <SourcePicker value={source} onChange={handleSourceChange} />
+      {/* The type is a correction, not a gate. Opening with a nine-button grid
+          made every capture start with a filing decision the app then made
+          again itself — handleExtract routes on detectUrlPlatform(), not on
+          whatever was picked here. So: state the guess, offer the override. */}
+      {pickerOpen ? (
+        <div className="space-y-2">
+          <SourcePicker
+            value={source}
+            onChange={(k) => {
+              handleSourceChange(k);
+              setAutoDetected(null);
+              setPickerOpen(false);
+            }}
+          />
+          <button
+            type="button"
+            onClick={() => setPickerOpen(false)}
+            className="text-[12px] text-muted-foreground hover:text-foreground px-1"
+          >
+            Done
+          </button>
+        </div>
+      ) : (
+        <button
+          type="button"
+          onClick={() => setPickerOpen(true)}
+          className="flex items-center gap-2 px-1 text-[12px] text-muted-foreground hover:text-foreground"
+        >
+          <span className="font-medium text-foreground">{sourceLabel(source)}</span>
+          <span aria-hidden>&middot;</span>
+          <span className="underline underline-offset-2">change</span>
+        </button>
+      )}
 
 
       {needsUrl && (

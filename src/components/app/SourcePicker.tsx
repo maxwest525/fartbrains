@@ -12,7 +12,7 @@ type Tile = {
   enabled: boolean;
 };
 
-const TILES: Tile[] = [
+export const TILES: Tile[] = [
   { key: "note",      label: "Note",      icon: FileText,   tone: "text-foreground",  enabled: true  },
   { key: "project",   label: "Project",   icon: Briefcase,  tone: "text-primary",     enabled: true  },
   { key: "link",      label: "Link / URL",icon: Link2,      tone: "text-primary",     enabled: true  },
@@ -76,3 +76,7 @@ export const SourcePicker = ({ value, onChange }: Props) => {
 
 export const isSourceEnabled = (key: SourceKey) =>
   TILES.find((t) => t.key === key)?.enabled ?? false;
+
+/** Human label for a source, for surfaces that show the current type collapsed. */
+export const sourceLabel = (key: SourceKey): string =>
+  TILES.find((t) => t.key === key)?.label ?? "Note";

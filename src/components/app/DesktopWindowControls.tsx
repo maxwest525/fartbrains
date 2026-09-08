@@ -48,9 +48,15 @@ export const DesktopWindowControls = () => {
       const m = localStorage.getItem(STORAGE) as Mode | null;
       if (m === "minimized" || m === "closed" || m === "open") setMode(m);
       // First visit on a real desktop screen: start in the wide layout.
+      //
+      // Threshold matches the media query that imposes the 430px phone frame
+      // in index.css (min-width: 768px). They were 1024 and 768, so every
+      // window between the two got framed down to a phone with no hint that a
+      // wider layout existed — which is most laptop windows that are not
+      // maximised.
       const storedExpanded = localStorage.getItem(EXPAND_STORAGE);
       setExpanded(
-        storedExpanded === null ? window.innerWidth >= 1024 : storedExpanded === "1",
+        storedExpanded === null ? window.innerWidth >= 768 : storedExpanded === "1",
       );
       const raw = localStorage.getItem(POS_STORAGE);
       if (raw) {
