@@ -15,6 +15,7 @@ import { ComposeIdea } from "@/components/app/ComposeIdea";
 
 
 import { MobileTabBar } from "@/components/app/MobileTabBar";
+import { AppSidebar } from "@/components/app/AppSidebar";
 import { SettingsSheet } from "@/components/app/SettingsSheet";
 import { FoldersPage } from "@/components/app/FoldersPage";
 import { AlarmOverlay } from "@/components/app/AlarmOverlay";
@@ -339,6 +340,24 @@ const Shell = () => {
       )}
 
       <div className="flex-1 flex min-h-0">
+        {/* Desktop navigation lives in a real column, not a phone tab bar.
+            AppSidebar was written for exactly this and had never been rendered
+            anywhere, so a wide screen got the phone's bottom tabs and nothing
+            else — folders were two taps away on a display with room to list
+            them all. Hidden while an idea is open on the graph view, which
+            owns the whole surface. */}
+        {!isMobile && !showGraph && (
+          <aside className="hidden md:flex w-[260px] shrink-0 flex-col border-r border-border/60 bg-background/40 backdrop-blur-xl overflow-y-auto no-scrollbar">
+            <AppSidebar
+              filter={filter}
+              onFilterChange={handleFilterChange}
+              onNewIdea={handleQuickAdd}
+              onOpenFolders={openFoldersPage}
+              foldersActive={view === "folders"}
+            />
+          </aside>
+        )}
+
         {/* Folders page — full-width when active */}
         {showFolders && (
           <FoldersPage
