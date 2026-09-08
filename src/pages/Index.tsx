@@ -9,7 +9,6 @@ import { MaterialIcon } from "@/components/ui/MaterialIcon";
 import { Input } from "@/components/ui/input";
 import { IdeaList } from "@/components/app/IdeaList";
 import { IdeaDetail } from "@/components/app/IdeaDetail";
-import { VoiceOrb } from "@/components/app/VoiceOrb";
 import { UrlCaptureScreen } from "@/components/app/UrlCaptureScreen";
 import { ComposeIdea } from "@/components/app/ComposeIdea";
 
@@ -423,10 +422,6 @@ const Shell = () => {
                 onOpenExisting={(id) => setSelectedId(id)}
               />
 
-              {/* Voice is one way in among several, not the whole screen. */}
-              <div className="w-full flex flex-col items-center">
-                <VoiceOrb compact />
-              </div>
             </div>
 
 
@@ -497,7 +492,10 @@ const Shell = () => {
         />
       )}
 
-      {view === "ideas" && filter.kind === "all" && selectedId === null && <AshDock />}
+      {/* Ash rides the browse views, not the capture view. The capture screen
+          already has the composer; a dock that also takes a URL, detects the
+          platform and picks a folder made two composers on one screen. */}
+      {view === "ideas" && filter.kind !== "all" && selectedId === null && <AshDock />}
 
       {/* To-do + jot: a persistent column on desktop, a sheet on the phone. */}
       <DesktopScratchpad />

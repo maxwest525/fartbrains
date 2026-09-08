@@ -25,7 +25,7 @@ const TITLEBAR_H = 32;
 export const DesktopWindowControls = () => {
   const [isDesktop, setIsDesktop] = useState(false);
   const [mode, setMode] = useState<Mode>("open");
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState(true);
   const [pos, setPos] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const [dragging, setDragging] = useState(false);
   const dragRef = useRef<{
@@ -55,9 +55,7 @@ export const DesktopWindowControls = () => {
       // wider layout existed — which is most laptop windows that are not
       // maximised.
       const storedExpanded = localStorage.getItem(EXPAND_STORAGE);
-      setExpanded(
-        storedExpanded === null ? window.innerWidth >= 768 : storedExpanded === "1",
-      );
+      setExpanded(storedExpanded === null ? true : storedExpanded === "1");
       const raw = localStorage.getItem(POS_STORAGE);
       if (raw) {
         const p = JSON.parse(raw);
@@ -110,6 +108,8 @@ export const DesktopWindowControls = () => {
     root.classList.toggle("desktop-minimized", mode === "minimized");
     root.classList.toggle("desktop-closed", mode === "closed");
     root.classList.toggle("desktop-expanded", expanded && mode === "open");
+    // The frame is opt-in now: only a deliberately un-expanded window is a phone.
+    root.classList.toggle("desktop-phone", !expanded);
     root.classList.toggle("desktop-dragging", dragging);
 
     // When maximized, ignore drag offset so it fills the viewport.

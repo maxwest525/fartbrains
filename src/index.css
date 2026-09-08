@@ -852,7 +852,12 @@ html:not(.dark) .gemini ::selection {
     padding-right: var(--split-reserve, 0px);
     transition: padding-right 220ms cubic-bezier(0.22, 1, 0.36, 1);
   }
-  #root {
+  /* The phone frame is now OPT-IN (html.desktop-phone), not the default.
+     It used to be the other way round, gated on a stored preference — so any
+     browser that had once written "not expanded" was stuck rendering a 430px
+     phone on a 1900px screen forever, with no way to tell that a wider layout
+     existed. A desktop should get the desktop. */
+  html.desktop-phone #root {
     position: relative;
     width: 430px;
     max-width: 100%;
@@ -890,12 +895,13 @@ html:not(.dark) .gemini ::selection {
       visibility 0s linear 0s;
   }
   /* No transition while actively dragging — feels 1:1 with the cursor. */
-  html.desktop-dragging #root {
+  html.desktop-phone.desktop-dragging #root {
     transition: none;
   }
 
   /* Full-width surfaces (e.g. the dashboard) opt out of the phone frame. */
-  html.route-wide #root {
+  html.route-wide #root,
+  html.route-wide.desktop-phone #root {
     width: 100%;
     max-width: 100%;
     height: auto;
@@ -943,8 +949,8 @@ html:not(.dark) .gemini ::selection {
 /* Desktop window controls — close / minimize / expand states.
    Toggled via classes on <html> by <DesktopWindowControls />. */
 @media (min-width: 768px) {
-  html.desktop-closed #root,
-  html.desktop-minimized #root {
+  html.desktop-phone.desktop-closed #root,
+  html.desktop-phone.desktop-minimized #root {
     opacity: 0;
     transform: translateZ(0) scale(0.92) translateY(24px);
     visibility: hidden;
@@ -954,7 +960,8 @@ html:not(.dark) .gemini ::selection {
       opacity 200ms ease,
       visibility 0s linear 260ms;
   }
-  html.desktop-expanded #root {
+  /* Kept so an explicitly expanded window still wins over the phone frame. */
+  html.desktop-expanded.desktop-phone #root {
     width: 100%;
     max-width: 100%;
     border-radius: 0;
