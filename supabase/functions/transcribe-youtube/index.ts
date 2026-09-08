@@ -1,6 +1,6 @@
 import { ALLOWED_ORIGIN } from "../_shared/cors.ts";
 import { guardAiRequest } from "../_shared/ai-guard.ts";
-import { SttError, checkAudioLimits, resolveSttConfig, transcribeAudio } from "../_shared/stt.ts";
+import { OUR_FAULT, SttError, checkAudioLimits, resolveSttConfig, transcribeAudio } from "../_shared/stt.ts";
 import {
   completeJob,
   createJob,
@@ -272,6 +272,9 @@ Deno.serve(async (req) => {
       const code = e instanceof SttError ? e.code : "stt_failed";
       await failJob(jobId, code);
       await _guard.record({ success: false, errorCode: code });
+      // Our failure, not their usage — see the same guard in
+      // transcribe-instagram.
+      if (OUR_FAULT.has(code)) await _guard.refund("failed_before_spend");
       console.error("transcribe-youtube: stt failed", code);
       return json({ error: "Couldn't transcribe this video. Try again in a moment.", code }, 502);
     }
