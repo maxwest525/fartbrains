@@ -500,6 +500,22 @@ html:not(.dark) .gemini ::selection {
     inset: -5px;
     z-index: -1;
     border-radius: inherit;
+    /* Paint the ring only. Sitting the gradient behind the card was never
+       going to work: backdrop-filter blurs what is behind glass, it does not
+       hide it, and the composer surface is mostly transparent — so a saturated
+       gradient behind it stayed a saturated gradient and became the card.
+       Masking to the padding band means nothing is painted behind the middle
+       at all, so there is nothing left to transmit. */
+    box-sizing: border-box;
+    padding: 6px;
+    -webkit-mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    mask-composite: exclude;
     background: conic-gradient(
       from var(--rb-angle, 0deg),
       hsl(var(--brand-2)) 0deg 89deg,
@@ -634,6 +650,19 @@ html:not(.dark) .gemini ::selection {
     color: #ffffff;
   }
   .glass-card-strong :where(p, span, li, h1, h2, h3, h4, h5, h6) { color: inherit; }
+
+  /* The composer's own surface: glass, but grounded.
+     glass-card-strong is rgba(255,255,255,0.08) — fine over the aurora, not
+     over anything bright, because 8% white hides nothing. The composer sits
+     inside a glow and holds the one piece of text the customer is writing, so
+     it takes its ground from --card and keeps the blur for the glass read. */
+  .composer-surface {
+    background-color: hsl(var(--card) / 0.86);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    backdrop-filter: blur(28px) saturate(150%);
+    -webkit-backdrop-filter: blur(28px) saturate(150%);
+    color: hsl(var(--card-foreground));
+  }
 
   /* QUIET — nested inset panel inside another glass surface. */
   .glass-card-quiet {
