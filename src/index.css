@@ -482,10 +482,24 @@ html:not(.dark) .gemini ::selection {
 
   /* Animated rainbow border for the capture composer.
      Orange → red → green → blue conic gradient with a subtle drift. */
-  .composer-rainbow {
+  /* Underlay glow. The gradient sits *behind* the glass and blurs outward, so
+     what reads is a halo at the rim rather than a fill — the earlier version
+     painted the gradient as the card's own background and relied on an opaque
+     child to mask it, which meant the moment the child was glass the whole
+     composer turned into a rainbow and took its labels with it.
+     Tight (inset -5px), slow (22s), and behind everything. */
+  .composer-glow {
     position: relative;
     border-radius: 1.25rem;
-    padding: 3px;
+    isolation: isolate;
+  }
+
+  .composer-glow::before {
+    content: "";
+    position: absolute;
+    inset: -5px;
+    z-index: -1;
+    border-radius: inherit;
     background: conic-gradient(
       from var(--rb-angle, 0deg),
       hsl(var(--brand-2)) 0deg 89deg,
@@ -497,12 +511,13 @@ html:not(.dark) .gemini ::selection {
       hsl(var(--brand-4)) 271deg 359deg,
       #ffffff00 359deg 360deg
     );
-    animation: composer-rainbow-spin 6s linear infinite;
-    box-shadow: 0 12px 36px -16px rgba(0, 0, 0, 0.55);
+    filter: blur(11px);
+    opacity: 0.5;
+    animation: composer-rainbow-spin 22s linear infinite;
   }
 
-  .composer-rainbow > * {
-    border-radius: calc(1.25rem - 3px);
+  @media (prefers-reduced-motion: reduce) {
+    .composer-glow::before { animation: none; }
   }
 
   @keyframes composer-rainbow-spin {
