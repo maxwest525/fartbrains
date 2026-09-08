@@ -425,7 +425,7 @@ const Shell = () => {
 
               {/* Voice is one way in among several, not the whole screen. */}
               <div className="w-full flex flex-col items-center">
-                <VoiceOrb />
+                <VoiceOrb compact />
               </div>
             </div>
 

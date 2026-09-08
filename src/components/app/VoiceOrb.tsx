@@ -20,10 +20,12 @@ const fmtSeconds = (s: number) => {
 type VoiceOrbProps = {
   /** True while Ash is speaking back — animates the orb in a different color. */
   speaking?: boolean;
+  /** Small form, for sitting under the composer rather than being the screen. */
+  compact?: boolean;
 };
 
 
-export const VoiceOrb = ({ speaking = false }: VoiceOrbProps) => {
+export const VoiceOrb = ({ speaking = false, compact = false }: VoiceOrbProps) => {
   const voice = useVoiceCapture({ maxSeconds: 180 });
   const live = useLiveTranscript();
   const [submitting, setSubmitting] = useState(false);
@@ -169,7 +171,12 @@ export const VoiceOrb = ({ speaking = false }: VoiceOrbProps) => {
         disabled={isBusy}
         aria-label={isRecording ? "Stop recording" : "Start voice capture"}
         className={cn(
-          "relative h-28 w-28 sm:h-40 sm:w-40 md:h-44 md:w-44 rounded-full flex items-center justify-center select-none transition-transform active:scale-[0.97]",
+          "relative rounded-full flex items-center justify-center select-none transition-transform active:scale-[0.97]",
+          // Voice is one way in, not the product. It was the only thing on the
+          // capture screen at 176px; the composer is the screen now.
+          compact
+            ? "h-16 w-16"
+            : "h-28 w-28 sm:h-40 sm:w-40 md:h-44 md:w-44",
           "focus:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--g-focus-ring)]",
           isBusy && "opacity-80 cursor-not-allowed",
         )}

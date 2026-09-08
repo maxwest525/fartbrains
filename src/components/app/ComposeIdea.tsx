@@ -885,7 +885,11 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
 
   return (
     <div className="composer-rainbow">
-      <div className="glass-card-strong rounded-[calc(1.25rem-1.5px)] p-3 sm:p-4 space-y-3 text-white">
+      {/* Opaque, not translucent. `glass-card-strong` lets the conic gradient
+          behind it through, so the rainbow meant to be a 3px rim flooded the
+          whole card and took the labels and placeholder with it. The rim is
+          the effect; the surface has to be solid for it to read as one. */}
+      <div className="bg-card rounded-[calc(1.25rem-3px)] p-3 sm:p-4 space-y-3 text-foreground">
       {/* The type is a correction, not a gate. Opening with a nine-button grid
           made every capture start with a filing decision the app then made
           again itself — handleExtract routes on detectUrlPlatform(), not on
