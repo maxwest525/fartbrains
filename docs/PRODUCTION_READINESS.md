@@ -1,6 +1,22 @@
 # Production readiness
 
-**Current verdict: NOT READY FOR LAUNCH.**
+**Current verdict: NOT READY FOR LAUNCH.** Two things block it, both of them
+work only the owner can do: Stripe has never been run in test mode, and the
+legal pages are still unreviewed drafts. Everything else on the P0/P1 list is
+either done or has a named, non-blocking caveat.
+
+## Live state (checked 2026-09-07)
+
+| | |
+|---|---|
+| Frontend | `https://fartbrain.app` serves a build that predates #30 — the legal-entity strings are absent from the deployed bundle. Publishing from Lovable is what deploys it. |
+| Edge functions | 32 deployed 2026-09-04. CORS pinned to `https://fartbrain.app` (see the two exceptions below). |
+| Database | Two-account RLS isolation verified 2026-09-04. |
+
+Anything in this file older than that date is a claim, not a check. Two entries
+below were stale for a day and read as open work after they had been closed —
+re-verify before acting on an unticked box.
+
 
 ## Backlog
 
@@ -28,13 +44,15 @@
 - [x] Server-side search + pagination — lists are bounded to 100 rows, indexed, and paged with an explicit "Load more" so nothing is truncated silently.
 - [ ] Semantic retrieval with citations, and grounded "not in your vault" answers.
 - [x] Hide phone auth until an SMS provider is configured and tested.
-- [~] Restrict CORS to production origins; add CSP (remaining response headers documented for the CDN).
-      **Code shipped, control inert.** Verified 2026-09-04: neither `ALLOWED_ORIGIN`
-      nor `APP_URL` is set on the deployed functions, so every one still answers
-      `Access-Control-Allow-Origin: *`. Setting the secret is the whole fix — see
-      the check in `docs/DEPLOYMENT.md`. Ticked too early once; a control that
-      exists in code and not in the environment is worse than one never written,
-      because it reads as done.
+- [x] Restrict CORS to production origins; add CSP (remaining response headers documented for the CDN).
+      `ALLOWED_ORIGIN` was set on 2026-09-06. Re-verified against production on
+      2026-09-07: every function using `_shared/cors.ts` echoes
+      `https://fartbrain.app` to a hostile origin instead of `*`. Two functions
+      still answer `*` because they do not import the shared helper — `mcp` (a
+      generated bundle, OAuth-authenticated rather than session-authenticated)
+      and `push-public-key` (returns public data). Both are tracked in
+      `docs/DEPLOYMENT.md`; neither is a session-token exposure. CSP response
+      headers for the CDN are still not applied.
 - [x] Trash retention is actually scheduled (nightly pg_cron job).
 - [~] Error monitoring and privacy-safe product analytics — error boundary and a content-safe analytics layer exist; no provider is wired.
 - [~] Production email sender-domain configuration — documented in `docs/DEPLOYMENT.md`, not verified.
@@ -59,7 +77,14 @@
       independently confirmed against the running function: Supabase denied
       function-source read and `tools/list` needs auth. Confirm by pointing a
       session at the endpoint and checking `build_prompt` is listed.
-- [ ] Run `docs/rls-two-account-test.sql` with two real accounts.
+- [x] Run `docs/rls-two-account-test.sql` with two real accounts — **done
+      2026-09-04**, inside a transaction that was rolled back. Two real accounts
+      (one owning 222 ideas, as the control). Every user-scoped table returned
+      zero of the other account's rows; cross-account update, delete and forged
+      insert were all refused, as was reassigning an owned row to the other
+      account (the `WITH CHECK` hole). `transcript_cache` and `billing_events`
+      returned nothing to a normal caller. Run by the Lovable agent against the
+      production database, not reproduced independently since.
 - [ ] Work through `docs/STRIPE_SETUP.md` in test mode.
 
 ### Target architecture (new track, see `docs/SPEC_LEDGER.md`)

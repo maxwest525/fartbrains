@@ -10,12 +10,13 @@ import { useFolders, useCreateFolder } from "@/hooks/useFolders";
 import { useCreateIdea } from "@/hooks/useIdeas";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { SourcePicker, isSourceEnabled, type SourceKey } from "./SourcePicker";
+import { SourcePicker, isSourceEnabled, sourceLabel, type SourceKey } from "./SourcePicker";
 import { ProjectComposer } from "./ProjectComposer";
 import { TranscriptCaptureScreen } from "./TranscriptCaptureScreen";
 import { PROJECT_TAG } from "@/lib/deliverables";
 import { validateOptimizedPrompt, type ValidationResult } from "@/lib/promptValidation";
 import { normalizeExtraction, summarizeKindFor, type NormalizedExtraction } from "@/lib/extractedContent";
+import { classifyInput, type DetectedKind } from "@/lib/inputClassifier";
 
 const NO_FOLDER = "__none__";
 
@@ -145,6 +146,12 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
   const [draftAtOptimize, setDraftAtOptimize] = useState<string>("");
 
   // Inline new-folder UI (triggered from chip).
+  /** What the last keystroke or paste looked like, so we can say so. */
+  const [autoDetected, setAutoDetected] = useState<DetectedKind | null>(null);
+
+  /** The type picker is a correction, so it stays shut until asked for. */
+  const [pickerOpen, setPickerOpen] = useState(false);
+
   const [newFolderOpen, setNewFolderOpen] = useState(false);
   const [newFolderName, setNewFolderName] = useState("");
 
@@ -193,6 +200,37 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
   const needsUrl = source === "instagram" || source === "link" || source === "youtube";
   const isTranscript = source === "transcript";
   const usesAiPreview = needsUrl || isTranscript;
+
+  /**
+   * One field. Work out what was typed or pasted and move the composer to
+   * match, instead of asking first.
+   *
+   * Only ever promotes away from "note", never back: deleting the tail of a
+   * pasted URL should not yank the mode out from under someone mid-edit. The
+   * source picker is still there to override, which is the right place for a
+   * correction — after the guess, not before the typing.
+   */
+  const absorb = (text: string) => {
+    const kind = classifyInput(text);
+
+    if (kind === "url") {
+      const platform = detectUrlPlatform(text).kind;
+      setSource(platform === "instagram" ? "instagram" : platform === "youtube" ? "youtube" : "link");
+      setUrl(text.trim());
+      setNote("");
+      setAutoDetected("url");
+      // Same behaviour the URL field already had on paste: start extracting so
+      // the preview is building while they read it.
+      setTimeout(() => handleExtract({ url: text.trim() }), 0);
+      return;
+    }
+
+    if (source !== "note") return;
+    if (kind === "list" || kind === "transcript") {
+      setSource(kind);
+      setAutoDetected(kind);
+    }
+  };
 
   const handleSourceChange = (key: SourceKey) => {
     if (!isSourceEnabled(key)) {
@@ -847,8 +885,44 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
 
   return (
     <div className="composer-rainbow">
-      <div className="glass-card-strong rounded-[calc(1.25rem-1.5px)] p-3 sm:p-4 space-y-3 text-white">
-      <SourcePicker value={source} onChange={handleSourceChange} />
+      {/* Opaque, not translucent. `glass-card-strong` lets the conic gradient
+          behind it through, so the rainbow meant to be a 3px rim flooded the
+          whole card and took the labels and placeholder with it. The rim is
+          the effect; the surface has to be solid for it to read as one. */}
+      <div className="bg-card rounded-[calc(1.25rem-3px)] p-3 sm:p-4 space-y-3 text-foreground">
+      {/* The type is a correction, not a gate. Opening with a nine-button grid
+          made every capture start with a filing decision the app then made
+          again itself — handleExtract routes on detectUrlPlatform(), not on
+          whatever was picked here. So: state the guess, offer the override. */}
+      {pickerOpen ? (
+        <div className="space-y-2">
+          <SourcePicker
+            value={source}
+            onChange={(k) => {
+              handleSourceChange(k);
+              setAutoDetected(null);
+              setPickerOpen(false);
+            }}
+          />
+          <button
+            type="button"
+            onClick={() => setPickerOpen(false)}
+            className="text-[12px] text-muted-foreground hover:text-foreground px-1"
+          >
+            Done
+          </button>
+        </div>
+      ) : (
+        <button
+          type="button"
+          onClick={() => setPickerOpen(true)}
+          className="flex items-center gap-2 px-1 text-[12px] text-muted-foreground hover:text-foreground"
+        >
+          <span className="font-medium text-foreground">{sourceLabel(source)}</span>
+          <span aria-hidden>&middot;</span>
+          <span className="underline underline-offset-2">change</span>
+        </button>
+      )}
 
 
       {needsUrl && (
@@ -1072,6 +1146,27 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
         </div>
       )}
 
+      {/* Say what was guessed. Silent mode-switching is the thing that makes an
+          app feel like it is fighting you; a line you can undo does not. The URL
+          branch has its own platform chip, so this covers the text kinds. */}
+      {!preview && autoDetected && autoDetected !== "url" && source === autoDetected && (
+        <div className="flex items-center gap-2 px-1 text-[12px] text-muted-foreground">
+          <span>
+            Detected a {autoDetected === "list" ? "checklist" : "transcript"}.
+          </span>
+          <button
+            type="button"
+            onClick={() => {
+              setSource("note");
+              setAutoDetected(null);
+            }}
+            className="font-medium text-primary underline-offset-2 hover:underline"
+          >
+            Keep as a note
+          </button>
+        </div>
+      )}
+
       {!preview && (source === "note" || source === "list" || isTranscript) ? (
         <div className="space-y-1.5">
           <label className="block text-[11px] font-semibold uppercase tracking-wide text-muted-foreground px-1">
@@ -1080,14 +1175,25 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
           <Textarea
             ref={noteTextareaRef}
             value={note}
-            onChange={(e) => setNote(e.target.value)}
+            onChange={(e) => {
+              setNote(e.target.value);
+              absorb(e.target.value);
+            }}
             onPaste={(e) => {
-              // Auto-trigger summarize+save when a substantial transcript is pasted into an empty field.
-              if (!isTranscript) return;
               const pasted = e.clipboardData.getData("text").trim();
-              if (pasted.length < 20 || note.trim().length > 0) return;
-              setNote(pasted);
-              setTimeout(() => handleGenerateAndSave({ note: pasted }), 0);
+              if (!pasted) return;
+
+              // A paste into an empty field is the clearest statement of intent
+              // we ever get, so classify the pasted text itself rather than
+              // waiting for the change event to catch up.
+              if (!note.trim()) {
+                e.preventDefault();
+                setNote(pasted);
+                absorb(pasted);
+                if (isTranscript && pasted.length >= 20) {
+                  setTimeout(() => handleGenerateAndSave({ note: pasted }), 0);
+                }
+              }
             }}
             placeholder={ph.note}
             rows={isTranscript ? 8 : source === "list" ? 5 : 4}
@@ -1098,7 +1204,10 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
         <Input
           ref={noteInputRef}
           value={note}
-          onChange={(e) => setNote(e.target.value)}
+          onChange={(e) => {
+            setNote(e.target.value);
+            absorb(e.target.value);
+          }}
           placeholder={ph.note}
           className="h-16 rounded-2xl text-[18px] font-medium px-4 placeholder:font-normal placeholder:text-muted-foreground/70"
         />

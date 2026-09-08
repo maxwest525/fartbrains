@@ -25,7 +25,7 @@ const TITLEBAR_H = 32;
 export const DesktopWindowControls = () => {
   const [isDesktop, setIsDesktop] = useState(false);
   const [mode, setMode] = useState<Mode>("open");
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState(true);
   const [pos, setPos] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const [dragging, setDragging] = useState(false);
   const dragRef = useRef<{
@@ -48,10 +48,14 @@ export const DesktopWindowControls = () => {
       const m = localStorage.getItem(STORAGE) as Mode | null;
       if (m === "minimized" || m === "closed" || m === "open") setMode(m);
       // First visit on a real desktop screen: start in the wide layout.
+      //
+      // Threshold matches the media query that imposes the 430px phone frame
+      // in index.css (min-width: 768px). They were 1024 and 768, so every
+      // window between the two got framed down to a phone with no hint that a
+      // wider layout existed — which is most laptop windows that are not
+      // maximised.
       const storedExpanded = localStorage.getItem(EXPAND_STORAGE);
-      setExpanded(
-        storedExpanded === null ? window.innerWidth >= 1024 : storedExpanded === "1",
-      );
+      setExpanded(storedExpanded === null ? true : storedExpanded === "1");
       const raw = localStorage.getItem(POS_STORAGE);
       if (raw) {
         const p = JSON.parse(raw);
@@ -104,6 +108,8 @@ export const DesktopWindowControls = () => {
     root.classList.toggle("desktop-minimized", mode === "minimized");
     root.classList.toggle("desktop-closed", mode === "closed");
     root.classList.toggle("desktop-expanded", expanded && mode === "open");
+    // The frame is opt-in now: only a deliberately un-expanded window is a phone.
+    root.classList.toggle("desktop-phone", !expanded);
     root.classList.toggle("desktop-dragging", dragging);
 
     // When maximized, ignore drag offset so it fills the viewport.

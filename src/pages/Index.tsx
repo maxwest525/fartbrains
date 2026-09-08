@@ -9,7 +9,6 @@ import { MaterialIcon } from "@/components/ui/MaterialIcon";
 import { Input } from "@/components/ui/input";
 import { IdeaList } from "@/components/app/IdeaList";
 import { IdeaDetail } from "@/components/app/IdeaDetail";
-import { VoiceOrb } from "@/components/app/VoiceOrb";
 import { UrlCaptureScreen } from "@/components/app/UrlCaptureScreen";
 import { ComposeIdea } from "@/components/app/ComposeIdea";
 
@@ -411,11 +410,18 @@ const Shell = () => {
             style={{ paddingBottom: "calc(var(--ash-dock-h, 0px) + env(safe-area-inset-bottom) + (var(--mobile-tabbar-h, 0px)) + 1.25rem)" }}
           >
 
-            <div className="w-full px-3 sm:px-6 lg:px-10 pt-6 sm:pt-10 pb-4 flex-1 min-h-0 flex flex-col items-center gap-5 sm:gap-6 max-w-3xl mx-auto">
+            <div className="w-full px-3 sm:px-6 lg:px-10 pt-6 sm:pt-10 pb-4 flex-1 min-h-0 flex flex-col min-w-0 gap-5 sm:gap-6 max-w-3xl mx-auto">
 
-              
+              {/* The composer is the capture screen. It was built and imported
+                  but never rendered, so the only thing on this view was the
+                  voice orb — which meant there was no way to paste a link
+                  without hand-writing a ?capture= query string. */}
+              <ComposeIdea
+                defaultFolderId={defaultFolderId}
+                onCreated={(id) => setSelectedId(id)}
+                onOpenExisting={(id) => setSelectedId(id)}
+              />
 
-              <VoiceOrb />
             </div>
 
 
@@ -486,7 +492,10 @@ const Shell = () => {
         />
       )}
 
-      {view === "ideas" && filter.kind === "all" && selectedId === null && <AshDock />}
+      {/* Ash rides the browse views, not the capture view. The capture screen
+          already has the composer; a dock that also takes a URL, detects the
+          platform and picks a folder made two composers on one screen. */}
+      {view === "ideas" && filter.kind !== "all" && selectedId === null && <AshDock />}
 
       {/* To-do + jot: a persistent column on desktop, a sheet on the phone. */}
       <DesktopScratchpad />
@@ -533,9 +542,9 @@ const Index = () => {
     return (
       // The landing page owns the whole screen, so its fallback is a matching
       // ground rather than null — otherwise the app's aurora flashes through
-      // for the moment before the chunk lands. Black, to match the landing
-      // page's own --bg; update both together if that changes.
-      <Suspense fallback={<div className="min-h-dvh bg-black" />}>
+      // for the moment before the chunk lands. It uses the app's own
+      // --background token, which is what the landing page paints too.
+      <Suspense fallback={<div className="min-h-dvh bg-background" />}>
         <Landing
           onEnter={() => {
             markEnteredVault();
