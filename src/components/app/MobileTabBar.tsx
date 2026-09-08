@@ -7,11 +7,13 @@ import type { IdeaFilter } from "@/hooks/useIdeas";
 type Props = {
   filter: IdeaFilter;
   /** Which top-level view is active. */
-  view: "ideas" | "folders" | "calendar" | "graph";
+  view: "ideas" | "folders" | "calendar" | "graph" | "ash";
   onFilterChange: (f: IdeaFilter) => void;
   onOpenFolders: () => void;
   onOpenCalendar: () => void;
   onOpenGraph: () => void;
+  /** Ash chat — its own page, which is where it always lived. */
+  onOpenAsh: () => void;
   onOpenNotes: () => void;
   onOpenSettings: () => void;
 };
@@ -64,11 +66,12 @@ const Tab = ({
  * Gemini Glimmer bottom tab bar — frosted glass, Material Symbols Rounded,
  * tonal indicator pill behind the active icon.
  */
-export const MobileTabBar = ({ filter, view, onFilterChange, onOpenFolders, onOpenCalendar, onOpenGraph, onOpenNotes, onOpenSettings }: Props) => {
+export const MobileTabBar = ({ filter, view, onFilterChange, onOpenFolders, onOpenCalendar, onOpenGraph, onOpenAsh, onOpenNotes, onOpenSettings }: Props) => {
   const isAll = view === "ideas" && filter.kind === "all";
   const isFolders = view === "folders";
   const isCalendar = view === "calendar";
   const isGraph = view === "graph";
+  const isAsh = view === "ash";
   const navRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
@@ -106,6 +109,7 @@ export const MobileTabBar = ({ filter, view, onFilterChange, onOpenFolders, onOp
       >
         <div className="flex items-stretch h-[72px]">
           <Tab active={isAll} icon="auto_awesome" label="Capture" onClick={() => onFilterChange({ kind: "all" })} />
+          <Tab active={isAsh} icon="auto_awesome_motion" label="Ash" onClick={onOpenAsh} />
           <Tab active={isGraph} icon="hub" label="Graph" onClick={onOpenGraph} />
           <Tab active={isFolders} icon="folder" label="Folders" onClick={onOpenFolders} />
           <Tab active={isCalendar} icon="calendar_month" label="Calendar" onClick={onOpenCalendar} />

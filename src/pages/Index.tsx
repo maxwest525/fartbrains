@@ -16,6 +16,7 @@ import { ComposeIdea } from "@/components/app/ComposeIdea";
 
 import { MobileTabBar } from "@/components/app/MobileTabBar";
 import { AppSidebar } from "@/components/app/AppSidebar";
+import { AshChatPanel } from "@/components/app/home/AshChatPanel";
 import { SettingsSheet } from "@/components/app/SettingsSheet";
 import { FoldersPage } from "@/components/app/FoldersPage";
 import { AlarmOverlay } from "@/components/app/AlarmOverlay";
@@ -38,7 +39,7 @@ import type { IdeaFilter } from "@/hooks/useIdeas";
 
 
 
-type View = "ideas" | "folders" | "calendar" | "graph";
+type View = "ideas" | "folders" | "calendar" | "graph" | "ash";
 
 const Shell = () => {
   const [view, setView] = useState<View>("ideas");
@@ -178,6 +179,11 @@ const Shell = () => {
     setSelectedId(null);
   };
 
+  const openAshPage = () => {
+    setView("ash");
+    setSelectedId(null);
+  };
+
   // On the graph view we render the idea detail as an overlay *inside* the graph
   // (so the graph stays mounted underneath). Everywhere else, mobile flips into
   // a full-screen detail view when an idea is selected.
@@ -185,6 +191,7 @@ const Shell = () => {
   const showFolders = view === "folders" && !showDetailOnly;
   const showCalendar = view === "calendar" && !showDetailOnly;
   const showGraph = view === "graph";
+  const showAsh = view === "ash" && !showDetailOnly;
   // Trash is a filter, but it renders its own restore/purge surface rather than
   // the normal idea list + detail pane.
   // First run. Offered only to an account that hasn't started using the
@@ -206,7 +213,7 @@ const Shell = () => {
   }, [showOnboarding, onboardingState.completed.length]);
 
   const showTrash =
-    !showFolders && !showCalendar && !showGraph && filter.kind === "trash";
+    !showFolders && !showCalendar && !showGraph && !showAsh && filter.kind === "trash";
   const defaultFolderId = filter.kind === "folder" ? filter.folderId : null;
 
   const activeFolderName =
@@ -240,6 +247,12 @@ const Shell = () => {
       icon: "folder",
       active: view === "folders" || filter.kind === "folder",
       onClick: openFoldersPage,
+    },
+    {
+      label: "Ash",
+      icon: "auto_awesome_motion",
+      active: view === "ash",
+      onClick: openAshPage,
     },
     {
       label: "Graph",
@@ -358,6 +371,29 @@ const Shell = () => {
           </aside>
         )}
 
+        {/* Ash — its own page, which is where it always was.
+            AshChatPanel is 277 lines of streaming chat with save-to-vault and
+            URL routing, and its own docstring says "Ash chat thread merged
+            into /". Nothing had referenced it in a long time: it sat in
+            src/components/app/home/ alongside TodayPanel, both orphaned, while
+            the thing still on screen called "Ash" was AshDock — a capture
+            composer with no chat in it at all. */}
+        {showAsh && (
+          <div className="flex-1 min-w-0 flex flex-col min-h-0">
+            <AshChatPanel
+              onSaved={(id) => setSelectedId(id)}
+              onOpenUrlCapture={(url) => setCapture({ kind: "url", url })}
+              onOpenTranscriptCapture={(text) => {
+                setView("ideas");
+                handleFilterChange({ kind: "all" });
+                toast("Paste that into the composer to summarize it", {
+                  description: text.slice(0, 80),
+                });
+              }}
+            />
+          </div>
+        )}
+
         {/* Folders page — full-width when active */}
         {showFolders && (
           <FoldersPage
@@ -422,7 +458,7 @@ const Shell = () => {
         )}
 
         {/* Capture view — compose only, full width. Shown when filter is "all" (the default landing). */}
-        {!showOnboarding && !showFolders && !showCalendar && !showGraph && !showDetailOnly && filter.kind === "all" && (
+        {!showOnboarding && !showFolders && !showCalendar && !showGraph && !showAsh && !showDetailOnly && filter.kind === "all" && (
           <div
             className="w-full flex-1 min-w-0 flex flex-col min-h-0 bg-transparent overflow-y-auto scroll-momentum touch-pan-y"
             style={{ paddingBottom: "calc(var(--ash-dock-h, 0px) + env(safe-area-inset-bottom) + (var(--mobile-tabbar-h, 0px)) + 1.25rem)" }}
@@ -457,7 +493,7 @@ const Shell = () => {
         )}
 
         {/* Browse view — flat list of ideas (Recents, Favorites, Folder-filtered, Search). */}
-        {!showTrash && !showFolders && !showCalendar && !showGraph && !showDetailOnly && filter.kind !== "all" && (
+        {!showTrash && !showFolders && !showCalendar && !showGraph && !showAsh && !showDetailOnly && filter.kind !== "all" && (
           <div
             className="shell-browse-col border-border flex flex-col min-h-0 bg-transparent overflow-y-auto scroll-momentum touch-pan-y"
             style={{ paddingBottom: isMobile ? "calc(var(--ash-dock-h, 0px) + var(--mobile-tabbar-h, 0px) + env(safe-area-inset-bottom) + 1rem)" : "1.5rem" }}
@@ -477,14 +513,14 @@ const Shell = () => {
         )}
 
         {/* Detail — desktop always shows, mobile only when an idea is selected */}
-        {!showTrash && !showFolders && !showCalendar && !showGraph && (!isMobile || showDetailOnly) && (
+        {!showTrash && !showFolders && !showCalendar && !showGraph && !showAsh && (!isMobile || showDetailOnly) && (
           <IdeaDetail ideaId={selectedId} onClose={() => setSelectedId(null)} backLabel={backLabel} onSelectIdea={setSelectedId} onOpenGraph={() => setView("graph")} />
         )}
       </div>
 
       {/* Floating "+ Add" — visible in any browse scope (folder, recent, favorites, search).
           Creates a stub idea in the active folder (or default) and opens it for editing. */}
-      {!showTrash && !showFolders && !showCalendar && !showGraph && !showDetailOnly && filter.kind !== "all" && (
+      {!showTrash && !showFolders && !showCalendar && !showGraph && !showAsh && !showDetailOnly && filter.kind !== "all" && (
         <button
           onClick={handleQuickAdd}
           disabled={createIdea.isPending}
@@ -500,11 +536,12 @@ const Shell = () => {
       {isMobile && (
         <MobileTabBar
           filter={filter}
-          view={view === "folders" ? "folders" : view === "calendar" ? "calendar" : view === "graph" ? "graph" : "ideas"}
+          view={view === "folders" ? "folders" : view === "calendar" ? "calendar" : view === "graph" ? "graph" : view === "ash" ? "ash" : "ideas"}
           onFilterChange={handleFilterChange}
           onOpenFolders={openFoldersPage}
           onOpenCalendar={openCalendarPage}
           onOpenGraph={openGraphPage}
+          onOpenAsh={openAshPage}
           onOpenNotes={() => setNotesOpen(true)}
           onOpenSettings={() => setSettingsOpen(true)}
         />
