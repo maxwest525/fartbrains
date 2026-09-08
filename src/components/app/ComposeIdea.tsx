@@ -10,7 +10,8 @@ import { useFolders, useCreateFolder } from "@/hooks/useFolders";
 import { useCreateIdea } from "@/hooks/useIdeas";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { SourcePicker, isSourceEnabled, sourceLabel, type SourceKey } from "./SourcePicker";
+import { SourcePicker, isSourceEnabled, TILES, type SourceKey } from "./SourcePicker";
+import { LoopRow } from "./LoopRow";
 import { ProjectComposer } from "./ProjectComposer";
 import { TranscriptCaptureScreen } from "./TranscriptCaptureScreen";
 import { PROJECT_TAG } from "@/lib/deliverables";
@@ -149,8 +150,6 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
   /** What the last keystroke or paste looked like, so we can say so. */
   const [autoDetected, setAutoDetected] = useState<DetectedKind | null>(null);
 
-  /** The type picker is a correction, so it stays shut until asked for. */
-  const [pickerOpen, setPickerOpen] = useState(false);
 
   const [newFolderOpen, setNewFolderOpen] = useState(false);
   const [newFolderName, setNewFolderName] = useState("");
@@ -884,46 +883,42 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
   }
 
   return (
-    <div className="composer-rainbow">
-      {/* Opaque, not translucent. `glass-card-strong` lets the conic gradient
-          behind it through, so the rainbow meant to be a 3px rim flooded the
-          whole card and took the labels and placeholder with it. The rim is
-          the effect; the surface has to be solid for it to read as one. */}
-      <div className="bg-card rounded-[calc(1.25rem-3px)] p-3 sm:p-4 space-y-3 text-foreground">
-      {/* The type is a correction, not a gate. Opening with a nine-button grid
-          made every capture start with a filing decision the app then made
-          again itself — handleExtract routes on detectUrlPlatform(), not on
-          whatever was picked here. So: state the guess, offer the override. */}
-      {pickerOpen ? (
-        <div className="space-y-2">
-          <SourcePicker
-            value={source}
-            onChange={(k) => {
-              handleSourceChange(k);
-              setAutoDetected(null);
-              setPickerOpen(false);
-            }}
-          />
-          <button
-            type="button"
-            onClick={() => setPickerOpen(false)}
-            className="text-[12px] text-muted-foreground hover:text-foreground px-1"
-          >
-            Done
-          </button>
-        </div>
-      ) : (
-        <button
-          type="button"
-          onClick={() => setPickerOpen(true)}
-          className="flex items-center gap-2 px-1 text-[12px] text-muted-foreground hover:text-foreground"
-        >
-          <span className="font-medium text-foreground">{sourceLabel(source)}</span>
-          <span aria-hidden>&middot;</span>
-          <span className="underline underline-offset-2">change</span>
-        </button>
-      )}
+    <div className="space-y-2.5">
+      {/* Type row — outside the glass, above it. It is not a gate and it does
+          not collapse: the detection picks for you, this shows what it picked
+          and lets you swipe to something else. Loops in both directions so a
+          flick never dead-ends. */}
+      <LoopRow ariaLabel="Capture type" className="gap-1.5 -mx-1 px-1">
+        {TILES.map((t) => {
+          const active = t.key === source;
+          const Icon = t.icon;
+          return (
+            <button
+              key={t.key}
+              type="button"
+              onClick={() => {
+                handleSourceChange(t.key);
+                setAutoDetected(null);
+              }}
+              disabled={!t.enabled}
+              className={cn(
+                "shrink-0 inline-flex items-center gap-1.5 h-9 px-3.5 rounded-full text-[13px] font-medium border transition-colors press whitespace-nowrap",
+                active
+                  ? "bg-primary text-primary-foreground border-primary"
+                  : "glass-pill border-transparent",
+                !t.enabled && "opacity-40 cursor-not-allowed",
+              )}
+            >
+              <Icon className={cn("h-3.5 w-3.5", active ? "" : t.tone)} />
+              {t.label}
+              {!t.enabled && <span className="text-[9px] uppercase tracking-wide">soon</span>}
+            </button>
+          );
+        })}
+      </LoopRow>
 
+      <div className="composer-glow">
+        <div className="glass-card-strong rounded-[1.25rem] p-3 sm:p-4 space-y-3 text-foreground">
 
       {needsUrl && (
         <div className="space-y-1.5">
@@ -1213,8 +1208,6 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
         />
       ) : null}
 
-      {!preview && folderChips}
-
       {!preview && (
         <div className="flex gap-2">
           <Button
@@ -1239,7 +1232,57 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
           </Button>
         </div>
       )}
+        </div>
       </div>
+
+      {/* Folder row — outside the glass, below it, mirroring the type row above.
+          Where it goes is a filing decision, not part of writing the thing. */}
+      {!preview && (
+        newFolderOpen ? (
+          <div>{folderChips}</div>
+        ) : (
+          <LoopRow ariaLabel="Folder" className="gap-1.5 -mx-1 px-1">
+            <button
+              type="button"
+              onClick={() => setFolder(NO_FOLDER)}
+              className={cn(
+                "shrink-0 inline-flex items-center gap-1 h-8 px-3 rounded-full text-[13px] font-medium border transition-colors press whitespace-nowrap",
+                folder === NO_FOLDER
+                  ? "bg-primary text-primary-foreground border-primary"
+                  : "glass-pill border-transparent",
+              )}
+            >
+              <Inbox className="h-3.5 w-3.5" />
+              All
+            </button>
+            {folders.map((f) => (
+              <button
+                key={f.id}
+                type="button"
+                onClick={() => setFolder(f.id)}
+                title={f.name}
+                className={cn(
+                  "shrink-0 inline-flex items-center gap-1 h-8 px-3 rounded-full text-[13px] font-medium border transition-colors press max-w-[160px]",
+                  folder === f.id
+                    ? "bg-primary text-primary-foreground border-primary"
+                    : "glass-pill border-transparent",
+                )}
+              >
+                <FolderIcon className="h-3.5 w-3.5 shrink-0" />
+                <span className="truncate">{f.name}</span>
+              </button>
+            ))}
+            <button
+              type="button"
+              onClick={() => setNewFolderOpen(true)}
+              className="shrink-0 inline-flex items-center gap-1 h-8 px-3 rounded-full text-[13px] font-medium border border-dashed border-border/70 text-muted-foreground hover:text-foreground hover:border-primary/50 transition-colors press"
+            >
+              <Plus className="h-3.5 w-3.5" />
+              New
+            </button>
+          </LoopRow>
+        )
+      )}
     </div>
   );
 };

@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { suggestFolderBySubject } from "@/lib/folderRouting";
 import { likeFilterValue } from "@/lib/searchTerm";
 import { toast } from "sonner";
 import { triggerExtractReferences } from "@/hooks/useIdeaReferences";
@@ -212,6 +213,64 @@ function classifyDefaultFolder(payload: {
   return "Ideas";
 }
 
+/**
+ * Ask the customer's own folders where this belongs, using what each has
+ * already collected. Returns null whenever nothing is a convincing match —
+ * falling through to the shape-based default is a fine outcome, filing
+ * something confidently in the wrong place is not.
+ *
+ * Best-effort throughout: routing must never be the reason a capture fails to
+ * save, so every failure here just means "no suggestion".
+ */
+async function routeBySubject(
+  userId: string,
+  payload: { title: string; tags?: string[] },
+): Promise<string | null> {
+  try {
+    const tags = payload.tags ?? [];
+    if (tags.length === 0 && !payload.title.trim()) return null;
+
+    const { data: folders } = await supabase
+      .from("folders")
+      .select("id, name")
+      .eq("user_id", userId);
+    if (!folders || folders.length === 0) return null;
+
+    // What each folder has collected. Bounded — this is on the save path, and
+    // the newest few hundred items describe a folder's subject well enough.
+    const { data: filed } = await supabase
+      .from("ideas")
+      .select("folder_id, tags")
+      .eq("user_id", userId)
+      .not("folder_id", "is", null)
+      .is("deleted_at", null)
+      .order("created_at", { ascending: false })
+      .limit(400);
+
+    const byFolder = new Map<string, string[]>();
+    for (const row of filed ?? []) {
+      const fid = (row as { folder_id: string | null }).folder_id;
+      if (!fid) continue;
+      const t = (row as { tags: string[] | null }).tags ?? [];
+      const acc = byFolder.get(fid);
+      if (acc) acc.push(...t);
+      else byFolder.set(fid, [...t]);
+    }
+
+    const suggestion = suggestFolderBySubject(
+      { title: payload.title, tags },
+      folders.map((f) => ({
+        id: (f as { id: string }).id,
+        name: (f as { name: string }).name,
+        tags: byFolder.get((f as { id: string }).id) ?? [],
+      })),
+    );
+    return suggestion?.id ?? null;
+  } catch {
+    return null;
+  }
+}
+
 export function useCreateIdea() {
   const qc = useQueryClient();
   return useMutation({
@@ -231,8 +290,18 @@ export function useCreateIdea() {
       const { data: userData } = await supabase.auth.getUser();
       if (!userData.user) throw new Error("Not authenticated");
 
-      // Auto-route to a default folder when the caller didn't pick one.
+      // Auto-route when the caller didn't pick a folder.
+      //
+      // Subject first, shape second. classifyDefaultFolder below sorts by
+      // shape into four canonical buckets, which is right for a checklist or a
+      // todo but means someone with "Business Ideas" and "Research Ideas"
+      // watches every captured reel land in a generic "Ideas" — their own
+      // folders never got a vote. So ask their folders first, and only fall
+      // through to the shape default when nothing there is a convincing match.
       let folderId = payload.folder_id ?? null;
+      if (!folderId) {
+        folderId = await routeBySubject(userData.user.id, payload);
+      }
       if (!folderId) {
         const target = classifyDefaultFolder(payload);
         const { data: match } = await supabase

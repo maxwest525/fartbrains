@@ -76,7 +76,3 @@ export const SourcePicker = ({ value, onChange }: Props) => {
 
 export const isSourceEnabled = (key: SourceKey) =>
   TILES.find((t) => t.key === key)?.enabled ?? false;
-
-/** Human label for a source, for surfaces that show the current type collapsed. */
-export const sourceLabel = (key: SourceKey): string =>
-  TILES.find((t) => t.key === key)?.label ?? "Note";
