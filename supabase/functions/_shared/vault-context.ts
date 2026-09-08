@@ -53,6 +53,142 @@ const svc = () =>
     { auth: { persistSession: false, autoRefreshToken: false } },
   );
 
+/** A row as retrieval reads it. */
+export type VaultRow = {
+  id: string;
+  title?: string | null;
+  tags?: unknown;
+  raw_note?: string | null;
+  ai_summary?: string | null;
+  extracted_text?: string | null;
+  created_at: string;
+};
+
+const TITLE_WEIGHT = 6;
+const TAG_WEIGHT = 4;
+const BODY_WEIGHT = 2;
+
+/**
+ * Score and rank candidate rows against the query terms.
+ *
+ * Split out of the fetch so it can be tested: this is the part that decides what
+ * Ash is allowed to know, and it had no tests at all.
+ */
+export function scoreRows(
+  rows: VaultRow[],
+  terms: string[],
+  excludeIdeaId?: string,
+  now = Date.now(),
+): VaultHit[] {
+  const scored: VaultHit[] = [];
+
+  for (const row of rows) {
+    if (excludeIdeaId && row.id === excludeIdeaId) continue;
+    const title = String(row.title ?? "");
+    const tags: string[] = Array.isArray(row.tags) ? row.tags.map(String) : [];
+    const note = String(row.raw_note ?? "");
+    const summary = String(row.ai_summary ?? "");
+    const extracted = String(row.extracted_text ?? "").slice(0, 4000);
+
+    const titleL = title.toLowerCase();
+    const tagsL = tags.join(" ").toLowerCase();
+    const bodyL = `${note}\n${summary}\n${extracted}`.toLowerCase();
+
+    let score = 0;
+    const titleHits: string[] = [];
+    const tagHits: string[] = [];
+    const bodyHits: string[] = [];
+    for (const t of terms) {
+      if (titleL.includes(t)) { score += TITLE_WEIGHT; titleHits.push(t); }
+      if (tagsL.includes(t)) { score += TAG_WEIGHT; tagHits.push(t); }
+      if (bodyL.includes(t)) { score += BODY_WEIGHT; bodyHits.push(t); }
+    }
+    if (score <= 0) continue;
+
+    // Mild recency boost (up to +2 for something from today). Deliberately
+    // small: it breaks ties between comparable matches, and must never let a
+    // weak match from this morning outrank a strong one from last year.
+    const ageDays = Math.max(0, (now - new Date(row.created_at).getTime()) / 86400000);
+    const recencyBoost = Math.max(0, 2 - ageDays / 30);
+    score += recencyBoost;
+
+    const matchedTerms = [...new Set([...titleHits, ...tagHits, ...bodyHits])];
+    const reasonParts: string[] = [];
+    if (titleHits.length) reasonParts.push(`title matches ${titleHits.map((t) => `"${t}"`).join(", ")}`);
+    if (tagHits.length) reasonParts.push(`tagged with ${tagHits.map((t) => `"${t}"`).join(", ")}`);
+    if (bodyHits.length) reasonParts.push(`body mentions ${bodyHits.map((t) => `"${t}"`).join(", ")}`);
+    if (recencyBoost > 1) reasonParts.push("captured recently");
+
+    scored.push({
+      id: row.id,
+      title: title || "(untitled)",
+      tags,
+      snippet: focusedSnippet(summary || note || extracted, matchedTerms),
+      score: Math.round(score * 10) / 10,
+      created_at: row.created_at,
+      matchedTerms,
+      reason: reasonParts.join(" · "),
+    });
+  }
+
+  scored.sort((a, b) => b.score - a.score);
+  return scored;
+}
+
+/**
+ * Terms safe to interpolate into a PostgREST filter.
+ *
+ * PostgREST does not take backslash escapes in filter values — a comma splits
+ * the `or()` clause list, and `%`/`_` are wildcards — so escaping is not
+ * available and pretending otherwise just hides the problem. `tokenize` already
+ * strips everything but letters, digits and hyphens, so in practice nothing is
+ * dropped here; this exists so that stays true if tokenize ever changes.
+ */
+const FILTER_SAFE = /^[a-z0-9-]+$/;
+
+export const filterSafeTerms = (terms: string[]): string[] =>
+  terms.filter((t) => FILTER_SAFE.test(t)).slice(0, MAX_FILTER_TERMS);
+
+/**
+ * Build the PostgREST `or` filter that narrows candidates in the database.
+ *
+ * Retrieval used to fetch the 400 most recently updated ideas and score those.
+ * That is silently wrong past 400: older material becomes invisible to Ash,
+ * which is the worst available failure mode because it still looks like an
+ * answer. Filtering in the database instead means every idea is a candidate
+ * regardless of vault size.
+ *
+ * `extracted_text` is matched too, despite holding whole transcripts. Leaving
+ * it out looked like a reasonable performance trade until it was checked against
+ * production: on the live vault, 9 of 85 matches for a sample term appear only
+ * in extracted_text. That is 11% of results silently dropped — the same class of
+ * bug as the 400-row window this change exists to remove, so it buys speed with
+ * exactly the wrong currency.
+ *
+ * SCALING: every clause is an unindexed ilike, bounded by the user_id index. The
+ * largest account today holds 224 ideas, where that is free. A trigram index
+ * (`pg_trgm` + GIN on the four columns) is what this needs before any single
+ * account reaches the low thousands.
+ */
+export const candidateFilter = (terms: string[]): string =>
+  filterSafeTerms(terms)
+    .flatMap((t) => [
+      `title.ilike.%${t}%`,
+      `ai_summary.ilike.%${t}%`,
+      `raw_note.ilike.%${t}%`,
+      `extracted_text.ilike.%${t}%`,
+    ])
+    .join(",");
+
+/**
+ * Terms past this do not narrow anything meaningful and each adds three clauses
+ * to the query. Tokenize already drops stopwords, so six carries the question.
+ */
+const MAX_FILTER_TERMS = 6;
+
+/** Most rows we will pull back and score in memory. */
+const MAX_CANDIDATES = 300;
+
 export async function retrieveVaultContext(opts: {
   userId: string;
   query: string;
@@ -64,67 +200,25 @@ export async function retrieveVaultContext(opts: {
   if (terms.length === 0) return [];
 
   try {
-    const { data, error } = await svc()
+    const filter = candidateFilter(terms);
+
+    let query = svc()
       .from("ideas")
       .select("id, title, tags, raw_note, ai_summary, extracted_text, created_at")
-      .eq("user_id", opts.userId)
+      .eq("user_id", opts.userId);
+    // No safe term to filter on — an empty or() is a malformed query, so fall
+    // back to the most recent window rather than asking for the whole vault.
+    if (filter) query = query.or(filter);
+
+    const { data, error } = await query
       .order("updated_at", { ascending: false })
-      .limit(400);
+      // A ceiling on rows returned, not on rows considered: the filter has
+      // already run in the database, so this bounds payload rather than hiding
+      // older ideas from the search the way the old unfiltered limit did.
+      .limit(MAX_CANDIDATES);
     if (error || !data) return [];
 
-    const now = Date.now();
-    const scored: VaultHit[] = [];
-
-    for (const row of data) {
-      if (opts.excludeIdeaId && row.id === opts.excludeIdeaId) continue;
-      const title = String(row.title ?? "");
-      const tags: string[] = Array.isArray(row.tags) ? row.tags.map(String) : [];
-      const note = String(row.raw_note ?? "");
-      const summary = String(row.ai_summary ?? "");
-      const extracted = String(row.extracted_text ?? "").slice(0, 4000);
-
-      const titleL = title.toLowerCase();
-      const tagsL = tags.join(" ").toLowerCase();
-      const bodyL = `${note}\n${summary}\n${extracted}`.toLowerCase();
-
-      let score = 0;
-      const titleHits: string[] = [];
-      const tagHits: string[] = [];
-      const bodyHits: string[] = [];
-      for (const t of terms) {
-        if (titleL.includes(t)) { score += 6; titleHits.push(t); }
-        if (tagsL.includes(t)) { score += 4; tagHits.push(t); }
-        if (bodyL.includes(t)) { score += 2; bodyHits.push(t); }
-      }
-      if (score <= 0) continue;
-
-      // Mild recency boost (up to +2 for something from today).
-      const ageDays = Math.max(0, (now - new Date(row.created_at).getTime()) / 86400000);
-      const recencyBoost = Math.max(0, 2 - ageDays / 30);
-      score += recencyBoost;
-
-      const matchedTerms = [...new Set([...titleHits, ...tagHits, ...bodyHits])];
-      const reasonParts: string[] = [];
-      if (titleHits.length) reasonParts.push(`title matches ${titleHits.map((t) => `"${t}"`).join(", ")}`);
-      if (tagHits.length) reasonParts.push(`tagged with ${tagHits.map((t) => `"${t}"`).join(", ")}`);
-      if (bodyHits.length) reasonParts.push(`body mentions ${bodyHits.map((t) => `"${t}"`).join(", ")}`);
-      if (recencyBoost > 1) reasonParts.push("captured recently");
-      const reason = reasonParts.join(" · ");
-
-      const snippetSource = summary || note || extracted;
-      scored.push({
-        id: row.id,
-        title: title || "(untitled)",
-        tags,
-        snippet: focusedSnippet(snippetSource, matchedTerms),
-        score: Math.round(score * 10) / 10,
-        created_at: row.created_at,
-        matchedTerms,
-        reason,
-      });
-    }
-
-    scored.sort((a, b) => b.score - a.score);
+    const scored = scoreRows(data as VaultRow[], terms, opts.excludeIdeaId);
     return scored.slice(0, limit);
   } catch (_e) {
     return [];

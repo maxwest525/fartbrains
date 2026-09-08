@@ -87,10 +87,10 @@ per hit, which is better than most vector search. Two real limits:
 - **Substring, not meaning.** A note about "churn" will not surface for
   "retention". This is the thing people mean when they say second brain, and we
   do not do it.
-- **It is capped at 400 ideas.** At 259 the cap has not bitten. The largest
-  single account decides when it does, and past that point older material is
-  silently invisible to Ash — the worst possible failure mode, because it looks
-  like an answer.
+- **It was capped at 400 ideas.** Fixed: the term filter now runs in the
+  database, so every idea is a candidate regardless of vault size. The cap was
+  closer to biting than it looked — the largest single account holds **224
+  ideas** against a 400-row window.
 
 ## What is still unverified
 
@@ -108,5 +108,9 @@ panel or `compose-output`, which is not deployed yet.
    rate-limited for retrying a broken feature is insult on top of injury.
 3. Read `usage` off every gateway response and write `model`, tokens and
    `estimated_cost` through `record()`. Two weeks of that unparks pricing.
-4. Decide on embeddings. Until then, raise the 400-idea retrieval cap or page it,
-   so the limit is a performance question rather than a correctness one.
+4. Decide on embeddings. The retrieval cap is fixed, but substring matching
+   still cannot find "churn" from "retention", which is what people mean by a
+   second brain.
+5. Add a trigram index (`pg_trgm` + GIN) before any single account reaches the
+   low thousands of ideas. Retrieval now runs four unindexed ilike clauses per
+   term, which is free at 224 ideas and will not stay free.
