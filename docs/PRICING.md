@@ -1,9 +1,26 @@
 # Pricing
 
-Researched 2026-09-08. Sources at the bottom. Revised the same day after Max
-ruled out briefs as the unit: the output is whatever the thing should be — an
-MVP, a skill tailored to them from what they saw on Instagram, an `agent.md` —
-and the meter is the **run**.
+**Status: parked 2026-09-08.** The unit cannot be chosen until we know what the
+product delivers. Max: "it depends what we make." An `agent.md` and a working
+MVP are not the same cost or the same value, so any meter picked now is picked
+blind.
+
+What is settled and worth keeping:
+
+- **The cost curve is one step.** Capture is ~$0.001. The output-producing step
+  is ~$0.15–0.40. Whatever the meter ends up being, it meters that step and
+  never meters capture.
+- **The comparables are builder tools, not note apps** — Lovable and Replit
+  Core at $25, v0 and Cursor at $20, not Reflect at $10. That is a consequence
+  of the positioning, and it is worth ~2.5x.
+- **The live site still sells $9 / "AI actions"**, wired to Stripe price ids in
+  the environment. Untouched. Changing it is a commerce decision.
+
+The tier table below is a **worked example**, not a recommendation — it shows
+what the shape looks like if the unit turns out to be a run. Read it for the
+margin arithmetic and the "what has to be measured" list, not for the numbers.
+
+Researched 2026-09-08. Sources at the bottom.
 
 ## What a run is
 
