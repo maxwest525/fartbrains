@@ -1,106 +1,205 @@
-# Pricing — WORK IN PROGRESS
+# Pricing
 
-**These numbers are a starting point, not a decision.** They are set so the
-product is shippable and coherent; edit them and the code follows (see
-"Where to change it" below).
+**Status: parked 2026-09-08.** The unit cannot be chosen until we know what the
+product delivers. Max: "it depends what we make." An `agent.md` and a working
+MVP are not the same cost or the same value, so any meter picked now is picked
+blind.
 
-## Comparable products
-Personal knowledge / second-brain tools cluster in a narrow band. From memory of
-the market rather than a live check — verify current prices before publishing:
+What is settled and worth keeping:
 
-| Product | Roughly |
-|---|---|
-| Obsidian Sync | ~$4–8 / mo |
-| Heptabase | ~$7–12 / mo |
-| Readwise Reader | ~$10 / mo |
-| Reflect | ~$10 / mo |
-| Mem | ~$10 / mo |
-| Notion AI add-on | ~$10 / mo per member |
-| Tana | ~$10–16 / mo |
+- **The cost curve is one step.** Capture is ~$0.001. The output-producing step
+  is ~$0.15–0.40. Whatever the meter ends up being, it meters that step and
+  never meters capture.
+- **The comparables are builder tools, not note apps** — Lovable and Replit
+  Core at $25, v0 and Cursor at $20, not Reflect at $10. That is a consequence
+  of the positioning, and it is worth ~2.5x.
+- **The live site still sells $9 / "AI actions"**, wired to Stripe price ids in
+  the environment. Untouched. Changing it is a commerce decision.
 
-**$8–12/month is the expected band.** Below it you look like a toy; above it you
-are competing with Notion on breadth, which Fartbrains does not have.
+The tier table below is a **worked example**, not a recommendation — it shows
+what the shape looks like if the unit turns out to be a run. Read it for the
+margin arithmetic and the "what has to be measured" list, not for the numbers.
 
-## Proposed structure
+Researched 2026-09-08. Sources at the bottom.
 
-### Free — $0
-The point of the free plan is that **your notes are never held hostage**. It is
-a real, permanent tier, not a trial.
+## What a run is
 
-- Unlimited items, folders, tags, reminders and tasks
-- Full search
-- Share links
-- Full export (JSON + Markdown) and account deletion
-- **50 AI actions per month**
+**One run = one loop, from an input to a delivered artifact.**
 
-### Pro — $9 / month, or $90 / year (2 months free)
-- Everything in Free
-- **1,000 AI actions per month**
-- Higher rate limits and larger inputs (longer transcripts, bigger pages)
-- Priority support
+That definition has to be exact, because it is the invoice.
 
-### Trial
-14 days of Pro, no card required. Card-free trials convert worse but generate
-far less refund noise for a solo operator — worth it at this scale.
+- **Iterations inside a loop are part of the same run.** You look at what came
+  back, say "no, make it a CLI, not a web app", and it goes again — still one
+  run. This is not generosity, it is the only way the product works: if
+  refining costs money, people accept the first output, and the first output
+  is never the good one.
+- **A run that delivers nothing does not count.** Model failure, a dead
+  Instagram link, a scrape that returned an empty page: not billed. A user who
+  suspects the counter is lying stops trusting the counter.
+- **Capture is not a run.** Paste, transcribe, summarize, tag, file, search,
+  ask Ash about your vault — all unmetered, forever, on every tier.
+- **Re-running the same input against a different output type** (you got the
+  spec, now you want the `agent.md`) **is a second run.** It is a second
+  artifact and a second full pass of work.
 
-## What is NOT charged as an AI action
-Since the transcription rework, a customer is only charged when we actually paid
-a provider. These are refunded automatically:
+Runs are countable, they are what the person actually came for, and they are
+where essentially all of the cost sits. That is everything you want in a meter.
 
-- **Cache hit** — someone already transcribed that public video, ever.
-- **Captions** — YouTube's own caption track, which costs us next to nothing.
-- **Failure before spend** — a download that failed, a file over the size cap.
+## What the market charges
 
-This matters for the free tier: 50 actions goes a lot further when saving a
-popular YouTube video usually costs nothing at all.
+The comparables changed when the output changed. We are no longer next to note
+apps; we are next to tools that produce working artifacts.
 
-## What counts as an "AI action"
-Operations are weighted, because a 20-minute transcription is not the same cost
-as an auto-tag:
+| Product | Price | Shape |
+|---|---|---|
+| v0 | $20/mo | flat + credits |
+| Cursor | $20/mo | flat, usage beyond |
+| Lovable | $25/mo Pro | message-metered |
+| Replit Core | $25/mo | flat + usage credits |
+| Gumloop | $37/mo for 10,000 credits | credit-metered |
+| Devin | $500/mo entry | ACU-metered |
+| — *for contrast* — | | |
+| Reflect / Mem | $10–12/mo | note apps |
+| ChatGPT / Claude / Perplexity | $19.99–20/mo | flat |
 
-| Operation | Weight |
-|---|---|
-| Deep research | 5 |
-| Transcription (YouTube, Instagram, audio) | 3 |
-| Ask your brain | 2 |
-| Summarize, auto-tag, prompts, references, URL extraction | 1 |
+**$20–25 is the builder-tool line.** That is the band to sit in, and it is
+above the note-app line — which is the practical reason the positioning fight
+in `PRODUCT_TRUTH.md` was worth having. Framed as a vault we are a $10 product.
 
-So 50 free actions is roughly *50 summaries*, or *~16 transcriptions*, or a mix.
+What the market has also settled:
 
-## Reasoning behind these numbers
-- **$9** sits mid-band, reads as deliberate rather than as a rounded guess, and
-  leaves room to raise to $12 later without a re-platform.
-- **Annual at 10× monthly** is the standard "two months free" framing and is the
-  easiest discount to explain.
-- **50 free actions** is enough to genuinely feel the product on real notes, and
-  small enough that a heavy user hits the wall inside a couple of weeks.
-- **1,000 Pro actions** is far above normal personal use, so the limit exists to
-  catch abuse and runaway loops, not to nickel-and-dime customers. Watch actual
-  usage in `ai_usage_events` for a month before tightening it.
-- **Transcription is now much cheaper per save than the weights suggest.** The
-  shared cache and the captions-first path mean many saves cost nothing. Check
-  the real ratio in `ai_usage_events` (`decision = 'cache_hit'` /
-  `'no_cost_source'` versus `'allowed'`) before assuming the 3x weight is right —
-  it may be too punitive.
+- Over 60% of AI SaaS now runs a hybrid: subscription for access, meter for
+  consumption. Gartner projects 70% of businesses prefer usage-based over
+  per-seat by 2026.
+- **Expose a unit people recognize, not tokens.** "Runs" is already that unit.
+  We do not need a credit abstraction — we have one expensive operation, not a
+  zoo of them. If OCR, agents and long loops later diverge wildly in cost,
+  *that* is when runs become credits, and the migration is a multiplier.
+- AI compresses SaaS gross margin from the classic 80–90% to 50–60%. Whatever
+  we pick has to be repriceable when inference costs move.
+- A tier above the standard one lifts conversion *into* the standard one, even
+  for people who never buy the top.
 
-## Cost check — do this before publishing
-Nothing above is grounded in your real provider bill. Before committing:
-1. Run a month of real usage and read `ai_usage_events`.
-2. Work out the cost of a worst-case Pro customer at 1,000 weighted actions.
-3. If that exceeds roughly a third of $9, either lower the allowance or raise the
-   price. A second-brain product where heavy users lose money is a trap.
+## Our cost side
 
-## Where to change it
-| What | Where |
-|---|---|
-| The price itself | Stripe dashboard; then set `STRIPE_PRICE_ID_PRO`. No code change. |
-| Monthly allowances and rate limits | `PLAN_LIMITS` in `supabase/functions/_shared/ai-guard.ts` |
-| Operation weights | `OPERATION_WEIGHT`, same file |
-| Which features are paid | `PAID_ONLY` / `ALWAYS_AVAILABLE` in `_shared/billing.ts` (server, authoritative) and `src/lib/entitlements.ts` (UI mirror) |
-| Trial length | Stripe price configuration |
+Every AI call goes through the Lovable AI gateway to Gemini:
+`gemini-2.5-flash-lite` (4 functions), `gemini-2.5-flash` (3),
+`gemini-3-flash-preview` (2 — now 3, with `analyze-image`),
+`gemini-3.1-flash-lite` (1), `gemini-3-pro-preview` (1). A cheap fleet, and
+that is what makes unmetered capture affordable.
 
-## Not decided
-- Whether to offer a lifetime or founding-member deal at launch.
-- Whether transcription should be metered separately. Caching and captions have
-  taken a lot of the pressure off, so re-measure before adding complexity.
-- Regional pricing.
+Estimated from published token prices — **not yet measured against our logs**:
+
+| Step | Model | Est. cost |
+|---|---|---|
+| Capture: transcribe + summarize + auto-tag | Flash-Lite | ~$0.001 |
+| Extract links / scrape / references | Flash-Lite | ~$0.002 |
+| Image OCR + object detection | Flash | ~$0.002 |
+| Ash chat turn over the vault | Flash | ~$0.002 |
+| Deep research (multi-hop, several pages) | Flash | ~$0.01–0.02 |
+| **A full run**, including 2–3 iterations | Flash + 3 Pro | **~$0.15–0.40** |
+
+Capture is a tenth of a cent. A run is a quarter. **The cost curve is one
+step**, and it is the step we are billing. That alignment is the whole design.
+
+The wide band on a run is real and it is the main risk: an `agent.md` is cheap,
+a working MVP with five iterations is not. See "What has to be true".
+
+## Recommendation
+
+| Tier | Price | Runs/mo | Everything else |
+|---|---|---|---|
+| **Free** | $0 | **2** | Unlimited capture, transcribe, OCR, tag, file, search, Ash |
+| **Pro** | **$25/mo** ($250/yr) | **50** | + deep research, MCP connect, share targets, all output types |
+| **Studio** | **$75/mo** | **250** | + priority queue, push-to-external-LLM, webhooks, API |
+| Overage | **$10 / 25 runs** | — | Never a hard stop mid-loop |
+
+Why this shape:
+
+- **Capture stays free forever, on every tier.** The habit is paste-a-link-and-
+  forget, and a counter on that step kills the habit for a tenth of a cent of
+  saved cost. Mem's 25-note free cap is the mistake to avoid. It also means the
+  free tier is a genuinely useful product, which is what makes the vault worth
+  enough material that the runs are good when someone does upgrade.
+- **Free gets 2 runs, not 0 and not 10.** One run does not prove anything —
+  the first output of anything is disappointing. Two lets someone iterate once
+  and see the loop actually work, which is the moment that sells this.
+- **$25 puts us on the builder line**, next to Lovable and Replit Core, not
+  next to Reflect. 50 runs is roughly 12 a week, which is more than a working
+  person gets through.
+- **Margin at the Pro cap:** 50 runs × $0.40 worst case = $20 against $25.
+  That is 20% margin — **too thin, and it is the number to watch.** At the more
+  likely $0.20 average it is $10 against $25, or 60%. A realistic Pro user
+  running 12 runs a month costs ~$2.50, which is 90%.
+  The cap bounds the tail; the tail is where this model breaks. If measurement
+  shows runs averaging north of $0.30, Pro drops to 35 runs or rises to $29.
+- **Overage instead of a wall.** Hitting a hard stop halfway through the loop
+  you are paying for is the single worst experience this product could have.
+- **$75 anchors $25** and is the natural home for anyone actually shipping.
+
+### What has to be true before this goes live
+
+1. **Measure, don't estimate.** Log tokens in/out and wall-clock per edge
+   function, tagged with user and run id, for two weeks. Every cost number
+   above is from list prices. The $0.15–0.40 band on a run is the one that
+   decides whether Pro is 35, 50, or 75 runs.
+2. **A run has to be worth ~50¢.** At the Pro cap that is what a buyer pays per
+   run. A spec is not obviously worth 50¢. A working MVP obviously is. The
+   pricing rests on the run producing a real artifact, which is the same bet
+   the product rests on.
+3. **The counter has to be visible before it is enforced.** Runs remaining,
+   what consumed them, and what a failed run did *not* consume. A cap the user
+   cannot see is a bug report.
+4. **Failed runs must be provably uncounted.** Needs a run record with a
+   terminal state, not a decrement at kickoff.
+
+## Metering coverage as of 2026-09-08
+
+`ai_usage_events` now receives the model and the real token counts the gateway
+reports, via `_shared/ai-cost.ts`. Before this it received nothing: every
+`model`, `input_units`, `output_units` and `estimated_cost` in production is
+NULL, and only four functions reported anything at all — as character and byte
+counts, which cannot be priced.
+
+Recording tokens and the model is unconditional. `estimated_cost` is only filled
+for models in the price table in `ai-cost.ts`, and left NULL otherwise, because
+a wrong cost silently poisons every margin figure derived from it while a NULL
+is merely honest. Recorded tokens let cost be recomputed later at whatever the
+price turns out to have been — which is the point.
+
+Known gaps, so nobody reads a clean table as complete coverage:
+
+- **Streaming responses are not counted.** `ash-chat` and `deep-research` stream,
+  so there is no parsed body to read usage from. Chat is cheap; deep research is
+  not, and it is part of every run. This is the most important remaining hole.
+- **`extract-references` under-reports.** Its per-item URL resolver runs in a
+  module-level helper with no access to the guard, so only the detection pass is
+  counted.
+- **Non-token providers are separate.** Speech-to-text and Apify bill per minute
+  and per actor run, not per token. Neither is in the price table.
+- **Gemini 3 models have no price row yet.** `gemini-3-flash-preview`,
+  `gemini-3.1-flash-lite` and `gemini-3-pro-preview` record tokens with a NULL
+  cost until someone checks the real list price. `compose-output` — the expensive
+  step — is one of them, so the number that matters most is still uncosted.
+
+## What to measure
+
+- tokens in/out and wall-clock per edge function, tagged with user id and run id
+- **cost per run, by output type** — spec vs `agent.md` vs skill vs MVP. If
+  those diverge by more than ~3×, runs have to become weighted credits.
+- iterations per run (the distribution) — this is the number that decides
+  whether "iterations are free" survives
+- runs per user per month, p50 and p95 — the cap belongs past p95
+- capture → run conversion: how many captures ever become a run
+- free → Pro conversion against runs used in the first week
+
+## Sources
+
+- [AI SaaS Pricing Models in 2026 — Fungies](https://fungies.io/ai-saas-pricing-models-2026/)
+- [SaaS Pricing Models: The Complete 2026 Guide — Pricing.io](https://www.pricingio.com/insights/saas-pricing-models-2026)
+- [AI Is Killing SaaS Margins — Fraction](https://www.hirefraction.com/blog/ai-is-killing-saas-margins-outcome-based-pricing-is-how-you-get-them-back/)
+- [AI SaaS Pricing Strategy: Tokens & Subscriptions — QubitTool](https://qubittool.com/blog/ai-saas-global-pricing-token-subscription)
+- [How to Price Your AI Product or Feature — Reforge](https://www.reforge.com/blog/how-to-price-your-ai-product)
+- [AI Pricing Guide 2026 — AIVario](https://aivario.com/blog/ai-pricing-guide-2026)
+- [AI Subscription Price Comparison Table 2026 — Aizolo](https://aizolo.com/blog/ai-subscription-price-comparison-table/)
+- [Gumloop Pricing Simplified for 2026 — Lindy](https://www.lindy.ai/blog/gumloop-pricing)

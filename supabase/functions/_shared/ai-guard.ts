@@ -28,7 +28,9 @@ export type AiOperation =
   | "transcribe_instagram"
   | "extract_instagram"
   | "transcribe_deliverables"
-  | "context_preview";
+  | "context_preview"
+  | "analyze_image"
+  | "compose_output";
 
 /**
  * Plans as this file meters them.

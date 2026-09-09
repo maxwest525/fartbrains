@@ -1,6 +1,6 @@
 import { ALLOWED_ORIGIN } from "../_shared/cors.ts";
 import { guardAiRequest } from "../_shared/ai-guard.ts";
-import { SttError, checkAudioLimits, resolveSttConfig, transcribeAudio } from "../_shared/stt.ts";
+import { OUR_FAULT, SttError, checkAudioLimits, resolveSttConfig, transcribeAudio } from "../_shared/stt.ts";
 import {
   completeJob,
   createJob,
@@ -128,6 +128,11 @@ Deno.serve(async (req) => {
     if (!apifyResp.ok) {
       const t = await apifyResp.text();
       console.error("Apify error", apifyResp.status, t);
+      // Nothing was transcribed, so nothing should be charged. Without this the
+      // user pays their allowance for our upstream failing, and then gets rate
+      // limited for retrying — which is exactly what the production log shows.
+      await failJob(jobId, "apify_error");
+      await _guard.refund("failed_before_spend");
       return json(
         { error: `Couldn't fetch Instagram media (Apify ${apifyResp.status})` },
         502,
@@ -136,6 +141,8 @@ Deno.serve(async (req) => {
 
     const items = (await apifyResp.json()) as Array<Record<string, unknown>>;
     if (!Array.isArray(items) || items.length === 0) {
+      await failJob(jobId, "no_media");
+      await _guard.refund("failed_before_spend");
       return json(
         { error: "No data returned for this Instagram URL. It may be private or removed." },
         422,
@@ -153,6 +160,8 @@ Deno.serve(async (req) => {
     const finalUrl = pickString(item, ["url"]) ?? target.toString();
 
     if (!videoUrl) {
+      await failJob(jobId, "no_video");
+      await _guard.refund("no_cost_source");
       return json(
         {
           error:
@@ -169,10 +178,14 @@ Deno.serve(async (req) => {
     // 2) Download the media bytes from Apify's CDN URL.
     const mediaResp = await fetch(videoUrl);
     if (!mediaResp.ok) {
+      await failJob(jobId, "media_download_failed");
+      await _guard.refund("failed_before_spend");
       return json({ error: `Couldn't download reel (${mediaResp.status})` }, 502);
     }
     const contentLengthHeader = mediaResp.headers.get("content-length");
     if (contentLengthHeader && Number(contentLengthHeader) > MAX_MEDIA_BYTES) {
+      await failJob(jobId, "media_too_large");
+      await _guard.refund("failed_before_spend");
       return json(
         { error: "Reel is too large to transcribe (over 50MB). Try a shorter clip." },
         413,
@@ -180,6 +193,8 @@ Deno.serve(async (req) => {
     }
     const mediaBuffer = await mediaResp.arrayBuffer();
     if (mediaBuffer.byteLength > MAX_MEDIA_BYTES) {
+      await failJob(jobId, "media_too_large");
+      await _guard.refund("failed_before_spend");
       return json(
         { error: "Reel is too large to transcribe (over 50MB). Try a shorter clip." },
         413,
@@ -205,6 +220,10 @@ Deno.serve(async (req) => {
       const code = e instanceof SttError ? e.code : "stt_failed";
       await failJob(jobId, code);
       await _guard.record({ success: false, errorCode: code });
+      // A bad key, a rejected file, or a provider outage is our problem, not
+      // the customer's usage. Charging for it — and then rate limiting the
+      // retry — is how a broken feature turns into a billing complaint.
+      if (OUR_FAULT.has(code)) await _guard.refund("failed_before_spend");
       console.error("transcribe-instagram: stt failed", code);
       // The caption is still worth returning — the user gets something useful.
       return json(

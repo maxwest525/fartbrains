@@ -1,6 +1,9 @@
 import { describe, it, expect } from "vitest";
 import {
+  OUR_FAULT,
   checkAudioLimits,
+  codeForStatus,
+  filenameFor,
   resolveSttConfig,
 } from "../../../supabase/functions/_shared/stt";
 
@@ -101,5 +104,68 @@ describe("refusing work before paying for it", () => {
 
   it("rejects empty audio", () => {
     expect(checkAudioLimits(cfg, 0, null)?.code).toBe("empty_audio");
+  });
+});
+
+describe("filenameFor", () => {
+  it("gives the upload a real extension, which is what providers read", () => {
+    expect(filenameFor("video/mp4")).toBe("audio.mp4");
+    expect(filenameFor("audio/mpeg")).toBe("audio.mp3");
+    expect(filenameFor("audio/x-m4a")).toBe("audio.m4a");
+    expect(filenameFor("video/quicktime")).toBe("audio.mov");
+  });
+
+  it("ignores codec parameters on the content type", () => {
+    expect(filenameFor('video/mp4; codecs="avc1.42E01E"')).toBe("audio.mp4");
+  });
+
+  it("is case insensitive", () => {
+    expect(filenameFor("VIDEO/MP4")).toBe("audio.mp4");
+  });
+
+  it("falls back to mp4 rather than sending no extension at all", () => {
+    // Sending a file literally named "audio" is what the old code did, and is
+    // the most likely cause of the provider_error on every Instagram capture.
+    expect(filenameFor("application/octet-stream")).toBe("audio.mp4");
+    expect(filenameFor("")).toBe("audio.mp4");
+  });
+});
+
+describe("codeForStatus", () => {
+  it("separates a bad key from a rejected file", () => {
+    expect(codeForStatus(401)).toBe("provider_auth");
+    expect(codeForStatus(403)).toBe("provider_auth");
+    expect(codeForStatus(400)).toBe("provider_rejected_media");
+    expect(codeForStatus(415)).toBe("provider_rejected_media");
+    expect(codeForStatus(422)).toBe("provider_rejected_media");
+  });
+
+  it("keeps rate limiting and size distinguishable", () => {
+    expect(codeForStatus(429)).toBe("rate_limited");
+    expect(codeForStatus(413)).toBe("audio_too_large");
+  });
+
+  it("calls a 5xx an outage rather than a generic error", () => {
+    expect(codeForStatus(500)).toBe("provider_unavailable");
+    expect(codeForStatus(503)).toBe("provider_unavailable");
+  });
+
+  it("still has a fallback for anything unexpected", () => {
+    expect(codeForStatus(418)).toBe("provider_error");
+  });
+});
+
+describe("OUR_FAULT", () => {
+  it("covers the failures the customer should not be charged for", () => {
+    for (const code of ["provider_auth", "provider_rejected_media", "provider_unavailable", "stt_failed"]) {
+      expect(OUR_FAULT.has(code)).toBe(true);
+    }
+  });
+
+  it("does not excuse audio that genuinely broke the limits", () => {
+    expect(OUR_FAULT.has("audio_too_large")).toBe(false);
+    expect(OUR_FAULT.has("audio_too_long")).toBe(false);
+    // Rate limiting is a real signal about usage, not a provider defect.
+    expect(OUR_FAULT.has("rate_limited")).toBe(false);
   });
 });

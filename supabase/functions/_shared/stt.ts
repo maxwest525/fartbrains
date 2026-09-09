@@ -80,6 +80,21 @@ export type SttResult = {
   usedFallback: boolean;
 };
 
+/**
+ * Failure codes that are ours to fix rather than the customer's to pay for.
+ *
+ * Deliberately excludes audio_too_large and audio_too_long: those are a true
+ * statement about what was submitted. A bad key, a rejected container or a
+ * provider outage is not — charging for it, and then rate limiting the retry,
+ * is how a broken feature becomes a billing complaint.
+ */
+export const OUR_FAULT = new Set([
+  "provider_auth",
+  "provider_rejected_media",
+  "provider_unavailable",
+  "stt_failed",
+]);
+
 export class SttError extends Error {
   constructor(message: string, readonly code: string) {
     super(message);
@@ -114,6 +129,65 @@ function toBlobPart(bytes: Uint8Array): ArrayBuffer {
   return copy;
 }
 
+/**
+ * A filename the provider will accept.
+ *
+ * Both endpoints are multipart file uploads, and both infer the container from
+ * the filename extension as well as the content type. We were uploading every
+ * reel as a file literally named "audio" with no extension, which at least one
+ * of them rejects outright — a plausible cause of the provider_error that
+ * every Instagram transcription in production has returned.
+ */
+const EXT: Record<string, string> = {
+  "video/mp4": "mp4",
+  "video/quicktime": "mov",
+  "video/webm": "webm",
+  "audio/mpeg": "mp3",
+  "audio/mp4": "m4a",
+  "audio/m4a": "m4a",
+  "audio/x-m4a": "m4a",
+  "audio/wav": "wav",
+  "audio/x-wav": "wav",
+  "audio/webm": "webm",
+  "audio/ogg": "ogg",
+  "audio/flac": "flac",
+};
+
+export function filenameFor(mime: string): string {
+  const base = mime.split(";")[0].trim().toLowerCase();
+  return `audio.${EXT[base] ?? "mp4"}`;
+}
+
+/**
+ * Turn a failed provider response into an error that says what to do about it.
+ *
+ * This used to collapse everything that was not a 429 into `provider_error`,
+ * and never read the body. That is the state the Instagram path has been stuck
+ * in: five failures on record, all logged as `provider_error`, with no way to
+ * tell a wrong API key from a rejected file format without redeploying to add a
+ * log line. The status code already distinguishes them, so use it.
+ */
+export function codeForStatus(status: number): string {
+  if (status === 401 || status === 403) return "provider_auth";
+  if (status === 413) return "audio_too_large";
+  if (status === 400 || status === 415 || status === 422) return "provider_rejected_media";
+  if (status === 429) return "rate_limited";
+  if (status >= 500) return "provider_unavailable";
+  return "provider_error";
+}
+
+async function providerFailure(label: string, resp: Response): Promise<SttError> {
+  // Read the body before anything else — it is the only place a provider
+  // explains itself, and it is gone once the response is discarded.
+  let detail = "";
+  try {
+    detail = (await resp.text()).slice(0, 600);
+  } catch { /* a body we cannot read is not worth failing differently over */ }
+  console.error(`${label} STT failed`, resp.status, detail);
+
+  return new SttError(`${label} STT failed (${resp.status})`, codeForStatus(resp.status));
+}
+
 async function callLovable(
   bytes: Uint8Array,
   mime: string,
@@ -121,7 +195,7 @@ async function callLovable(
   apiKey: string,
 ): Promise<string> {
   const fd = new FormData();
-  fd.append("file", new File([toBlobPart(bytes)], "audio", { type: mime }));
+  fd.append("file", new File([toBlobPart(bytes)], filenameFor(mime), { type: mime }));
   fd.append("model", model);
 
   const resp = await fetch("https://ai.gateway.lovable.dev/v1/audio/transcriptions", {
@@ -129,12 +203,7 @@ async function callLovable(
     headers: { Authorization: `Bearer ${apiKey}` },
     body: fd,
   });
-  if (!resp.ok) {
-    throw new SttError(
-      `Lovable STT failed (${resp.status})`,
-      resp.status === 429 ? "rate_limited" : "provider_error",
-    );
-  }
+  if (!resp.ok) throw await providerFailure("Lovable", resp);
   const data = (await resp.json()) as { text?: string };
   return (data.text ?? "").trim();
 }
@@ -146,7 +215,7 @@ async function callElevenLabs(
   apiKey: string,
 ): Promise<string> {
   const fd = new FormData();
-  fd.append("file", new Blob([toBlobPart(bytes)], { type: mime }), "audio");
+  fd.append("file", new Blob([toBlobPart(bytes)], { type: mime }), filenameFor(mime));
   fd.append("model_id", model);
 
   const resp = await fetch("https://api.elevenlabs.io/v1/speech-to-text", {
@@ -154,12 +223,7 @@ async function callElevenLabs(
     headers: { "xi-api-key": apiKey },
     body: fd,
   });
-  if (!resp.ok) {
-    throw new SttError(
-      `ElevenLabs Scribe failed (${resp.status})`,
-      resp.status === 429 ? "rate_limited" : "provider_error",
-    );
-  }
+  if (!resp.ok) throw await providerFailure("ElevenLabs Scribe", resp);
   const data = (await resp.json()) as { text?: string };
   return (data.text ?? "").trim();
 }

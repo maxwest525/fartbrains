@@ -1,5 +1,6 @@
 import { ALLOWED_ORIGIN } from "../_shared/cors.ts";
 import { guardAiRequest } from "../_shared/ai-guard.ts";
+import { costFrom } from "../_shared/ai-cost.ts";
 const corsHeaders = {
   "Access-Control-Allow-Origin": ALLOWED_ORIGIN,
   "Vary": "Origin",
@@ -133,6 +134,13 @@ Deno.serve(async (req) => {
     }
 
     const data = await r.json();
+    // The gateway reports tokens on every response; record them. Without this
+    // the cost columns stay null and there is no way to price anything.
+    await _guard.record({
+      success: true,
+      provider: "lovable",
+      ...costFrom(data, "google/gemini-2.5-flash"),
+    });
     const optimized: string = data?.choices?.[0]?.message?.content?.trim() ?? "";
     if (!optimized) {
       return new Response(

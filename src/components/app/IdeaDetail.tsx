@@ -41,6 +41,7 @@ import { RelatedIdeas } from "./RelatedIdeas";
 import { IdeaReferences } from "./IdeaReferences";
 import { CollapsibleSection } from "./CollapsibleSection";
 import { IdeaChatScreen } from "./IdeaChatScreen";
+import { RunPanel } from "./RunPanel";
 
 const NO_FOLDER = "__none__";
 
@@ -730,6 +731,22 @@ export const IdeaDetail = ({ ideaId, onClose, backLabel = "Back", onSelectIdea, 
                   await updateIdea.mutateAsync({ id: idea.id, patch: { ai_summary: md } });
                 }
               }}
+            />
+          </div>
+        )}
+
+        {/* The loop. Sits above Research rather than below it because the
+            research is in service of this — it is the thing you came for, and
+            it chains the research itself so nobody has to remember to run it
+            first. */}
+        {!editing && idea && (
+          <div className="scroll-mt-4">
+            <div className="idea-section-label mb-2.5">Build</div>
+            <RunPanel
+              ideaTitle={idea.title}
+              transcript={idea.extracted_text}
+              summary={idea.ai_summary}
+              tags={idea.tags}
             />
           </div>
         )}

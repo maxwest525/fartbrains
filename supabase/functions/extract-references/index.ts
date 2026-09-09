@@ -1,5 +1,6 @@
 import { ALLOWED_ORIGIN } from "../_shared/cors.ts";
 import { guardAiRequest } from "../_shared/ai-guard.ts";
+import { costFrom } from "../_shared/ai-cost.ts";
 // Extract specific recommendations from an idea and resolve each to one URL.
 // Uses Lovable AI to detect items, Firecrawl search for the URL, with an
 // AI-only "best guess" fallback if Firecrawl isn't available.
@@ -116,6 +117,15 @@ No prose, no markdown fences.`;
     }
 
     const extractData = await extractResp.json();
+    // Records the detection pass only. The per-item URL resolver below runs in a
+    // module-level helper with no access to the guard, so its calls are not
+    // counted yet — this function therefore under-reports, which is noted in
+    // docs/PRICING.md rather than papered over.
+    await _guard.record({
+      success: true,
+      provider: "lovable",
+      ...costFrom(extractData, "google/gemini-2.5-flash-lite"),
+    });
     const rawContent: string = extractData?.choices?.[0]?.message?.content ?? "";
     const items = parseItems(rawContent).filter((it) => {
       const n = it.name.trim().toLowerCase();

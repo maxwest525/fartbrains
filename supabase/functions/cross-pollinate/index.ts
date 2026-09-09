@@ -1,5 +1,6 @@
 import { ALLOWED_ORIGIN } from "../_shared/cors.ts";
 import { guardAiRequest } from "../_shared/ai-guard.ts";
+import { costFrom } from "../_shared/ai-cost.ts";
 // Cross-pollinate: pick a random other idea from the user's library and
 // propose a creative, useful connection — how could that idea (or its angle)
 // act as a solution, accelerator, or unlock for the current one?
@@ -103,6 +104,9 @@ No prose outside JSON, no markdown fences.`;
     }
 
     const data = await resp.json();
+    // The gateway reports tokens on every response; record them. Without this
+    // the cost columns stay null and there is no way to price anything.
+    await _guard.record({ success: true, provider: "lovable", ...costFrom(data, "google/gemini-2.5-flash") });
     const raw: string = data?.choices?.[0]?.message?.content ?? "";
     const cleaned = raw.replace(/^```json\s*|\s*```$/g, "").trim();
     let parsed: { headline?: string; suggestion?: string } = {};
