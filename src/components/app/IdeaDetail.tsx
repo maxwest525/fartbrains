@@ -745,6 +745,7 @@ export const IdeaDetail = ({ ideaId, onClose, backLabel = "Back", onSelectIdea, 
             <RunPanel
               ideaTitle={idea.title}
               transcript={idea.extracted_text}
+              note={idea.raw_note}
               summary={idea.ai_summary}
               tags={idea.tags}
             />

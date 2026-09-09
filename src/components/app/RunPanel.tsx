@@ -16,6 +16,7 @@ import {
   skip,
   type Run,
 } from "@/lib/runPipeline";
+import { functionErrorMessage } from "@/lib/functionError";
 import {
   DESCRIPTIONS,
   LABELS,
@@ -43,12 +44,14 @@ const KINDS: OutputKind[] = ["spec", "mvp", "agent", "skill", "playbook"];
 type Props = {
   ideaTitle: string;
   transcript?: string | null;
+  /** What the person typed. For a plain note this is the only material there is. */
+  note?: string | null;
   summary?: string | null;
   tags?: string[] | null;
   className?: string;
 };
 
-export const RunPanel = ({ ideaTitle, transcript, summary, tags, className }: Props) => {
+export const RunPanel = ({ ideaTitle, transcript, note, summary, tags, className }: Props) => {
   const [intent, setIntent] = useState("");
   const [override, setOverride] = useState<OutputKind | null>(null);
   const [run, setRun] = useState<Run | null>(null);
@@ -65,6 +68,13 @@ export const RunPanel = ({ ideaTitle, transcript, summary, tags, className }: Pr
   // stop asking — they answered.
   const asking = override === null && shouldConfirm(suggestion);
 
+  /** Everything we could hand the model, so the UI can say when there is nothing. */
+  const material = [transcript, note, summary]
+    .map((part) => (part ?? "").trim())
+    .filter(Boolean)
+    .join("\n\n");
+  const hasMaterial = material.length >= 40;
+
   const go = async () => {
     if (busy) return;
     setBusy(true);
@@ -76,7 +86,6 @@ export const RunPanel = ({ ideaTitle, transcript, summary, tags, className }: Pr
     r = complete(begin(r, "detect"), "detect", LABELS[kind]);
     setRun(r);
 
-    const material = [transcript ?? "", summary ?? ""].join("\n\n").trim();
     let research = "";
 
     // Research is optional: if it fails, the output is thinner but it still
@@ -102,7 +111,7 @@ export const RunPanel = ({ ideaTitle, transcript, summary, tags, className }: Pr
     setRun(r);
     try {
       const { data, error } = await supabase.functions.invoke("compose-output", {
-        body: { kind, intent, title: ideaTitle, transcript: material, summary, research },
+        body: { kind, intent, title: ideaTitle, transcript: material, note, summary, research },
       });
       if (error) throw new Error(error.message);
       if (data?.error) throw new Error(data.error);
@@ -111,7 +120,8 @@ export const RunPanel = ({ ideaTitle, transcript, summary, tags, className }: Pr
       setOutput(text);
       setRun(complete(r, "compose", LABELS[kind]));
     } catch (e) {
-      const message = e instanceof Error ? e.message : "Couldn't build the output";
+      // Read what the function actually said rather than the generic wrapper.
+      const message = await functionErrorMessage(e, "Couldn't build the output");
       setRun(fail(r, "compose", message));
       toast.error(message);
     } finally {
@@ -175,10 +185,24 @@ export const RunPanel = ({ ideaTitle, transcript, summary, tags, className }: Pr
             : `${LABELS[kind]} — ${suggestion.reason}.`}
       </p>
 
+      {/* Say so before spending the expensive step. The model cannot build from
+          an empty note, and letting someone press the button to find that out is
+          how the first real use of this panel went. */}
+      {!hasMaterial && (
+        <p className="rounded-xl glass-card-quiet p-3 text-[12px] leading-[1.5] text-muted-foreground">
+          Nothing to build from yet. Add a note, paste a transcript, or capture a link
+          on this idea first.
+        </p>
+      )}
+
       {run && <RunProgress run={run} />}
 
       <div className="flex gap-2">
-        <Button onClick={go} disabled={busy} className="h-10 flex-1 rounded-xl text-[15px] font-semibold">
+        <Button
+          onClick={go}
+          disabled={busy || !hasMaterial}
+          className="h-10 flex-1 rounded-xl text-[15px] font-semibold"
+        >
           {output ? <RotateCcw className="mr-1.5 h-4 w-4" /> : <Play className="mr-1.5 h-4 w-4" />}
           {busy ? "Working…" : output ? "Run again" : `Build the ${LABELS[kind].toLowerCase()}`}
         </Button>

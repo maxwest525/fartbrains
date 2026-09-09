@@ -30,7 +30,23 @@ const json = (body: unknown, status = 200) =>
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
 
+/**
+ * A failure the person should be able to read.
+ *
+ * Returned with 200 on purpose. `supabase.functions.invoke` collapses every
+ * non-2xx into a FunctionsHttpError whose message is the generic "Edge Function
+ * returned a non-2xx status code" and leaves the body in `.context`, so a 400
+ * carrying a perfectly clear explanation reaches the user as "Edge function
+ * failed". Every other function in this repo returns 200 with an `error` field
+ * and the client reads it; this one did not, and that is the whole reason the
+ * first real use of the Build panel was unexplainable.
+ */
+const fail = (message: string) => json({ error: message });
+
 type OutputKind = "spec" | "agent" | "skill" | "mvp" | "playbook";
+
+/** Below this there is nothing to work from and the model would invent one. */
+const MIN_MATERIAL = 40;
 
 const KINDS: Record<OutputKind, { system: string; model: string }> = {
   spec: {
@@ -115,6 +131,11 @@ const buildMaterial = (b: Record<string, unknown>): string => {
     }
   };
   add("The source, transcribed", b.transcript, 40_000);
+  // A typed idea keeps its content in raw_note and nowhere else. Leaving this
+  // out meant the Build panel had material sitting right there and sent none of
+  // it — the three most recently touched ideas in production are exactly this
+  // shape, which is how the first real use of the feature failed.
+  add("The note, as written", b.note, 20_000);
   add("Summary", b.summary, 8_000);
   add("Research findings", b.research, 30_000);
   add("Pages it linked to", b.scraped, 30_000);
@@ -134,11 +155,13 @@ Deno.serve(async (req) => {
   try {
     const body = await req.json();
     const { kind, intent, title } = body ?? {};
-    if (!isKind(kind)) return json({ error: "Unknown output kind" }, 400);
+    if (!isKind(kind)) return fail("Unknown output kind");
 
     const material = buildMaterial(body ?? {});
-    if (material.length < 40) {
-      return json({ error: "Not enough material to build anything yet" }, 400);
+    if (material.length < MIN_MATERIAL) {
+      return fail(
+        "There is not enough here to build from yet. Add a note, paste a transcript, or run research on this first.",
+      );
     }
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
@@ -181,9 +204,9 @@ Deno.serve(async (req) => {
       const detail = await resp.text();
       console.error("compose-output gateway error:", resp.status, detail);
       // 429 and 402 are worth distinguishing: one is wait, the other is pay.
-      if (resp.status === 429) return json({ error: "Rate limited — try again shortly" }, 429);
-      if (resp.status === 402) return json({ error: "AI credits exhausted" }, 402);
-      return json({ error: "Couldn't build the output" }, 502);
+      if (resp.status === 429) return fail("Rate limited — try again in a moment.");
+      if (resp.status === 402) return fail("AI credits exhausted.");
+      return fail("The model could not be reached. Try again shortly.");
     }
 
     const data = await resp.json();
@@ -191,11 +214,11 @@ Deno.serve(async (req) => {
     // the cost columns stay null and there is no way to price anything.
     await _guard.record({ success: true, provider: "lovable", ...costFrom(data, spec.model) });
     const output = (data?.choices?.[0]?.message?.content ?? "").trim();
-    if (!output) return json({ error: "Came back empty" }, 502);
+    if (!output) return fail("The model came back empty. Try running it again.");
 
     return json({ kind, output });
   } catch (e) {
     console.error("compose-output error:", e);
-    return json({ error: e instanceof Error ? e.message : "Couldn't build the output" }, 500);
+    return fail(e instanceof Error ? e.message : "Couldn't build the output");
   }
 });
