@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { motion, MotionConfig, type MotionProps } from "motion/react";
 import { setLandingActive } from "@/lib/landingMode";
@@ -14,6 +14,12 @@ import { setLandingActive } from "@/lib/landingMode";
  * looking at two different companies. Everything below uses `bg-background`,
  * `bg-card`, `border-border` and `.brand-gradient`, so re-skinning the app
  * re-skins this page with it.
+ *
+ * Structure and copy tone are modeled on altari.ai (sticky nav, bold
+ * numbers-driven hero, pain-point section, three-step process, stats bar,
+ * feature cards, integrations, FAQ) minus the parts that would require
+ * fabricating things Fart Brains doesn't have: customer logos, testimonials,
+ * a case study, a founder/team bio, and an ROI calculator.
  */
 
 const REDUCED = () =>
@@ -99,33 +105,102 @@ const TIMELINE: { when: string; what: string }[] = [
   { when: "28 AUG", what: "Note — “same idea, but provisioning has to be automatic”" },
 ];
 
-const PLANS: {
-  name: string;
-  price: string;
-  items: string[];
-  featured: boolean;
-}[] = [
+const PAIN_POINTS: { title: string; body: string }[] = [
   {
-    name: "Free",
-    price: "$0",
-    featured: false,
-    items: [
-      "Unlimited saves, folders, tags, reminders",
-      "Full search and share links",
-      "50 AI actions a month",
-      "Full export and account deletion",
-    ],
+    title: "You save it, then you lose it",
+    body: "Screenshots in your camera roll, tabs you never closed, a “Watch Later” list with 400 videos in it. The idea is in there somewhere. Good luck.",
   },
   {
-    name: "Pro",
-    price: "$9",
-    featured: true,
-    items: [
-      "Everything in Free",
-      "1,000 AI actions a month",
-      "Longer transcripts, bigger pages",
-      "Priority support",
-    ],
+    title: "Re-watching for the one part that mattered",
+    body: "You remember it was a podcast, somewhere around the middle, and it was about pricing. Scrubbing a 51-minute episode to find nine seconds isn’t research.",
+  },
+  {
+    title: "The idea dies in the DMs",
+    body: "You sent it to yourself, or to a teammate, and it sat there. A link with no context is a chore for future-you, so future-you skips it.",
+  },
+  {
+    title: "Nothing turns into anything",
+    body: "Reading and doing are different verbs. Most tools stop at “saved.” The gap between the reel and the shipped thing is where the idea actually dies.",
+  },
+];
+
+const HOW_IT_WORKS: { step: string; title: string; body: string }[] = [
+  {
+    step: "01",
+    title: "Paste the link",
+    body: "A reel, a podcast, a talk, an article, or just type the thought. No app to install on the other end, no browser extension required.",
+  },
+  {
+    step: "02",
+    title: "It reads, transcribes, and files it",
+    body: "Video and audio get transcribed in seconds. Everything gets summarized, tagged, and dropped into the right folder — automatically, not as a queue you manage.",
+  },
+  {
+    step: "03",
+    title: "You ask it to build the thing",
+    body: "Point it at one idea or sixteen related ones, and it drafts the plan, the outline, or the working version — the step that used to be the part you never got to.",
+  },
+];
+
+const STATS: { value: string; label: string }[] = [
+  { value: "11s", label: "average transcription time for a saved video" },
+  { value: "3", label: "tags and a folder assigned automatically, every save" },
+  { value: "1,000", label: "AI actions a month on Pro, 50 free forever" },
+  { value: "0", label: "extra fields required to sign up" },
+];
+
+const CAPABILITIES: { title: string; body: string }[] = [
+  {
+    title: "Capture",
+    body: "Paste a link from anywhere — video, audio, an article, a screenshot — or drop in a raw thought. One box, no forms.",
+  },
+  {
+    title: "Transcribe",
+    body: "Video and audio are transcribed automatically, so the actual words are searchable, not just the title you gave it.",
+  },
+  {
+    title: "Summarize & tag",
+    body: "Every save gets a short summary, a handful of tags, and a folder — sorted the moment it lands, not the next time you tidy up.",
+  },
+  {
+    title: "Connect",
+    body: "Ideas saved months apart get read together when they share a thread, so the plan you get back accounts for all of them, not just the last one.",
+  },
+  {
+    title: "Ship",
+    body: "Turn a saved idea, or a cluster of them, into a first draft — an outline, a spec, a working version — instead of one more open tab.",
+  },
+  {
+    title: "Find it again",
+    body: "Full-text search across every transcript and note you've ever saved. If you remember one phrase from it, you'll find it.",
+  },
+];
+
+const SOURCES = [
+  "TikTok", "Instagram Reels", "YouTube", "Podcasts", "X / Twitter",
+  "Articles & blogs", "Voice notes", "Plain text",
+];
+
+const FAQS: { q: string; a: string }[] = [
+  {
+    q: "What counts as \"the thing\" it ships?",
+    a: "Whatever the idea calls for — a written outline, a project spec, a first draft of code, or a plan broken into steps. It's scoped to get you from idea to a usable starting point, not to replace the work entirely.",
+  },
+  {
+    q: "Does the free plan actually stay free?",
+    a: "Yes. Free is a permanent tier, not a trial — unlimited saves, folders, tags, reminders, full search, and 50 AI actions a month, for as long as you use it.",
+  },
+  {
+    q: "What happens to my data if I cancel?",
+    a: "You can export everything or delete your account at any point, on either plan. Nothing is held hostage behind a downgrade.",
+  },
+  {
+    q: "How accurate is the transcription?",
+    a: "It handles normal speech, accents, and typical background noise well. Heavily accented audio or overlapping speakers will occasionally need a manual correction, which you can do inline.",
+  },
+  {
+    q: "Can I use this with a team?",
+    a: "Today it's built around a single vault per account. Shared folders and team seats are on the roadmap — if that's the blocker for you, it helps to hear about it.",
   },
 ];
 
@@ -233,6 +308,33 @@ const ProductShot = () => (
   </div>
 );
 
+const FaqItem = ({ q, a, defaultOpen }: { q: string; a: string; defaultOpen?: boolean }) => {
+  const [open, setOpen] = useState(!!defaultOpen);
+  return (
+    <div className="rounded-2xl border border-border bg-card">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="flex w-full items-center justify-between gap-4 px-6 py-5 text-left text-[16px] font-semibold"
+        aria-expanded={open}
+      >
+        {q}
+        <span
+          className={`shrink-0 text-muted-foreground transition-transform duration-200 ${open ? "rotate-45" : ""}`}
+          aria-hidden
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden>
+            <path d="M12 5v14M5 12h14" />
+          </svg>
+        </span>
+      </button>
+      {open && (
+        <div className="px-6 pb-5 text-[15px] leading-[1.6] text-muted-foreground">{a}</div>
+      )}
+    </div>
+  );
+};
+
 /* --------------------------------- page --------------------------------- */
 
 const Landing = ({ onEnter }: { onEnter?: () => void }) => {
@@ -263,11 +365,13 @@ const Landing = ({ onEnter }: { onEnter?: () => void }) => {
       <style>{CSS}</style>
       <div className="fb-root min-h-dvh bg-background text-foreground antialiased">
         {/* --------------------------------- nav -------------------------------- */}
-        <nav className="flex items-center justify-between border-b border-border px-6 py-[22px] md:px-20">
+        <nav className="sticky top-0 z-30 flex items-center justify-between border-b border-border bg-background/85 px-6 py-[18px] backdrop-blur md:px-20">
           <Wordmark />
-          <div className="flex items-center gap-5 text-[14.5px] font-medium text-muted-foreground md:gap-[30px]">
-            <a href="#catches" className="hidden hover:text-foreground sm:inline">What it does</a>
+          <div className="flex items-center gap-5 text-[14.5px] font-medium text-muted-foreground md:gap-8">
+            <a href="#catches" className="hidden hover:text-foreground lg:inline">What it catches</a>
+            <a href="#how-it-works" className="hidden hover:text-foreground lg:inline">How it works</a>
             <a href="#pricing" className="hidden hover:text-foreground sm:inline">Pricing</a>
+            <a href="#faq" className="hidden hover:text-foreground lg:inline">FAQ</a>
             <button type="button" onClick={enter} className="hidden hover:text-foreground sm:inline">Log in</button>
             <motion.button
               type="button"
@@ -296,9 +400,9 @@ const Landing = ({ onEnter }: { onEnter?: () => void }) => {
               every reel you swore you&rsquo;d come back to
             </div>
             <h1 className="mb-[30px] text-[44px] font-bold leading-[1.04] tracking-[-0.035em] sm:text-[62px] md:text-[82px]">
-              Save the reel.
+              You&rsquo;re losing good ideas.
               <br />
-              Ship the <S>thing</S>.
+              We built the <S>fix</S>.
             </h1>
             <p className="mb-[42px] max-w-[660px] text-[17px] leading-[1.55] text-muted-foreground sm:text-xl [text-wrap:pretty]">
               Somebody explains exactly how they did it &mdash; the strategy, the order,
@@ -346,6 +450,54 @@ const Landing = ({ onEnter }: { onEnter?: () => void }) => {
                 <div className={`text-xs font-semibold ${c.tone}`}>{c.kind}</div>
                 <div className="text-[16.5px] font-medium leading-[1.4]">&ldquo;{c.quote}&rdquo;</div>
                 <div className="text-sm leading-[1.55] text-muted-foreground">{c.note}</div>
+              </motion.div>
+            ))}
+          </div>
+        </section>
+
+        {/* ------------------------------ pain points ---------------------------- */}
+        <section className="border-t border-border px-6 py-24 md:px-20">
+          <div className="mb-6 text-[12.5px] font-semibold uppercase tracking-[0.05em] text-muted-foreground">
+            Who this is for
+          </div>
+          <h2 className="mb-14 max-w-[760px] text-[32px] font-bold leading-[1.15] tracking-[-0.03em] sm:text-[42px]">
+            If any of this sounds familiar, the problem isn&rsquo;t your discipline
+            &mdash; it&rsquo;s that <S>nothing was built to close the loop</S>.
+          </h2>
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+            {PAIN_POINTS.map((p, i) => (
+              <motion.div
+                key={p.title}
+                className="rounded-2xl border border-border bg-card p-7"
+                {...reveal({ y: 24, delay: i * 0.06 })}
+              >
+                <div className="mb-3 text-[18px] font-semibold leading-[1.3]">{p.title}</div>
+                <div className="text-[15px] leading-[1.6] text-muted-foreground">{p.body}</div>
+              </motion.div>
+            ))}
+          </div>
+        </section>
+
+        {/* ----------------------------- how it works ---------------------------- */}
+        <section id="how-it-works" className="border-t border-border px-6 py-24 md:px-20">
+          <div className="mb-6 text-[12.5px] font-semibold uppercase tracking-[0.05em] text-muted-foreground">
+            How it works
+          </div>
+          <h2 className="mb-14 max-w-[640px] text-[32px] font-bold leading-[1.15] tracking-[-0.03em] sm:text-[42px]">
+            Three steps. None of them are &ldquo;organize it yourself.&rdquo;
+          </h2>
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+            {HOW_IT_WORKS.map((s, i) => (
+              <motion.div
+                key={s.step}
+                className="relative rounded-2xl border border-border bg-card p-7"
+                {...reveal({ y: 26, delay: i * 0.08 })}
+              >
+                <div className="brand-gradient-text mb-5 font-serif-accent text-[40px] italic leading-none">
+                  {s.step}
+                </div>
+                <div className="mb-2.5 text-[19px] font-semibold leading-[1.3]">{s.title}</div>
+                <div className="text-[15px] leading-[1.6] text-muted-foreground">{s.body}</div>
               </motion.div>
             ))}
           </div>
@@ -417,6 +569,59 @@ const Landing = ({ onEnter }: { onEnter?: () => void }) => {
           </div>
         </section>
 
+        {/* --------------------------------- stats ------------------------------- */}
+        <section className="border-t border-border px-6 py-[68px] md:px-20">
+          <div className="grid grid-cols-2 gap-8 lg:grid-cols-4">
+            {STATS.map((s, i) => (
+              <motion.div key={s.label} {...reveal({ y: 20, delay: i * 0.06 })}>
+                <div className="brand-gradient-text mb-2 text-[38px] font-bold tracking-[-0.03em] sm:text-[46px]">
+                  {s.value}
+                </div>
+                <div className="text-[14px] leading-[1.5] text-muted-foreground">{s.label}</div>
+              </motion.div>
+            ))}
+          </div>
+        </section>
+
+        {/* ----------------------------- capabilities ---------------------------- */}
+        <section className="border-t border-border px-6 py-24 md:px-20">
+          <div className="mb-6 text-[12.5px] font-semibold uppercase tracking-[0.05em] text-muted-foreground">
+            In production
+          </div>
+          <h2 className="mb-14 max-w-[640px] text-[32px] font-bold leading-[1.15] tracking-[-0.03em] sm:text-[42px]">
+            Everything that happens between paste and done.
+          </h2>
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {CAPABILITIES.map((c, i) => (
+              <motion.div
+                key={c.title}
+                className="rounded-2xl border border-border bg-card p-7"
+                {...reveal({ y: 24, delay: (i % 3) * 0.07 })}
+              >
+                <div className="mb-2.5 text-[18px] font-semibold leading-[1.3]">{c.title}</div>
+                <div className="text-[15px] leading-[1.6] text-muted-foreground">{c.body}</div>
+              </motion.div>
+            ))}
+          </div>
+        </section>
+
+        {/* ----------------------------- integrations ---------------------------- */}
+        <section className="border-t border-border px-6 py-20 md:px-20">
+          <div className="mb-8 text-[12.5px] font-semibold uppercase tracking-[0.05em] text-muted-foreground">
+            Paste a link from anywhere
+          </div>
+          <div className="flex flex-wrap gap-3">
+            {SOURCES.map((s) => (
+              <span
+                key={s}
+                className="rounded-full border border-border bg-card px-[18px] py-[9px] text-[14px] font-medium text-foreground/80"
+              >
+                {s}
+              </span>
+            ))}
+          </div>
+        </section>
+
         {/* ------------------------------- pricing ------------------------------ */}
         <section id="pricing" className="border-t border-border px-6 py-24 md:px-20">
           <h2 className="mb-3.5 text-[34px] font-bold tracking-[-0.03em] sm:text-[46px]">
@@ -471,10 +676,24 @@ const Landing = ({ onEnter }: { onEnter?: () => void }) => {
           </p>
         </section>
 
+        {/* --------------------------------- faq --------------------------------- */}
+        <section id="faq" className="border-t border-border px-6 py-24 md:px-20">
+          <h2 className="mb-14 text-[32px] font-bold tracking-[-0.03em] sm:text-[42px]">
+            Questions people actually ask
+          </h2>
+          <div className="mx-auto flex max-w-[760px] flex-col gap-3">
+            {FAQS.map((f, i) => (
+              <FaqItem key={f.q} q={f.q} a={f.a} defaultOpen={i === 0} />
+            ))}
+          </div>
+        </section>
+
         {/* -------------------------------- footer ------------------------------ */}
         <footer className="flex flex-col items-start justify-between gap-4 border-t border-border px-6 py-10 text-sm text-muted-foreground sm:flex-row sm:items-center md:px-20">
           <span>Fart Brains &mdash; fartbrain.app</span>
           <div className="flex gap-[26px]">
+            <a href="#catches" className="hidden hover:text-foreground sm:inline">What it catches</a>
+            <a href="#faq" className="hidden hover:text-foreground sm:inline">FAQ</a>
             <Link to="/privacy" className="hover:text-foreground">Privacy</Link>
             <Link to="/terms" className="hover:text-foreground">Terms</Link>
             <button type="button" onClick={enter} className="hover:text-foreground">Log in</button>
@@ -486,6 +705,36 @@ const Landing = ({ onEnter }: { onEnter?: () => void }) => {
 };
 
 export default Landing;
+
+const PLANS: {
+  name: string;
+  price: string;
+  items: string[];
+  featured: boolean;
+}[] = [
+  {
+    name: "Free",
+    price: "$0",
+    featured: false,
+    items: [
+      "Unlimited saves, folders, tags, reminders",
+      "Full search and share links",
+      "50 AI actions a month",
+      "Full export and account deletion",
+    ],
+  },
+  {
+    name: "Pro",
+    price: "$9",
+    featured: true,
+    items: [
+      "Everything in Free",
+      "1,000 AI actions a month",
+      "Longer transcripts, bigger pages",
+      "Priority support",
+    ],
+  },
+];
 
 /**
  * Only what the app shell cannot express in utilities: undoing the phone-frame
