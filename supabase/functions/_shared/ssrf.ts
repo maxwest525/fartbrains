@@ -126,14 +126,31 @@ export function isBlockedIPv6(ip: string): boolean {
   return false;
 }
 
+/**
+ * Deno's DNS resolver, reached through globalThis with a local type.
+ *
+ * The runtime provides it, but the type checkers this file passes through
+ * describe the Deno global only as far as `env`, so referencing `Deno.resolveDns`
+ * directly fails the build. Naming the shape here keeps the call type-safe
+ * without depending on whose ambient declaration wins.
+ */
+type DnsResolver = (hostname: string, recordType: "A" | "AAAA") => Promise<string[]>;
+
+function dnsResolver(): DnsResolver | null {
+  const deno = (globalThis as { Deno?: { resolveDns?: DnsResolver } }).Deno;
+  return typeof deno?.resolveDns === "function" ? deno.resolveDns.bind(deno) : null;
+}
+
 async function resolveAll(host: string): Promise<string[]> {
+  const resolve = dnsResolver();
+  if (!resolve) return [];
   const out: string[] = [];
   try {
-    const a = await Deno.resolveDns(host, "A");
+    const a = await resolve(host, "A");
     out.push(...a);
   } catch { /* ignore */ }
   try {
-    const aaaa = await Deno.resolveDns(host, "AAAA");
+    const aaaa = await resolve(host, "AAAA");
     out.push(...aaaa);
   } catch { /* ignore */ }
   return out;
