@@ -1,6 +1,19 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { motion, MotionConfig, type MotionProps } from "motion/react";
+import {
+  Inbox,
+  Rewind,
+  MessageSquareDashed,
+  CircleSlash2,
+  Link2,
+  AudioLines,
+  Tags,
+  Waypoints,
+  Rocket,
+  Search,
+  type LucideIcon,
+} from "lucide-react";
 import { setLandingActive } from "@/lib/landingMode";
 
 /**
@@ -105,20 +118,24 @@ const TIMELINE: { when: string; what: string }[] = [
   { when: "28 AUG", what: "Note — “same idea, but provisioning has to be automatic”" },
 ];
 
-const PAIN_POINTS: { title: string; body: string }[] = [
+const PAIN_POINTS: { icon: LucideIcon; title: string; body: string }[] = [
   {
+    icon: Inbox,
     title: "You save it, then you lose it",
     body: "Screenshots in your camera roll, tabs you never closed, a “Watch Later” list with 400 videos in it. The idea is in there somewhere. Good luck.",
   },
   {
+    icon: Rewind,
     title: "Re-watching for the one part that mattered",
     body: "You remember it was a podcast, somewhere around the middle, and it was about pricing. Scrubbing a 51-minute episode to find nine seconds isn’t research.",
   },
   {
+    icon: MessageSquareDashed,
     title: "The idea dies in the DMs",
     body: "You sent it to yourself, or to a teammate, and it sat there. A link with no context is a chore for future-you, so future-you skips it.",
   },
   {
+    icon: CircleSlash2,
     title: "Nothing turns into anything",
     body: "Reading and doing are different verbs. Most tools stop at “saved.” The gap between the reel and the shipped thing is where the idea actually dies.",
   },
@@ -149,28 +166,34 @@ const STATS: { value: string; label: string }[] = [
   { value: "0", label: "extra fields required to sign up" },
 ];
 
-const CAPABILITIES: { title: string; body: string }[] = [
+const CAPABILITIES: { icon: LucideIcon; title: string; body: string }[] = [
   {
+    icon: Link2,
     title: "Capture",
     body: "Paste a link from anywhere — video, audio, an article, a screenshot — or drop in a raw thought. One box, no forms.",
   },
   {
+    icon: AudioLines,
     title: "Transcribe",
     body: "Video and audio are transcribed automatically, so the actual words are searchable, not just the title you gave it.",
   },
   {
+    icon: Tags,
     title: "Summarize & tag",
     body: "Every save gets a short summary, a handful of tags, and a folder — sorted the moment it lands, not the next time you tidy up.",
   },
   {
+    icon: Waypoints,
     title: "Connect",
     body: "Ideas saved months apart get read together when they share a thread, so the plan you get back accounts for all of them, not just the last one.",
   },
   {
+    icon: Rocket,
     title: "Ship",
     body: "Turn a saved idea, or a cluster of them, into a first draft — an outline, a spec, a working version — instead of one more open tab.",
   },
   {
+    icon: Search,
     title: "Find it again",
     body: "Full-text search across every transcript and note you've ever saved. If you remember one phrase from it, you'll find it.",
   },
@@ -308,6 +331,12 @@ const ProductShot = () => (
   </div>
 );
 
+const IconBadge = ({ icon: Icon }: { icon: LucideIcon }) => (
+  <div className="mb-5 inline-flex h-11 w-11 items-center justify-center rounded-[12px] border border-primary/25 bg-primary/10 text-primary">
+    <Icon size={20} strokeWidth={1.8} aria-hidden />
+  </div>
+);
+
 const FaqItem = ({ q, a, defaultOpen }: { q: string; a: string; defaultOpen?: boolean }) => {
   const [open, setOpen] = useState(!!defaultOpen);
   return (
@@ -365,27 +394,30 @@ const Landing = ({ onEnter }: { onEnter?: () => void }) => {
       <style>{CSS}</style>
       <div className="fb-root min-h-dvh bg-background text-foreground antialiased">
         {/* --------------------------------- nav -------------------------------- */}
-        <nav className="sticky top-0 z-30 flex items-center justify-between border-b border-border bg-background/85 px-6 py-[18px] backdrop-blur md:px-20">
-          <Wordmark />
-          <div className="flex items-center gap-5 text-[14.5px] font-medium text-muted-foreground md:gap-8">
-            <a href="#catches" className="hidden hover:text-foreground lg:inline">What it catches</a>
-            <a href="#how-it-works" className="hidden hover:text-foreground lg:inline">How it works</a>
-            <a href="#pricing" className="hidden hover:text-foreground sm:inline">Pricing</a>
-            <a href="#faq" className="hidden hover:text-foreground lg:inline">FAQ</a>
-            <button type="button" onClick={enter} className="hidden hover:text-foreground sm:inline">Log in</button>
-            <motion.button
-              type="button"
-              onClick={enter}
-              className="brand-gradient rounded-[10px] px-[19px] py-[9px] font-semibold text-white"
-              {...PRESS}
-            >
-              Start free
-            </motion.button>
-          </div>
-        </nav>
+        <div className="sticky top-0 z-30 px-4 pt-4 md:px-8">
+          <nav className="mx-auto flex max-w-[1160px] items-center justify-between rounded-full border border-border bg-card/90 px-5 py-[12px] shadow-[0_10px_34px_-16px_rgba(0,0,0,0.35)] backdrop-blur-md md:px-7">
+            <Wordmark />
+            <div className="flex items-center gap-5 text-[14.5px] font-medium text-muted-foreground md:gap-7">
+              <a href="#catches" className="hidden hover:text-foreground lg:inline">What it catches</a>
+              <a href="#how-it-works" className="hidden hover:text-foreground lg:inline">How it works</a>
+              <a href="#pricing" className="hidden hover:text-foreground sm:inline">Pricing</a>
+              <a href="#faq" className="hidden hover:text-foreground lg:inline">FAQ</a>
+              <button type="button" onClick={enter} className="hidden hover:text-foreground sm:inline">Log in</button>
+              <motion.button
+                type="button"
+                onClick={enter}
+                className="brand-gradient rounded-full px-[19px] py-[9px] font-semibold text-white"
+                {...PRESS}
+              >
+                Start free
+              </motion.button>
+            </div>
+          </nav>
+        </div>
 
         {/* -------------------------------- hero -------------------------------- */}
-        <header className="relative overflow-hidden px-6 pb-[104px] pt-24 md:px-20 md:pt-32">
+        <header className="relative overflow-hidden px-6 pb-[104px] pt-20 md:px-20 md:pt-28">
+          <div aria-hidden className="fb-dot-grid pointer-events-none absolute inset-0" />
           <div
             aria-hidden
             className="pointer-events-none absolute -top-[300px] left-[46%] h-[700px] w-[1000px] -translate-x-1/2"
@@ -456,7 +488,7 @@ const Landing = ({ onEnter }: { onEnter?: () => void }) => {
         </section>
 
         {/* ------------------------------ pain points ---------------------------- */}
-        <section className="border-t border-border px-6 py-24 md:px-20">
+        <section className="border-t border-border bg-muted/40 px-6 py-24 md:px-20">
           <div className="mb-6 text-[12.5px] font-semibold uppercase tracking-[0.05em] text-muted-foreground">
             Who this is for
           </div>
@@ -471,6 +503,7 @@ const Landing = ({ onEnter }: { onEnter?: () => void }) => {
                 className="rounded-2xl border border-border bg-card p-7"
                 {...reveal({ y: 24, delay: i * 0.06 })}
               >
+                <IconBadge icon={p.icon} />
                 <div className="mb-3 text-[18px] font-semibold leading-[1.3]">{p.title}</div>
                 <div className="text-[15px] leading-[1.6] text-muted-foreground">{p.body}</div>
               </motion.div>
@@ -493,11 +526,17 @@ const Landing = ({ onEnter }: { onEnter?: () => void }) => {
                 className="relative rounded-2xl border border-border bg-card p-7"
                 {...reveal({ y: 26, delay: i * 0.08 })}
               >
-                <div className="brand-gradient-text mb-5 font-serif-accent text-[40px] italic leading-none">
+                <div className="mb-5 inline-flex h-11 w-11 items-center justify-center rounded-full border border-primary/30 bg-primary/10 text-[15px] font-semibold text-primary">
                   {s.step}
                 </div>
                 <div className="mb-2.5 text-[19px] font-semibold leading-[1.3]">{s.title}</div>
                 <div className="text-[15px] leading-[1.6] text-muted-foreground">{s.body}</div>
+                {i < HOW_IT_WORKS.length - 1 && (
+                  <div
+                    aria-hidden
+                    className="absolute right-[-13px] top-[38px] hidden h-px w-[26px] bg-border lg:block"
+                  />
+                )}
               </motion.div>
             ))}
           </div>
@@ -570,7 +609,7 @@ const Landing = ({ onEnter }: { onEnter?: () => void }) => {
         </section>
 
         {/* --------------------------------- stats ------------------------------- */}
-        <section className="border-t border-border px-6 py-[68px] md:px-20">
+        <section className="border-t border-border bg-muted/40 px-6 py-[68px] md:px-20">
           <div className="grid grid-cols-2 gap-8 lg:grid-cols-4">
             {STATS.map((s, i) => (
               <motion.div key={s.label} {...reveal({ y: 20, delay: i * 0.06 })}>
@@ -598,6 +637,7 @@ const Landing = ({ onEnter }: { onEnter?: () => void }) => {
                 className="rounded-2xl border border-border bg-card p-7"
                 {...reveal({ y: 24, delay: (i % 3) * 0.07 })}
               >
+                <IconBadge icon={c.icon} />
                 <div className="mb-2.5 text-[18px] font-semibold leading-[1.3]">{c.title}</div>
                 <div className="text-[15px] leading-[1.6] text-muted-foreground">{c.body}</div>
               </motion.div>
@@ -606,7 +646,7 @@ const Landing = ({ onEnter }: { onEnter?: () => void }) => {
         </section>
 
         {/* ----------------------------- integrations ---------------------------- */}
-        <section className="border-t border-border px-6 py-20 md:px-20">
+        <section className="border-t border-border bg-muted/40 px-6 py-20 md:px-20">
           <div className="mb-8 text-[12.5px] font-semibold uppercase tracking-[0.05em] text-muted-foreground">
             Paste a link from anywhere
           </div>
@@ -677,7 +717,7 @@ const Landing = ({ onEnter }: { onEnter?: () => void }) => {
         </section>
 
         {/* --------------------------------- faq --------------------------------- */}
-        <section id="faq" className="border-t border-border px-6 py-24 md:px-20">
+        <section id="faq" className="border-t border-border bg-muted/40 px-6 py-24 md:px-20">
           <h2 className="mb-14 text-[32px] font-bold tracking-[-0.03em] sm:text-[42px]">
             Questions people actually ask
           </h2>
@@ -755,4 +795,11 @@ html.fb-landing body::before { display: none !important; }
 .fb-root { overflow-x: hidden; }
 .fb-root ::selection { background: hsl(var(--primary) / 0.3); color: hsl(var(--foreground)); }
 .fb-root .font-serif-accent { font-family: "Instrument Serif", Georgia, serif; }
+
+.fb-dot-grid {
+  background-image: radial-gradient(hsl(var(--foreground) / 0.14) 1px, transparent 1px);
+  background-size: 26px 26px;
+  mask-image: radial-gradient(ellipse 70% 60% at 50% 0%, black 40%, transparent 100%);
+  -webkit-mask-image: radial-gradient(ellipse 70% 60% at 50% 0%, black 40%, transparent 100%);
+}
 `;
