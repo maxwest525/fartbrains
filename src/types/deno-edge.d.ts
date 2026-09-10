@@ -12,4 +12,5 @@ declare const Deno: {
   env: {
     get(key: string): string | undefined;
   };
+  resolveDns(hostname: string, recordType: "A" | "AAAA"): Promise<string[]>;
 };
