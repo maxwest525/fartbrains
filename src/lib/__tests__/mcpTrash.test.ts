@@ -66,7 +66,8 @@ const ctx = {} as never;
  * spelling out every optional field in every case.
  */
 const args = (o: Record<string, unknown>) => o as never;
-const text = (r: { content: Array<{ text?: string }> }) => r.content[0]?.text ?? "";
+const text = (r: { content: unknown }) =>
+  (r.content as Array<{ text?: string }>)[0]?.text ?? "";
 
 beforeEach(() => {
   filters = [];
