@@ -121,35 +121,41 @@ type GraphNode = {
   x: number;
   y: number;
 };
-type EdgeKind = "tag" | "folder" | "keyword";
+type EdgeKind = "tag" | "folder";
 type GraphEdge = { a: string; b: string; kind: EdgeKind; reason: string };
 
 /** What this graph actually shows: the same four saved items from "What it
- * catches" above, plus two of the folders from the product shot, wired
- * together the same way the in-app Graph does it — shared tags, shared
- * folders, shared keywords — not a decorative network of made-up dots. */
+ * catches" above, filed into three of the folders from the product shot,
+ * wired together the same way the in-app Graph does it — shared tags or a
+ * shared folder — not a decorative network of made-up dots.
+ *
+ * Every edge stays inside its own cluster on purpose: an earlier version
+ * reached across the diagram to tie "the one you had in the shower" to an
+ * unrelated architecture note over a manufactured "shared keyword", which
+ * both looked wrong (the line's label landed on top of other nodes) and was
+ * wrong (those two don't actually share anything) — the shower note gets
+ * its own folder here instead of a fabricated connection. */
 const GRAPH_NODES: GraphNode[] = [
-  { id: "seo",      label: "the SEO play from that reel",   kind: "item",   x: 130, y: 100 },
-  { id: "onboard",  label: "why their onboarding converts", kind: "item",   x: 260, y: 60 },
-  { id: "tenancy",  label: "how they did multi-tenancy",    kind: "item",   x: 460, y: 150 },
-  { id: "shower",   label: "the one you had in the shower", kind: "item",   x: 300, y: 290 },
-  { id: "growth",   label: "Growth ideas",                  kind: "folder", x: 200, y: 190 },
-  { id: "arch",     label: "Architecture",                  kind: "folder", x: 400, y: 250 },
+  { id: "seo",       label: "the SEO play from that reel",   kind: "item",   x: 110, y: 90 },
+  { id: "onboard",   label: "why their onboarding converts", kind: "item",   x: 235, y: 65 },
+  { id: "growth",    label: "Growth ideas",                  kind: "folder", x: 170, y: 175 },
+  { id: "tenancy",   label: "how they did multi-tenancy",    kind: "item",   x: 435, y: 95 },
+  { id: "arch",      label: "Architecture",                  kind: "folder", x: 475, y: 200 },
+  { id: "shower",    label: "the one you had in the shower", kind: "item",   x: 200, y: 280 },
+  { id: "readlater", label: "Read later",                    kind: "folder", x: 335, y: 260 },
 ];
 
 const GRAPH_EDGES: GraphEdge[] = [
-  { a: "seo",     b: "growth",  kind: "folder",  reason: "Filed in the same folder" },
-  { a: "onboard", b: "growth",  kind: "folder",  reason: "Filed in the same folder" },
-  { a: "seo",     b: "onboard", kind: "tag",     reason: "Both tagged growth" },
-  { a: "tenancy", b: "arch",    kind: "folder",  reason: "Filed in the same folder" },
-  { a: "shower",  b: "arch",    kind: "keyword", reason: "Shares the word “provisioning”" },
-  { a: "shower",  b: "onboard", kind: "keyword", reason: "Shares the word “automatic”" },
+  { a: "seo",     b: "growth",    kind: "folder", reason: "Filed in the same folder" },
+  { a: "onboard", b: "growth",    kind: "folder", reason: "Filed in the same folder" },
+  { a: "seo",     b: "onboard",   kind: "tag",    reason: "Both tagged growth" },
+  { a: "tenancy", b: "arch",      kind: "folder", reason: "Filed in the same folder" },
+  { a: "shower",  b: "readlater", kind: "folder", reason: "Filed in the same folder" },
 ];
 
 const EDGE_COLOR: Record<EdgeKind, string> = {
   tag: "hsl(330 85% 65%)",
   folder: "hsl(var(--primary))",
-  keyword: "hsl(220 95% 62%)",
 };
 
 const PAIN_POINTS: { icon: LucideIcon; title: string; body: string }[] = [
@@ -367,17 +373,17 @@ const ProductShot = () => (
 
 /**
  * A small, self-contained network diagram of the exact four items shown in
- * "What it catches" above, plus two of the folders from the product shot.
- * It isn't decoration standing in for the product — it's the same mechanism
- * as the in-app Graph, run on four fixed examples instead of your own vault:
- * items get wired together because they share a folder, a tag, or a keyword,
+ * "What it catches" above, filed into three of the folders from the product
+ * shot. It isn't decoration standing in for the product — it's the same
+ * mechanism as the in-app Graph, run on four fixed examples instead of your
+ * own vault: items get wired together because they share a folder or a tag,
  * and hovering a connection says which. Drag a node to move it; the real
  * thing does the placing for you.
  *
  * Deliberately hand-rolled instead of a graph library: an early version of
  * this page shipped three.js and a force-graph package just for a hero
  * visual (see docs/LANDING_TEMPLATE.md) and both got dropped for bundle
- * size. Six nodes and six edges don't need a physics engine.
+ * size. Seven nodes and five edges don't need a physics engine.
  */
 const IdeaGraph = () => {
   const [nodes, setNodes] = useState(GRAPH_NODES);
@@ -447,7 +453,7 @@ const IdeaGraph = () => {
               {active && (
                 <text
                   x={mx}
-                  y={my - 6}
+                  y={my - 13}
                   textAnchor="middle"
                   style={{ font: "600 10px system-ui, sans-serif", fill: EDGE_COLOR[e.kind] }}
                 >
@@ -512,10 +518,6 @@ const IdeaGraph = () => {
         <span className="flex items-center gap-1.5">
           <span className="h-[9px] w-[9px] rounded-full" style={{ background: EDGE_COLOR.tag }} />
           Shared tag
-        </span>
-        <span className="flex items-center gap-1.5">
-          <span className="h-[9px] w-[9px] rounded-full" style={{ background: EDGE_COLOR.keyword }} />
-          Shared keyword
         </span>
       </div>
       <p className="mt-1.5 px-1 text-[12.5px] text-muted-foreground">
