@@ -7,7 +7,7 @@ import { readCrashes, clearCrashes } from "@/lib/crashReport";
 const NOTE = "Retainer pitch: open with the churn number, close on the audit";
 
 /** A component that fails the way a real one would: while rendering content. */
-function Exploding() {
+function Exploding(): JSX.Element {
   throw new Error(`Cannot read properties of undefined (reading "${NOTE}")`);
 }
 

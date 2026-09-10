@@ -59,7 +59,14 @@ const appendIdeaChat = (await import("../mcp/tools/append-idea-chat")).default;
 const updateIdea = (await import("../mcp/tools/update-idea")).default;
 
 const ctx = {} as never;
-const text = (r: { content: { text: string }[] }) => r.content[0].text;
+/**
+ * The tools declare their input with zod, so a partial patch is not assignable
+ * to the inferred shape even though the handler accepts it at runtime — which is
+ * exactly what these tests exercise. Cast at the single call site instead of
+ * spelling out every optional field in every case.
+ */
+const args = (o: Record<string, unknown>) => o as never;
+const text = (r: { content: Array<{ text?: string }> }) => r.content[0]?.text ?? "";
 
 beforeEach(() => {
   filters = [];
