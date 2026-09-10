@@ -78,6 +78,24 @@ export type IdeaFilter =
 export const IDEAS_PAGE_SIZE = 100;
 
 /**
+ * Every column the app actually uses — deliberately not `*`.
+ *
+ * `ideas` carries a `search_vector` column that exists purely so Postgres can
+ * rank full-text search. `select("*")` shipped it to the browser on every list
+ * render: measured against the live database it is the single largest part of
+ * the payload (647 kB across the table, more than the notes and transcripts put
+ * together) and nothing here can read it. Naming the columns keeps it in the
+ * database where it belongs.
+ */
+export const IDEA_COLUMNS = [
+  "id", "user_id", "folder_id", "title", "raw_note", "source_url", "source_type",
+  "source_label", "source_meta", "extracted_text", "ai_summary", "generated_prompt",
+  "priority", "tags", "tag_meta", "is_favorite", "remind_at", "notify_push",
+  "notify_email", "reminder_fired_at", "pinned_at", "synced_to_amos", "deleted_at",
+  "created_at", "updated_at",
+].join(", ");
+
+/**
  * Count only — no rows. Used where the app needs to know whether a customer has
  * anything yet (first run) without pulling their vault to find out.
  */
@@ -106,17 +124,17 @@ export function useIdeas(filter: IdeaFilter, pageSize: number = IDEAS_PAGE_SIZE)
       if (filter.kind === "trash") {
         const { data, error } = await supabase
           .from("ideas")
-          .select("*")
+          .select(IDEA_COLUMNS)
           .not("deleted_at", "is", null)
           .order("deleted_at", { ascending: false })
           .range(0, pageSize - 1);
         if (error) throw error;
-        return (data ?? []) as Idea[];
+        return (data ?? []) as unknown as Idea[];
       }
 
       let q = supabase
         .from("ideas")
-        .select("*")
+        .select(IDEA_COLUMNS)
         .is("deleted_at", null)
         .order("pinned_at", { ascending: false, nullsFirst: false })
         .order("updated_at", { ascending: false });
@@ -151,7 +169,7 @@ export function useIdeas(filter: IdeaFilter, pageSize: number = IDEAS_PAGE_SIZE)
 
       const { data, error } = await q;
       if (error) throw error;
-      return (data ?? []) as Idea[];
+      return (data ?? []) as unknown as Idea[];
     },
   });
 }
@@ -162,9 +180,9 @@ export function useIdea(id: string | null) {
     enabled: !!id,
     queryFn: async (): Promise<Idea | null> => {
       if (!id) return null;
-      const { data, error } = await supabase.from("ideas").select("*").eq("id", id).maybeSingle();
+      const { data, error } = await supabase.from("ideas").select(IDEA_COLUMNS).eq("id", id).maybeSingle();
       if (error) throw error;
-      return data as Idea | null;
+      return data as unknown as Idea | null;
     },
   });
 }

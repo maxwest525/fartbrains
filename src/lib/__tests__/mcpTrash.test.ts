@@ -59,7 +59,15 @@ const appendIdeaChat = (await import("../mcp/tools/append-idea-chat")).default;
 const updateIdea = (await import("../mcp/tools/update-idea")).default;
 
 const ctx = {} as never;
-const text = (r: { content: { text: string }[] }) => r.content[0].text;
+/**
+ * The tools declare their input with zod, so a partial patch is not assignable
+ * to the inferred shape even though the handler accepts it at runtime — which is
+ * exactly what these tests exercise. Cast at the single call site instead of
+ * spelling out every optional field in every case.
+ */
+const args = (o: Record<string, unknown>) => o as never;
+const text = (r: { content?: unknown }) =>
+  (r.content as Array<{ text?: string }>)[0]?.text ?? "";
 
 beforeEach(() => {
   filters = [];
@@ -73,13 +81,13 @@ const trash = () => {
 
 describe("get_idea_chat", () => {
   it("returns the thread for a live idea", async () => {
-    const res = await getIdeaChat.handler({ idea_id: "idea-1" }, ctx);
+    const res = await getIdeaChat.handler(args({ idea_id: "idea-1" }), ctx);
     expect(res.isError).toBeFalsy();
   });
 
   it("refuses a trashed idea instead of replaying a deleted conversation", async () => {
     trash();
-    const res = await getIdeaChat.handler({ idea_id: "idea-1" }, ctx);
+    const res = await getIdeaChat.handler(args({ idea_id: "idea-1" }), ctx);
     expect(res.isError).toBe(true);
     expect(text(res)).toMatch(/Trash/);
   });
@@ -87,7 +95,7 @@ describe("get_idea_chat", () => {
   it("says only 'not found' for an idea that is not the caller's", async () => {
     // RLS returns no row either way, so the message must not distinguish them.
     ideaRow = null;
-    const res = await getIdeaChat.handler({ idea_id: "idea-1" }, ctx);
+    const res = await getIdeaChat.handler(args({ idea_id: "idea-1" }), ctx);
     expect(text(res)).toBe("Idea not found");
   });
 });
@@ -95,7 +103,7 @@ describe("get_idea_chat", () => {
 describe("append_idea_chat", () => {
   it("writes to a live idea", async () => {
     const res = await appendIdeaChat.handler(
-      { idea_id: "idea-1", role: "assistant", content: "hello" },
+      args({ idea_id: "idea-1", role: "assistant", content: "hello" }),
       ctx,
     );
     expect(res.isError).toBeFalsy();
@@ -105,7 +113,7 @@ describe("append_idea_chat", () => {
   it("writes nothing into a trashed idea's thread", async () => {
     trash();
     const res = await appendIdeaChat.handler(
-      { idea_id: "idea-1", role: "assistant", content: "hello" },
+      args({ idea_id: "idea-1", role: "assistant", content: "hello" }),
       ctx,
     );
     expect(res.isError).toBe(true);
@@ -117,24 +125,24 @@ describe("append_idea_chat", () => {
 
 describe("update_idea", () => {
   it("edits a live idea", async () => {
-    const res = await updateIdea.handler({ idea_id: "idea-1", title: "New" }, ctx);
+    const res = await updateIdea.handler(args({ idea_id: "idea-1", title: "New" }), ctx);
     expect(res.isError).toBeFalsy();
   });
 
   it("filters the update on deleted_at so a trashed idea matches nothing", async () => {
-    await updateIdea.handler({ idea_id: "idea-1", title: "New" }, ctx);
+    await updateIdea.handler(args({ idea_id: "idea-1", title: "New" }), ctx);
     expect(filters).toContainEqual({ table: "ideas", op: "is", args: ["deleted_at", null] });
   });
 
   it("reports not found rather than succeeding into a trashed note", async () => {
     trash();
-    const res = await updateIdea.handler({ idea_id: "idea-1", title: "New" }, ctx);
+    const res = await updateIdea.handler(args({ idea_id: "idea-1", title: "New" }), ctx);
     expect(res.isError).toBe(true);
     expect(text(res)).toMatch(/Trash/);
   });
 
   it("still refuses an empty patch", async () => {
-    const res = await updateIdea.handler({ idea_id: "idea-1" }, ctx);
+    const res = await updateIdea.handler(args({ idea_id: "idea-1" }), ctx);
     expect(text(res)).toBe("Nothing to update");
   });
 });

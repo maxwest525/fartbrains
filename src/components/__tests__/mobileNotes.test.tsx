@@ -27,6 +27,7 @@ const props = {
   onOpenGraph: vi.fn(),
   onOpenNotes: vi.fn(),
   onOpenSettings: vi.fn(),
+  onOpenAsh: vi.fn(),
 };
 
 describe("mobile notes entry point", () => {

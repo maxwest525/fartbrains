@@ -991,6 +991,10 @@ export type Database = {
         Args: { p_retention_days?: number }
         Returns: number
       }
+      purge_internal_job_logs: {
+        Args: { p_retention_days?: number }
+        Returns: undefined
+      }
       read_email_batch: {
         Args: { batch_size: number; queue_name: string; vt: number }
         Returns: {
