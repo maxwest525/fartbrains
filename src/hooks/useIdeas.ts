@@ -129,7 +129,7 @@ export function useIdeas(filter: IdeaFilter, pageSize: number = IDEAS_PAGE_SIZE)
           .order("deleted_at", { ascending: false })
           .range(0, pageSize - 1);
         if (error) throw error;
-        return (data ?? []) as Idea[];
+        return (data ?? []) as unknown as Idea[];
       }
 
       let q = supabase
@@ -169,7 +169,7 @@ export function useIdeas(filter: IdeaFilter, pageSize: number = IDEAS_PAGE_SIZE)
 
       const { data, error } = await q;
       if (error) throw error;
-      return (data ?? []) as Idea[];
+      return (data ?? []) as unknown as Idea[];
     },
   });
 }
@@ -182,7 +182,7 @@ export function useIdea(id: string | null) {
       if (!id) return null;
       const { data, error } = await supabase.from("ideas").select(IDEA_COLUMNS).eq("id", id).maybeSingle();
       if (error) throw error;
-      return data as Idea | null;
+      return data as unknown as Idea | null;
     },
   });
 }
