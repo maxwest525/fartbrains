@@ -15,6 +15,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { setLandingActive } from "@/lib/landingMode";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 /**
  * The marketing page.
@@ -112,51 +113,147 @@ const SUMMARY_POINTS = [
   "Show the value before the paywall, every time. The card comes after the win.",
 ];
 
-type GraphNode = {
-  id: string;
-  label: string;
-  /** "item" = something you saved; "folder" = where it landed. Styled
-   * differently so the graph reads as filed content, not abstract dots. */
-  kind: "item" | "folder";
-  x: number;
-  y: number;
-};
-type EdgeKind = "tag" | "folder";
-type GraphEdge = { a: string; b: string; kind: EdgeKind; reason: string };
+type GraphCluster = { id: string; label: string; hue: number };
+type GraphNode = { id: string; cluster: string; label: string; detail: string };
+type LaidOutNode = GraphNode & { x: number; y: number };
 
-/** What this graph actually shows: the same four saved items from "What it
- * catches" above, filed into three of the folders from the product shot,
- * wired together the same way the in-app Graph does it — shared tags or a
- * shared folder — not a decorative network of made-up dots.
- *
- * Every edge stays inside its own cluster on purpose: an earlier version
- * reached across the diagram to tie "the one you had in the shower" to an
- * unrelated architecture note over a manufactured "shared keyword", which
- * both looked wrong (the line's label landed on top of other nodes) and was
- * wrong (those two don't actually share anything) — the shower note gets
- * its own folder here instead of a fabricated connection. */
+/**
+ * Fifty real, publicly documented product and growth practices — not
+ * fabricated flavor text, and not anyone's private content attributed to
+ * them without consent. These are facts about companies and products,
+ * the same kind of thing you'd read in a case study or hear on a podcast:
+ * safe to reference factually, the way any industry blog does, with no
+ * implied claim that Fart Brains captured it or that anyone endorses this
+ * product. Grouped into ten themes so the graph shows real clustering
+ * instead of an arbitrary scatter.
+ */
+const GRAPH_CLUSTERS: GraphCluster[] = [
+  { id: "growth",       label: "Growth",              hue: 262 },
+  { id: "onboarding",   label: "Onboarding",          hue: 298 },
+  { id: "design",       label: "Design & UX",         hue: 334 },
+  { id: "engineering",  label: "Engineering",         hue: 10 },
+  { id: "content",      label: "Content",             hue: 46 },
+  { id: "community",    label: "Community",           hue: 82 },
+  { id: "monetization", label: "Monetization",        hue: 118 },
+  { id: "culture",      label: "Culture & ops",       hue: 154 },
+  { id: "productivity", label: "Productivity tools",  hue: 190 },
+  { id: "social",       label: "Social platforms",    hue: 226 },
+];
+
 const GRAPH_NODES: GraphNode[] = [
-  { id: "seo",       label: "the SEO play from that reel",   kind: "item",   x: 110, y: 90 },
-  { id: "onboard",   label: "why their onboarding converts", kind: "item",   x: 235, y: 65 },
-  { id: "growth",    label: "Growth ideas",                  kind: "folder", x: 170, y: 175 },
-  { id: "tenancy",   label: "how they did multi-tenancy",    kind: "item",   x: 435, y: 95 },
-  { id: "arch",      label: "Architecture",                  kind: "folder", x: 475, y: 200 },
-  { id: "shower",    label: "the one you had in the shower", kind: "item",   x: 200, y: 280 },
-  { id: "readlater", label: "Read later",                    kind: "folder", x: 335, y: 260 },
+  { id: "n1",  cluster: "growth",       label: "Dropbox's double-sided referral",     detail: "Give space, get space — both sides got extra storage, and it drove roughly 60% of Dropbox's early signups." },
+  { id: "n2",  cluster: "growth",       label: "PayPal's $10-for-signup",             detail: "PayPal paid new users and referrers real cash in its early days to bootstrap two-sided adoption." },
+  { id: "n3",  cluster: "growth",       label: "Airbnb's Craigslist cross-post",      detail: "Airbnb let hosts one-click cross-post listings to Craigslist to tap into existing housing-search traffic." },
+  { id: "n4",  cluster: "growth",       label: "Slack's time-to-2,000-messages",      detail: "Slack tracked how fast a team hit 2,000 messages as its core activation metric, not signups." },
+  { id: "n5",  cluster: "growth",       label: "Superhuman's onboarding score",       detail: "Superhuman optimized onboarding by tracking the % who'd be 'very disappointed' without it, targeting 40%+." },
+
+  { id: "n6",  cluster: "onboarding",   label: "Duolingo's streak mechanic",          detail: "A visible daily streak, and the fear of breaking it, is Duolingo's single biggest retention lever." },
+  { id: "n7",  cluster: "onboarding",   label: "Notion's template gallery",           detail: "New users pick a template instead of a blank page, so day one already has something in it." },
+  { id: "n8",  cluster: "onboarding",   label: "Canva's 'design for X' prompt",       detail: "Canva asks what you're making before showing a blank canvas, then narrows the toolset to match." },
+  { id: "n9",  cluster: "onboarding",   label: "Calendly's link-first setup",         detail: "One link replaces a scheduling back-and-forth; the product is themed around avoiding a second email." },
+  { id: "n10", cluster: "onboarding",   label: "Linear's opinionated defaults",       detail: "Linear ships almost no configuration up front — the defaults are the product's opinion on how teams work." },
+
+  { id: "n11", cluster: "design",       label: "Figma's live multiplayer cursors",    detail: "Seeing a teammate's cursor move in real time was Figma's biggest differentiator over file-based tools." },
+  { id: "n12", cluster: "design",       label: "Apple's 'one more thing'",            detail: "Structuring a keynote with a late surprise is a storytelling beat Apple reused for two decades." },
+  { id: "n13", cluster: "design",       label: "Material Design's elevation scale",   detail: "Shadows in Material Design map to a strict elevation scale, not arbitrary drop-shadow values." },
+  { id: "n14", cluster: "design",       label: "Stripe's checkout auto-fill",         detail: "Stripe's checkout detects card type and country from the first few digits, before you finish typing." },
+  { id: "n15", cluster: "design",       label: "Airbnb's 11-star experience",         detail: "Airbnb's internal framework imagines an absurd 11-star stay to find ideas worth stealing at 5 stars." },
+
+  { id: "n16", cluster: "engineering",  label: "How Slack shards workspaces",         detail: "Each Slack workspace is effectively an isolated tenant, sharded so one huge workspace can't slow another." },
+  { id: "n17", cluster: "engineering",  label: "Stripe's idempotency keys",           detail: "Every write API call takes an idempotency key so a retried request can never double-charge a customer." },
+  { id: "n18", cluster: "engineering",  label: "GitHub's contribution graph",         detail: "The green squares are a gamified visualization of commits — a retention mechanic, not a technical need." },
+  { id: "n19", cluster: "engineering",  label: "Basecamp's boring stack",             detail: "Basecamp is famously built on an intentionally 'boring' Rails stack instead of chasing new frameworks." },
+  { id: "n20", cluster: "engineering",  label: "Netflix's chaos engineering",         detail: "Netflix built Chaos Monkey to randomly kill production servers on purpose, forcing resilience." },
+
+  { id: "n21", cluster: "content",      label: "Wistia's video-first blog",           detail: "Wistia built its content marketing around video tutorials instead of text posts, matching its product." },
+  { id: "n22", cluster: "content",      label: "Ahrefs' content-decay tracking",      detail: "Ahrefs tracks when old posts start losing rankings and schedules a refresh instead of net-new content." },
+  { id: "n23", cluster: "content",      label: "Patagonia's ‘Don't Buy This Jacket’", detail: "Patagonia ran a Black Friday ad telling people not to buy their jacket — and it grew sales." },
+  { id: "n24", cluster: "content",      label: "Mailchimp's freemium ladder",         detail: "Mailchimp's free tier is generous enough to get a business fully dependent before the first bill." },
+  { id: "n25", cluster: "content",      label: "HubSpot's inbound methodology",       detail: "HubSpot built an entire category, 'inbound marketing,' just to have a name for what it was selling." },
+
+  { id: "n26", cluster: "community",    label: "Reddit's karma system",               detail: "Karma has no monetary value, but it's enough of a score to shape years of posting behavior." },
+  { id: "n27", cluster: "community",    label: "Discord's server-first structure",    detail: "Discord grew by embedding inside existing gaming communities instead of building its own social graph." },
+  { id: "n28", cluster: "community",    label: "Product Hunt's launch-day spike",     detail: "A single day of concentrated attention on Product Hunt can outweigh months of steady organic traffic." },
+  { id: "n29", cluster: "community",    label: "'Do things that don't scale'",        detail: "Paul Graham's Y Combinator essay argues early growth almost always comes from manual, unscalable effort." },
+  { id: "n30", cluster: "community",    label: "Duolingo's owl on social media",      detail: "Duolingo's unhinged mascot voice on TikTok is a scrappy alternative to traditional brand marketing." },
+
+  { id: "n31", cluster: "monetization", label: "Gumroad's simple payout split",       detail: "Gumroad's pitch is a flat, transparent cut instead of the tiered fee structures competitors used." },
+  { id: "n32", cluster: "monetization", label: "Substack's flat 10% cut",             detail: "Substack takes a flat 10% of subscription revenue, betting writers will grow the pie, not haggle the cut." },
+  { id: "n33", cluster: "monetization", label: "Zoom's 40-minute free limit",         detail: "Zoom's free group-call limit was calibrated just short enough to nudge upgrades without killing adoption." },
+  { id: "n34", cluster: "monetization", label: "Spotify's family-plan upsell",        detail: "Spotify's family plan is priced to make individual premium look like the worse deal for two or more." },
+  { id: "n35", cluster: "monetization", label: "Dropbox's storage-based pricing",     detail: "Dropbox charges for the resource that scales with how deeply embedded you already are in the product." },
+
+  { id: "n36", cluster: "culture",      label: "Basecamp's Shape Up cycles",          detail: "Basecamp's 'Shape Up' method runs six-week cycles with a mandatory cool-down week instead of endless sprints." },
+  { id: "n37", cluster: "culture",      label: "Amazon's two-pizza teams",            detail: "Amazon's rule of thumb: if a team can't be fed by two pizzas, it's too big to move fast." },
+  { id: "n38", cluster: "culture",      label: "Netflix's 'freedom and responsibility'", detail: "Netflix's culture deck traded approval chains for high autonomy and high accountability." },
+  { id: "n39", cluster: "culture",      label: "Buffer's public salary formula",      detail: "Buffer publishes the exact formula used to calculate every employee's salary, founders included." },
+  { id: "n40", cluster: "culture",      label: "Automattic's fully remote org",       detail: "WordPress.com's parent company has operated fully distributed since before remote work was mainstream." },
+
+  { id: "n41", cluster: "productivity", label: "Trello's kanban simplicity",          detail: "Trello took a manufacturing scheduling method, kanban, and stripped it to cards and columns." },
+  { id: "n42", cluster: "productivity", label: "Airtable's flexible views",           detail: "The same Airtable data can be a grid, calendar, or kanban board — one dataset, several lenses." },
+  { id: "n43", cluster: "productivity", label: "Miro's infinite canvas",              detail: "Removing the page boundary entirely changed how teams used Miro for workshops versus a fixed deck." },
+  { id: "n44", cluster: "productivity", label: "Asana's task dependencies",           detail: "Asana's dependency graph quietly turns a to-do list into something closer to a project scheduler." },
+  { id: "n45", cluster: "productivity", label: "Loom's async video culture",          detail: "Loom's pitch was replacing a meeting with a 90-second video the other person watches on their own time." },
+
+  { id: "n46", cluster: "social",       label: "TikTok's For You algorithm",          detail: "TikTok's feed optimizes on watch time per video, not follower graphs — why unknown accounts can go viral." },
+  { id: "n47", cluster: "social",       label: "Instagram's pivot to Reels",          detail: "Instagram restructured its feed algorithm around short video once TikTok's growth was impossible to ignore." },
+  { id: "n48", cluster: "social",       label: "LinkedIn's dwell-time ranking",       detail: "LinkedIn's algorithm rewards posts that keep people reading in-app longer — hence the hook-and-pause format." },
+  { id: "n49", cluster: "social",       label: "X's tweetstorm format",               detail: "The tweetstorm emerged from users working around a character limit; the platform later built it in natively." },
+  { id: "n50", cluster: "social",       label: "YouTube Shorts' discovery feed",      detail: "YouTube built a separate short-form discovery surface instead of blending Shorts into regular search." },
 ];
 
-const GRAPH_EDGES: GraphEdge[] = [
-  { a: "seo",     b: "growth",    kind: "folder", reason: "Filed in the same folder" },
-  { a: "onboard", b: "growth",    kind: "folder", reason: "Filed in the same folder" },
-  { a: "seo",     b: "onboard",   kind: "tag",    reason: "Both tagged growth" },
-  { a: "tenancy", b: "arch",      kind: "folder", reason: "Filed in the same folder" },
-  { a: "shower",  b: "readlater", kind: "folder", reason: "Filed in the same folder" },
-];
+const CLUSTER_BY_ID = Object.fromEntries(GRAPH_CLUSTERS.map((c) => [c.id, c]));
 
-const EDGE_COLOR: Record<EdgeKind, string> = {
-  tag: "hsl(330 85% 65%)",
-  folder: "hsl(var(--primary))",
+const CLUSTER_COL_SPACING = 195;
+const CLUSTER_ROW_SPACING = 260;
+const CLUSTER_MARGIN = 110;
+const PENTAGON_RADIUS = 58;
+
+/** Cluster "home" positions in a grid with the given column count, spaced
+ * far enough apart that no cluster's pentagon of nodes can reach another
+ * cluster's — the fix for the earlier bug where a cross-cluster edge's
+ * label landed on an unrelated node. Column count varies by viewport: a
+ * 5×2 grid is a wide, short shape that fits a desktop card; the same grid
+ * on a narrow phone screen would shrink until the nodes were unreadable
+ * and unTappable, so mobile uses a narrower, taller 3×4 grid instead. */
+const clusterHome = (columns: number): Record<string, { x: number; y: number }> =>
+  Object.fromEntries(
+    GRAPH_CLUSTERS.map((c, i) => [
+      c.id,
+      {
+        x: CLUSTER_MARGIN + (i % columns) * CLUSTER_COL_SPACING,
+        y: CLUSTER_MARGIN + 30 + Math.floor(i / columns) * CLUSTER_ROW_SPACING,
+      },
+    ]),
+  );
+
+const graphViewBox = (columns: number) => {
+  const rows = Math.ceil(GRAPH_CLUSTERS.length / columns);
+  return {
+    width: CLUSTER_MARGIN * 2 + (columns - 1) * CLUSTER_COL_SPACING,
+    height: CLUSTER_MARGIN * 2 + 30 + (rows - 1) * CLUSTER_ROW_SPACING,
+  };
 };
+
+const layoutNodes = (nodes: GraphNode[], columns: number): LaidOutNode[] => {
+  const home = clusterHome(columns);
+  const seen: Record<string, number> = {};
+  return nodes.map((n) => {
+    const i = (seen[n.cluster] ??= 0);
+    seen[n.cluster] += 1;
+    const c = home[n.cluster];
+    const angle = (-90 + i * 72) * (Math.PI / 180);
+    return { ...n, x: c.x + PENTAGON_RADIUS * Math.cos(angle), y: c.y + PENTAGON_RADIUS * Math.sin(angle) };
+  });
+};
+
+/** Each cluster's five nodes form a closed pentagon (node 0→1→2→3→4→0) —
+ * "filed under the same theme," same honest reasoning as a shared folder,
+ * scaled up. No edge ever crosses into another cluster. */
+const GRAPH_EDGES: { a: string; b: string; cluster: string }[] = GRAPH_CLUSTERS.flatMap((c) => {
+  const ids = GRAPH_NODES.filter((n) => n.cluster === c.id).map((n) => n.id);
+  return ids.map((id, i) => ({ a: id, b: ids[(i + 1) % ids.length], cluster: c.id }));
+});
 
 const PAIN_POINTS: { icon: LucideIcon; title: string; body: string }[] = [
   {
@@ -372,25 +469,44 @@ const ProductShot = () => (
 );
 
 /**
- * A small, self-contained network diagram of the exact four items shown in
- * "What it catches" above, filed into three of the folders from the product
- * shot. It isn't decoration standing in for the product — it's the same
- * mechanism as the in-app Graph, run on four fixed examples instead of your
- * own vault: items get wired together because they share a folder or a tag,
- * and hovering a connection says which. Drag a node to move it; the real
- * thing does the placing for you.
+ * Fifty real, publicly documented product and growth practices, clustered
+ * into ten themes and wired the same way the in-app Graph wires your own
+ * saved ideas — same folder, effectively, scaled up. Not decoration: drag
+ * any node, hover one to see its cluster light up, click one to read the
+ * actual fact in the inspector below (that's what "inspectable" means here
+ * — the graph is a browsable index, not just a picture).
  *
- * Deliberately hand-rolled instead of a graph library: an early version of
- * this page shipped three.js and a force-graph package just for a hero
- * visual (see docs/LANDING_TEMPLATE.md) and both got dropped for bundle
- * size. Seven nodes and five edges don't need a physics engine.
+ * Every edge stays inside its own cluster's pentagon by construction — see
+ * layoutNodes()/GRAPH_EDGES above — which is also what keeps fifty nodes
+ * from turning into fifty crossing lines: a bug from an earlier, much
+ * smaller version of this graph came from exactly that.
+ *
+ * Deliberately hand-rolled instead of a graph library or physics engine:
+ * an early version of this page shipped three.js and a force-graph package
+ * just for a hero visual (see docs/LANDING_TEMPLATE.md) and both got
+ * dropped for bundle size. Fixed pentagon layouts don't need either.
  */
 const IdeaGraph = () => {
-  const [nodes, setNodes] = useState(GRAPH_NODES);
+  const isMobile = useIsMobile();
+  const columns = isMobile ? 3 : 5;
+  const home = clusterHome(columns);
+  const viewBox = graphViewBox(columns);
+  const [nodes, setNodes] = useState<LaidOutNode[]>(() => layoutNodes(GRAPH_NODES, columns));
   const [hovered, setHovered] = useState<string | null>(null);
   const [dragging, setDragging] = useState<string | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   const svgRef = useRef<SVGSVGElement>(null);
   const byId = Object.fromEntries(nodes.map((n) => [n.id, n]));
+
+  // Re-lay-out when the column count changes (e.g. rotating the phone, or
+  // resizing the desktop widget down to mobile width) rather than leaving
+  // nodes positioned for a grid that no longer exists.
+  const columnsRef = useRef(columns);
+  useEffect(() => {
+    if (columnsRef.current === columns) return;
+    columnsRef.current = columns;
+    setNodes(layoutNodes(GRAPH_NODES, columns));
+  }, [columns]);
 
   const toSvgPoint = (clientX: number, clientY: number) => {
     const svg = svgRef.current;
@@ -415,113 +531,120 @@ const IdeaGraph = () => {
   };
   const endDrag = () => setDragging(null);
 
-  const focusId = dragging ?? hovered;
-  const activeEdges = focusId ? GRAPH_EDGES.filter((e) => e.a === focusId || e.b === focusId) : [];
-  const activeSet = focusId ? new Set(activeEdges.flatMap((e) => [e.a, e.b])) : null;
+  const focusId = dragging ?? hovered ?? selectedId;
+  const focusCluster = focusId ? byId[focusId]?.cluster ?? null : null;
+  const selected = selectedId ? byId[selectedId] : null;
 
   return (
     <div className="rounded-2xl border border-border bg-card p-3 sm:p-5">
       <svg
         ref={svgRef}
-        viewBox="0 0 560 320"
+        viewBox={`0 0 ${viewBox.width} ${viewBox.height}`}
         role="img"
-        aria-label="Interactive diagram of the four items from 'What it catches' connected by shared folder, tag, or keyword"
-        className="h-[260px] w-full touch-none select-none sm:h-[300px]"
+        aria-label="Interactive diagram of fifty real product and growth ideas, clustered by theme"
+        style={{ aspectRatio: `${viewBox.width} / ${viewBox.height}` }}
+        className="w-full touch-none select-none"
         onPointerMove={onSvgMove}
         onPointerUp={endDrag}
         onPointerCancel={endDrag}
+        onPointerLeave={endDrag}
       >
+        {GRAPH_CLUSTERS.map((c) => {
+          const clusterPos = home[c.id];
+          const dim = focusCluster ? focusCluster !== c.id : false;
+          return (
+            <text
+              key={c.id}
+              x={clusterPos.x}
+              y={clusterPos.y + 92}
+              textAnchor="middle"
+              opacity={dim ? 0.35 : 0.8}
+              style={{ font: "600 11px system-ui, sans-serif", fill: `hsl(${c.hue} 70% 65%)` }}
+            >
+              {c.label}
+            </text>
+          );
+        })}
         {GRAPH_EDGES.map((e) => {
           const na = byId[e.a];
           const nb = byId[e.b];
           if (!na || !nb) return null;
-          const active = activeSet ? activeSet.has(e.a) && activeSet.has(e.b) : false;
-          const dim = activeSet ? !active : false;
-          const mx = (na.x + nb.x) / 2;
-          const my = (na.y + nb.y) / 2;
+          const hue = CLUSTER_BY_ID[e.cluster].hue;
+          const active = focusCluster === e.cluster;
+          const dim = focusCluster ? !active : false;
           return (
-            <g key={`${e.a}-${e.b}`}>
-              <line
-                x1={na.x}
-                y1={na.y}
-                x2={nb.x}
-                y2={nb.y}
-                stroke={EDGE_COLOR[e.kind]}
-                strokeOpacity={dim ? 0.08 : active ? 0.85 : 0.35}
-                strokeWidth={active ? 2 : 1.5}
+            <line
+              key={`${e.a}-${e.b}`}
+              x1={na.x}
+              y1={na.y}
+              x2={nb.x}
+              y2={nb.y}
+              stroke={`hsl(${hue} 75% 60%)`}
+              strokeOpacity={dim ? 0.08 : active ? 0.7 : 0.3}
+              strokeWidth={active ? 1.75 : 1.25}
+            />
+          );
+        })}
+        {nodes.map((n) => {
+          const hue = CLUSTER_BY_ID[n.cluster].hue;
+          const dim = focusCluster ? focusCluster !== n.cluster : false;
+          const active = focusId === n.id;
+          const isSelected = selectedId === n.id;
+          return (
+            <g
+              key={n.id}
+              transform={`translate(${n.x} ${n.y})`}
+              opacity={dim ? 0.25 : 1}
+              className="cursor-pointer"
+              onPointerDown={onNodeDown(n.id)}
+              onPointerUp={() => {
+                setDragging(null);
+                setSelectedId(n.id);
+              }}
+              onPointerEnter={() => !dragging && setHovered(n.id)}
+              onPointerLeave={() => setHovered((h) => (h === n.id ? null : h))}
+            >
+              <circle
+                r={active ? 7 : 5}
+                fill={`hsl(${hue} 75% 60%)`}
+                stroke={isSelected ? "hsl(var(--foreground))" : "hsl(var(--card))"}
+                strokeWidth={isSelected ? 2.5 : 1.5}
               />
               {active && (
                 <text
-                  x={mx}
-                  y={my - 13}
+                  x={0}
+                  y={-13}
                   textAnchor="middle"
-                  style={{ font: "600 10px system-ui, sans-serif", fill: EDGE_COLOR[e.kind] }}
+                  style={{ font: "600 10.5px system-ui, sans-serif", fill: "hsl(var(--foreground) / 0.9)" }}
                 >
-                  {e.reason}
+                  {n.label.length > 30 ? `${n.label.slice(0, 29)}…` : n.label}
                 </text>
               )}
             </g>
           );
         })}
-        {nodes.map((n) => {
-          const dim = activeSet ? !activeSet.has(n.id) : false;
-          const active = focusId === n.id;
-          const isFolder = n.kind === "folder";
-          return (
-            <g
-              key={n.id}
-              transform={`translate(${n.x} ${n.y})`}
-              opacity={dim ? 0.32 : 1}
-              className="cursor-grab active:cursor-grabbing"
-              onPointerDown={onNodeDown(n.id)}
-              onPointerEnter={() => !dragging && setHovered(n.id)}
-              onPointerLeave={() => setHovered((h) => (h === n.id ? null : h))}
-            >
-              {isFolder ? (
-                <rect
-                  x={-9}
-                  y={-7}
-                  width={18}
-                  height={14}
-                  rx={3}
-                  fill="none"
-                  stroke="hsl(var(--foreground))"
-                  strokeWidth={active ? 2 : 1.5}
-                  strokeOpacity={0.85}
-                />
-              ) : (
-                <>
-                  <circle r={active ? 8.5 : 6} fill="hsl(var(--primary))" />
-                  <circle r={active ? 8.5 : 6} fill="none" stroke="hsl(var(--card))" strokeWidth={2} />
-                </>
-              )}
-              <text
-                x={0}
-                y={active ? -18 : isFolder ? -13 : -12}
-                textAnchor="middle"
-                style={{
-                  font: active ? "600 11px system-ui, sans-serif" : "10px system-ui, sans-serif",
-                  fill: "hsl(var(--foreground) / 0.85)",
-                }}
-              >
-                {n.label.length > 27 ? `${n.label.slice(0, 26)}…` : n.label}
-              </text>
-            </g>
-          );
-        })}
       </svg>
-      <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1.5 px-1 text-[11.5px] text-muted-foreground">
-        <span className="flex items-center gap-1.5">
-          <span className="h-[9px] w-[9px] rounded-full" style={{ background: EDGE_COLOR.folder }} />
-          Same folder
-        </span>
-        <span className="flex items-center gap-1.5">
-          <span className="h-[9px] w-[9px] rounded-full" style={{ background: EDGE_COLOR.tag }} />
-          Shared tag
-        </span>
+
+      <div className="mt-3 min-h-[72px] rounded-xl border border-border bg-background/60 p-3.5">
+        {selected ? (
+          <>
+            <div className="mb-1 flex items-center gap-2">
+              <span className="h-2 w-2 rounded-full" style={{ background: `hsl(${CLUSTER_BY_ID[selected.cluster].hue} 75% 60%)` }} />
+              <span className="text-[11px] font-semibold uppercase tracking-[0.05em] text-muted-foreground">
+                {CLUSTER_BY_ID[selected.cluster].label}
+              </span>
+            </div>
+            <div className="mb-1 text-[14.5px] font-semibold leading-[1.3]">{selected.label}</div>
+            <p className="text-[13.5px] leading-[1.5] text-muted-foreground">{selected.detail}</p>
+          </>
+        ) : (
+          <p className="flex h-full items-center text-[13px] text-muted-foreground">
+            Click any node to read the real fact behind it.
+          </p>
+        )}
       </div>
-      <p className="mt-1.5 px-1 text-[12.5px] text-muted-foreground">
-        This is the in-app Graph, run on four examples instead of your vault. Drag a node; hover a line for why it&rsquo;s there.
+      <p className="mt-2 px-0.5 text-[12px] text-muted-foreground">
+        50 real, publicly documented ideas — not anyone's private content, and nobody shown or referenced here endorses this product. Drag a node; click one to inspect it.
       </p>
     </div>
   );
