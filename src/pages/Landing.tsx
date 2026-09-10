@@ -112,31 +112,45 @@ const SUMMARY_POINTS = [
   "Show the value before the paywall, every time. The card comes after the win.",
 ];
 
-type GraphNode = { id: string; label: string; cluster: 0 | 1 | 2; x: number; y: number };
+type GraphNode = {
+  id: string;
+  label: string;
+  /** "item" = something you saved; "folder" = where it landed. Styled
+   * differently so the graph reads as filed content, not abstract dots. */
+  kind: "item" | "folder";
+  x: number;
+  y: number;
+};
+type EdgeKind = "tag" | "folder" | "keyword";
+type GraphEdge = { a: string; b: string; kind: EdgeKind; reason: string };
 
-/** Sample nodes for the landing page's interactive graph — the same kind of
- * saved items shown elsewhere on this page (What it catches, the timeline),
- * arranged into the clusters Fart Brains would actually find between them. */
+/** What this graph actually shows: the same four saved items from "What it
+ * catches" above, plus two of the folders from the product shot, wired
+ * together the same way the in-app Graph does it — shared tags, shared
+ * folders, shared keywords — not a decorative network of made-up dots. */
 const GRAPH_NODES: GraphNode[] = [
-  { id: "seo",      label: "the SEO play from that reel",        cluster: 0, x: 150, y: 95 },
-  { id: "onboard1", label: "why their onboarding converts",      cluster: 0, x: 245, y: 165 },
-  { id: "onboard2", label: "onboarding costs two engineer-days", cluster: 0, x: 110, y: 210 },
-  { id: "growth",   label: "Growth ideas",                       cluster: 0, x: 205, y: 60 },
-  { id: "tenancy",  label: "how they did multi-tenancy",         cluster: 1, x: 460, y: 90 },
-  { id: "isolation",label: "isolation is the selling point",     cluster: 1, x: 400, y: 160 },
-  { id: "provision",label: "provisioning has to be automatic",   cluster: 1, x: 500, y: 195 },
-  { id: "arch",     label: "Architecture",                       cluster: 1, x: 555, y: 120 },
-  { id: "shower",   label: "the one you had in the shower",      cluster: 2, x: 290, y: 300 },
-  { id: "readlater",label: "Read later",                         cluster: 2, x: 380, y: 270 },
+  { id: "seo",      label: "the SEO play from that reel",   kind: "item",   x: 130, y: 100 },
+  { id: "onboard",  label: "why their onboarding converts", kind: "item",   x: 260, y: 60 },
+  { id: "tenancy",  label: "how they did multi-tenancy",    kind: "item",   x: 460, y: 150 },
+  { id: "shower",   label: "the one you had in the shower", kind: "item",   x: 300, y: 290 },
+  { id: "growth",   label: "Growth ideas",                  kind: "folder", x: 200, y: 190 },
+  { id: "arch",     label: "Architecture",                  kind: "folder", x: 400, y: 250 },
 ];
 
-const GRAPH_EDGES: [string, string][] = [
-  ["seo", "growth"], ["seo", "onboard1"], ["onboard1", "onboard2"], ["onboard1", "growth"],
-  ["tenancy", "arch"], ["tenancy", "isolation"], ["isolation", "provision"], ["provision", "arch"],
-  ["shower", "readlater"], ["shower", "onboard1"], ["readlater", "provision"],
+const GRAPH_EDGES: GraphEdge[] = [
+  { a: "seo",     b: "growth",  kind: "folder",  reason: "Filed in the same folder" },
+  { a: "onboard", b: "growth",  kind: "folder",  reason: "Filed in the same folder" },
+  { a: "seo",     b: "onboard", kind: "tag",     reason: "Both tagged growth" },
+  { a: "tenancy", b: "arch",    kind: "folder",  reason: "Filed in the same folder" },
+  { a: "shower",  b: "arch",    kind: "keyword", reason: "Shares the word “provisioning”" },
+  { a: "shower",  b: "onboard", kind: "keyword", reason: "Shares the word “automatic”" },
 ];
 
-const CLUSTER_COLOR = ["hsl(var(--primary))", "hsl(220 95% 62%)", "hsl(var(--accent))"] as const;
+const EDGE_COLOR: Record<EdgeKind, string> = {
+  tag: "hsl(330 85% 65%)",
+  folder: "hsl(var(--primary))",
+  keyword: "hsl(220 95% 62%)",
+};
 
 const PAIN_POINTS: { icon: LucideIcon; title: string; body: string }[] = [
   {
@@ -352,16 +366,18 @@ const ProductShot = () => (
 );
 
 /**
- * A small, self-contained network diagram — draggable nodes, hover to see
- * what connects to what. Sample data only (the same items shown in "What it
- * catches" and the timeline above), but the interaction is real: this is
- * roughly what the product does with your own saved ideas, just with your
- * mouse standing in for the part that normally happens on its own.
+ * A small, self-contained network diagram of the exact four items shown in
+ * "What it catches" above, plus two of the folders from the product shot.
+ * It isn't decoration standing in for the product — it's the same mechanism
+ * as the in-app Graph, run on four fixed examples instead of your own vault:
+ * items get wired together because they share a folder, a tag, or a keyword,
+ * and hovering a connection says which. Drag a node to move it; the real
+ * thing does the placing for you.
  *
  * Deliberately hand-rolled instead of a graph library: an early version of
  * this page shipped three.js and a force-graph package just for a hero
  * visual (see docs/LANDING_TEMPLATE.md) and both got dropped for bundle
- * size. Ten nodes and eleven edges don't need a physics engine.
+ * size. Six nodes and six edges don't need a physics engine.
  */
 const IdeaGraph = () => {
   const [nodes, setNodes] = useState(GRAPH_NODES);
@@ -394,43 +410,57 @@ const IdeaGraph = () => {
   const endDrag = () => setDragging(null);
 
   const focusId = dragging ?? hovered;
-  const activeSet = focusId
-    ? new Set(GRAPH_EDGES.filter(([a, b]) => a === focusId || b === focusId).flat())
-    : null;
+  const activeEdges = focusId ? GRAPH_EDGES.filter((e) => e.a === focusId || e.b === focusId) : [];
+  const activeSet = focusId ? new Set(activeEdges.flatMap((e) => [e.a, e.b])) : null;
 
   return (
     <div className="rounded-2xl border border-border bg-card p-3 sm:p-5">
       <svg
         ref={svgRef}
-        viewBox="0 0 640 340"
+        viewBox="0 0 560 320"
         role="img"
-        aria-label="Interactive diagram of sample saved ideas connected by shared themes"
-        className="h-[280px] w-full touch-none select-none sm:h-[320px]"
+        aria-label="Interactive diagram of the four items from 'What it catches' connected by shared folder, tag, or keyword"
+        className="h-[260px] w-full touch-none select-none sm:h-[300px]"
         onPointerMove={onSvgMove}
         onPointerUp={endDrag}
         onPointerCancel={endDrag}
       >
-        {GRAPH_EDGES.map(([a, b]) => {
-          const na = byId[a];
-          const nb = byId[b];
+        {GRAPH_EDGES.map((e) => {
+          const na = byId[e.a];
+          const nb = byId[e.b];
           if (!na || !nb) return null;
-          const dim = activeSet ? !(activeSet.has(a) && activeSet.has(b)) : false;
+          const active = activeSet ? activeSet.has(e.a) && activeSet.has(e.b) : false;
+          const dim = activeSet ? !active : false;
+          const mx = (na.x + nb.x) / 2;
+          const my = (na.y + nb.y) / 2;
           return (
-            <line
-              key={`${a}-${b}`}
-              x1={na.x}
-              y1={na.y}
-              x2={nb.x}
-              y2={nb.y}
-              stroke="hsl(var(--foreground))"
-              strokeOpacity={dim ? 0.05 : 0.25}
-              strokeWidth={1.5}
-            />
+            <g key={`${e.a}-${e.b}`}>
+              <line
+                x1={na.x}
+                y1={na.y}
+                x2={nb.x}
+                y2={nb.y}
+                stroke={EDGE_COLOR[e.kind]}
+                strokeOpacity={dim ? 0.08 : active ? 0.85 : 0.35}
+                strokeWidth={active ? 2 : 1.5}
+              />
+              {active && (
+                <text
+                  x={mx}
+                  y={my - 6}
+                  textAnchor="middle"
+                  style={{ font: "600 10px system-ui, sans-serif", fill: EDGE_COLOR[e.kind] }}
+                >
+                  {e.reason}
+                </text>
+              )}
+            </g>
           );
         })}
         {nodes.map((n) => {
           const dim = activeSet ? !activeSet.has(n.id) : false;
           const active = focusId === n.id;
+          const isFolder = n.kind === "folder";
           return (
             <g
               key={n.id}
@@ -441,11 +471,27 @@ const IdeaGraph = () => {
               onPointerEnter={() => !dragging && setHovered(n.id)}
               onPointerLeave={() => setHovered((h) => (h === n.id ? null : h))}
             >
-              <circle r={active ? 8.5 : 6} fill={CLUSTER_COLOR[n.cluster]} />
-              <circle r={active ? 8.5 : 6} fill="none" stroke="hsl(var(--card))" strokeWidth={2} />
+              {isFolder ? (
+                <rect
+                  x={-9}
+                  y={-7}
+                  width={18}
+                  height={14}
+                  rx={3}
+                  fill="none"
+                  stroke="hsl(var(--foreground))"
+                  strokeWidth={active ? 2 : 1.5}
+                  strokeOpacity={0.85}
+                />
+              ) : (
+                <>
+                  <circle r={active ? 8.5 : 6} fill="hsl(var(--primary))" />
+                  <circle r={active ? 8.5 : 6} fill="none" stroke="hsl(var(--card))" strokeWidth={2} />
+                </>
+              )}
               <text
                 x={0}
-                y={active ? -16 : -12}
+                y={active ? -18 : isFolder ? -13 : -12}
                 textAnchor="middle"
                 style={{
                   font: active ? "600 11px system-ui, sans-serif" : "10px system-ui, sans-serif",
@@ -458,8 +504,22 @@ const IdeaGraph = () => {
           );
         })}
       </svg>
-      <p className="mt-1 px-1 text-[12.5px] text-muted-foreground">
-        Drag a node. Hover one to see what it&rsquo;s connected to.
+      <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1.5 px-1 text-[11.5px] text-muted-foreground">
+        <span className="flex items-center gap-1.5">
+          <span className="h-[9px] w-[9px] rounded-full" style={{ background: EDGE_COLOR.folder }} />
+          Same folder
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span className="h-[9px] w-[9px] rounded-full" style={{ background: EDGE_COLOR.tag }} />
+          Shared tag
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span className="h-[9px] w-[9px] rounded-full" style={{ background: EDGE_COLOR.keyword }} />
+          Shared keyword
+        </span>
+      </div>
+      <p className="mt-1.5 px-1 text-[12.5px] text-muted-foreground">
+        This is the in-app Graph, run on four examples instead of your vault. Drag a node; hover a line for why it&rsquo;s there.
       </p>
     </div>
   );
