@@ -1,8 +1,10 @@
 import { useEffect, useRef, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 /**
- * A horizontal row that scrolls forever in both directions.
+ * A horizontal row that scrolls forever in both directions — on a touch
+ * surface narrow enough that not everything fits on screen at once.
  *
  * The children are rendered three times and the scroller sits on the middle
  * copy. Whenever a scroll drifts into the first or last copy we jump back by
@@ -15,6 +17,10 @@ import { cn } from "@/lib/utils";
  *
  * Nothing animates on its own. These are buttons — a row that drifts while you
  * are trying to press something is a worse problem than a row that ends.
+ *
+ * On a desktop-width frame there is usually room to just show every option,
+ * and nobody flicks a mouse — so there the row wraps to as many lines as it
+ * needs instead of looping, and renders each child once.
  */
 export const LoopRow = ({
   children,
@@ -26,10 +32,12 @@ export const LoopRow = ({
   /** Named for screen readers; the duplicate copies are hidden from them. */
   ariaLabel: string;
 }) => {
+  const isMobile = useIsMobile();
   const scroller = useRef<HTMLDivElement>(null);
   const middle = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    if (!isMobile) return;
     const el = scroller.current;
     const mid = middle.current;
     if (!el || !mid) return;
@@ -61,7 +69,15 @@ export const LoopRow = ({
       el.removeEventListener("scroll", onScroll);
       ro.disconnect();
     };
-  }, [children]);
+  }, [children, isMobile]);
+
+  if (!isMobile) {
+    return (
+      <div role="group" aria-label={ariaLabel} className={cn("flex flex-wrap items-center", className)}>
+        {children}
+      </div>
+    );
+  }
 
   return (
     <div

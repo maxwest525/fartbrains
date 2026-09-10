@@ -3,6 +3,7 @@ import { Sparkles, Loader2, AlertTriangle, Inbox, Folder as FolderIcon, CheckCir
 import { cn } from "@/lib/utils";
 import { useDuplicateUrl } from "@/hooks/useDuplicateUrl";
 import { useUrlCheck } from "@/hooks/useUrlCheck";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
@@ -118,6 +119,7 @@ const linesToChecklist = (raw: string): string =>
  * The optional title is auto-filled by AI; users edit on the idea detail view.
  */
 export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Props) => {
+  const isMobile = useIsMobile();
   const { data: folders = [] } = useFolders();
   const createIdea = useCreateIdea();
   const createFolder = useCreateFolder();
@@ -652,7 +654,12 @@ export const ComposeIdea = ({ defaultFolderId, onCreated, onOpenExisting }: Prop
           </Button>
         </div>
       )}
-      <div className="flex items-center gap-1.5 overflow-x-auto -mx-1 px-1 pb-0.5 no-scrollbar scroll-momentum">
+      <div
+        className={cn(
+          "flex items-center gap-1.5 pb-0.5",
+          isMobile ? "overflow-x-auto -mx-1 px-1 no-scrollbar scroll-momentum" : "flex-wrap",
+        )}
+      >
         <button
           type="button"
           onClick={() => setFolder(NO_FOLDER)}
