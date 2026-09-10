@@ -124,7 +124,7 @@ export function useIdeas(filter: IdeaFilter, pageSize: number = IDEAS_PAGE_SIZE)
       if (filter.kind === "trash") {
         const { data, error } = await supabase
           .from("ideas")
-          .select("*")
+          .select(IDEA_COLUMNS)
           .not("deleted_at", "is", null)
           .order("deleted_at", { ascending: false })
           .range(0, pageSize - 1);
@@ -134,7 +134,7 @@ export function useIdeas(filter: IdeaFilter, pageSize: number = IDEAS_PAGE_SIZE)
 
       let q = supabase
         .from("ideas")
-        .select("*")
+        .select(IDEA_COLUMNS)
         .is("deleted_at", null)
         .order("pinned_at", { ascending: false, nullsFirst: false })
         .order("updated_at", { ascending: false });
@@ -180,7 +180,7 @@ export function useIdea(id: string | null) {
     enabled: !!id,
     queryFn: async (): Promise<Idea | null> => {
       if (!id) return null;
-      const { data, error } = await supabase.from("ideas").select("*").eq("id", id).maybeSingle();
+      const { data, error } = await supabase.from("ideas").select(IDEA_COLUMNS).eq("id", id).maybeSingle();
       if (error) throw error;
       return data as Idea | null;
     },
