@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { motion, MotionConfig, type MotionProps } from "motion/react";
 import {
@@ -112,11 +112,31 @@ const SUMMARY_POINTS = [
   "Show the value before the paywall, every time. The card comes after the win.",
 ];
 
-const TIMELINE: { when: string; what: string }[] = [
-  { when: "12 MAR", what: "Reel — isolation is the selling point, nobody shares a database" },
-  { when: "03 JUN", what: "Podcast — onboarding costs them two engineer-days" },
-  { when: "28 AUG", what: "Note — “same idea, but provisioning has to be automatic”" },
+type GraphNode = { id: string; label: string; cluster: 0 | 1 | 2; x: number; y: number };
+
+/** Sample nodes for the landing page's interactive graph — the same kind of
+ * saved items shown elsewhere on this page (What it catches, the timeline),
+ * arranged into the clusters Fart Brains would actually find between them. */
+const GRAPH_NODES: GraphNode[] = [
+  { id: "seo",      label: "the SEO play from that reel",        cluster: 0, x: 150, y: 95 },
+  { id: "onboard1", label: "why their onboarding converts",      cluster: 0, x: 245, y: 165 },
+  { id: "onboard2", label: "onboarding costs two engineer-days", cluster: 0, x: 110, y: 210 },
+  { id: "growth",   label: "Growth ideas",                       cluster: 0, x: 205, y: 60 },
+  { id: "tenancy",  label: "how they did multi-tenancy",         cluster: 1, x: 460, y: 90 },
+  { id: "isolation",label: "isolation is the selling point",     cluster: 1, x: 400, y: 160 },
+  { id: "provision",label: "provisioning has to be automatic",   cluster: 1, x: 500, y: 195 },
+  { id: "arch",     label: "Architecture",                       cluster: 1, x: 555, y: 120 },
+  { id: "shower",   label: "the one you had in the shower",      cluster: 2, x: 290, y: 300 },
+  { id: "readlater",label: "Read later",                         cluster: 2, x: 380, y: 270 },
 ];
+
+const GRAPH_EDGES: [string, string][] = [
+  ["seo", "growth"], ["seo", "onboard1"], ["onboard1", "onboard2"], ["onboard1", "growth"],
+  ["tenancy", "arch"], ["tenancy", "isolation"], ["isolation", "provision"], ["provision", "arch"],
+  ["shower", "readlater"], ["shower", "onboard1"], ["readlater", "provision"],
+];
+
+const CLUSTER_COLOR = ["hsl(var(--primary))", "hsl(220 95% 62%)", "hsl(var(--accent))"] as const;
 
 const PAIN_POINTS: { icon: LucideIcon; title: string; body: string }[] = [
   {
@@ -330,6 +350,120 @@ const ProductShot = () => (
     </div>
   </div>
 );
+
+/**
+ * A small, self-contained network diagram — draggable nodes, hover to see
+ * what connects to what. Sample data only (the same items shown in "What it
+ * catches" and the timeline above), but the interaction is real: this is
+ * roughly what the product does with your own saved ideas, just with your
+ * mouse standing in for the part that normally happens on its own.
+ *
+ * Deliberately hand-rolled instead of a graph library: an early version of
+ * this page shipped three.js and a force-graph package just for a hero
+ * visual (see docs/LANDING_TEMPLATE.md) and both got dropped for bundle
+ * size. Ten nodes and eleven edges don't need a physics engine.
+ */
+const IdeaGraph = () => {
+  const [nodes, setNodes] = useState(GRAPH_NODES);
+  const [hovered, setHovered] = useState<string | null>(null);
+  const [dragging, setDragging] = useState<string | null>(null);
+  const svgRef = useRef<SVGSVGElement>(null);
+  const byId = Object.fromEntries(nodes.map((n) => [n.id, n]));
+
+  const toSvgPoint = (clientX: number, clientY: number) => {
+    const svg = svgRef.current;
+    const box = svg?.viewBox.baseVal;
+    if (!svg || !box) return { x: 0, y: 0 };
+    const rect = svg.getBoundingClientRect();
+    return {
+      x: box.x + ((clientX - rect.left) / rect.width) * box.width,
+      y: box.y + ((clientY - rect.top) / rect.height) * box.height,
+    };
+  };
+
+  const onNodeDown = (id: string) => (e: React.PointerEvent) => {
+    (e.currentTarget as Element).setPointerCapture(e.pointerId);
+    setDragging(id);
+    setHovered(id);
+  };
+  const onSvgMove = (e: React.PointerEvent) => {
+    if (!dragging) return;
+    const p = toSvgPoint(e.clientX, e.clientY);
+    setNodes((ns) => ns.map((n) => (n.id === dragging ? { ...n, x: p.x, y: p.y } : n)));
+  };
+  const endDrag = () => setDragging(null);
+
+  const focusId = dragging ?? hovered;
+  const activeSet = focusId
+    ? new Set(GRAPH_EDGES.filter(([a, b]) => a === focusId || b === focusId).flat())
+    : null;
+
+  return (
+    <div className="rounded-2xl border border-border bg-card p-3 sm:p-5">
+      <svg
+        ref={svgRef}
+        viewBox="0 0 640 340"
+        role="img"
+        aria-label="Interactive diagram of sample saved ideas connected by shared themes"
+        className="h-[280px] w-full touch-none select-none sm:h-[320px]"
+        onPointerMove={onSvgMove}
+        onPointerUp={endDrag}
+        onPointerCancel={endDrag}
+      >
+        {GRAPH_EDGES.map(([a, b]) => {
+          const na = byId[a];
+          const nb = byId[b];
+          if (!na || !nb) return null;
+          const dim = activeSet ? !(activeSet.has(a) && activeSet.has(b)) : false;
+          return (
+            <line
+              key={`${a}-${b}`}
+              x1={na.x}
+              y1={na.y}
+              x2={nb.x}
+              y2={nb.y}
+              stroke="hsl(var(--foreground))"
+              strokeOpacity={dim ? 0.05 : 0.25}
+              strokeWidth={1.5}
+            />
+          );
+        })}
+        {nodes.map((n) => {
+          const dim = activeSet ? !activeSet.has(n.id) : false;
+          const active = focusId === n.id;
+          return (
+            <g
+              key={n.id}
+              transform={`translate(${n.x} ${n.y})`}
+              opacity={dim ? 0.32 : 1}
+              className="cursor-grab active:cursor-grabbing"
+              onPointerDown={onNodeDown(n.id)}
+              onPointerEnter={() => !dragging && setHovered(n.id)}
+              onPointerLeave={() => setHovered((h) => (h === n.id ? null : h))}
+            >
+              <circle r={active ? 8.5 : 6} fill={CLUSTER_COLOR[n.cluster]} />
+              <circle r={active ? 8.5 : 6} fill="none" stroke="hsl(var(--card))" strokeWidth={2} />
+              <text
+                x={0}
+                y={active ? -16 : -12}
+                textAnchor="middle"
+                style={{
+                  font: active ? "600 11px system-ui, sans-serif" : "10px system-ui, sans-serif",
+                  fill: "hsl(var(--foreground) / 0.85)",
+                }}
+              >
+                {n.label.length > 27 ? `${n.label.slice(0, 26)}…` : n.label}
+              </text>
+            </g>
+          );
+        })}
+      </svg>
+      <p className="mt-1 px-1 text-[12.5px] text-muted-foreground">
+        Drag a node. Hover one to see what it&rsquo;s connected to.
+      </p>
+    </div>
+  );
+};
 
 const IconBadge = ({ icon: Icon }: { icon: LucideIcon }) => (
   <div className="mb-5 inline-flex h-11 w-11 items-center justify-center rounded-[12px] border border-primary/25 bg-primary/10 text-primary">
@@ -574,18 +708,9 @@ const Landing = ({ onEnter }: { onEnter?: () => void }) => {
               </p>
             </div>
             <div className="flex flex-col gap-3 lg:col-span-7">
-              {TIMELINE.map((t, i) => (
-                <motion.div
-                  key={t.when}
-                  className="flex items-center gap-4 rounded-xl border border-border bg-card px-5 py-4"
-                  {...reveal({ y: 20, delay: i * 0.08 })}
-                >
-                  <span className="w-[76px] shrink-0 text-[11.5px] font-medium text-muted-foreground">
-                    {t.when}
-                  </span>
-                  <span className="text-[15.5px] text-foreground/85">{t.what}</span>
-                </motion.div>
-              ))}
+              <motion.div {...reveal({ y: 24 })}>
+                <IdeaGraph />
+              </motion.div>
               <motion.div
                 className="mt-2 flex gap-4 rounded-xl border border-primary/40 px-5 py-[22px]"
                 style={{
