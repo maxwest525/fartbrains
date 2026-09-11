@@ -114,7 +114,7 @@ const SUMMARY_POINTS = [
 ];
 
 type GraphCluster = { id: string; label: string; hue: number };
-type GraphNode = { id: string; cluster: string; label: string; detail: string };
+type GraphNode = { id: string; cluster: string; label: string; detail: string; concept: string };
 type LaidOutNode = GraphNode & { x: number; y: number };
 
 /**
@@ -141,65 +141,65 @@ const GRAPH_CLUSTERS: GraphCluster[] = [
 ];
 
 const GRAPH_NODES: GraphNode[] = [
-  { id: "n1",  cluster: "growth",       label: "Dropbox's double-sided referral",     detail: "Give space, get space — both sides got extra storage, and it drove roughly 60% of Dropbox's early signups." },
-  { id: "n2",  cluster: "growth",       label: "PayPal's $10-for-signup",             detail: "PayPal paid new users and referrers real cash in its early days to bootstrap two-sided adoption." },
-  { id: "n3",  cluster: "growth",       label: "Airbnb's Craigslist cross-post",      detail: "Airbnb let hosts one-click cross-post listings to Craigslist to tap into existing housing-search traffic." },
-  { id: "n4",  cluster: "growth",       label: "Slack's time-to-2,000-messages",      detail: "Slack tracked how fast a team hit 2,000 messages as its core activation metric, not signups." },
-  { id: "n5",  cluster: "growth",       label: "Superhuman's onboarding score",       detail: "Superhuman optimized onboarding by tracking the % who'd be 'very disappointed' without it, targeting 40%+." },
+  { id: "n1",  cluster: "growth",       label: "Dropbox's double-sided referral",     detail: "Give space, get space — both sides got extra storage, and it drove roughly 60% of Dropbox's early signups.", concept: "A two-sided invite reward, drafted into a spec: give a perk, get a perk." },
+  { id: "n2",  cluster: "growth",       label: "PayPal's $10-for-signup",             detail: "PayPal paid new users and referrers real cash in its early days to bootstrap two-sided adoption.", concept: "A cash-referral test plan, budgeted and scoped, ready to hand to marketing." },
+  { id: "n3",  cluster: "growth",       label: "Airbnb's Craigslist cross-post",      detail: "Airbnb let hosts one-click cross-post listings to Craigslist to tap into existing housing-search traffic.", concept: "A cross-post integration brief, scoped small enough for a two-day build." },
+  { id: "n4",  cluster: "growth",       label: "Slack's time-to-2,000-messages",      detail: "Slack tracked how fast a team hit 2,000 messages as its core activation metric, not signups.", concept: "An activation-metric dashboard spec, built around your own equivalent milestone." },
+  { id: "n5",  cluster: "growth",       label: "Superhuman's onboarding score",       detail: "Superhuman optimized onboarding by tracking the % who'd be 'very disappointed' without it, targeting 40%+.", concept: "A one-question 'how disappointed' survey, drafted for your own onboarding flow." },
 
-  { id: "n6",  cluster: "onboarding",   label: "Duolingo's streak mechanic",          detail: "A visible daily streak, and the fear of breaking it, is Duolingo's single biggest retention lever." },
-  { id: "n7",  cluster: "onboarding",   label: "Notion's template gallery",           detail: "New users pick a template instead of a blank page, so day one already has something in it." },
-  { id: "n8",  cluster: "onboarding",   label: "Canva's 'design for X' prompt",       detail: "Canva asks what you're making before showing a blank canvas, then narrows the toolset to match." },
-  { id: "n9",  cluster: "onboarding",   label: "Calendly's link-first setup",         detail: "One link replaces a scheduling back-and-forth; the product is themed around avoiding a second email." },
-  { id: "n10", cluster: "onboarding",   label: "Linear's opinionated defaults",       detail: "Linear ships almost no configuration up front — the defaults are the product's opinion on how teams work." },
+  { id: "n6",  cluster: "onboarding",   label: "Duolingo's streak mechanic",          detail: "A visible daily streak, and the fear of breaking it, is Duolingo's single biggest retention lever.", concept: "A daily-streak counter spec, ready to drop into your onboarding screen." },
+  { id: "n7",  cluster: "onboarding",   label: "Notion's template gallery",           detail: "New users pick a template instead of a blank page, so day one already has something in it.", concept: "A starter-template gallery outline, drafted for your own blank-page problem." },
+  { id: "n8",  cluster: "onboarding",   label: "Canva's 'design for X' prompt",       detail: "Canva asks what you're making before showing a blank canvas, then narrows the toolset to match.", concept: "A 'what are you making' intake prompt, drafted for your composer's first screen." },
+  { id: "n9",  cluster: "onboarding",   label: "Calendly's link-first setup",         detail: "One link replaces a scheduling back-and-forth; the product is themed around avoiding a second email.", concept: "A one-link booking flow brief, scoped to replace a scheduling email thread." },
+  { id: "n10", cluster: "onboarding",   label: "Linear's opinionated defaults",       detail: "Linear ships almost no configuration up front — the defaults are the product's opinion on how teams work.", concept: "An 'opinionated defaults' checklist, drafted for your next settings screen." },
 
-  { id: "n11", cluster: "design",       label: "Figma's live multiplayer cursors",    detail: "Seeing a teammate's cursor move in real time was Figma's biggest differentiator over file-based tools." },
-  { id: "n12", cluster: "design",       label: "Apple's 'one more thing'",            detail: "Structuring a keynote with a late surprise is a storytelling beat Apple reused for two decades." },
-  { id: "n13", cluster: "design",       label: "Material Design's elevation scale",   detail: "Shadows in Material Design map to a strict elevation scale, not arbitrary drop-shadow values." },
-  { id: "n14", cluster: "design",       label: "Stripe's checkout auto-fill",         detail: "Stripe's checkout detects card type and country from the first few digits, before you finish typing." },
-  { id: "n15", cluster: "design",       label: "Airbnb's 11-star experience",         detail: "Airbnb's internal framework imagines an absurd 11-star stay to find ideas worth stealing at 5 stars." },
+  { id: "n11", cluster: "design",       label: "Figma's live multiplayer cursors",    detail: "Seeing a teammate's cursor move in real time was Figma's biggest differentiator over file-based tools.", concept: "A live-presence indicator spec, drafted for your own collaborative screens." },
+  { id: "n12", cluster: "design",       label: "Apple's 'one more thing'",            detail: "Structuring a keynote with a late surprise is a storytelling beat Apple reused for two decades.", concept: "A presentation outline with the best reveal deliberately saved for last." },
+  { id: "n13", cluster: "design",       label: "Material Design's elevation scale",   detail: "Shadows in Material Design map to a strict elevation scale, not arbitrary drop-shadow values.", concept: "A shadow/elevation token scale, drafted to standardize your own UI." },
+  { id: "n14", cluster: "design",       label: "Stripe's checkout auto-fill",         detail: "Stripe's checkout detects card type and country from the first few digits, before you finish typing.", concept: "A card-autodetect UX spec, ready to hand off for your checkout flow." },
+  { id: "n15", cluster: "design",       label: "Airbnb's 11-star experience",         detail: "Airbnb's internal framework imagines an absurd 11-star stay to find ideas worth stealing at 5 stars.", concept: "An '11-star' brainstorm doc, scaled back into three shippable 5-star ideas." },
 
-  { id: "n16", cluster: "engineering",  label: "How Slack shards workspaces",         detail: "Each Slack workspace is effectively an isolated tenant, sharded so one huge workspace can't slow another." },
-  { id: "n17", cluster: "engineering",  label: "Stripe's idempotency keys",           detail: "Every write API call takes an idempotency key so a retried request can never double-charge a customer." },
-  { id: "n18", cluster: "engineering",  label: "GitHub's contribution graph",         detail: "The green squares are a gamified visualization of commits — a retention mechanic, not a technical need." },
-  { id: "n19", cluster: "engineering",  label: "Basecamp's boring stack",             detail: "Basecamp is famously built on an intentionally 'boring' Rails stack instead of chasing new frameworks." },
-  { id: "n20", cluster: "engineering",  label: "Netflix's chaos engineering",         detail: "Netflix built Chaos Monkey to randomly kill production servers on purpose, forcing resilience." },
+  { id: "n16", cluster: "engineering",  label: "How Slack shards workspaces",         detail: "Each Slack workspace is effectively an isolated tenant, sharded so one huge workspace can't slow another.", concept: "A tenant-isolation architecture doc, drafted for your own multi-tenant setup." },
+  { id: "n17", cluster: "engineering",  label: "Stripe's idempotency keys",           detail: "Every write API call takes an idempotency key so a retried request can never double-charge a customer.", concept: "An idempotency-key spec for your write endpoints, ready for review." },
+  { id: "n18", cluster: "engineering",  label: "GitHub's contribution graph",         detail: "The green squares are a gamified visualization of commits — a retention mechanic, not a technical need.", concept: "A gamified-consistency widget brief, drafted for your own retention screen." },
+  { id: "n19", cluster: "engineering",  label: "Basecamp's boring stack",             detail: "Basecamp is famously built on an intentionally 'boring' Rails stack instead of chasing new frameworks.", concept: "A 'boring stack' tech-choice memo, drafted to justify your next infra decision." },
+  { id: "n20", cluster: "engineering",  label: "Netflix's chaos engineering",         detail: "Netflix built Chaos Monkey to randomly kill production servers on purpose, forcing resilience.", concept: "A chaos-testing runbook outline, scoped to your own production environment." },
 
-  { id: "n21", cluster: "content",      label: "Wistia's video-first blog",           detail: "Wistia built its content marketing around video tutorials instead of text posts, matching its product." },
-  { id: "n22", cluster: "content",      label: "Ahrefs' content-decay tracking",      detail: "Ahrefs tracks when old posts start losing rankings and schedules a refresh instead of net-new content." },
-  { id: "n23", cluster: "content",      label: "Patagonia's ‘Don't Buy This Jacket’", detail: "Patagonia ran a Black Friday ad telling people not to buy their jacket — and it grew sales." },
-  { id: "n24", cluster: "content",      label: "Mailchimp's freemium ladder",         detail: "Mailchimp's free tier is generous enough to get a business fully dependent before the first bill." },
-  { id: "n25", cluster: "content",      label: "HubSpot's inbound methodology",       detail: "HubSpot built an entire category, 'inbound marketing,' just to have a name for what it was selling." },
+  { id: "n21", cluster: "content",      label: "Wistia's video-first blog",           detail: "Wistia built its content marketing around video tutorials instead of text posts, matching its product.", concept: "A video-first content calendar, drafted around your own product tutorials." },
+  { id: "n22", cluster: "content",      label: "Ahrefs' content-decay tracking",      detail: "Ahrefs tracks when old posts start losing rankings and schedules a refresh instead of net-new content.", concept: "A content-refresh schedule, drafted from your own already-published posts." },
+  { id: "n23", cluster: "content",      label: "Patagonia's ‘Don't Buy This Jacket’", detail: "Patagonia ran a Black Friday ad telling people not to buy their jacket — and it grew sales.", concept: "A counter-intuitive ad concept, drafted around your own product's honesty angle." },
+  { id: "n24", cluster: "content",      label: "Mailchimp's freemium ladder",         detail: "Mailchimp's free tier is generous enough to get a business fully dependent before the first bill.", concept: "A freemium-tier spec, scoped to what your product can afford to give away." },
+  { id: "n25", cluster: "content",      label: "HubSpot's inbound methodology",       detail: "HubSpot built an entire category, 'inbound marketing,' just to have a name for what it was selling.", concept: "A named-methodology one-pager, drafted to brand your own approach." },
 
-  { id: "n26", cluster: "community",    label: "Reddit's karma system",               detail: "Karma has no monetary value, but it's enough of a score to shape years of posting behavior." },
-  { id: "n27", cluster: "community",    label: "Discord's server-first structure",    detail: "Discord grew by embedding inside existing gaming communities instead of building its own social graph." },
-  { id: "n28", cluster: "community",    label: "Product Hunt's launch-day spike",     detail: "A single day of concentrated attention on Product Hunt can outweigh months of steady organic traffic." },
-  { id: "n29", cluster: "community",    label: "'Do things that don't scale'",        detail: "Paul Graham's Y Combinator essay argues early growth almost always comes from manual, unscalable effort." },
-  { id: "n30", cluster: "community",    label: "Duolingo's owl on social media",      detail: "Duolingo's unhinged mascot voice on TikTok is a scrappy alternative to traditional brand marketing." },
+  { id: "n26", cluster: "community",    label: "Reddit's karma system",               detail: "Karma has no monetary value, but it's enough of a score to shape years of posting behavior.", concept: "A non-monetary points system spec, drafted for your own community feature." },
+  { id: "n27", cluster: "community",    label: "Discord's server-first structure",    detail: "Discord grew by embedding inside existing gaming communities instead of building its own social graph.", concept: "A go-to-market brief aimed at existing communities instead of a cold audience." },
+  { id: "n28", cluster: "community",    label: "Product Hunt's launch-day spike",     detail: "A single day of concentrated attention on Product Hunt can outweigh months of steady organic traffic.", concept: "A launch-day plan built around one concentrated push instead of a slow drip." },
+  { id: "n29", cluster: "community",    label: "'Do things that don't scale'",        detail: "Paul Graham's Y Combinator essay argues early growth almost always comes from manual, unscalable effort.", concept: "A manual, unscalable first-30-days plan, drafted just to land your first users." },
+  { id: "n30", cluster: "community",    label: "Duolingo's owl on social media",      detail: "Duolingo's unhinged mascot voice on TikTok is a scrappy alternative to traditional brand marketing.", concept: "An unhinged brand-voice content brief, drafted for your own social accounts." },
 
-  { id: "n31", cluster: "monetization", label: "Gumroad's simple payout split",       detail: "Gumroad's pitch is a flat, transparent cut instead of the tiered fee structures competitors used." },
-  { id: "n32", cluster: "monetization", label: "Substack's flat 10% cut",             detail: "Substack takes a flat 10% of subscription revenue, betting writers will grow the pie, not haggle the cut." },
-  { id: "n33", cluster: "monetization", label: "Zoom's 40-minute free limit",         detail: "Zoom's free group-call limit was calibrated just short enough to nudge upgrades without killing adoption." },
-  { id: "n34", cluster: "monetization", label: "Spotify's family-plan upsell",        detail: "Spotify's family plan is priced to make individual premium look like the worse deal for two or more." },
-  { id: "n35", cluster: "monetization", label: "Dropbox's storage-based pricing",     detail: "Dropbox charges for the resource that scales with how deeply embedded you already are in the product." },
+  { id: "n31", cluster: "monetization", label: "Gumroad's simple payout split",       detail: "Gumroad's pitch is a flat, transparent cut instead of the tiered fee structures competitors used.", concept: "A flat-fee pricing memo, drafted to simplify your own payout structure." },
+  { id: "n32", cluster: "monetization", label: "Substack's flat 10% cut",             detail: "Substack takes a flat 10% of subscription revenue, betting writers will grow the pie, not haggle the cut.", concept: "A revenue-share spec, drafted to align your incentives with your creators'." },
+  { id: "n33", cluster: "monetization", label: "Zoom's 40-minute free limit",         detail: "Zoom's free group-call limit was calibrated just short enough to nudge upgrades without killing adoption.", concept: "A free-tier limit calibrated to nudge upgrades, drafted for your own paywall." },
+  { id: "n34", cluster: "monetization", label: "Spotify's family-plan upsell",        detail: "Spotify's family plan is priced to make individual premium look like the worse deal for two or more.", concept: "A group-plan pricing page, drafted to make the multi-seat option obviously better." },
+  { id: "n35", cluster: "monetization", label: "Dropbox's storage-based pricing",     detail: "Dropbox charges for the resource that scales with how deeply embedded you already are in the product.", concept: "A usage-based pricing model, drafted around whatever resource you're already scaling." },
 
-  { id: "n36", cluster: "culture",      label: "Basecamp's Shape Up cycles",          detail: "Basecamp's 'Shape Up' method runs six-week cycles with a mandatory cool-down week instead of endless sprints." },
-  { id: "n37", cluster: "culture",      label: "Amazon's two-pizza teams",            detail: "Amazon's rule of thumb: if a team can't be fed by two pizzas, it's too big to move fast." },
-  { id: "n38", cluster: "culture",      label: "Netflix's 'freedom and responsibility'", detail: "Netflix's culture deck traded approval chains for high autonomy and high accountability." },
-  { id: "n39", cluster: "culture",      label: "Buffer's public salary formula",      detail: "Buffer publishes the exact formula used to calculate every employee's salary, founders included." },
-  { id: "n40", cluster: "culture",      label: "Automattic's fully remote org",       detail: "WordPress.com's parent company has operated fully distributed since before remote work was mainstream." },
+  { id: "n36", cluster: "culture",      label: "Basecamp's Shape Up cycles",          detail: "Basecamp's 'Shape Up' method runs six-week cycles with a mandatory cool-down week instead of endless sprints.", concept: "A six-week cycle plan with a built-in cool-down week, drafted for your team." },
+  { id: "n37", cluster: "culture",      label: "Amazon's two-pizza teams",            detail: "Amazon's rule of thumb: if a team can't be fed by two pizzas, it's too big to move fast.", concept: "A team-sizing policy memo, drafted to keep your squads small and fast." },
+  { id: "n38", cluster: "culture",      label: "Netflix's 'freedom and responsibility'", detail: "Netflix's culture deck traded approval chains for high autonomy and high accountability.", concept: "A lightweight culture doc trading approvals for autonomy, drafted for your team." },
+  { id: "n39", cluster: "culture",      label: "Buffer's public salary formula",      detail: "Buffer publishes the exact formula used to calculate every employee's salary, founders included.", concept: "A transparent compensation formula, drafted and ready to publish." },
+  { id: "n40", cluster: "culture",      label: "Automattic's fully remote org",       detail: "WordPress.com's parent company has operated fully distributed since before remote work was mainstream.", concept: "A fully-remote operating doc, drafted for your own distributed team." },
 
-  { id: "n41", cluster: "productivity", label: "Trello's kanban simplicity",          detail: "Trello took a manufacturing scheduling method, kanban, and stripped it to cards and columns." },
-  { id: "n42", cluster: "productivity", label: "Airtable's flexible views",           detail: "The same Airtable data can be a grid, calendar, or kanban board — one dataset, several lenses." },
-  { id: "n43", cluster: "productivity", label: "Miro's infinite canvas",              detail: "Removing the page boundary entirely changed how teams used Miro for workshops versus a fixed deck." },
-  { id: "n44", cluster: "productivity", label: "Asana's task dependencies",           detail: "Asana's dependency graph quietly turns a to-do list into something closer to a project scheduler." },
-  { id: "n45", cluster: "productivity", label: "Loom's async video culture",          detail: "Loom's pitch was replacing a meeting with a 90-second video the other person watches on their own time." },
+  { id: "n41", cluster: "productivity", label: "Trello's kanban simplicity",          detail: "Trello took a manufacturing scheduling method, kanban, and stripped it to cards and columns.", concept: "A stripped-down kanban board spec, drafted from a heavier project-management tool." },
+  { id: "n42", cluster: "productivity", label: "Airtable's flexible views",           detail: "The same Airtable data can be a grid, calendar, or kanban board — one dataset, several lenses.", concept: "A multi-view data spec — grid, calendar, kanban — drafted from one dataset." },
+  { id: "n43", cluster: "productivity", label: "Miro's infinite canvas",              detail: "Removing the page boundary entirely changed how teams used Miro for workshops versus a fixed deck.", concept: "An infinite-canvas workshop template, drafted for your next team session." },
+  { id: "n44", cluster: "productivity", label: "Asana's task dependencies",           detail: "Asana's dependency graph quietly turns a to-do list into something closer to a project scheduler.", concept: "A task-dependency graph spec, drafted to turn your list into a real schedule." },
+  { id: "n45", cluster: "productivity", label: "Loom's async video culture",          detail: "Loom's pitch was replacing a meeting with a 90-second video the other person watches on their own time.", concept: "A 90-second video-update template, drafted to replace one recurring meeting." },
 
-  { id: "n46", cluster: "social",       label: "TikTok's For You algorithm",          detail: "TikTok's feed optimizes on watch time per video, not follower graphs — why unknown accounts can go viral." },
-  { id: "n47", cluster: "social",       label: "Instagram's pivot to Reels",          detail: "Instagram restructured its feed algorithm around short video once TikTok's growth was impossible to ignore." },
-  { id: "n48", cluster: "social",       label: "LinkedIn's dwell-time ranking",       detail: "LinkedIn's algorithm rewards posts that keep people reading in-app longer — hence the hook-and-pause format." },
-  { id: "n49", cluster: "social",       label: "X's tweetstorm format",               detail: "The tweetstorm emerged from users working around a character limit; the platform later built it in natively." },
-  { id: "n50", cluster: "social",       label: "YouTube Shorts' discovery feed",      detail: "YouTube built a separate short-form discovery surface instead of blending Shorts into regular search." },
+  { id: "n46", cluster: "social",       label: "TikTok's For You algorithm",          detail: "TikTok's feed optimizes on watch time per video, not follower graphs — why unknown accounts can go viral.", concept: "A watch-time-first content brief, drafted regardless of your current follower count." },
+  { id: "n47", cluster: "social",       label: "Instagram's pivot to Reels",          detail: "Instagram restructured its feed algorithm around short video once TikTok's growth was impossible to ignore.", concept: "A short-form video test plan, drafted from your existing long-form content." },
+  { id: "n48", cluster: "social",       label: "LinkedIn's dwell-time ranking",       detail: "LinkedIn's algorithm rewards posts that keep people reading in-app longer — hence the hook-and-pause format.", concept: "A hook-and-pause post template, drafted for your next LinkedIn update." },
+  { id: "n49", cluster: "social",       label: "X's tweetstorm format",               detail: "The tweetstorm emerged from users working around a character limit; the platform later built it in natively.", concept: "A thread outline, drafted to break your long-form idea into a tweetstorm." },
+  { id: "n50", cluster: "social",       label: "YouTube Shorts' discovery feed",      detail: "YouTube built a separate short-form discovery surface instead of blending Shorts into regular search.", concept: "A dedicated short-form discovery brief, drafted separate from your main uploads." },
 ];
 
 const CLUSTER_BY_ID = Object.fromEntries(GRAPH_CLUSTERS.map((c) => [c.id, c]));
@@ -636,15 +636,22 @@ const IdeaGraph = () => {
             </div>
             <div className="mb-1 text-[14.5px] font-semibold leading-[1.3]">{selected.label}</div>
             <p className="text-[13.5px] leading-[1.5] text-muted-foreground">{selected.detail}</p>
+            <div className="mt-3 flex gap-2.5 rounded-lg border border-primary/30 bg-primary/[0.07] p-2.5">
+              <Rocket className="mt-0.5 h-4 w-4 shrink-0 text-primary" strokeWidth={1.8} aria-hidden />
+              <p className="text-[13px] leading-[1.5] text-foreground/90">
+                <span className="font-semibold text-primary">What it would draft: </span>
+                {selected.concept}
+              </p>
+            </div>
           </>
         ) : (
           <p className="flex h-full items-center text-[13px] text-muted-foreground">
-            Click any node to read the real fact behind it.
+            Click any node to read the real fact — and the concept it turns into.
           </p>
         )}
       </div>
       <p className="mt-2 px-0.5 text-[12px] text-muted-foreground">
-        50 real, publicly documented ideas — not anyone's private content, and nobody shown or referenced here endorses this product. Drag a node; click one to inspect it.
+        50 real, publicly documented ideas — not anyone's private content, and nobody shown or referenced here endorses this product. The fact is real; the drafted concept is what Fart Brains would sketch from it, the same way it does with your own saved ideas. Drag a node; click one to inspect it.
       </p>
     </div>
   );
