@@ -253,7 +253,6 @@ function ThoughtWorld({ chapter, pulse }: WorldProps) {
   );
 }
 
-
 type GraphNode = {
   id: string;
   type: "THOUGHT" | "SOURCE" | "CREATOR" | "RESEARCH" | "RULE" | "OUTCOME";
@@ -264,24 +263,139 @@ type GraphNode = {
 };
 
 const GRAPH_CORE: GraphNode[] = [
-  { id: "seed", type: "THOUGHT", title: "Paid ads + SEO should be one system", detail: "The user's original tweak preserved beside the source.", provenance: "PRIVATE NOTE · TODAY" },
-  { id: "reel", type: "SOURCE", title: "Competitor keyword strategy", detail: "Original Instagram source, transcript, claims and extracted references.", provenance: "PUBLIC SOURCE · TRANSCRIBED" },
-  { id: "creator", type: "CREATOR", title: "Creator strategy corpus", detail: "Recurring frameworks extracted from the creator's other public ideas.", provenance: "14 PUBLIC SOURCES · CITED" },
-  { id: "intent", type: "RESEARCH", title: "Commercial intent signal", detail: "Corroborating evidence connecting keyword gaps to purchase intent.", provenance: "RESEARCH PACK · 12 SOURCES" },
-  { id: "route-rule", type: "RULE", title: "Paid-or-organic routing rule", detail: "If intent is immediate, test paid. If value compounds, publish organic.", provenance: "DETERMINISTIC RULE · V3" },
-  { id: "outcome-engine", type: "OUTCOME", title: "Competitor Signal Engine", detail: "A complete product outcome assembled from the connected graph.", provenance: "FARTBRAIN OUTCOME · READY" },
-  { id: "old-paid", type: "THOUGHT", title: "Underpriced paid intent", detail: "A related thought captured three months earlier.", provenance: "PRIVATE NOTE · 3 MONTHS AGO" },
-  { id: "old-seo", type: "THOUGHT", title: "Adjacent ranking expansion", detail: "A related SEO thought recovered from the private graph.", provenance: "PRIVATE NOTE · 6 WEEKS AGO" },
-  { id: "landing-data", type: "SOURCE", title: "Landing-page conversion data", detail: "A saved dataset that validates which intent routes convert.", provenance: "PRIVATE FILE · CSV" },
-  { id: "creator-branch", type: "CREATOR", title: "Demand-capture framework", detail: "A second creator idea that strengthens the original strategy.", provenance: "PUBLIC SOURCE · CITED" },
-  { id: "difficulty", type: "RESEARCH", title: "Organic difficulty score", detail: "Evidence used to decide whether SEO can compound efficiently.", provenance: "RESEARCH · VERIFIED URL" },
-  { id: "cpc", type: "RESEARCH", title: "Paid acquisition pressure", detail: "Cost-per-click evidence used by the routing decision.", provenance: "RESEARCH · CURRENT DATA" },
-  { id: "fallback", type: "RULE", title: "Fallback branch", detail: "When organic difficulty is high, run a bounded paid validation first.", provenance: "DETERMINISTIC RULE · ELSE" },
-  { id: "validation", type: "RULE", title: "Success validation", detail: "Compare qualified acquisition cost, time-to-signal and compounding value.", provenance: "VALIDATION CONTRACT" },
-  { id: "brief", type: "OUTCOME", title: "MVP product brief", detail: "Product definition generated without requiring project access.", provenance: "OUTPUT · 12 SECTIONS" },
-  { id: "spec", type: "OUTCOME", title: "Implementation specification", detail: "Architecture, interfaces, decision logic and acceptance criteria.", provenance: "OUTPUT · VERSIONED" },
-  { id: "skill", type: "OUTCOME", title: "Reusable operator skill", detail: "The reconstructed human strategy expressed as reusable logic.", provenance: "OUTPUT · PORTABLE" },
-  { id: "bridge", type: "OUTCOME", title: "Actual Build handoff", detail: "Execution package stops safely at the MCP or API project boundary.", provenance: "CONNECTION REQUIRED" },
+  {
+    id: "seed",
+    type: "THOUGHT",
+    title: "Paid ads + SEO should be one system",
+    detail: "The user's original tweak preserved beside the source.",
+    provenance: "PRIVATE NOTE · TODAY",
+  },
+  {
+    id: "reel",
+    type: "SOURCE",
+    title: "Competitor keyword strategy",
+    detail:
+      "Original Instagram source, transcript, claims and extracted references.",
+    provenance: "PUBLIC SOURCE · TRANSCRIBED",
+  },
+  {
+    id: "creator",
+    type: "CREATOR",
+    title: "Creator strategy corpus",
+    detail:
+      "Recurring frameworks extracted from the creator's other public ideas.",
+    provenance: "14 PUBLIC SOURCES · CITED",
+  },
+  {
+    id: "intent",
+    type: "RESEARCH",
+    title: "Commercial intent signal",
+    detail:
+      "Corroborating evidence connecting keyword gaps to purchase intent.",
+    provenance: "RESEARCH PACK · 12 SOURCES",
+  },
+  {
+    id: "route-rule",
+    type: "RULE",
+    title: "Paid-or-organic routing rule",
+    detail:
+      "If intent is immediate, test paid. If value compounds, publish organic.",
+    provenance: "DETERMINISTIC RULE · V3",
+  },
+  {
+    id: "outcome-engine",
+    type: "OUTCOME",
+    title: "Competitor Signal Engine",
+    detail: "A complete product outcome assembled from the connected graph.",
+    provenance: "FARTBRAIN OUTCOME · READY",
+  },
+  {
+    id: "old-paid",
+    type: "THOUGHT",
+    title: "Underpriced paid intent",
+    detail: "A related thought captured three months earlier.",
+    provenance: "PRIVATE NOTE · 3 MONTHS AGO",
+  },
+  {
+    id: "old-seo",
+    type: "THOUGHT",
+    title: "Adjacent ranking expansion",
+    detail: "A related SEO thought recovered from the private graph.",
+    provenance: "PRIVATE NOTE · 6 WEEKS AGO",
+  },
+  {
+    id: "landing-data",
+    type: "SOURCE",
+    title: "Landing-page conversion data",
+    detail: "A saved dataset that validates which intent routes convert.",
+    provenance: "PRIVATE FILE · CSV",
+  },
+  {
+    id: "creator-branch",
+    type: "CREATOR",
+    title: "Demand-capture framework",
+    detail: "A second creator idea that strengthens the original strategy.",
+    provenance: "PUBLIC SOURCE · CITED",
+  },
+  {
+    id: "difficulty",
+    type: "RESEARCH",
+    title: "Organic difficulty score",
+    detail: "Evidence used to decide whether SEO can compound efficiently.",
+    provenance: "RESEARCH · VERIFIED URL",
+  },
+  {
+    id: "cpc",
+    type: "RESEARCH",
+    title: "Paid acquisition pressure",
+    detail: "Cost-per-click evidence used by the routing decision.",
+    provenance: "RESEARCH · CURRENT DATA",
+  },
+  {
+    id: "fallback",
+    type: "RULE",
+    title: "Fallback branch",
+    detail:
+      "When organic difficulty is high, run a bounded paid validation first.",
+    provenance: "DETERMINISTIC RULE · ELSE",
+  },
+  {
+    id: "validation",
+    type: "RULE",
+    title: "Success validation",
+    detail:
+      "Compare qualified acquisition cost, time-to-signal and compounding value.",
+    provenance: "VALIDATION CONTRACT",
+  },
+  {
+    id: "brief",
+    type: "OUTCOME",
+    title: "MVP product brief",
+    detail: "Product definition generated without requiring project access.",
+    provenance: "OUTPUT · 12 SECTIONS",
+  },
+  {
+    id: "spec",
+    type: "OUTCOME",
+    title: "Implementation specification",
+    detail: "Architecture, interfaces, decision logic and acceptance criteria.",
+    provenance: "OUTPUT · VERSIONED",
+  },
+  {
+    id: "skill",
+    type: "OUTCOME",
+    title: "Reusable operator skill",
+    detail: "The reconstructed human strategy expressed as reusable logic.",
+    provenance: "OUTPUT · PORTABLE",
+  },
+  {
+    id: "bridge",
+    type: "OUTCOME",
+    title: "Actual Build handoff",
+    detail:
+      "Execution package stops safely at the MCP or API project boundary.",
+    provenance: "CONNECTION REQUIRED",
+  },
 ];
 
 const GRAPH_NODES: GraphNode[] = [
@@ -293,7 +407,8 @@ const GRAPH_NODES: GraphNode[] = [
       type: parent.type === "OUTCOME" ? "RESEARCH" : parent.type,
       title: `Supporting ${parent.type.toLowerCase()} ${String(index + 1).padStart(2, "0")}`,
       detail: `Evidence or context connected to “${parent.title}”.`,
-      provenance: index % 3 === 0 ? "PRIVATE GRAPH · LINKED" : "SOURCE EVIDENCE · CITED",
+      provenance:
+        index % 3 === 0 ? "PRIVATE GRAPH · LINKED" : "SOURCE EVIDENCE · CITED",
       parentId: parent.id,
     } as GraphNode;
   }),
@@ -312,12 +427,15 @@ function InspectableGraph() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const selectedRef = useRef("outcome-engine");
   const [selectedId, setSelectedId] = useState("outcome-engine");
+  const [savedId, setSavedId] = useState<string | null>(null);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   selectedRef.current = selectedId;
-  const selected = GRAPH_NODES.find((node) => node.id === selectedId) ?? GRAPH_CORE[5];
-  const relatedCount = GRAPH_NODES.filter(
-    (node) => node.parentId === selected.id || node.id === selected.parentId,
-  ).length + 3;
+  const selected =
+    GRAPH_NODES.find((node) => node.id === selectedId) ?? GRAPH_CORE[5];
+  const relatedCount =
+    GRAPH_NODES.filter(
+      (node) => node.parentId === selected.id || node.id === selected.parentId,
+    ).length + 3;
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -325,7 +443,11 @@ function InspectableGraph() {
 
     let renderer: THREE.WebGLRenderer;
     try {
-      renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+      renderer = new THREE.WebGLRenderer({
+        canvas,
+        antialias: true,
+        alpha: true,
+      });
     } catch {
       return;
     }
@@ -339,7 +461,14 @@ function InspectableGraph() {
     graph.rotation.x = -0.18;
     scene.add(graph);
 
-    const typeOrder: GraphNode["type"][] = ["THOUGHT", "SOURCE", "CREATOR", "RESEARCH", "RULE", "OUTCOME"];
+    const typeOrder: GraphNode["type"][] = [
+      "THOUGHT",
+      "SOURCE",
+      "CREATOR",
+      "RESEARCH",
+      "RULE",
+      "OUTCOME",
+    ];
     const positions: THREE.Vector3[] = [];
     const meshes: THREE.Mesh[] = [];
     const materials: THREE.MeshBasicMaterial[] = [];
@@ -365,7 +494,11 @@ function InspectableGraph() {
       positions.push(position);
 
       const isCore = coreIndex >= 0;
-      const geometry = new THREE.SphereGeometry(isCore ? 0.16 : 0.055 + random() * 0.035, isCore ? 18 : 8, isCore ? 18 : 8);
+      const geometry = new THREE.SphereGeometry(
+        isCore ? 0.16 : 0.055 + random() * 0.035,
+        isCore ? 18 : 8,
+        isCore ? 18 : 8,
+      );
       const material = new THREE.MeshBasicMaterial({
         color: GRAPH_COLORS[node.type],
         transparent: true,
@@ -381,7 +514,12 @@ function InspectableGraph() {
       if (isCore) {
         const halo = new THREE.Mesh(
           new THREE.RingGeometry(0.22, 0.25, 28),
-          new THREE.MeshBasicMaterial({ color: GRAPH_COLORS[node.type], transparent: true, opacity: 0.38, side: THREE.DoubleSide }),
+          new THREE.MeshBasicMaterial({
+            color: GRAPH_COLORS[node.type],
+            transparent: true,
+            opacity: 0.38,
+            side: THREE.DoubleSide,
+          }),
         );
         halo.position.copy(position);
         halo.lookAt(camera.position);
@@ -389,21 +527,34 @@ function InspectableGraph() {
       }
     });
 
-    const indexById = new Map(GRAPH_NODES.map((node, index) => [node.id, index]));
+    const indexById = new Map(
+      GRAPH_NODES.map((node, index) => [node.id, index]),
+    );
     const edgePairs: Array<[number, number]> = [];
     GRAPH_NODES.forEach((node, index) => {
       if (node.parentId) {
         const parentIndex = indexById.get(node.parentId);
         if (parentIndex !== undefined) edgePairs.push([index, parentIndex]);
       }
-      if (index > GRAPH_CORE.length && index % 3 !== 0) edgePairs.push([index, index - 1]);
+      if (index > GRAPH_CORE.length && index % 3 !== 0)
+        edgePairs.push([index, index - 1]);
     });
     [
-      ["seed", "reel"], ["seed", "old-paid"], ["seed", "old-seo"], ["reel", "creator"],
-      ["creator", "creator-branch"], ["intent", "difficulty"], ["intent", "cpc"],
-      ["route-rule", "fallback"], ["route-rule", "validation"], ["route-rule", "outcome-engine"],
-      ["outcome-engine", "brief"], ["outcome-engine", "spec"], ["outcome-engine", "skill"],
-      ["outcome-engine", "bridge"], ["landing-data", "validation"],
+      ["seed", "reel"],
+      ["seed", "old-paid"],
+      ["seed", "old-seo"],
+      ["reel", "creator"],
+      ["creator", "creator-branch"],
+      ["intent", "difficulty"],
+      ["intent", "cpc"],
+      ["route-rule", "fallback"],
+      ["route-rule", "validation"],
+      ["route-rule", "outcome-engine"],
+      ["outcome-engine", "brief"],
+      ["outcome-engine", "spec"],
+      ["outcome-engine", "skill"],
+      ["outcome-engine", "bridge"],
+      ["landing-data", "validation"],
     ].forEach(([a, b]) => {
       const ai = indexById.get(a);
       const bi = indexById.get(b);
@@ -411,12 +562,22 @@ function InspectableGraph() {
     });
 
     const edgeData: number[] = [];
-    edgePairs.forEach(([a, b]) => edgeData.push(...positions[a].toArray(), ...positions[b].toArray()));
+    edgePairs.forEach(([a, b]) =>
+      edgeData.push(...positions[a].toArray(), ...positions[b].toArray()),
+    );
     const lineGeometry = new THREE.BufferGeometry();
-    lineGeometry.setAttribute("position", new THREE.Float32BufferAttribute(edgeData, 3));
+    lineGeometry.setAttribute(
+      "position",
+      new THREE.Float32BufferAttribute(edgeData, 3),
+    );
     const lines = new THREE.LineSegments(
       lineGeometry,
-      new THREE.LineBasicMaterial({ color: 0x8c74de, transparent: true, opacity: 0.24, blending: THREE.AdditiveBlending }),
+      new THREE.LineBasicMaterial({
+        color: 0x8c74de,
+        transparent: true,
+        opacity: 0.24,
+        blending: THREE.AdditiveBlending,
+      }),
     );
     graph.add(lines);
 
@@ -463,7 +624,11 @@ function InspectableGraph() {
     };
     const onWheel = (event: WheelEvent) => {
       event.preventDefault();
-      targetZoom = THREE.MathUtils.clamp(targetZoom + event.deltaY * 0.008, 7.5, 18);
+      targetZoom = THREE.MathUtils.clamp(
+        targetZoom + event.deltaY * 0.008,
+        7.5,
+        18,
+      );
     };
     const resize = () => {
       const width = Math.max(canvas.clientWidth, 1);
@@ -487,10 +652,18 @@ function InspectableGraph() {
       raycaster.setFromCamera(pointer, camera);
       const hovered = raycaster.intersectObjects(meshes, false)[0];
       const hoverId = hovered?.object.userData.graphId as string | undefined;
-      setHoveredId((current) => current === (hoverId ?? null) ? current : (hoverId ?? null));
-      canvas.style.cursor = dragging ? "grabbing" : hoverId ? "pointer" : "grab";
+      setHoveredId((current) =>
+        current === (hoverId ?? null) ? current : (hoverId ?? null),
+      );
+      canvas.style.cursor = dragging
+        ? "grabbing"
+        : hoverId
+          ? "pointer"
+          : "grab";
 
-      const selectedNode = GRAPH_NODES.find((node) => node.id === selectedRef.current);
+      const selectedNode = GRAPH_NODES.find(
+        (node) => node.id === selectedRef.current,
+      );
       meshes.forEach((mesh, index) => {
         const node = GRAPH_NODES[index];
         const connected =
@@ -498,9 +671,16 @@ function InspectableGraph() {
           node.parentId === selectedRef.current ||
           selectedNode?.parentId === node.id;
         const isHovered = node.id === hoverId;
-        materials[index].opacity = connected ? 1 : selectedRef.current ? 0.24 : 0.72;
+        materials[index].opacity = connected
+          ? 1
+          : selectedRef.current
+            ? 0.24
+            : 0.72;
         const targetScale = isHovered ? 2.1 : connected ? 1.35 : 1;
-        mesh.scale.lerp(new THREE.Vector3(targetScale, targetScale, targetScale), 0.16);
+        mesh.scale.lerp(
+          new THREE.Vector3(targetScale, targetScale, targetScale),
+          0.16,
+        );
       });
       renderer.render(scene, camera);
       raf = requestAnimationFrame(draw);
@@ -528,20 +708,55 @@ function InspectableGraph() {
         <b>96 NODES · 108+ RELATIONSHIPS</b>
       </header>
       <div className="fb-graph-stage">
-        <canvas ref={canvasRef} aria-label="Inspectable three-dimensional Fartbrain knowledge graph" />
+        <canvas
+          ref={canvasRef}
+          aria-label="Inspectable three-dimensional Fartbrain knowledge graph"
+        />
         <div className="fb-graph-legend">
-          {(["THOUGHT", "SOURCE", "CREATOR", "RESEARCH", "RULE", "OUTCOME"] as const).map((type) => (
-            <span key={type} style={{ color: `#${GRAPH_COLORS[type].toString(16).padStart(6, "0")}` }}>● {type}</span>
+          {(
+            [
+              "THOUGHT",
+              "SOURCE",
+              "CREATOR",
+              "RESEARCH",
+              "RULE",
+              "OUTCOME",
+            ] as const
+          ).map((type) => (
+            <span
+              key={type}
+              style={{
+                color: `#${GRAPH_COLORS[type].toString(16).padStart(6, "0")}`,
+              }}
+            >
+              ● {type}
+            </span>
           ))}
         </div>
-        <small className="fb-graph-hint">DRAG TO ROTATE · SCROLL TO ZOOM · CLICK A NODE</small>
+        <small className="fb-graph-hint">
+          DRAG TO ROTATE · SCROLL TO ZOOM · CLICK A NODE
+        </small>
       </div>
       <aside className="fb-node-inspector" aria-live="polite">
-        <small>{hoveredId ? "HOVERING" : "SELECTED NODE"} · {selected.type}</small>
+        <small>
+          {hoveredId ? "HOVERING" : "SELECTED NODE"} · {selected.type}
+        </small>
         <h3>{selected.title}</h3>
         <p>{selected.detail}</p>
-        <div><span>PROVENANCE</span><b>{selected.provenance}</b></div>
-        <div><span>RELATIONSHIPS</span><b>{relatedCount} TRACED</b></div>
+        <div>
+          <span>PROVENANCE</span>
+          <b>{selected.provenance}</b>
+        </div>
+        <div>
+          <span>RELATIONSHIPS</span>
+          <b>{relatedCount} TRACED</b>
+        </div>
+        <button
+          className={savedId === selected.id ? "saved" : ""}
+          onClick={() => setSavedId(selected.id)}
+        >
+          {savedId === selected.id ? "SAVED TO YOUR BRAIN ✓" : "SAVE THIS +"}
+        </button>
       </aside>
     </div>
   );
@@ -614,6 +829,7 @@ function CaptureTerminal({
             <span>MVP SPEC</span>
             <span>BUILD PROMPT</span>
             <span>REASONING RULES</span>
+            <span>JARVIS BRAIN</span>
           </div>
           <button className="fb-connect-mcp">
             ACTUAL BUILD <b>CONNECT PROJECT VIA MCP →</b>
@@ -924,31 +1140,50 @@ export default function LandingCinematic({
               <em>A starting line.</em>
             </h2>
             <p>
-              Choose the shape: MVP brief, implementation prompt, workflow,
-              agent, skill or operating playbook. Nothing requires a connection
-              until you ask Fartbrain to execute it.
+              Choose the shape: MVP brief, workflow, agent, skill—or combine a
+              creator&rsquo;s five related videos into one Jarvis Brain.
+              Fartbrain reconstructs the shared operator, saves it, and prepares
+              the whole intelligence system in one shot.
             </p>
           </div>
           <div className="fb-build-surface">
             <header>
-              COMPETITOR SIGNAL ENGINE <span>READY TO BUILD</span>
+              CHOOSE AN OUTCOME <span>NO CONNECTION REQUIRED</span>
             </header>
+            <section className="fb-jarvis-flow">
+              <div>
+                {["YT 01", "YT 02", "YT 03", "YT 04", "YT 05"].map((video) => (
+                  <span key={video}>{video}</span>
+                ))}
+              </div>
+              <i>→</i>
+              <strong>JARVIS BRAIN</strong>
+            </section>
             {[
-              "MVP product brief",
-              "System architecture",
-              "Research dossier",
-              "Implementation prompt",
-              "Reusable skill",
+              { title: "MVP product brief", meta: "12 sections" },
+              {
+                title: "System architecture",
+                meta: "generated from this idea",
+              },
+              { title: "Research dossier", meta: "sources + provenance" },
+              {
+                title: "Implementation prompt",
+                meta: "one-shot build package",
+              },
+              { title: "Reusable skill", meta: "operator logic" },
+              {
+                title: "Jarvis Brain",
+                meta: "5 videos → 1 intelligence system",
+                featured: true,
+              },
             ].map((x, i) => (
-              <div key={x}>
+              <div key={x.title} className={x.featured ? "featured" : ""}>
                 <span>{String(i + 1).padStart(2, "0")}</span>
-                <b>{x}</b>
-                <small>
-                  {i === 0 ? "12 sections" : "generated from this idea"}
-                </small>
+                <b>{x.title}</b>
+                <small>{x.meta}</small>
               </div>
             ))}
-            <button onClick={run}>INSPECT BUILD PACKAGE ↗</button>
+            <button onClick={run}>SAVE THIS OUTCOME +</button>
           </div>
         </section>
 
@@ -1101,6 +1336,14 @@ const enhancementStyles = `
 .fb-node-inspector div{display:grid;gap:7px;padding:15px 0;border-top:1px solid rgba(255,255,255,.09)}
 .fb-node-inspector div span{color:#5f5a68;font:700 7px ui-monospace;letter-spacing:.1em}
 .fb-node-inspector div b{color:#d8d4e5;font:700 9px ui-monospace;letter-spacing:.04em}
+.fb-node-inspector>button{width:100%;margin-top:18px;padding:14px;border:1px solid rgba(164,138,255,.45);background:rgba(164,138,255,.08);color:#c8bbff;font:800 9px ui-monospace;letter-spacing:.09em;transition:.2s ease}
+.fb-node-inspector>button:hover{border-color:var(--cyan);color:var(--cyan);background:rgba(53,216,255,.08)}
+.fb-node-inspector>button.saved{border-color:rgba(119,242,180,.5);color:#77f2b4;background:rgba(119,242,180,.07)}
+.fb-jarvis-flow{display:grid;grid-template-columns:1fr auto 120px;align-items:center;gap:15px;padding:18px 20px;border-top:1px solid rgba(255,255,255,.09);border-bottom:1px solid rgba(164,138,255,.32);background:linear-gradient(90deg,rgba(164,138,255,.08),rgba(53,216,255,.035))}
+.fb-jarvis-flow>div{display:flex;gap:5px;flex-wrap:wrap}.fb-jarvis-flow>div span{padding:6px;border:1px solid rgba(255,255,255,.12);color:#777282;font:700 7px ui-monospace;letter-spacing:.08em}
+.fb-jarvis-flow>i{color:var(--cyan);font-size:18px;font-style:normal}.fb-jarvis-flow>strong{color:#d8ceff;font:800 10px ui-monospace;letter-spacing:.08em}
+.fb-build-surface>div.featured{border-left:2px solid var(--violet);background:rgba(164,138,255,.07)}.fb-build-surface>div.featured b{color:#c9bdff}.fb-build-surface>div.featured small{color:var(--cyan)}
+@media(max-width:760px){.fb-graph-inspector{height:820px}.fb-graph-stage{bottom:320px}.fb-node-inspector{height:320px}.fb-jarvis-flow{grid-template-columns:1fr auto}.fb-jarvis-flow>strong{grid-column:1/-1}}
 @media(max-width:760px){.fb-graph-chapter{padding-top:15vh}.fb-graph-chapter>.fb-copy{width:100%}.fb-graph-inspector{width:100%;height:760px;margin-top:45px}.fb-graph-stage{inset:49px 0 260px}.fb-node-inspector{top:auto;left:0;bottom:0;width:100%;height:260px;border-left:0;border-top:1px solid rgba(255,255,255,.09);padding:22px}.fb-node-inspector p{min-height:auto}.fb-graph-legend{max-width:88%}.fb-extraction-stack,.fb-related,.fb-ash,.fb-reason-engine,.fb-build-surface,.fb-bridge-panel{width:100%;margin-top:70px}.fb-extraction-stack div:nth-child(5){translate:32px}.fb-reason-engine>div{grid-template-columns:82px 1fr auto}.fb-reason-engine>div.alt{margin-left:20px}.fb-connect-mcp{gap:14px;text-align:left}.fb-bridge-map{grid-template-columns:1fr}.fb-bridge-core{grid-template-columns:auto auto auto;justify-content:center;margin:8px}.fb-bridge-core strong{rotate:90deg}}
 `;
 
