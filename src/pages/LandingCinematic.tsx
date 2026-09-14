@@ -829,10 +829,10 @@ function CaptureTerminal({
             <span>MVP SPEC</span>
             <span>BUILD PROMPT</span>
             <span>REASONING RULES</span>
-            <span>JARVIS BRAIN</span>
+            <span>FINISHED PRODUCT</span>
           </div>
           <button className="fb-connect-mcp">
-            ACTUAL BUILD <b>CONNECT PROJECT VIA MCP →</b>
+            BUILD TYPE: ONE SHOT <b>DELIVER THE FINISHED PRODUCT →</b>
           </button>
         </div>
       </div>
@@ -1140,15 +1140,16 @@ export default function LandingCinematic({
               <em>A starting line.</em>
             </h2>
             <p>
-              Choose the shape: MVP brief, workflow, agent, skill—or combine a
-              creator&rsquo;s five related videos into one Jarvis Brain.
-              Fartbrain reconstructs the shared operator, saves it, and prepares
-              the whole intelligence system in one shot.
+              One creator gatekept a complete build across five separate
+              videos. Drop in one link and Fartbrain can find the related
+              videos—or link the exact sources yourself. Then choose what you
+              want built. Behind the scenes, Fartbrain turns the full source set
+              into a controlled build loop and ships the finished product.
             </p>
           </div>
           <div className="fb-build-surface">
             <header>
-              CHOOSE AN OUTCOME <span>NO CONNECTION REQUIRED</span>
+              SOURCE SET → FINISHED PRODUCT <span>NO GATEKEEPING</span>
             </header>
             <section className="fb-jarvis-flow">
               <div>
@@ -1157,23 +1158,22 @@ export default function LandingCinematic({
                 ))}
               </div>
               <i>→</i>
-              <strong>JARVIS BRAIN</strong>
+              <strong>COMPLETE BUILD INTELLIGENCE</strong>
             </section>
             {[
-              { title: "MVP product brief", meta: "12 sections" },
+              { title: "Web application", meta: "working product" },
               {
-                title: "System architecture",
-                meta: "generated from this idea",
+                title: "AI agent",
+                meta: "configured + operational",
               },
-              { title: "Research dossier", meta: "sources + provenance" },
+              { title: "Automation system", meta: "working workflow" },
               {
-                title: "Implementation prompt",
-                meta: "one-shot build package",
+                title: "MVP",
+                meta: "ready to use",
               },
-              { title: "Reusable skill", meta: "operator logic" },
               {
-                title: "Jarvis Brain",
-                meta: "5 videos → 1 intelligence system",
+                title: "Your chosen product",
+                meta: "the actual deliverable",
                 featured: true,
               },
             ].map((x, i) => (
@@ -1183,7 +1183,7 @@ export default function LandingCinematic({
                 <small>{x.meta}</small>
               </div>
             ))}
-            <button onClick={run}>SAVE THIS OUTCOME +</button>
+            <button onClick={run}>BUILD TYPE: ONE SHOT →</button>
           </div>
         </section>
 
