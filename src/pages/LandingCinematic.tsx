@@ -848,6 +848,7 @@ export default function LandingCinematic({
   const [chapter, setChapter] = useState(0);
   const [pulse, setPulse] = useState(0);
   const [terminal, setTerminal] = useState(false);
+  const [buildMode, setBuildMode] = useState<"ONE SHOT" | "PREPARE ONLY">("ONE SHOT");
   const sections = useRef<Array<HTMLElement | null>>([]);
 
   useEffect(() => {
@@ -1149,7 +1150,7 @@ export default function LandingCinematic({
           </div>
           <div className="fb-build-surface">
             <header>
-              SOURCE SET → FINISHED PRODUCT <span>NO GATEKEEPING</span>
+              SOURCE SET → FINISHED PRODUCT <span>{buildMode}</span>
             </header>
             <section className="fb-jarvis-flow">
               <div>
@@ -1160,6 +1161,18 @@ export default function LandingCinematic({
               <i>→</i>
               <strong>COMPLETE BUILD INTELLIGENCE</strong>
             </section>
+            <div className="fb-build-mode">
+              <span>BUILD MODE</span>
+              <button className={buildMode === "ONE SHOT" ? "active" : ""} onClick={() => setBuildMode("ONE SHOT")}>ONE SHOT</button>
+              <button className={buildMode === "PREPARE ONLY" ? "active" : ""} onClick={() => setBuildMode("PREPARE ONLY")}>PREPARE ONLY</button>
+            </div>
+            <div className="fb-build-loop" aria-label="One Shot build loop">
+              {["LINK SOURCES", "EXTRACT SYSTEM", "BUILD", "VALIDATE", "DELIVER"].map((stage, i) => (
+                <span key={stage} className={buildMode === "ONE SHOT" ? "lit" : i < 2 ? "lit" : ""}>
+                  <b>{String(i + 1).padStart(2, "0")}</b>{stage}
+                </span>
+              ))}
+            </div>
             {[
               { title: "Web application", meta: "working product" },
               {
@@ -1183,7 +1196,7 @@ export default function LandingCinematic({
                 <small>{x.meta}</small>
               </div>
             ))}
-            <button onClick={run}>BUILD TYPE: ONE SHOT →</button>
+            <button onClick={run}>{buildMode === "ONE SHOT" ? "RUN ONE SHOT BUILD →" : "PREPARE BUILD PACKAGE →"}</button>
           </div>
         </section>
 
@@ -1343,6 +1356,7 @@ const enhancementStyles = `
 .fb-jarvis-flow>div{display:flex;gap:5px;flex-wrap:wrap}.fb-jarvis-flow>div span{padding:6px;border:1px solid rgba(255,255,255,.12);color:#777282;font:700 7px ui-monospace;letter-spacing:.08em}
 .fb-jarvis-flow>i{color:var(--cyan);font-size:18px;font-style:normal}.fb-jarvis-flow>strong{color:#d8ceff;font:800 10px ui-monospace;letter-spacing:.08em}
 .fb-build-surface>div.featured{border-left:2px solid var(--violet);background:rgba(164,138,255,.07)}.fb-build-surface>div.featured b{color:#c9bdff}.fb-build-surface>div.featured small{color:var(--cyan)}
+.fb-build-mode{display:flex;align-items:center;gap:7px;padding:14px 20px;border-top:1px solid rgba(255,255,255,.09);color:#777282;font:700 8px ui-monospace;letter-spacing:.1em}.fb-build-mode span{margin-right:auto}.fb-build-mode button{padding:7px 9px;border:1px solid rgba(255,255,255,.13);background:transparent;color:#777282;font:700 8px ui-monospace;letter-spacing:.08em}.fb-build-mode button.active{border-color:var(--cyan);color:var(--cyan);background:rgba(53,216,255,.08)}.fb-build-loop{display:grid!important;grid-template-columns:repeat(5,1fr)!important;gap:0;padding:14px 20px!important;border-top:1px solid rgba(255,255,255,.09);background:rgba(0,0,0,.12)}.fb-build-loop span{display:grid;gap:7px;color:#45414d;font:700 7px ui-monospace;letter-spacing:.06em}.fb-build-loop span+span{border-left:1px solid rgba(255,255,255,.09);padding-left:10px}.fb-build-loop span.lit{color:#bcb6cb}.fb-build-loop span.lit b{color:var(--violet)}
 @media(max-width:760px){.fb-graph-inspector{height:820px}.fb-graph-stage{bottom:320px}.fb-node-inspector{height:320px}.fb-jarvis-flow{grid-template-columns:1fr auto}.fb-jarvis-flow>strong{grid-column:1/-1}}
 @media(max-width:760px){.fb-graph-chapter{padding-top:15vh}.fb-graph-chapter>.fb-copy{width:100%}.fb-graph-inspector{width:100%;height:760px;margin-top:45px}.fb-graph-stage{inset:49px 0 260px}.fb-node-inspector{top:auto;left:0;bottom:0;width:100%;height:260px;border-left:0;border-top:1px solid rgba(255,255,255,.09);padding:22px}.fb-node-inspector p{min-height:auto}.fb-graph-legend{max-width:88%}.fb-extraction-stack,.fb-related,.fb-ash,.fb-reason-engine,.fb-build-surface,.fb-bridge-panel{width:100%;margin-top:70px}.fb-extraction-stack div:nth-child(5){translate:32px}.fb-reason-engine>div{grid-template-columns:82px 1fr auto}.fb-reason-engine>div.alt{margin-left:20px}.fb-connect-mcp{gap:14px;text-align:left}.fb-bridge-map{grid-template-columns:1fr}.fb-bridge-core{grid-template-columns:auto auto auto;justify-content:center;margin:8px}.fb-bridge-core strong{rotate:90deg}}
 `;
