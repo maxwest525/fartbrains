@@ -416,7 +416,7 @@ export default function LandingCinematic({
       text: "The current workflow never compares paid and organic opportunity.",
     },
   ];
-  const visibleRelationshipNodes = relationshipNodes.filter(
+  const activeRelationshipNodes = relationshipNodes.filter(
     (node) => density >= node.threshold,
   );
 
@@ -558,7 +558,8 @@ export default function LandingCinematic({
               decisions and outcomes all become part of one living system.
             </p>
             <label>
-              GRAPH DETAIL <b>{visibleRelationshipNodes.length} / 6 NODES</b>
+              CONNECTION DEPTH{" "}
+              <b>{activeRelationshipNodes.length} / 6 TRACED</b>
               <input
                 type="range"
                 min="12"
@@ -567,25 +568,28 @@ export default function LandingCinematic({
                 value={density}
                 onChange={(e) => setDensity(Number(e.target.value))}
               />
-              <small>DRAG TO REVEAL WEAKER OR MORE DISTANT CONNECTIONS</small>
+              <small>
+                EVERY IDEA STAYS · DRAG TO TRACE DEEPER RELATIONSHIPS
+              </small>
             </label>
           </div>
           <div className="fb-related" aria-live="polite">
-            {visibleRelationshipNodes.map((node, index) => (
+            {relationshipNodes.map((node, index) => (
               <article
                 key={node.meta}
-                className={
-                  index === visibleRelationshipNodes.length - 1 ? "newest" : ""
-                }
+                className={density >= node.threshold ? "traced" : "untraced"}
                 style={{ "--node-index": index } as CSSProperties}
               >
                 <small>{node.meta}</small>
                 <b>{node.text}</b>
+                <i>{density >= node.threshold ? "CONNECTED" : "UNTRACED"}</i>
               </article>
             ))}
             <div>
-              <span>{visibleRelationshipNodes.length} NODES VISIBLE</span>
-              <strong>{density}% GRAPH DETAIL</strong>
+              <span>6 IDEAS PRESERVED</span>
+              <strong>
+                {activeRelationshipNodes.length} RELATIONSHIPS TRACED
+              </strong>
             </div>
           </div>
         </section>
@@ -839,9 +843,9 @@ const enhancementStyles = `
 .fb-connect-mcp b{color:var(--cyan)}
 .fb-copy label small{display:block;margin-top:12px;color:#5f5a6d;font:700 8px/1.4 ui-monospace;letter-spacing:.08em}
 .fb-related{min-height:410px;transition:min-height .25s ease}
-.fb-related article{animation:fb-node-in .28s ease both}
-.fb-related article.newest{border-color:rgba(53,216,255,.52);box-shadow:0 0 34px rgba(53,216,255,.08)}
-@keyframes fb-node-in{from{opacity:0;transform:translateY(12px) scale(.98)}to{opacity:1;transform:translateY(0) scale(1)}}
+.fb-related article{display:grid;grid-template-columns:1fr auto;transition:opacity .25s ease,border-color .25s ease,box-shadow .25s ease}
+.fb-related article small,.fb-related article b{grid-column:1}.fb-related article i{grid-column:2;grid-row:1/3;align-self:center;color:#5d5868;font:700 7px ui-monospace;letter-spacing:.08em;font-style:normal}
+.fb-related article.untraced{opacity:.48}.fb-related article.traced{opacity:1;border-color:rgba(53,216,255,.48);box-shadow:0 0 28px rgba(53,216,255,.07)}.fb-related article.traced i{color:var(--cyan)}
 .fb-reason,.fb-bridge{justify-content:space-between;gap:8vw}
 .fb-bridge-panel{width:min(620px,49vw);border:1px solid rgba(164,138,255,.35);background:rgba(8,8,14,.82);backdrop-filter:blur(20px);box-shadow:0 40px 120px -65px rgba(164,138,255,.8)}
 .fb-bridge-panel>header,.fb-bridge-panel>footer{display:flex;justify-content:space-between;padding:16px 19px;color:#777282;font:700 9px ui-monospace;letter-spacing:.1em}
