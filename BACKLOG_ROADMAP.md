@@ -9,6 +9,8 @@ Fartbrain captures the smallest fleeting thought before it disappears, preserves
 
 Fartbrain is the private intelligence layer between everything a user knows and everything they may eventually build.
 
+Fartbrain **is the graph**. It must own its graph model, relationships, reasoning semantics, provenance, and user experience. It does not borrow, embed, or merely decorate another product's graph. External systems may supply nodes and signals through MCP or API, but Fartbrain normalizes them into its own private intelligence graph and remains the authoritative reasoning layer.
+
 The product has three distinct layers:
 
 1. **Private Brain** — the Obsidian-plus intelligence and knowledge layer.
@@ -20,6 +22,8 @@ The first two layers remain fully valuable without connecting a project. Executi
 ## Non-negotiable product boundaries
 
 - Fartbrain remains private by default.
+- Fartbrain is the canonical graph, not a wrapper around or borrower of another graph product.
+- Connected projects and external services feed Fartbrain's graph; they do not replace or control it.
 - The Private Brain is never reduced to a lead-generation wrapper for the execution product.
 - Fartbrain produces every promised outcome without requiring MCP, API, repository, or project access.
 - Selecting **Actual Build** prepares the complete execution package and then stops at **Connect this project via MCP**.
@@ -55,6 +59,8 @@ The first two layers remain fully valuable without connecting a project. Executi
 
 ### Private knowledge graph
 
+- Build and own the underlying graph architecture, node model, edge model, relationship semantics, provenance, permissions, and traversal logic.
+- Treat notes, sources, creators, strategies, claims, decisions, projects, features, functions, outcomes, and validations as first-class graph entities where appropriate.
 - Connect captures using metadata, semantic similarity, explicit tags, shared entities, goals, projects, people, and outcomes.
 - Maintain an interactive note-cluster graph.
 - Surface relationships the user would not remember to search for.
@@ -157,6 +163,8 @@ After a user deliberately connects a project through MCP or API, Fartbrain maps:
 - Customer feedback and requested improvements.
 - Business goals, constraints, costs, and success metrics.
 - Relevant nodes from the user's Private Brain.
+
+This is not a borrowed project graph. Fartbrain ingests authorized project evidence and represents it inside Fartbrain's own graph ontology, linked to the existing private intelligence graph.
 
 ### Improvement engine
 
@@ -303,6 +311,8 @@ Preferred routing options include the existing self-hosted LiteLLM/OpenRouter st
 
 ### Phase 1 — Strengthen the Private Brain
 
+- [ ] Define and version Fartbrain's owned graph ontology, node types, edge types, provenance, permissions, and temporal model.
+- [ ] Select and implement the graph persistence and traversal architecture without surrendering the product's graph model to a vendor.
 - [ ] Audit capture pathways and remove friction.
 - [ ] Implement public creator identity and creator-corpus extraction.
 - [ ] Store extraction provenance and citations.
@@ -444,4 +454,3 @@ Preferred routing options include the existing self-hosted LiteLLM/OpenRouter st
 **Product hierarchy**
 
 `Private Brain → Deterministic Outcomes → Optional Adaptive Bridge → Approved Execution`
-
