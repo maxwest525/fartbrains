@@ -128,8 +128,13 @@ Fartbrain should be able to produce all applicable outcomes before any project c
 - Marketing or distribution strategy.
 - Structured data/API contract.
 - Execution-ready project package.
-- Jarvis Brain: a saved, reusable intelligence system synthesized from multiple related sources such as a creator's five-video series.
-- One-shot system package containing the combined knowledge, operator model, deterministic rules, prompts, tools, memory design, validations, and optional MCP/API execution handoff.
+
+### Build types
+
+- **One Shot** is a build type, not an outcome. The user chooses the product they want; Fartbrain discovers or accepts the complete source set, creates the necessary build loop behind the scenes, executes it, validates the result, and delivers the finished product.
+- A One Shot build may begin with one source URL. Fartbrain should identify and propose the creator's related public videos, while also allowing the user to link the exact source set manually.
+- The five-video "Jarvis brain" example is a source-discovery and one-shot-build use case, not a saved graph object, reconstructed-idea requirement, or universal output category.
+- When the destination is an existing external project, execution still stops at the explicit MCP/API connection boundary until the user connects and authorizes that project.
 
 ### Required quality bar
 
@@ -406,8 +411,9 @@ Preferred routing options include the existing self-hosted LiteLLM/OpenRouter st
 - [ ] Migrate remaining AI functions by task family.
 - [ ] Add model-routing configuration and cost dashboard.
 - [ ] Build creator-map extraction.
-- [ ] Add multi-source collections so a user can combine several videos, URLs, notes, or documents into one named intelligence system.
-- [ ] Build the Jarvis Brain outcome: resolve overlap and contradictions across sources, reconstruct the shared operator, save it to the private graph, and generate a one-shot implementation package.
+- [ ] Add source-set discovery: from one creator URL, find and propose the other public videos or sources that complete the build, with manual linking and approval.
+- [ ] Build the **One Shot** build type: let the user choose the finished product, generate the internal build loop from the approved source set, execute it, validate it, and deliver the working product.
+- [ ] Support multi-source collections without requiring them to become a named graph object or reconstructed idea before a build can run.
 - [ ] Add **Save this** to graph nodes, Ash conclusions, research findings, and generated outcomes.
 - [ ] Build outcome versioning and evidence display.
 - [ ] Prototype read-only GitHub project mapping through MCP/API.
