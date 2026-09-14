@@ -15,6 +15,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { setLandingActive } from "@/lib/landingMode";
+import LandingCinematic from "@/pages/LandingCinematic";
 
 /**
  * The marketing page.
@@ -840,7 +841,7 @@ const Landing = ({ onEnter }: { onEnter?: () => void }) => {
   );
 };
 
-export default Landing;
+export default LandingCinematic;
 
 const PLANS: {
   name: string;
