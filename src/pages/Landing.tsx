@@ -378,6 +378,74 @@ const Wordmark = () => (
   </div>
 );
 
+const HERO_STAGES = [
+  { label: "Captured", detail: "Instagram reel + your tweak", icon: Link2 },
+  { label: "Understood", detail: "Transcript, summary, sources", icon: AudioLines },
+  { label: "Connected", detail: "Paid ads × SEO × competitor data", icon: Waypoints },
+  { label: "Built", detail: "MVP spec + custom prompt", icon: Rocket },
+];
+
+/** The actual product loop, compressed into one cinematic first-screen scene. */
+const HeroBrain = () => {
+  const [active, setActive] = useState(0);
+
+  useEffect(() => {
+    if (REDUCED()) return;
+    const timer = window.setInterval(() => setActive((value) => (value + 1) % HERO_STAGES.length), 1700);
+    return () => window.clearInterval(timer);
+  }, []);
+
+  return (
+    <div className="fb-brain-stage" aria-label="A captured reel becoming a researched, connected business build">
+      <div className="fb-brain-glow" aria-hidden />
+
+      <motion.div
+        className="fb-source-card"
+        initial={REDUCED() ? undefined : { opacity: 0, x: -22, rotate: -5 }}
+        animate={{ opacity: 1, x: 0, rotate: -2 }}
+        transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+      >
+        <div className="fb-source-head"><span>REEL · 00:47</span><span className="fb-live-dot" /></div>
+        <div className="fb-reel-frame">
+          <div className="fb-reel-bars"><i /><i /><i /><i /><i /><i /></div>
+          <div className="fb-reel-caption">Steal competitor keywords<br />for lower-cost paid ads</div>
+        </div>
+        <div className="fb-source-note">“Do this for SEO too — turn it into one system.”</div>
+      </motion.div>
+
+      <div className="fb-exploded-stack" aria-hidden>
+        <div className={`fb-intel-layer fb-layer-1 ${active === 0 ? "is-active" : ""}`}><span>01</span><strong>RAW CAPTURE</strong><small>reel + “use this for SEO too”</small></div>
+        <div className={`fb-intel-layer fb-layer-2 ${active === 1 ? "is-active" : ""}`}><span>02</span><strong>TRANSCRIPT</strong><small>the actual strategy, cleaned up</small></div>
+        <div className={`fb-intel-layer fb-layer-3 ${active === 1 ? "is-active" : ""}`}><span>03</span><strong>DEEP RESEARCH</strong><small>sources, proof, useful URLs</small></div>
+        <div className={`fb-intel-layer fb-layer-4 ${active === 2 ? "is-active" : ""}`}><span>04</span><strong>YOUR BRAIN</strong><small>7 related notes found</small></div>
+        <div className={`fb-intel-layer fb-layer-5 ${active === 3 ? "is-active" : ""}`}><span>05</span><strong>BUILD PACKAGE</strong><small>custom MVP spec + prompt</small></div>
+        <div className="fb-stack-spine"><span>ASH</span></div>
+      </div>
+
+      <motion.div
+        className="fb-output-card"
+        initial={REDUCED() ? undefined : { opacity: 0, x: 24, rotate: 5 }}
+        animate={{ opacity: 1, x: 0, rotate: 2 }}
+        transition={{ duration: 0.8, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
+      >
+        <div className="fb-output-kicker">READY TO MAKE</div>
+        <div className="fb-output-title">Competitor Signal Engine</div>
+        <p>One custom workflow connecting paid-ad intelligence, SEO gaps and live competitor movement.</p>
+        <div className="fb-output-tags"><span>MVP spec</span><span>Build prompt</span><span>Research</span></div>
+      </motion.div>
+
+      <div className="fb-stage-rail">
+        {HERO_STAGES.map(({ label, detail, icon: Icon }, index) => (
+          <button key={label} type="button" onClick={() => setActive(index)} className={active === index ? "is-active" : ""}>
+            <span className="fb-stage-icon"><Icon size={15} strokeWidth={1.8} /></span>
+            <span><strong>{label}</strong><small>{detail}</small></span>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+};
+
 /**
  * A still of the real capture flow. It is a drawing, not a screenshot, so it
  * has to be kept honest by hand: every label here matches something the app
@@ -742,7 +810,7 @@ const Landing = ({ onEnter }: { onEnter?: () => void }) => {
         </div>
 
         {/* -------------------------------- hero -------------------------------- */}
-        <header className="relative overflow-hidden px-6 pb-[104px] pt-20 md:px-20 md:pt-28">
+        <header className="relative overflow-hidden px-6 pb-[104px] pt-16 md:px-12 md:pt-24 xl:px-20">
           <div aria-hidden className="fb-dot-grid pointer-events-none absolute inset-0" />
           <div
             aria-hidden
@@ -752,23 +820,21 @@ const Landing = ({ onEnter }: { onEnter?: () => void }) => {
                 "radial-gradient(closest-side, hsl(var(--primary) / 0.2), hsl(220 95% 58% / 0.1) 55%, transparent)",
             }}
           />
-          <div className="relative max-w-[980px]">
+          <div className="relative mx-auto grid max-w-[1440px] items-center gap-14 xl:grid-cols-[minmax(0,0.82fr)_minmax(640px,1.18fr)] xl:gap-8">
+            <div className="relative z-10">
             <div className="mb-8 inline-flex items-center gap-2.5 rounded-full border border-border bg-card px-[15px] py-[7px] text-[12.5px] font-medium text-muted-foreground">
               <span className="brand-gradient h-[7px] w-[7px] rounded-full" />
-              every reel you swore you&rsquo;d come back to
+              every thought too small to stop for
             </div>
-            <h1 className="mb-[30px] text-[44px] font-bold leading-[1.04] tracking-[-0.035em] sm:text-[62px] md:text-[82px]">
-              You&rsquo;re losing good ideas.
+            <h1 className="mb-[30px] text-[44px] font-bold leading-[1.02] tracking-[-0.045em] sm:text-[62px] md:text-[76px]">
+              Don&rsquo;t save the post.
               <br />
-              We built the <S>fix</S>.
+              Save what it could <S>become</S>.
             </h1>
-            <p className="mb-[42px] max-w-[660px] text-[17px] leading-[1.55] text-muted-foreground sm:text-xl [text-wrap:pretty]">
-              Somebody explains exactly how they did it &mdash; the strategy, the order,
-              the reason it works. It&rsquo;s a 47-second reel, and by Thursday it&rsquo;s
-              gone. Paste the link. Fart Brains transcribes it, researches around it,
-              files it where it belongs, and runs it out to something you can use
-              tomorrow &mdash; a working MVP, an agent that does the thing, a skill
-              shaped around how you actually work.
+            <p className="mb-[42px] max-w-[620px] text-[17px] leading-[1.6] text-muted-foreground sm:text-xl [text-wrap:pretty]">
+              Drop in the reel, page, voice note or half-baked thought. Fart Brains
+              transcribes it, researches it, pulls every useful source, connects it to
+              what you already know, then turns your tweak into something buildable.
             </p>
             <div className="flex flex-wrap items-center gap-3.5">
               <motion.button
@@ -790,6 +856,15 @@ const Landing = ({ onEnter }: { onEnter?: () => void }) => {
             <p className="mt-[22px] text-[13.5px] text-muted-foreground">
               No card. The free plan is permanent, not a countdown.
             </p>
+            </div>
+            <motion.div
+              className="relative min-w-0"
+              initial={REDUCED() ? undefined : { opacity: 0, scale: 0.96, y: 28 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              transition={{ duration: 0.9, delay: 0.12, ease: [0.16, 1, 0.3, 1] }}
+            >
+              <HeroBrain />
+            </motion.div>
           </div>
         </header>
 
@@ -1119,4 +1194,61 @@ html.fb-landing body::before { display: none !important; }
   mask-image: radial-gradient(ellipse 70% 60% at 50% 0%, black 40%, transparent 100%);
   -webkit-mask-image: radial-gradient(ellipse 70% 60% at 50% 0%, black 40%, transparent 100%);
 }
+
+.fb-brain-stage {
+  position: relative; min-height: 650px; isolation: isolate;
+  border: 1px solid hsl(var(--border)); border-radius: 28px; overflow: hidden;
+  background:
+    radial-gradient(circle at 52% 42%, hsl(var(--primary) / .18), transparent 31%),
+    linear-gradient(145deg, hsl(var(--card) / .96), hsl(var(--background) / .98));
+  box-shadow: inset 0 1px 0 hsl(var(--foreground) / .05), 0 60px 120px -70px hsl(var(--primary) / .55);
+}
+.fb-brain-stage::before { content: ""; position: absolute; inset: 0; z-index: -1; opacity: .32; background-image: radial-gradient(hsl(var(--foreground) / .22) .75px, transparent .75px); background-size: 18px 18px; mask-image: radial-gradient(circle at 50% 42%, #000, transparent 72%); }
+.fb-brain-glow { position: absolute; width: 360px; height: 360px; left: 50%; top: 43%; translate: -50% -50%; border-radius: 50%; background: radial-gradient(circle, hsl(var(--primary) / .24), hsl(var(--accent) / .06) 45%, transparent 70%); filter: blur(18px); }
+.fb-exploded-stack { position:absolute; z-index:3; left:50%; top:42%; width:260px; height:350px; translate:-50% -50%; perspective:900px; transform-style:preserve-3d; }
+.fb-intel-layer { position:absolute; left:50%; top:50%; width:220px; height:118px; padding:15px 17px; border:1px solid hsl(var(--foreground)/.12); border-radius:15px; background:linear-gradient(145deg,hsl(var(--card)/.96),hsl(var(--secondary)/.82)); box-shadow:0 18px 35px -24px rgba(0,0,0,.9),inset 0 1px hsl(var(--foreground)/.05); transform-origin:center; transition:transform .65s cubic-bezier(.16,1,.3,1),border-color .4s,filter .4s,opacity .4s; }
+.fb-intel-layer::after { content:""; position:absolute; inset:0; border-radius:inherit; background:linear-gradient(115deg,transparent 20%,hsl(var(--foreground)/.06) 47%,transparent 65%); translate:-120% 0; animation:fb-scan 5s ease-in-out infinite; }
+.fb-intel-layer span { display:block; margin-bottom:20px; color:hsl(var(--primary)); font:700 9px/1 ui-monospace,monospace; letter-spacing:.15em; }
+.fb-intel-layer strong { display:block; color:hsl(var(--foreground)); font-size:11px; letter-spacing:.09em; }
+.fb-intel-layer small { display:block; margin-top:6px; color:hsl(var(--muted-foreground)); font-size:9px; }
+.fb-layer-1{transform:translate(-86%,-98%) rotateY(34deg) rotateX(9deg) rotateZ(-7deg)}
+.fb-layer-2{transform:translate(-64%,-73%) rotateY(22deg) rotateX(7deg) rotateZ(-4deg)}
+.fb-layer-3{transform:translate(-50%,-50%) rotateY(8deg) rotateX(5deg)}
+.fb-layer-4{transform:translate(-35%,-25%) rotateY(-15deg) rotateX(4deg) rotateZ(4deg)}
+.fb-layer-5{transform:translate(-15%,2%) rotateY(-31deg) rotateX(8deg) rotateZ(7deg)}
+.fb-intel-layer.is-active { border-color:hsl(var(--accent)/.7); filter:brightness(1.18); box-shadow:0 0 38px hsl(var(--primary)/.22),0 22px 50px -28px rgba(0,0,0,.9); }
+.fb-stack-spine { position:absolute; z-index:8; left:50%; top:50%; width:58px; height:58px; translate:-50% -50%; display:grid; place-items:center; border:1px solid hsl(var(--accent)/.65); border-radius:50%; background:hsl(var(--background)/.9); box-shadow:0 0 40px hsl(var(--primary)/.45); }
+.fb-stack-spine::before,.fb-stack-spine::after{content:"";position:absolute;width:310px;height:1px;background:linear-gradient(90deg,transparent,hsl(var(--primary)/.6),transparent)}
+.fb-stack-spine::before{rotate:-28deg}.fb-stack-spine::after{rotate:28deg}.fb-stack-spine span{z-index:2;font-size:10px;font-weight:800;letter-spacing:.12em;color:hsl(var(--accent))}
+.fb-source-card,.fb-output-card { position: absolute; z-index: 5; width: 196px; border: 1px solid hsl(var(--border)); border-radius: 16px; background: hsl(var(--card) / .92); backdrop-filter: blur(18px); box-shadow: 0 26px 60px -30px rgba(0,0,0,.7); }
+.fb-source-card { left: 22px; top: 35px; padding: 11px; }
+.fb-source-head { display: flex; justify-content: space-between; align-items: center; margin: 0 2px 9px; color: hsl(var(--muted-foreground)); font-size: 9px; font-weight: 700; letter-spacing: .1em; }
+.fb-live-dot { width: 6px; height: 6px; border-radius: 50%; background: #ff496d; box-shadow: 0 0 10px #ff496d; }
+.fb-reel-frame { position: relative; height: 174px; overflow: hidden; border-radius: 10px; background: linear-gradient(155deg,#11101c 20%,#28205a 62%,#0ca5b8); }
+.fb-reel-frame::before { content:""; position:absolute; inset:0; background: radial-gradient(circle at 60% 32%,rgba(255,255,255,.19),transparent 22%), linear-gradient(0deg,rgba(0,0,0,.72),transparent 60%); }
+.fb-reel-bars { position:absolute; inset:42px 24px auto; height:50px; display:flex; align-items:end; justify-content:center; gap:5px; }
+.fb-reel-bars i { display:block; width:7px; border-radius:4px; background:linear-gradient(#a783ff,#22d3ee); animation:fb-bars 1.2s ease-in-out infinite alternate; }.fb-reel-bars i:nth-child(1){height:24px}.fb-reel-bars i:nth-child(2){height:44px;animation-delay:.2s}.fb-reel-bars i:nth-child(3){height:31px;animation-delay:.35s}.fb-reel-bars i:nth-child(4){height:48px;animation-delay:.1s}.fb-reel-bars i:nth-child(5){height:21px;animation-delay:.45s}.fb-reel-bars i:nth-child(6){height:37px;animation-delay:.25s}
+.fb-reel-caption { position:absolute; left:12px; right:12px; bottom:12px; color:#fff; font-size:12px; line-height:1.35; font-weight:700; }
+.fb-source-note { padding:10px 3px 1px; color:hsl(var(--muted-foreground)); font-size:10px; line-height:1.4; }
+.fb-output-card { right:20px; top:60px; padding:17px; }
+.fb-output-kicker { margin-bottom:8px; color:hsl(var(--accent)); font-size:9px; font-weight:800; letter-spacing:.12em; }
+.fb-output-title { margin-bottom:8px; font-size:16px; line-height:1.15; font-weight:750; letter-spacing:-.025em; }
+.fb-output-card p { color:hsl(var(--muted-foreground)); font-size:11px; line-height:1.5; }
+.fb-output-tags { display:flex; flex-wrap:wrap; gap:5px; margin-top:12px; }.fb-output-tags span{padding:5px 7px;border-radius:6px;background:hsl(var(--primary)/.1);color:hsl(var(--primary));font-size:9px;font-weight:650}
+.fb-stage-rail { position:absolute; z-index:8; left:18px; right:18px; bottom:18px; display:grid; grid-template-columns:repeat(4,1fr); gap:7px; }
+.fb-stage-rail button { display:flex; align-items:center; gap:9px; min-width:0; padding:10px; border:1px solid hsl(var(--border)); border-radius:12px; background:hsl(var(--card)/.72); color:hsl(var(--muted-foreground)); text-align:left; transition:.35s ease; backdrop-filter:blur(10px); }
+.fb-stage-rail button.is-active { border-color:hsl(var(--primary)/.6); background:hsl(var(--primary)/.1); color:hsl(var(--foreground)); box-shadow:0 0 24px hsl(var(--primary)/.12); transform:translateY(-3px); }
+.fb-stage-icon { display:grid; place-items:center; width:28px; height:28px; flex:0 0 auto; border-radius:8px; background:hsl(var(--foreground)/.05); }.fb-stage-rail .is-active .fb-stage-icon{color:hsl(var(--primary));background:hsl(var(--primary)/.15)}
+.fb-stage-rail strong,.fb-stage-rail small{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.fb-stage-rail strong{font-size:11px}.fb-stage-rail small{margin-top:2px;font-size:8px;color:hsl(var(--muted-foreground))}
+@keyframes fb-scan{0%,55%{translate:-120% 0}85%,100%{translate:120% 0}} @keyframes fb-bars{to{transform:scaleY(.55);opacity:.65}}
+
+@media (max-width: 720px) {
+  .fb-brain-stage { min-height: 570px; border-radius: 22px; }
+  .fb-source-card { left: 12px; top: 18px; width: 155px; }
+  .fb-reel-frame { height: 133px; }
+  .fb-output-card { right: 11px; top: 45px; width: 158px; }
+  .fb-exploded-stack { top:52%; scale:.74; }
+  .fb-stage-rail { grid-template-columns:repeat(2,1fr); left:10px; right:10px; bottom:10px; }
+}
+@media (prefers-reduced-motion: reduce) { .fb-intel-layer::after,.fb-reel-bars i { animation:none; } }
 `;
