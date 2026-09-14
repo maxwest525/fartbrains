@@ -1,10 +1,4 @@
-import {
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-  type CSSProperties,
-} from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import * as THREE from "three";
 import { setLandingActive } from "@/lib/landingMode";
@@ -22,12 +16,12 @@ const chapters = [
 const reducedMotion = () =>
   window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
 
-type WorldProps = { chapter: number; pulse: number; density: number };
+type WorldProps = { chapter: number; pulse: number };
 
-function ThoughtWorld({ chapter, pulse, density }: WorldProps) {
+function ThoughtWorld({ chapter, pulse }: WorldProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const stateRef = useRef({ chapter, pulse, density });
-  stateRef.current = { chapter, pulse, density };
+  const stateRef = useRef({ chapter, pulse });
+  stateRef.current = { chapter, pulse };
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -204,7 +198,7 @@ function ThoughtWorld({ chapter, pulse, density }: WorldProps) {
     let time = 0;
     const quiet = reducedMotion();
     const draw = () => {
-      const { chapter: c, pulse: p, density: d } = stateRef.current;
+      const { chapter: c, pulse: p } = stateRef.current;
       if (!quiet) time += 0.006;
       const targetScale = 0.82 + c * 0.13;
       world.scale.lerp(
@@ -213,7 +207,7 @@ function ThoughtWorld({ chapter, pulse, density }: WorldProps) {
       );
       world.rotation.y += quiet ? 0 : 0.0014 + c * 0.00015;
       world.rotation.x = Math.sin(time * 0.7) * 0.075;
-      lines.material.opacity = 0.035 + (d / 100) * 0.2;
+      lines.material.opacity = 0.08 + Math.min(c, 4) * 0.025;
       core.rotation.x += quiet ? 0 : 0.007;
       core.rotation.y += quiet ? 0 : 0.009;
       const beat = 1 + Math.sin(time * 5 + p * 4) * 0.09 + p * 0.18;
@@ -256,6 +250,300 @@ function ThoughtWorld({ chapter, pulse, density }: WorldProps) {
       className="fb-world"
       aria-label="Interactive three-dimensional map of captured and connected ideas"
     />
+  );
+}
+
+
+type GraphNode = {
+  id: string;
+  type: "THOUGHT" | "SOURCE" | "CREATOR" | "RESEARCH" | "RULE" | "OUTCOME";
+  title: string;
+  detail: string;
+  provenance: string;
+  parentId?: string;
+};
+
+const GRAPH_CORE: GraphNode[] = [
+  { id: "seed", type: "THOUGHT", title: "Paid ads + SEO should be one system", detail: "The user's original tweak preserved beside the source.", provenance: "PRIVATE NOTE · TODAY" },
+  { id: "reel", type: "SOURCE", title: "Competitor keyword strategy", detail: "Original Instagram source, transcript, claims and extracted references.", provenance: "PUBLIC SOURCE · TRANSCRIBED" },
+  { id: "creator", type: "CREATOR", title: "Creator strategy corpus", detail: "Recurring frameworks extracted from the creator's other public ideas.", provenance: "14 PUBLIC SOURCES · CITED" },
+  { id: "intent", type: "RESEARCH", title: "Commercial intent signal", detail: "Corroborating evidence connecting keyword gaps to purchase intent.", provenance: "RESEARCH PACK · 12 SOURCES" },
+  { id: "route-rule", type: "RULE", title: "Paid-or-organic routing rule", detail: "If intent is immediate, test paid. If value compounds, publish organic.", provenance: "DETERMINISTIC RULE · V3" },
+  { id: "outcome-engine", type: "OUTCOME", title: "Competitor Signal Engine", detail: "A complete product outcome assembled from the connected graph.", provenance: "FARTBRAIN OUTCOME · READY" },
+  { id: "old-paid", type: "THOUGHT", title: "Underpriced paid intent", detail: "A related thought captured three months earlier.", provenance: "PRIVATE NOTE · 3 MONTHS AGO" },
+  { id: "old-seo", type: "THOUGHT", title: "Adjacent ranking expansion", detail: "A related SEO thought recovered from the private graph.", provenance: "PRIVATE NOTE · 6 WEEKS AGO" },
+  { id: "landing-data", type: "SOURCE", title: "Landing-page conversion data", detail: "A saved dataset that validates which intent routes convert.", provenance: "PRIVATE FILE · CSV" },
+  { id: "creator-branch", type: "CREATOR", title: "Demand-capture framework", detail: "A second creator idea that strengthens the original strategy.", provenance: "PUBLIC SOURCE · CITED" },
+  { id: "difficulty", type: "RESEARCH", title: "Organic difficulty score", detail: "Evidence used to decide whether SEO can compound efficiently.", provenance: "RESEARCH · VERIFIED URL" },
+  { id: "cpc", type: "RESEARCH", title: "Paid acquisition pressure", detail: "Cost-per-click evidence used by the routing decision.", provenance: "RESEARCH · CURRENT DATA" },
+  { id: "fallback", type: "RULE", title: "Fallback branch", detail: "When organic difficulty is high, run a bounded paid validation first.", provenance: "DETERMINISTIC RULE · ELSE" },
+  { id: "validation", type: "RULE", title: "Success validation", detail: "Compare qualified acquisition cost, time-to-signal and compounding value.", provenance: "VALIDATION CONTRACT" },
+  { id: "brief", type: "OUTCOME", title: "MVP product brief", detail: "Product definition generated without requiring project access.", provenance: "OUTPUT · 12 SECTIONS" },
+  { id: "spec", type: "OUTCOME", title: "Implementation specification", detail: "Architecture, interfaces, decision logic and acceptance criteria.", provenance: "OUTPUT · VERSIONED" },
+  { id: "skill", type: "OUTCOME", title: "Reusable operator skill", detail: "The reconstructed human strategy expressed as reusable logic.", provenance: "OUTPUT · PORTABLE" },
+  { id: "bridge", type: "OUTCOME", title: "Actual Build handoff", detail: "Execution package stops safely at the MCP or API project boundary.", provenance: "CONNECTION REQUIRED" },
+];
+
+const GRAPH_NODES: GraphNode[] = [
+  ...GRAPH_CORE,
+  ...Array.from({ length: 78 }, (_, index) => {
+    const parent = GRAPH_CORE[index % GRAPH_CORE.length];
+    return {
+      id: `evidence-${index + 1}`,
+      type: parent.type === "OUTCOME" ? "RESEARCH" : parent.type,
+      title: `Supporting ${parent.type.toLowerCase()} ${String(index + 1).padStart(2, "0")}`,
+      detail: `Evidence or context connected to “${parent.title}”.`,
+      provenance: index % 3 === 0 ? "PRIVATE GRAPH · LINKED" : "SOURCE EVIDENCE · CITED",
+      parentId: parent.id,
+    } as GraphNode;
+  }),
+];
+
+const GRAPH_COLORS: Record<GraphNode["type"], number> = {
+  THOUGHT: 0xa48aff,
+  SOURCE: 0x35d8ff,
+  CREATOR: 0xff79c6,
+  RESEARCH: 0x77f2b4,
+  RULE: 0xffc857,
+  OUTCOME: 0xf4f1ff,
+};
+
+function InspectableGraph() {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const selectedRef = useRef("outcome-engine");
+  const [selectedId, setSelectedId] = useState("outcome-engine");
+  const [hoveredId, setHoveredId] = useState<string | null>(null);
+  selectedRef.current = selectedId;
+  const selected = GRAPH_NODES.find((node) => node.id === selectedId) ?? GRAPH_CORE[5];
+  const relatedCount = GRAPH_NODES.filter(
+    (node) => node.parentId === selected.id || node.id === selected.parentId,
+  ).length + 3;
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    let renderer: THREE.WebGLRenderer;
+    try {
+      renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+    } catch {
+      return;
+    }
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(48, 1, 0.1, 80);
+    camera.position.z = 12.5;
+    renderer.setPixelRatio(Math.min(devicePixelRatio, 1.75));
+
+    const graph = new THREE.Group();
+    graph.rotation.x = -0.18;
+    scene.add(graph);
+
+    const typeOrder: GraphNode["type"][] = ["THOUGHT", "SOURCE", "CREATOR", "RESEARCH", "RULE", "OUTCOME"];
+    const positions: THREE.Vector3[] = [];
+    const meshes: THREE.Mesh[] = [];
+    const materials: THREE.MeshBasicMaterial[] = [];
+    let seed = 91827;
+    const random = () => {
+      seed = (seed * 16807) % 2147483647;
+      return (seed - 1) / 2147483646;
+    };
+
+    GRAPH_NODES.forEach((node, index) => {
+      const cluster = typeOrder.indexOf(node.type);
+      const clusterAngle = (cluster / typeOrder.length) * Math.PI * 2;
+      const cx = Math.cos(clusterAngle) * 3.5;
+      const cy = Math.sin(clusterAngle) * 2.45;
+      const coreIndex = GRAPH_CORE.findIndex((item) => item.id === node.id);
+      const spread = coreIndex >= 0 ? 0.25 : 1.2 + random() * 1.25;
+      const angle = random() * Math.PI * 2;
+      const position = new THREE.Vector3(
+        cx + Math.cos(angle) * spread,
+        cy + Math.sin(angle) * spread * 0.7,
+        (random() - 0.5) * 4.4,
+      );
+      positions.push(position);
+
+      const isCore = coreIndex >= 0;
+      const geometry = new THREE.SphereGeometry(isCore ? 0.16 : 0.055 + random() * 0.035, isCore ? 18 : 8, isCore ? 18 : 8);
+      const material = new THREE.MeshBasicMaterial({
+        color: GRAPH_COLORS[node.type],
+        transparent: true,
+        opacity: isCore ? 1 : 0.72,
+      });
+      const mesh = new THREE.Mesh(geometry, material);
+      mesh.position.copy(position);
+      mesh.userData.graphId = node.id;
+      graph.add(mesh);
+      meshes.push(mesh);
+      materials.push(material);
+
+      if (isCore) {
+        const halo = new THREE.Mesh(
+          new THREE.RingGeometry(0.22, 0.25, 28),
+          new THREE.MeshBasicMaterial({ color: GRAPH_COLORS[node.type], transparent: true, opacity: 0.38, side: THREE.DoubleSide }),
+        );
+        halo.position.copy(position);
+        halo.lookAt(camera.position);
+        graph.add(halo);
+      }
+    });
+
+    const indexById = new Map(GRAPH_NODES.map((node, index) => [node.id, index]));
+    const edgePairs: Array<[number, number]> = [];
+    GRAPH_NODES.forEach((node, index) => {
+      if (node.parentId) {
+        const parentIndex = indexById.get(node.parentId);
+        if (parentIndex !== undefined) edgePairs.push([index, parentIndex]);
+      }
+      if (index > GRAPH_CORE.length && index % 3 !== 0) edgePairs.push([index, index - 1]);
+    });
+    [
+      ["seed", "reel"], ["seed", "old-paid"], ["seed", "old-seo"], ["reel", "creator"],
+      ["creator", "creator-branch"], ["intent", "difficulty"], ["intent", "cpc"],
+      ["route-rule", "fallback"], ["route-rule", "validation"], ["route-rule", "outcome-engine"],
+      ["outcome-engine", "brief"], ["outcome-engine", "spec"], ["outcome-engine", "skill"],
+      ["outcome-engine", "bridge"], ["landing-data", "validation"],
+    ].forEach(([a, b]) => {
+      const ai = indexById.get(a);
+      const bi = indexById.get(b);
+      if (ai !== undefined && bi !== undefined) edgePairs.push([ai, bi]);
+    });
+
+    const edgeData: number[] = [];
+    edgePairs.forEach(([a, b]) => edgeData.push(...positions[a].toArray(), ...positions[b].toArray()));
+    const lineGeometry = new THREE.BufferGeometry();
+    lineGeometry.setAttribute("position", new THREE.Float32BufferAttribute(edgeData, 3));
+    const lines = new THREE.LineSegments(
+      lineGeometry,
+      new THREE.LineBasicMaterial({ color: 0x8c74de, transparent: true, opacity: 0.24, blending: THREE.AdditiveBlending }),
+    );
+    graph.add(lines);
+
+    const raycaster = new THREE.Raycaster();
+    const pointer = new THREE.Vector2(4, 4);
+    let dragging = false;
+    let moved = false;
+    let lastX = 0;
+    let lastY = 0;
+    let targetZoom = 12.5;
+
+    const setPointer = (event: PointerEvent) => {
+      const rect = canvas.getBoundingClientRect();
+      pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+      pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+    };
+    const onDown = (event: PointerEvent) => {
+      dragging = true;
+      moved = false;
+      lastX = event.clientX;
+      lastY = event.clientY;
+      canvas.setPointerCapture(event.pointerId);
+    };
+    const onMove = (event: PointerEvent) => {
+      setPointer(event);
+      if (dragging) {
+        const dx = event.clientX - lastX;
+        const dy = event.clientY - lastY;
+        if (Math.abs(dx) + Math.abs(dy) > 2) moved = true;
+        graph.rotation.y += dx * 0.006;
+        graph.rotation.x += dy * 0.004;
+        lastX = event.clientX;
+        lastY = event.clientY;
+      }
+    };
+    const onUp = (event: PointerEvent) => {
+      if (!moved) {
+        setPointer(event);
+        raycaster.setFromCamera(pointer, camera);
+        const hit = raycaster.intersectObjects(meshes, false)[0];
+        if (hit) setSelectedId(hit.object.userData.graphId as string);
+      }
+      dragging = false;
+    };
+    const onWheel = (event: WheelEvent) => {
+      event.preventDefault();
+      targetZoom = THREE.MathUtils.clamp(targetZoom + event.deltaY * 0.008, 7.5, 18);
+    };
+    const resize = () => {
+      const width = Math.max(canvas.clientWidth, 1);
+      const height = Math.max(canvas.clientHeight, 1);
+      renderer.setSize(width, height, false);
+      camera.aspect = width / height;
+      camera.updateProjectionMatrix();
+    };
+    const observer = new ResizeObserver(resize);
+    observer.observe(canvas);
+    canvas.addEventListener("pointerdown", onDown);
+    canvas.addEventListener("pointermove", onMove);
+    canvas.addEventListener("pointerup", onUp);
+    canvas.addEventListener("wheel", onWheel, { passive: false });
+    resize();
+
+    let raf = 0;
+    const draw = () => {
+      camera.position.z += (targetZoom - camera.position.z) * 0.08;
+      if (!dragging && !reducedMotion()) graph.rotation.y += 0.0007;
+      raycaster.setFromCamera(pointer, camera);
+      const hovered = raycaster.intersectObjects(meshes, false)[0];
+      const hoverId = hovered?.object.userData.graphId as string | undefined;
+      setHoveredId((current) => current === (hoverId ?? null) ? current : (hoverId ?? null));
+      canvas.style.cursor = dragging ? "grabbing" : hoverId ? "pointer" : "grab";
+
+      const selectedNode = GRAPH_NODES.find((node) => node.id === selectedRef.current);
+      meshes.forEach((mesh, index) => {
+        const node = GRAPH_NODES[index];
+        const connected =
+          node.id === selectedRef.current ||
+          node.parentId === selectedRef.current ||
+          selectedNode?.parentId === node.id;
+        const isHovered = node.id === hoverId;
+        materials[index].opacity = connected ? 1 : selectedRef.current ? 0.24 : 0.72;
+        const targetScale = isHovered ? 2.1 : connected ? 1.35 : 1;
+        mesh.scale.lerp(new THREE.Vector3(targetScale, targetScale, targetScale), 0.16);
+      });
+      renderer.render(scene, camera);
+      raf = requestAnimationFrame(draw);
+    };
+    draw();
+
+    return () => {
+      cancelAnimationFrame(raf);
+      observer.disconnect();
+      canvas.removeEventListener("pointerdown", onDown);
+      canvas.removeEventListener("pointermove", onMove);
+      canvas.removeEventListener("pointerup", onUp);
+      canvas.removeEventListener("wheel", onWheel);
+      meshes.forEach((mesh) => mesh.geometry.dispose());
+      materials.forEach((material) => material.dispose());
+      lineGeometry.dispose();
+      renderer.dispose();
+    };
+  }, []);
+
+  return (
+    <div className="fb-graph-inspector">
+      <header>
+        <span>FARTBRAIN / KNOWLEDGE GRAPH</span>
+        <b>96 NODES · 108+ RELATIONSHIPS</b>
+      </header>
+      <div className="fb-graph-stage">
+        <canvas ref={canvasRef} aria-label="Inspectable three-dimensional Fartbrain knowledge graph" />
+        <div className="fb-graph-legend">
+          {(["THOUGHT", "SOURCE", "CREATOR", "RESEARCH", "RULE", "OUTCOME"] as const).map((type) => (
+            <span key={type} style={{ color: `#${GRAPH_COLORS[type].toString(16).padStart(6, "0")}` }}>● {type}</span>
+          ))}
+        </div>
+        <small className="fb-graph-hint">DRAG TO ROTATE · SCROLL TO ZOOM · CLICK A NODE</small>
+      </div>
+      <aside className="fb-node-inspector" aria-live="polite">
+        <small>{hoveredId ? "HOVERING" : "SELECTED NODE"} · {selected.type}</small>
+        <h3>{selected.title}</h3>
+        <p>{selected.detail}</p>
+        <div><span>PROVENANCE</span><b>{selected.provenance}</b></div>
+        <div><span>RELATIONSHIPS</span><b>{relatedCount} TRACED</b></div>
+      </aside>
+    </div>
   );
 }
 
@@ -343,7 +631,6 @@ export default function LandingCinematic({
 }) {
   const [chapter, setChapter] = useState(0);
   const [pulse, setPulse] = useState(0);
-  const [density, setDensity] = useState(68);
   const [terminal, setTerminal] = useState(false);
   const sections = useRef<Array<HTMLElement | null>>([]);
 
@@ -384,47 +671,11 @@ export default function LandingCinematic({
     setPulse((v) => v + 1);
     setTerminal(true);
   };
-  const relationshipNodes = [
-    {
-      threshold: 12,
-      meta: "3 MONTHS AGO · PAID ADS",
-      text: "Competitor keyword gaps expose underpriced intent.",
-    },
-    {
-      threshold: 28,
-      meta: "6 WEEKS AGO · SEO",
-      text: "Adjacent rankings are the fastest pages to expand.",
-    },
-    {
-      threshold: 44,
-      meta: "TODAY · YOUR TWEAK",
-      text: "One engine decides: ad, page, or both.",
-    },
-    {
-      threshold: 60,
-      meta: "CREATOR MAP · RECURRING STRATEGY",
-      text: "The creator repeatedly routes demand signals by purchase intent.",
-    },
-    {
-      threshold: 76,
-      meta: "RESEARCH · CORROBORATING SIGNAL",
-      text: "Organic pages reduce paid dependency when the query compounds.",
-    },
-    {
-      threshold: 92,
-      meta: "PROJECT · MISSING CONNECTION",
-      text: "The current workflow never compares paid and organic opportunity.",
-    },
-  ];
-  const activeRelationshipNodes = relationshipNodes.filter(
-    (node) => density >= node.threshold,
-  );
-
   return (
     <div className="fbc">
       <style>{styles}</style>
       <style>{enhancementStyles}</style>
-      <ThoughtWorld chapter={chapter} pulse={pulse} density={density} />
+      <ThoughtWorld chapter={chapter} pulse={pulse} />
       <div className="fb-vignette" />
 
       <nav className="fb-cinema-nav">
@@ -543,55 +794,25 @@ export default function LandingCinematic({
         <section
           id="graph"
           ref={sectionRef(2)}
-          className="fb-chapter fb-connect"
+          className="fb-chapter fb-graph-chapter"
         >
           <div className="fb-copy">
             <span className="fb-eyebrow">03 / FARTBRAIN IS THE GRAPH</span>
             <h2>
-              Everything becomes
+              Inspect the
               <br />
-              connected <em>intelligence.</em>
+              thought behind
+              <br />
+              <em>the thought.</em>
             </h2>
             <p>
-              Fartbrain owns the private graph: its nodes, relationships,
-              provenance and reasoning. Notes, creators, research, strategies,
-              decisions and outcomes all become part of one living system.
+              Not a folder tree and not a decorative constellation. Fartbrain
+              owns a dense, inspectable graph of notes, sources, creators,
+              evidence, rules and outcomes—with every relationship traceable
+              back to why it exists.
             </p>
-            <label>
-              CONNECTION DEPTH{" "}
-              <b>{activeRelationshipNodes.length} / 6 TRACED</b>
-              <input
-                type="range"
-                min="12"
-                max="100"
-                step="4"
-                value={density}
-                onChange={(e) => setDensity(Number(e.target.value))}
-              />
-              <small>
-                EVERY IDEA STAYS · DRAG TO TRACE DEEPER RELATIONSHIPS
-              </small>
-            </label>
           </div>
-          <div className="fb-related" aria-live="polite">
-            {relationshipNodes.map((node, index) => (
-              <article
-                key={node.meta}
-                className={density >= node.threshold ? "traced" : "untraced"}
-                style={{ "--node-index": index } as CSSProperties}
-              >
-                <small>{node.meta}</small>
-                <b>{node.text}</b>
-                <i>{density >= node.threshold ? "CONNECTED" : "UNTRACED"}</i>
-              </article>
-            ))}
-            <div>
-              <span>6 IDEAS PRESERVED</span>
-              <strong>
-                {activeRelationshipNodes.length} RELATIONSHIPS TRACED
-              </strong>
-            </div>
-          </div>
+          <InspectableGraph />
         </section>
 
         <section
@@ -861,7 +1082,26 @@ const enhancementStyles = `
 .fb-bridge-core strong{font-size:20px}.fb-bridge-core span{font-size:7px}
 .fb-recommendation{display:grid;gap:10px;padding:20px 22px}
 .fb-recommendation small{color:var(--violet);font:700 8px ui-monospace;letter-spacing:.1em}.fb-recommendation b{font-size:14px;line-height:1.45}.fb-recommendation span{color:#777282;font:700 8px ui-monospace;letter-spacing:.08em}
-@media(max-width:760px){.fb-extraction-stack,.fb-related,.fb-ash,.fb-reason-engine,.fb-build-surface,.fb-bridge-panel{width:100%;margin-top:70px}.fb-extraction-stack div:nth-child(5){translate:32px}.fb-reason-engine>div{grid-template-columns:82px 1fr auto}.fb-reason-engine>div.alt{margin-left:20px}.fb-connect-mcp{gap:14px;text-align:left}.fb-bridge-map{grid-template-columns:1fr}.fb-bridge-core{grid-template-columns:auto auto auto;justify-content:center;margin:8px}.fb-bridge-core strong{rotate:90deg}}
+.fb-graph-chapter{display:block;padding-top:13vh}
+.fb-graph-chapter>.fb-copy{width:min(680px,70vw);position:relative;z-index:2}
+.fb-graph-chapter>.fb-copy h2{font-size:clamp(48px,5.8vw,88px)}
+.fb-graph-chapter>.fb-copy p{max-width:610px}
+.fb-graph-inspector{position:relative;width:88vw;height:680px;margin:42px auto 0;border:1px solid rgba(164,138,255,.28);background:linear-gradient(145deg,rgba(9,8,17,.94),rgba(5,7,13,.88));box-shadow:0 55px 140px -65px #000,0 0 100px rgba(112,80,220,.08);overflow:hidden}
+.fb-graph-inspector>header{height:48px;display:flex;align-items:center;justify-content:space-between;padding:0 18px;border-bottom:1px solid rgba(255,255,255,.09);color:#777282;font:700 8px ui-monospace;letter-spacing:.1em}
+.fb-graph-inspector>header b{color:var(--cyan)}
+.fb-graph-stage{position:absolute;inset:49px 310px 0 0}
+.fb-graph-stage canvas{width:100%;height:100%;display:block;touch-action:none;background:radial-gradient(circle at 50% 46%,rgba(89,55,170,.14),transparent 56%)}
+.fb-graph-legend{position:absolute;top:16px;left:16px;display:flex;gap:10px;flex-wrap:wrap;max-width:460px;pointer-events:none}
+.fb-graph-legend span{font:700 7px ui-monospace;letter-spacing:.08em}
+.fb-graph-hint{position:absolute;left:18px;bottom:16px;color:#615c6c;font:700 8px ui-monospace;letter-spacing:.09em;pointer-events:none}
+.fb-node-inspector{position:absolute;top:49px;right:0;bottom:0;width:310px;padding:32px 25px;border-left:1px solid rgba(255,255,255,.09);background:rgba(7,7,12,.76);backdrop-filter:blur(16px)}
+.fb-node-inspector>small{color:var(--violet);font:700 8px ui-monospace;letter-spacing:.1em}
+.fb-node-inspector h3{margin:20px 0 15px;font-size:26px;line-height:1.02;letter-spacing:-.035em}
+.fb-node-inspector p{min-height:110px;color:#9b96a8;font-size:13px;line-height:1.6}
+.fb-node-inspector div{display:grid;gap:7px;padding:15px 0;border-top:1px solid rgba(255,255,255,.09)}
+.fb-node-inspector div span{color:#5f5a68;font:700 7px ui-monospace;letter-spacing:.1em}
+.fb-node-inspector div b{color:#d8d4e5;font:700 9px ui-monospace;letter-spacing:.04em}
+@media(max-width:760px){.fb-graph-chapter{padding-top:15vh}.fb-graph-chapter>.fb-copy{width:100%}.fb-graph-inspector{width:100%;height:760px;margin-top:45px}.fb-graph-stage{inset:49px 0 260px}.fb-node-inspector{top:auto;left:0;bottom:0;width:100%;height:260px;border-left:0;border-top:1px solid rgba(255,255,255,.09);padding:22px}.fb-node-inspector p{min-height:auto}.fb-graph-legend{max-width:88%}.fb-extraction-stack,.fb-related,.fb-ash,.fb-reason-engine,.fb-build-surface,.fb-bridge-panel{width:100%;margin-top:70px}.fb-extraction-stack div:nth-child(5){translate:32px}.fb-reason-engine>div{grid-template-columns:82px 1fr auto}.fb-reason-engine>div.alt{margin-left:20px}.fb-connect-mcp{gap:14px;text-align:left}.fb-bridge-map{grid-template-columns:1fr}.fb-bridge-core{grid-template-columns:auto auto auto;justify-content:center;margin:8px}.fb-bridge-core strong{rotate:90deg}}
 `;
 
 const styles = `
