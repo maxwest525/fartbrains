@@ -536,6 +536,24 @@ const ProductShot = () => (
   </div>
 );
 
+const ConnectionStack = () => (
+  <div className="fb-connection-stack">
+    <div className="fb-connection-inputs">
+      <div className="fb-note-card"><span>3 months ago · Paid ads</span><strong>Competitor keyword gaps can reveal cheaper purchase-intent terms.</strong></div>
+      <div className="fb-note-card"><span>6 weeks ago · SEO</span><strong>Pages already ranking on adjacent terms are the fastest place to expand.</strong></div>
+      <div className="fb-note-card"><span>Today · Your note</span><strong>Combine both signals. One engine should decide whether a gap becomes an ad or a page.</strong></div>
+    </div>
+    <div className="fb-connection-merge" aria-hidden><span /><b>7 related notes</b><span /></div>
+    <div className="fb-connection-output">
+      <div className="fb-output-kicker">NEW BUILD · GENERATED FROM YOUR BRAIN</div>
+      <h3>Competitor Signal Engine</h3>
+      <p>Monitor competitor movement, score keyword gaps, then route each opportunity into paid acquisition or organic content.</p>
+      <div className="fb-build-files"><span>01 / product brief</span><span>02 / research pack</span><span>03 / build spec</span><span>04 / implementation prompt</span></div>
+      <button type="button">Talk it through with Ash <span>→</span></button>
+    </div>
+  </div>
+);
+
 /**
  * Fifty real, publicly documented product and growth practices, clustered
  * into ten themes and wired the same way the in-app Graph wires your own
@@ -976,7 +994,7 @@ const Landing = ({ onEnter }: { onEnter?: () => void }) => {
             </div>
             <div className="flex flex-col gap-3 lg:col-span-7">
               <motion.div {...reveal({ y: 24 })}>
-                <IdeaGraph />
+                <ConnectionStack />
               </motion.div>
               <motion.div
                 className="mt-2 flex gap-4 rounded-xl border border-primary/40 px-5 py-[22px]"
@@ -1195,6 +1213,17 @@ html.fb-landing body::before { display: none !important; }
   -webkit-mask-image: radial-gradient(ellipse 70% 60% at 50% 0%, black 40%, transparent 100%);
 }
 
+.fb-connection-stack { position:relative; overflow:hidden; padding:24px; border:1px solid hsl(var(--border)); border-radius:24px; background:linear-gradient(145deg,hsl(var(--card)),hsl(var(--background))); box-shadow:0 40px 80px -60px hsl(var(--primary)/.5); }
+.fb-connection-stack::before{content:"";position:absolute;inset:-30%;pointer-events:none;background:radial-gradient(circle at 68% 55%,hsl(var(--primary)/.16),transparent 28%);}
+.fb-connection-inputs{position:relative;display:grid;gap:9px;padding-right:18%;}
+.fb-note-card{position:relative;padding:13px 15px;border:1px solid hsl(var(--border));border-radius:12px;background:hsl(var(--card)/.86);box-shadow:0 12px 30px -25px #000;transition:transform .3s ease,border-color .3s ease}.fb-note-card:nth-child(2){translate:7% 0}.fb-note-card:nth-child(3){translate:14% 0}.fb-note-card:hover{transform:translateX(5px);border-color:hsl(var(--primary)/.45)}
+.fb-note-card span{display:block;margin-bottom:5px;color:hsl(var(--muted-foreground));font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.08em}.fb-note-card strong{display:block;font-size:11px;line-height:1.45;font-weight:580;color:hsl(var(--foreground)/.85)}
+.fb-connection-merge{position:relative;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:10px;margin:18px 0;color:hsl(var(--accent));font-size:9px;font-weight:750;text-transform:uppercase;letter-spacing:.1em}.fb-connection-merge span{height:1px;background:linear-gradient(90deg,transparent,hsl(var(--primary)/.6))}.fb-connection-merge span:last-child{background:linear-gradient(90deg,hsl(var(--primary)/.6),transparent)}
+.fb-connection-output{position:relative;padding:22px;border:1px solid hsl(var(--primary)/.42);border-radius:17px;background:linear-gradient(135deg,hsl(var(--primary)/.1),hsl(var(--accent)/.05));box-shadow:inset 0 1px hsl(var(--foreground)/.05),0 0 40px hsl(var(--primary)/.08)}
+.fb-connection-output h3{margin:3px 0 8px;font-size:22px;line-height:1.15;letter-spacing:-.025em}.fb-connection-output>p{max-width:540px;color:hsl(var(--muted-foreground));font-size:13px;line-height:1.55}
+.fb-build-files{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin:18px 0}.fb-build-files span{padding:9px 10px;border:1px solid hsl(var(--border));border-radius:8px;background:hsl(var(--background)/.52);color:hsl(var(--foreground)/.72);font:650 9px/1 ui-monospace,monospace;text-transform:uppercase;letter-spacing:.05em}
+.fb-connection-output button{display:flex;width:100%;align-items:center;justify-content:space-between;padding:12px 14px;border-radius:10px;background:hsl(var(--foreground));color:hsl(var(--background));font-size:11px;font-weight:700}.fb-connection-output button span{font-size:16px}
+
 .fb-brain-stage {
   position: relative; min-height: 650px; isolation: isolate;
   border: 1px solid hsl(var(--border)); border-radius: 28px; overflow: hidden;
@@ -1249,6 +1278,7 @@ html.fb-landing body::before { display: none !important; }
   .fb-output-card { right: 11px; top: 45px; width: 158px; }
   .fb-exploded-stack { top:52%; scale:.74; }
   .fb-stage-rail { grid-template-columns:repeat(2,1fr); left:10px; right:10px; bottom:10px; }
+  .fb-connection-stack{padding:14px}.fb-connection-inputs{padding-right:10%}.fb-build-files{grid-template-columns:1fr}.fb-note-card:nth-child(2){translate:4% 0}.fb-note-card:nth-child(3){translate:8% 0}
 }
 @media (prefers-reduced-motion: reduce) { .fb-intel-layer::after,.fb-reel-bars i { animation:none; } }
 `;
