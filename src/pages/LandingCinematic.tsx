@@ -1,4 +1,10 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+} from "react";
 import { Link } from "react-router-dom";
 import * as THREE from "three";
 import { setLandingActive } from "@/lib/landingMode";
@@ -378,6 +384,41 @@ export default function LandingCinematic({
     setPulse((v) => v + 1);
     setTerminal(true);
   };
+  const relationshipNodes = [
+    {
+      threshold: 12,
+      meta: "3 MONTHS AGO · PAID ADS",
+      text: "Competitor keyword gaps expose underpriced intent.",
+    },
+    {
+      threshold: 28,
+      meta: "6 WEEKS AGO · SEO",
+      text: "Adjacent rankings are the fastest pages to expand.",
+    },
+    {
+      threshold: 44,
+      meta: "TODAY · YOUR TWEAK",
+      text: "One engine decides: ad, page, or both.",
+    },
+    {
+      threshold: 60,
+      meta: "CREATOR MAP · RECURRING STRATEGY",
+      text: "The creator repeatedly routes demand signals by purchase intent.",
+    },
+    {
+      threshold: 76,
+      meta: "RESEARCH · CORROBORATING SIGNAL",
+      text: "Organic pages reduce paid dependency when the query compounds.",
+    },
+    {
+      threshold: 92,
+      meta: "PROJECT · MISSING CONNECTION",
+      text: "The current workflow never compares paid and organic opportunity.",
+    },
+  ];
+  const visibleRelationshipNodes = relationshipNodes.filter(
+    (node) => density >= node.threshold,
+  );
 
   return (
     <div className="fbc">
@@ -517,32 +558,34 @@ export default function LandingCinematic({
               decisions and outcomes all become part of one living system.
             </p>
             <label>
-              RELATIONSHIP DENSITY <b>{density}%</b>
+              GRAPH DETAIL <b>{visibleRelationshipNodes.length} / 6 NODES</b>
               <input
                 type="range"
                 min="12"
                 max="100"
+                step="4"
                 value={density}
                 onChange={(e) => setDensity(Number(e.target.value))}
               />
+              <small>DRAG TO REVEAL WEAKER OR MORE DISTANT CONNECTIONS</small>
             </label>
           </div>
-          <div className="fb-related">
-            <article>
-              <small>3 MONTHS AGO · PAID ADS</small>
-              <b>Competitor keyword gaps expose underpriced intent.</b>
-            </article>
-            <article>
-              <small>6 WEEKS AGO · SEO</small>
-              <b>Adjacent rankings are the fastest pages to expand.</b>
-            </article>
-            <article>
-              <small>TODAY · YOUR TWEAK</small>
-              <b>One engine decides: ad, page, or both.</b>
-            </article>
+          <div className="fb-related" aria-live="polite">
+            {visibleRelationshipNodes.map((node, index) => (
+              <article
+                key={node.meta}
+                className={
+                  index === visibleRelationshipNodes.length - 1 ? "newest" : ""
+                }
+                style={{ "--node-index": index } as CSSProperties}
+              >
+                <small>{node.meta}</small>
+                <b>{node.text}</b>
+              </article>
+            ))}
             <div>
-              <span>7 NOTES FOUND</span>
-              <strong>1 NEW THROUGH-LINE</strong>
+              <span>{visibleRelationshipNodes.length} NODES VISIBLE</span>
+              <strong>{density}% GRAPH DETAIL</strong>
             </div>
           </div>
         </section>
@@ -794,6 +837,11 @@ const enhancementStyles = `
 .fb-reason-engine footer{border-top:1px solid rgba(255,255,255,.09);color:#9a95a7}
 .fb-connect-mcp{display:flex;justify-content:space-between;width:100%;margin-top:22px;padding:16px 18px;border:1px solid rgba(53,216,255,.45);background:rgba(53,216,255,.06);color:#fff;font:800 9px ui-monospace;letter-spacing:.1em}
 .fb-connect-mcp b{color:var(--cyan)}
+.fb-copy label small{display:block;margin-top:12px;color:#5f5a6d;font:700 8px/1.4 ui-monospace;letter-spacing:.08em}
+.fb-related{min-height:410px;transition:min-height .25s ease}
+.fb-related article{animation:fb-node-in .28s ease both}
+.fb-related article.newest{border-color:rgba(53,216,255,.52);box-shadow:0 0 34px rgba(53,216,255,.08)}
+@keyframes fb-node-in{from{opacity:0;transform:translateY(12px) scale(.98)}to{opacity:1;transform:translateY(0) scale(1)}}
 .fb-reason,.fb-bridge{justify-content:space-between;gap:8vw}
 .fb-bridge-panel{width:min(620px,49vw);border:1px solid rgba(164,138,255,.35);background:rgba(8,8,14,.82);backdrop-filter:blur(20px);box-shadow:0 40px 120px -65px rgba(164,138,255,.8)}
 .fb-bridge-panel>header,.fb-bridge-panel>footer{display:flex;justify-content:space-between;padding:16px 19px;color:#777282;font:700 9px ui-monospace;letter-spacing:.1em}
