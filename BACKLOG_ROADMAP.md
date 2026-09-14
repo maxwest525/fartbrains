@@ -128,6 +128,8 @@ Fartbrain should be able to produce all applicable outcomes before any project c
 - Marketing or distribution strategy.
 - Structured data/API contract.
 - Execution-ready project package.
+- Jarvis Brain: a saved, reusable intelligence system synthesized from multiple related sources such as a creator's five-video series.
+- One-shot system package containing the combined knowledge, operator model, deterministic rules, prompts, tools, memory design, validations, and optional MCP/API execution handoff.
 
 ### Required quality bar
 
@@ -404,6 +406,9 @@ Preferred routing options include the existing self-hosted LiteLLM/OpenRouter st
 - [ ] Migrate remaining AI functions by task family.
 - [ ] Add model-routing configuration and cost dashboard.
 - [ ] Build creator-map extraction.
+- [ ] Add multi-source collections so a user can combine several videos, URLs, notes, or documents into one named intelligence system.
+- [ ] Build the Jarvis Brain outcome: resolve overlap and contradictions across sources, reconstruct the shared operator, save it to the private graph, and generate a one-shot implementation package.
+- [ ] Add **Save this** to graph nodes, Ash conclusions, research findings, and generated outcomes.
 - [ ] Build outcome versioning and evidence display.
 - [ ] Prototype read-only GitHub project mapping through MCP/API.
 - [ ] Prototype the bridge recommendation card and approval experience.
