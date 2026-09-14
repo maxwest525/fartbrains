@@ -6,10 +6,11 @@ import { setLandingActive } from "@/lib/landingMode";
 const chapters = [
   "Capture",
   "Extract",
-  "Connect",
-  "Synthesize",
+  "Graph",
+  "Ash",
   "Reason",
-  "Build",
+  "Outcomes",
+  "Bridge",
   "Execute",
 ];
 const reducedMotion = () =>
@@ -446,7 +447,7 @@ export default function LandingCinematic({
           <footer>
             <span>ONE FLEETING THOUGHT.</span>
             <a href="#extract">SCROLL TO OPEN IT ↓</a>
-            <span>01 — 07</span>
+            <span>01 — 08</span>
           </footer>
         </section>
 
@@ -499,22 +500,21 @@ export default function LandingCinematic({
         </section>
 
         <section
-          id="connect"
+          id="graph"
           ref={sectionRef(2)}
           className="fb-chapter fb-connect"
         >
           <div className="fb-copy">
-            <span className="fb-eyebrow">
-              03 / YOUR BRAIN IS NOT A FOLDER TREE
-            </span>
+            <span className="fb-eyebrow">03 / FARTBRAIN IS THE GRAPH</span>
             <h2>
-              Old thoughts
+              Everything becomes
               <br />
-              come back <em>alive.</em>
+              connected <em>intelligence.</em>
             </h2>
             <p>
-              Metadata gives every note context. Fartbrain surfaces the
-              relationships you would never remember to search for.
+              Fartbrain owns the private graph: its nodes, relationships,
+              provenance and reasoning. Notes, creators, research, strategies,
+              decisions and outcomes all become part of one living system.
             </p>
             <label>
               RELATIONSHIP DENSITY <b>{density}%</b>
@@ -548,7 +548,7 @@ export default function LandingCinematic({
         </section>
 
         <section
-          id="synthesize"
+          id="ash"
           ref={sectionRef(3)}
           className="fb-chapter fb-synthesize"
         >
@@ -641,7 +641,11 @@ export default function LandingCinematic({
           </div>
         </section>
 
-        <section id="build" ref={sectionRef(5)} className="fb-chapter fb-build">
+        <section
+          id="outcomes"
+          ref={sectionRef(5)}
+          className="fb-chapter fb-build"
+        >
           <div className="fb-copy">
             <span className="fb-eyebrow">06 / EVERY OUTCOME STILL SHIPS</span>
             <h2>
@@ -681,11 +685,72 @@ export default function LandingCinematic({
         </section>
 
         <section
-          id="execute"
+          id="bridge"
           ref={sectionRef(6)}
+          className="fb-chapter fb-bridge"
+        >
+          <div className="fb-copy">
+            <span className="fb-eyebrow">07 / THE ADAPTIVE BRIDGE</span>
+            <h2>
+              Your brain sees
+              <br />
+              what the project
+              <br />
+              <em>is missing.</em>
+            </h2>
+            <p>
+              Connect a project only when you choose. Fartbrain maps its code,
+              features, data, workflows and goals into Fartbrain&rsquo;s own
+              graph, then finds the logical gap between what exists and what
+              should happen next.
+            </p>
+          </div>
+          <div className="fb-bridge-panel">
+            <header>
+              ADAPTIVE BRIDGE <span>OBSERVE ONLY</span>
+            </header>
+            <div
+              className="fb-bridge-map"
+              aria-label="Private intelligence graph connected to a project graph"
+            >
+              <div className="fb-graph-side private">
+                <small>FARTBRAIN / PRIVATE GRAPH</small>
+                <b>Strategy</b>
+                <b>Creator map</b>
+                <b>Decision rule</b>
+                <b>Outcome</b>
+              </div>
+              <div className="fb-bridge-core">
+                <i>GAP</i>
+                <strong>→</strong>
+                <span>IMPROVEMENT</span>
+              </div>
+              <div className="fb-graph-side project">
+                <small>CONNECTED PROJECT</small>
+                <b>Feature</b>
+                <b>Workflow</b>
+                <b>Service</b>
+                <b>Goal</b>
+              </div>
+            </div>
+            <div className="fb-recommendation">
+              <small>DETECTED / MISSING CONNECTION</small>
+              <b>
+                Route keyword opportunities into one paid + organic decision
+                engine.
+              </b>
+              <span>EXPECTED OUTCOME · LOWER ACQUISITION COST</span>
+            </div>
+            <footer>OBSERVE → DETECT → PROPOSE → PREVIEW → APPROVE</footer>
+          </div>
+        </section>
+
+        <section
+          id="execute"
+          ref={sectionRef(7)}
           className="fb-chapter fb-final"
         >
-          <span className="fb-eyebrow">07 / EXECUTION IS OPTIONAL</span>
+          <span className="fb-eyebrow">08 / EXECUTION IS OPTIONAL</span>
           <h2>
             Everything ready.
             <br />
@@ -695,8 +760,8 @@ export default function LandingCinematic({
           </h2>
           <p>
             Your outcomes are complete without an integration. Choose Actual
-            Build and Fartbrain stops safely at the project boundary until its
-            MCP is connected.
+            Build and Fartbrain stops safely at the project boundary until MCP
+            or API access is connected, scoped and approved.
           </p>
           <button className="fb-primary" onClick={run}>
             See the execution handoff <span>↗</span>
@@ -729,7 +794,22 @@ const enhancementStyles = `
 .fb-reason-engine footer{border-top:1px solid rgba(255,255,255,.09);color:#9a95a7}
 .fb-connect-mcp{display:flex;justify-content:space-between;width:100%;margin-top:22px;padding:16px 18px;border:1px solid rgba(53,216,255,.45);background:rgba(53,216,255,.06);color:#fff;font:800 9px ui-monospace;letter-spacing:.1em}
 .fb-connect-mcp b{color:var(--cyan)}
-@media(max-width:760px){.fb-extraction-stack,.fb-related,.fb-ash,.fb-reason-engine,.fb-build-surface{width:100%;margin-top:70px}.fb-extraction-stack div:nth-child(5){translate:32px}.fb-reason-engine>div{grid-template-columns:82px 1fr auto}.fb-reason-engine>div.alt{margin-left:20px}.fb-connect-mcp{gap:14px;text-align:left}}
+.fb-reason,.fb-bridge{justify-content:space-between;gap:8vw}
+.fb-bridge-panel{width:min(620px,49vw);border:1px solid rgba(164,138,255,.35);background:rgba(8,8,14,.82);backdrop-filter:blur(20px);box-shadow:0 40px 120px -65px rgba(164,138,255,.8)}
+.fb-bridge-panel>header,.fb-bridge-panel>footer{display:flex;justify-content:space-between;padding:16px 19px;color:#777282;font:700 9px ui-monospace;letter-spacing:.1em}
+.fb-bridge-panel>header span{color:var(--cyan)}
+.fb-bridge-panel>footer{border-top:1px solid rgba(255,255,255,.09);color:#8d879a}
+.fb-bridge-map{display:grid;grid-template-columns:1fr 105px 1fr;gap:12px;align-items:center;padding:22px 18px;border-top:1px solid rgba(255,255,255,.09);border-bottom:1px solid rgba(255,255,255,.09)}
+.fb-graph-side{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.fb-graph-side small{grid-column:1/-1;margin-bottom:5px;color:#777282;font:700 8px ui-monospace;letter-spacing:.08em}
+.fb-graph-side b{position:relative;padding:12px 8px;border:1px solid rgba(255,255,255,.1);font-size:10px;font-weight:650;text-align:center;background:rgba(255,255,255,.025)}
+.fb-graph-side.private b{border-color:rgba(164,138,255,.28);color:#c5b8ff}.fb-graph-side.project b{border-color:rgba(53,216,255,.2);color:#a7eefe}
+.fb-bridge-core{display:grid;justify-items:center;gap:7px;color:var(--cyan);font:800 8px ui-monospace;letter-spacing:.08em}
+.fb-bridge-core i{display:grid;place-items:center;width:48px;height:48px;border:1px solid var(--violet);border-radius:50%;color:var(--violet);font-style:normal;box-shadow:0 0 30px rgba(164,138,255,.2)}
+.fb-bridge-core strong{font-size:20px}.fb-bridge-core span{font-size:7px}
+.fb-recommendation{display:grid;gap:10px;padding:20px 22px}
+.fb-recommendation small{color:var(--violet);font:700 8px ui-monospace;letter-spacing:.1em}.fb-recommendation b{font-size:14px;line-height:1.45}.fb-recommendation span{color:#777282;font:700 8px ui-monospace;letter-spacing:.08em}
+@media(max-width:760px){.fb-extraction-stack,.fb-related,.fb-ash,.fb-reason-engine,.fb-build-surface,.fb-bridge-panel{width:100%;margin-top:70px}.fb-extraction-stack div:nth-child(5){translate:32px}.fb-reason-engine>div{grid-template-columns:82px 1fr auto}.fb-reason-engine>div.alt{margin-left:20px}.fb-connect-mcp{gap:14px;text-align:left}.fb-bridge-map{grid-template-columns:1fr}.fb-bridge-core{grid-template-columns:auto auto auto;justify-content:center;margin:8px}.fb-bridge-core strong{rotate:90deg}}
 `;
 
 const styles = `
